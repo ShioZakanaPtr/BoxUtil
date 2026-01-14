@@ -13,8 +13,8 @@ import org.boxutil.manager.*;
 /**
  * A multi-thread OpenGL based lib/engine of the game <a href="https://fractalsoftworks.com/">Starsector</a>.
  * <blockquote>Environment: JDK17.0.10_zulu</blockquote>
- * <blockquote>Repository: <a href="https://www.fossic.org/thread-15746-1-1.html">https://www.fossic.org/thread-15746-1-1.html</a></blockquote>
- * <blockquote>For how to use <strong>BoxUtil</strong> as lib: <a href="rd">rd</a></blockquote>
+ * <blockquote>Repository: <a href="https://github.com/ShioZakanaPtr/BoxUtil">GigHub</a></blockquote>
+ * <blockquote>For how to use <strong>BoxUtil</strong> as lib: <a href="https://www.fossic.org/thread-15746-1-1.html">This Website</a></blockquote>
  * @since 2024.08.18
  * @author ShioZakana
  * @version 2026.01.14 - 1.5.0
