@@ -8,16 +8,22 @@ import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.attribute.FontMapData;
 import org.boxutil.units.standard.entity.TextFieldEntity;
 import org.boxutil.units.standard.misc.TextFieldObject;
+import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
 import org.boxutil.util.TransformUtil;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
+import org.lwjgl.util.vector.Vector3f;
 
+import java.awt.*;
 import java.nio.FloatBuffer;
+import java.util.Locale;
 
 public final class BUtil_GLDrawInstanceMemoryUsage {
     private final static TextFieldObject _TEXT = new TextFieldObject();
+    private final static TextFieldObject _HOVER_TEXT = new TextFieldObject();
     private final static InstanceType[] _TYPES = InstanceType.values();
     private final static float _BAR_WIDTH = 512.0f, _BAR_HEIGHT = 32.0f, _SPACE = 10.0f;
     private final static byte[][] _COLOR;
@@ -84,8 +90,22 @@ public final class BUtil_GLDrawInstanceMemoryUsage {
             _TEXT.setTextDataRefreshIndex(0);
             _TEXT.setTextDataRefreshSize(7);
         }
+        if (_HOVER_TEXT.getFontMap() == null) {
+            _HOVER_TEXT.setFontMap(new FontMapData("graphics/fonts/FiraCodeModified/Fira_Code_SemiBold_14.fnt"));
+            _HOVER_TEXT.setAlignment(TextFieldEntity.Alignment.MID);
+            _HOVER_TEXT.mallocTextData(60);
+            _HOVER_TEXT.addText("0");
+            _HOVER_TEXT.addText(" / ");
+            _HOVER_TEXT.addText("0");
+            _HOVER_TEXT.addText(" Byte");
+            _HOVER_TEXT.setFieldWidth(512.0f);
+            _HOVER_TEXT.setFieldHeight(32.0f);
+            _HOVER_TEXT.setTextDataRefreshIndex(0);
+            _HOVER_TEXT.setTextDataRefreshAllFromCurrentIndex();
+            _HOVER_TEXT.submitText();
+        }
 
-        final float fontHeight = _TEXT.getFontMap().getLineHeight();
+        final float fixedTextHeight = _TEXT.getFontMap().getLineHeight(), hoverTextHeight = _HOVER_TEXT.getFontMap().getLineHeight();
         final float locX = ShaderCore.getScreenWidth(), locY = ShaderCore.getScreenHeight();
         if (_MATRIX == null) _MATRIX = CommonUtil.createFloatBuffer(TransformUtil.createWindowOrthoMatrix(new Matrix4f()));
         GL11.glPushAttrib(GL11.GL_VIEWPORT_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TRANSFORM_BIT | GL11.GL_POLYGON_BIT);
@@ -97,7 +117,11 @@ public final class BUtil_GLDrawInstanceMemoryUsage {
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
 
-        GL11.glTranslatef(locX - _BAR_WIDTH - _SPACE, locY - fontHeight - _BAR_HEIGHT - 32.0f, 0.0f);
+        final var mousePos = new Vector2f(Mouse.getX(), Mouse.getY());
+        final var aabb = new Vector2f[]{new Vector2f(), new Vector2f(locX - _SPACE, locY - 32.0f)};
+        aabb[0].x = aabb[1].x - _BAR_WIDTH;
+        aabb[0].y = aabb[1].y - fixedTextHeight - _BAR_HEIGHT;
+        GL11.glTranslatef(aabb[0].x, aabb[0].y, 0.0f);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_POLYGON_SMOOTH);
@@ -109,6 +133,8 @@ public final class BUtil_GLDrawInstanceMemoryUsage {
         Pair<Long, Long> values;
         TextFieldEntity.TextData textData;
         long usageValue;
+        float drawOffset;
+        boolean notShowHover = true;
         for (var type : _TYPES) {
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glPushMatrix();
@@ -124,9 +150,27 @@ public final class BUtil_GLDrawInstanceMemoryUsage {
             _TEXT.getTextDataList().get(4).text = getNum(values.two);
             _TEXT.getTextDataList().get(6).text = getUsageP((double) usageValue / values.two);
             _TEXT.submitText();
-            _TEXT.render(new Vector2f(0, fontHeight + _BAR_HEIGHT), 0, false, null);
+            _TEXT.render(new Vector2f(0, fixedTextHeight + _BAR_HEIGHT), 0, false, null);
 
-            GL11.glTranslatef(0.0f, -(fontHeight + _BAR_HEIGHT + _SPACE), 0.0f);
+            if (notShowHover && CalculateUtil.isPointWithinAABB(mousePos, aabb)) {
+                notShowHover = false;
+                aabb[0].x = 0.0f;
+                aabb[0].y = (hoverTextHeight + _BAR_HEIGHT) * 0.5f;
+                aabb[1].x = 1.5f;
+                aabb[1].y = aabb[0].y - 1.5f;
+                _HOVER_TEXT.getTextDataList().get(0).text = String.format(Locale.US, "%,d", usageValue);
+                _HOVER_TEXT.getTextDataList().get(2).text = String.format(Locale.US, "%,d", values.two);
+                _HOVER_TEXT.submitText();
+                _HOVER_TEXT.render(aabb[0], 0, false, Color.BLACK);
+                _HOVER_TEXT.render(aabb[1], 0, false, null);
+            }
+
+            drawOffset = -(fixedTextHeight + _BAR_HEIGHT + _SPACE);
+            GL11.glTranslatef(0.0f, drawOffset, 0.0f);
+            if (notShowHover) {
+                aabb[0].y += drawOffset;
+                aabb[1].y += drawOffset;
+            }
         }
 
         GL11.glPopMatrix();

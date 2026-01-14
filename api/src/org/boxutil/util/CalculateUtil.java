@@ -1,8 +1,10 @@
 package org.boxutil.util;
 
+import com.fs.starfarer.api.combat.BoundsAPI;
 import com.fs.starfarer.api.combat.CombatEntityAPI;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
+import org.boxutil.define.BoxEnum;
 import org.lwjgl.util.vector.*;
 
 import java.awt.*;
@@ -183,9 +185,90 @@ public final class CalculateUtil {
         return out;
     }
 
+    public static boolean isPointWithinAABB(Vector2f point, Vector2f bl, Vector2f tr) {
+        return point.x >= bl.x && point.x <= tr.x && point.y >= bl.y && point.y <= tr.y;
+    }
+
+    /**
+     * @param aabb Vector2f[] = {bottomLeft, topRight}
+     */
+    public static boolean isPointWithinAABB(Vector2f point, Vector2f[] aabb) {
+        return isPointWithinAABB(point, aabb[0], aabb[1]);
+    }
+
+    public static boolean isPointWithinAABB(Vector2f point, float range, Vector2f bl, Vector2f tr) {
+        return point.x + range >= bl.x && point.x - range <= tr.x && point.y + range >= bl.y && point.y - range <= tr.y;
+    }
+
+    /**
+     * @param aabb Vector2f[] = {bottomLeft, topRight}
+     */
+    public static boolean isPointWithinAABB(Vector2f point, float range, Vector2f[] aabb) {
+        return isPointWithinAABB(point, range, aabb[0], aabb[1]);
+    }
+
+    // From java.awt.geom.Line2D.relativeCCW()
+    private static byte relativeCCW_F(float x1, float y1, float x2, float y2, float px, float py) {
+        x2 -= x1;
+        y2 -= y1;
+        px -= x1;
+        py -= y1;
+        float ccw = px * y2 - py * x2;
+        if (ccw == 0.0f) {
+            ccw = px * x2 + py * y2;
+            if (ccw > 0.0f) {
+                ccw = (px - x2) * x2 + (py - y2) * y2;
+                if (ccw < 0.0f) ccw = 0.0f;
+            }
+        }
+        return ccw < 0.0f ? BoxEnum.NEG_ONE : (ccw > 0.0f ? BoxEnum.ONE : BoxEnum.ZERO);
+    }
+
+    private static boolean linesIntersect(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
+        return (relativeCCW_F(x1, y1, x2, y2, x3, y3) * relativeCCW_F(x1, y1, x2, y2, x4, y4) <= 0) &&
+                (relativeCCW_F(x3, y3, x4, y4, x1, y1) * relativeCCW_F(x3, y3, x4, y4, x2, y2) <= 0);
+    }
+
+    public static boolean isSegmentWithinOrIntersectAABB(Vector2f start, Vector2f end, Vector2f bl, Vector2f tr) {
+        boolean result = isPointWithinAABB(start, bl, tr) || isPointWithinAABB(end, bl, tr);
+        result |= linesIntersect(start.x, start.y, end.x, end.y, bl.x, bl.y, tr.x, tr.y) || linesIntersect(start.x, start.y, end.x, end.y, bl.x, tr.y, tr.x, bl.y);
+        return result;
+    }
+
+    public static boolean isSegmentWithinOrIntersectAABB(BoundsAPI.SegmentAPI segment, Vector2f bl, Vector2f tr) {
+        return isSegmentWithinOrIntersectAABB(segment.getP1(), segment.getP2(), bl, tr);
+    }
+
+    /**
+     * @param aabb Vector2f[] = {bottomLeft, topRight}
+     */
+    public static boolean isSegmentWithinOrIntersectAABB(Vector2f start, Vector2f end, Vector2f[] aabb) {
+        return isSegmentWithinOrIntersectAABB(start, end, aabb[0], aabb[1]);
+    }
+
+    /**
+     * @param aabb Vector2f[] = {bottomLeft, topRight}
+     */
+    public static boolean isSegmentWithinOrIntersectAABB(BoundsAPI.SegmentAPI segment, Vector2f[] aabb) {
+        return isSegmentWithinOrIntersectAABB(segment.getP1(), segment.getP2(), aabb);
+    }
+
+    public static boolean isAABBOverlap(Vector2f blSRC, Vector2f trSRC, Vector2f blDST, Vector2f trDST) {
+        return trSRC.x >= blDST.x && trSRC.y >= blDST.y && blSRC.x <= trDST.x && blSRC.y <= trDST.y;
+    }
+
+    /**
+     * @param aabbSRC Vector2f[] = {bottomLeft, topRight}
+     * @param aabbDST Vector2f[] = {bottomLeft, topRight}
+     */
+    public static boolean isAABBOverlap(Vector2f[] aabbSRC, Vector2f[] aabbDST) {
+        return isAABBOverlap(aabbSRC[0], aabbSRC[1], aabbDST[0], aabbDST[1]);
+    }
+
     public static byte mix(byte src, byte dst, float factor) {
         return (byte) Math.round(src * (1.0f - factor) + dst * factor);
     }
+
     public static int mix(int src, int dst, float factor) {
         return Math.round(src * (1.0f - factor) + dst * factor);
     }

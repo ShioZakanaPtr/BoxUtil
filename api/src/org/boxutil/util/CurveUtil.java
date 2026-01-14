@@ -170,6 +170,7 @@ public final class CurveUtil {
         return new Vector2f[]{new Vector2f(hullArray[0][0], hullArray[0][1]), new Vector2f(hullArray[1][0], hullArray[1][1])};
     }
 
+    @Deprecated
     public static boolean isPointWithinAABB(Vector2f point, Vector2f bl, Vector2f tr) {
         return point.x >= bl.x && point.x <= tr.x && point.y >= bl.y && point.y <= tr.y;
     }
@@ -177,10 +178,12 @@ public final class CurveUtil {
     /**
      * @param aabb Vector2f[] = {bottomLeft, topRight}
      */
+    @Deprecated
     public static boolean isPointWithinAABB(Vector2f point, Vector2f[] aabb) {
         return isPointWithinAABB(point, aabb[0], aabb[1]);
     }
 
+    @Deprecated
     public static boolean isPointWithinAABB(Vector2f point, float range, Vector2f bl, Vector2f tr) {
         return point.x + range >= bl.x && point.x - range <= tr.x && point.y + range >= bl.y && point.y - range <= tr.y;
     }
@@ -188,11 +191,13 @@ public final class CurveUtil {
     /**
      * @param aabb Vector2f[] = {bottomLeft, topRight}
      */
+    @Deprecated
     public static boolean isPointWithinAABB(Vector2f point, float range, Vector2f[] aabb) {
         return isPointWithinAABB(point, range, aabb[0], aabb[1]);
     }
 
     // From java.awt.geom.Line2D.relativeCCW()
+    @Deprecated
     private static byte relativeCCW_F(float x1, float y1, float x2, float y2, float px, float py) {
         x2 -= x1;
         y2 -= y1;
@@ -209,17 +214,20 @@ public final class CurveUtil {
         return ccw < 0.0f ? BoxEnum.NEG_ONE : (ccw > 0.0f ? BoxEnum.ONE : BoxEnum.ZERO);
     }
 
+    @Deprecated
     private static boolean linesIntersect(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
         return (relativeCCW_F(x1, y1, x2, y2, x3, y3) * relativeCCW_F(x1, y1, x2, y2, x4, y4) <= 0) &&
                 (relativeCCW_F(x3, y3, x4, y4, x1, y1) * relativeCCW_F(x3, y3, x4, y4, x2, y2) <= 0);
     }
 
+    @Deprecated
     public static boolean isSegmentWithinOrIntersectAABB(Vector2f start, Vector2f end, Vector2f bl, Vector2f tr) {
         boolean result = isPointWithinAABB(start, bl, tr) || isPointWithinAABB(end, bl, tr);
         result |= linesIntersect(start.x, start.y, end.x, end.y, bl.x, bl.y, tr.x, tr.y) || linesIntersect(start.x, start.y, end.x, end.y, bl.x, tr.y, tr.x, bl.y);
         return result;
     }
 
+    @Deprecated
     public static boolean isSegmentWithinOrIntersectAABB(BoundsAPI.SegmentAPI segment, Vector2f bl, Vector2f tr) {
         return isSegmentWithinOrIntersectAABB(segment.getP1(), segment.getP2(), bl, tr);
     }
@@ -227,6 +235,7 @@ public final class CurveUtil {
     /**
      * @param aabb Vector2f[] = {bottomLeft, topRight}
      */
+    @Deprecated
     public static boolean isSegmentWithinOrIntersectAABB(Vector2f start, Vector2f end, Vector2f[] aabb) {
         return isSegmentWithinOrIntersectAABB(start, end, aabb[0], aabb[1]);
     }
@@ -234,10 +243,12 @@ public final class CurveUtil {
     /**
      * @param aabb Vector2f[] = {bottomLeft, topRight}
      */
+    @Deprecated
     public static boolean isSegmentWithinOrIntersectAABB(BoundsAPI.SegmentAPI segment, Vector2f[] aabb) {
         return isSegmentWithinOrIntersectAABB(segment.getP1(), segment.getP2(), aabb);
     }
 
+    @Deprecated
     public static boolean isAABBOverlap(Vector2f blSRC, Vector2f trSRC, Vector2f blDST, Vector2f trDST) {
         return trSRC.x >= blDST.x && trSRC.y >= blDST.y && blSRC.x <= trDST.x && blSRC.y <= trDST.y;
     }
@@ -246,6 +257,7 @@ public final class CurveUtil {
      * @param aabbSRC Vector2f[] = {bottomLeft, topRight}
      * @param aabbDST Vector2f[] = {bottomLeft, topRight}
      */
+    @Deprecated
     public static boolean isAABBOverlap(Vector2f[] aabbSRC, Vector2f[] aabbDST) {
         return isAABBOverlap(aabbSRC[0], aabbSRC[1], aabbDST[0], aabbDST[1]);
     }
@@ -465,7 +477,7 @@ public final class CurveUtil {
         for (float checkRoot : roots) {
             if (checkRoot < 0.0f || checkRoot > 1.0f) continue;
             checkPointTMP = getPointOnCurveArray(curveStart, curveEnd, checkRoot);
-            if (isPointWithinAABB(new Vector2f(checkPointTMP[0], checkPointTMP[1]), 0.05f, segAABB)) {
+            if (CalculateUtil.isPointWithinAABB(new Vector2f(checkPointTMP[0], checkPointTMP[1]), 0.05f, segAABB)) {
                 result.add(new Vector3f(checkPointTMP[0], checkPointTMP[1], checkRoot));
             }
         }
@@ -514,7 +526,7 @@ public final class CurveUtil {
     }
 
     private static void _curveIntersection(CurvePackage src, CurvePackageDst dst, float searchThresholdSquared, float splitFactorEachRound, List<CurvePackage> result) {
-        if (!isAABBOverlap(src.aabb, dst.aabb)) return;
+        if (!CalculateUtil.isAABBOverlap(src.aabb, dst.aabb)) return;
         if (getAABBsLengthSquared(src.aabb, dst.aabb) <= searchThresholdSquared) {
             result.add(src);
             return;
@@ -936,7 +948,7 @@ public final class CurveUtil {
                     shipHullBoundPair[1].y += shipCenter.y;
                     CalculateUtil.min(shipHullBoundPair[0], shipHullBoundPair[1], shipHullBoundAABB[0]);
                     CalculateUtil.max(shipHullBoundPair[0], shipHullBoundPair[1], shipHullBoundAABB[1]);
-                    if (!isAABBOverlap(cullAABB, shipHullBoundAABB)) continue;
+                    if (!CalculateUtil.isAABBOverlap(cullAABB, shipHullBoundAABB)) continue;
 
                     Vector2f.sub(shipHullBoundPair[1], shipHullBoundPair[0], _firstCullCenter);
                     boundNormal.set(-_firstCullCenter.y, _firstCullCenter.x);
@@ -1127,7 +1139,7 @@ public final class CurveUtil {
             if (targetICheck instanceof CombatEntityAPI) {
                 targetI = (CombatEntityAPI) targetICheck;
                 if (targetI instanceof BattleObjectiveAPI || targetI instanceof EmpArcEntityAPI || targetI instanceof DamagingProjectileAPI && !(targetI instanceof MissileAPI)) continue;
-                if (dealtController.isIgnore(targetI) || !isPointWithinAABB(Matrix2f.transform(_transform, Vector2f.sub(targetI.getLocation(), curveStart, firstCullLoc), firstCullLoc), targetI.getCollisionRadius() * 1.1f + 0.05f, firstCullAABB)) continue;
+                if (dealtController.isIgnore(targetI) || !CalculateUtil.isPointWithinAABB(Matrix2f.transform(_transform, Vector2f.sub(targetI.getLocation(), curveStart, firstCullLoc), firstCullLoc), targetI.getCollisionRadius() * 1.1f + 0.05f, firstCullAABB)) continue;
                 targetList.add(targetI);
             }
         }
@@ -1198,7 +1210,7 @@ public final class CurveUtil {
                     shipHullBoundPair[1].x += hullOffsetX;
                     shipHullBoundPair[1].y += hullOffsetY;
                     Matrix2f.transform(hullBoundInv, shipHullBoundPair[1], shipHullBoundPair[1]);
-                    if (isSegmentWithinOrIntersectAABB(shipHullBoundPair[0], shipHullBoundPair[1], firstCullAABB)) {
+                    if (CalculateUtil.isSegmentWithinOrIntersectAABB(shipHullBoundPair[0], shipHullBoundPair[1], firstCullAABB)) {
                         shipHullBoundPair[0].set(shipHullBoundPairTMP[0]);
                         Vector2f.add(shipHullBoundPair[0], shipCenter, shipHullBoundPair[0]);
                         shipHullBoundPair[1].set(shipHullBoundPairTMP[1]);

@@ -26,6 +26,7 @@ v1.5.0 / 2026.01.14
     部分位于 org.boxutil.units.builtin 中的类移动
     TemporaryCleanupPlugin / TextSubmitFeedbackAPI 移动至 org.boxutil.base.api.resource
     LayeredRenderingPlugin 移动至 org.boxutil.base.api.everyframe
+    部分位于 CurveUtil 中的方法移动至 CalculateUtil (AABB相关)，原位置上的方法保留但标记为弃用
 
     用于光影包渲染的部分资源类，现在拥有了专有的 hashCode 与 equals 计算方法
     改进 SimpleParticleControlData 的默认计时策略，减少空闲时的计算调用
