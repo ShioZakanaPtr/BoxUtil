@@ -7,8 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="Starsecore_core" level="project" />
-    <orderEntry type="library" exported="" name="Starsecore_core_obf" level="project" />
+    <orderEntry type="library" exported="" name="SS_098" level="application" />
     <orderEntry type="module" module-name="backends" exported="" />
   </component>
 </module>
