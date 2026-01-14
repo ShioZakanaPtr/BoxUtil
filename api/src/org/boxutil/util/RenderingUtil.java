@@ -937,9 +937,6 @@ public final class RenderingUtil {
             return result;
         }
 
-        /**
-         * Include additional explosion texture tile from vanilla fx folder: <code>explosion3.png</code>, <code>explosion4.png</code>, <code>explosion5.png</code>, <code>explosion6.png</code>
-         */
         public static boolean spawnExplosion(boolean isCampaign, Vector2f loc, Vector2f vel, Color color, float size, float maxDuration) {
             if (!BoxConfigs.isShaderEnable()) return false;
             if (ignoreSpawn(isCampaign, loc, size) || maxDuration <= 0.0f || color.getAlpha() < 1) return true;
