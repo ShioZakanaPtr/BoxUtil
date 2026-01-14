@@ -355,9 +355,18 @@ public final class BUtil_InstanceDataMemoryPool {
                 result = null;
             } else break;
         }
-        if (result != null || memArraySize < 10) return result;
+        if (result != null || memArraySize < 6) return result;
 
-        for (int i = memArraySize - 5; i < memArraySize; ++i) {
+        final int forwardStart = Math.max(memArraySize - 5, 5);
+        for (int i = forwardStart; i < memArraySize; ++i) {
+            result = _MEM_FREE[target].get(i);
+            if (result.size < foundSize) {
+                result = null;
+            } else break;
+        }
+        if (result != null || memArraySize < 11) return result;
+
+        for (int i = forwardLimit; i < forwardStart; ++i) { // scan all between ends
             result = _MEM_FREE[target].get(i);
             if (result.size < foundSize) {
                 result = null;
