@@ -212,6 +212,7 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         this.runThreadPlugin(true);
         this.runEntityAdvance();
         this.runEntitySubmit();
+        GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT);
 
         BoxThreadSync.Logical.beginPoolCompact().arriveAndAwaitAdvance();
         if (!this._tmpQueue_plugin.isEmpty()) BUtil_ThreadResource.Logical.addAllThreadPlugin(this._tmpQueue_plugin);

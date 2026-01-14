@@ -100,7 +100,6 @@ public final class BUtil_ThreadResource {
                 command.accept(null);
             }
             if (BoxDatabase.getGLState().GL_GL43) GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-            if (BoxDatabase.getGLState().GL_GL42) GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT);
         }
 
         static Deque<BackgroundEveryFramePlugin> getThreadPluginQueue() {

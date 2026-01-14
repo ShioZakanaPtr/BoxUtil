@@ -795,7 +795,7 @@ public final class BUtil_GLImpl {
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, ShaderCore.getRenderingBuffer().getFBO(0));
                 GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-                GL42.glMemoryBarrier(GL42.GL_ALL_BARRIER_BITS);
+                GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
                 for (InstanceType instanceType : InstanceType.values()) BUtil_InstanceDataMemoryPool.rebindSSBO(instanceType);
             }
             context.applyBeforeLowestLayerRender(viewport, isCampaign == BoxEnum.TRUE,
