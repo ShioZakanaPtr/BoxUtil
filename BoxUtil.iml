@@ -3,6 +3,8 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/JavaDoc" />
+      <excludeFolder url="file://$MODULE_DIR$/jars" />
       <excludeFolder url="file://$MODULE_DIR$/shaders" />
     </content>
     <orderEntry type="inheritedJdk" />
