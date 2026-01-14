@@ -1,0 +1,12 @@
+package org.boxutil.backends.console;
+
+import org.boxutil.config.BoxConfigs;
+import de.unkrig.commons.nullanalysis.NotNull;
+import org.lazywizard.console.BaseCommand;
+
+public class ShowInstanceMemoryUsage implements BaseCommand {
+    public CommandResult runCommand(@NotNull String s, @NotNull BaseCommand.CommandContext commandContext) {
+        BoxConfigs.setShowInstanceMemoryUsage(Boolean.parseBoolean(s.toUpperCase()));
+        return CommandResult.SUCCESS;
+    }
+}

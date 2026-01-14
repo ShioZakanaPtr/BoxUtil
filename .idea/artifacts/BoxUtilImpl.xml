@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="BoxUtilImpl">
+    <output-path>$PROJECT_DIR$/jars/backends</output-path>
+    <root id="archive" name="BoxUtilImpl.jar">
+      <element id="module-output" name="backends" />
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,5 @@
+command,class,tags,syntax,help
+ShowMultiPassChannel,org.boxutil.backends.console.ShowMultiPassChannel,console,ShowMultiPassChannel [optionalChannel],"Show fragment color of multiple-pass rendering on screen, it is all without AA, ignore case. Valid channel value: ""none"", BEAUTY, COLOR, EMISSIVE, POSITION, NORMAL, TANGENT, MATERIAL, BLOOM."
+ShowAAStatus,org.boxutil.backends.console.ShowAAStatus,console,ShowAAStatus [optionalBoolean],"Show pixels that have AA applied on screen, and mark in green. ignore case."
+ShowInstanceMemoryUsage,org.boxutil.backends.console.ShowInstanceMemoryUsage,console,ShowInstanceMemoryUsage [optionalBoolean],"Show the status GUI of instance data memory pool on screen. ignore case."
+PrintContextInfo,org.boxutil.backends.console.PrintContextInfo,console,PrintContextInfo (no arguments),Print info for OpenGL.

@@ -1,0 +1,58 @@
+#version 430
+
+precision OVERWRITE_PRECISION float;
+precision highp int;
+
+layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0, rgba8) uniform writeonly image2D tex;
+layout(binding = 0) uniform sampler2D texHeight;
+layout(binding = 1) uniform sampler2D alphaSrc;
+
+uniform ivec3 sizeState;
+uniform float normalStrength;
+
+float getPixel(in ivec2 offset, in ivec2 coord, in ivec2 maxIndex) {
+    return texelFetch(texHeight, clamp(coord + offset, ivec2(0), maxIndex), 0).x;
+}
+
+vec3 getNormal(in ivec2 coord) {
+    ivec2 maxIndex = sizeState.xy - 1;
+    float gLT = getPixel(ivec2(-1, 1), coord, maxIndex);
+    float gT = getPixel(ivec2(0, 1), coord, maxIndex);
+    float gRT = getPixel(ivec2(1, 1), coord, maxIndex);
+    float gL = getPixel(ivec2(-1, 0), coord, maxIndex);
+    float gR = getPixel(ivec2(1, 0), coord, maxIndex);
+    float gLB = getPixel(ivec2(-1, -1), coord, maxIndex);
+    float gB = getPixel(ivec2(0, -1), coord, maxIndex);
+    float gRB = getPixel(ivec2(1, -1), coord, maxIndex);
+
+    float gxL = gL * 0.625;
+    gxL += (gLT + gLB) * 0.1875;
+    float gxR = gR * 0.625;
+    gxR += (gRT + gRB) * 0.1875;
+    float gyU = gT * 0.625;
+    gyU += (gLT + gRT) * 0.1875;
+    float gyD = gB * 0.625;
+    gyD += (gLB + gRB) * 0.1875;
+    bool flipX = (sizeState.z & 2) == 2;
+    bool flipY = (sizeState.z & 1) == 1;
+    float dx = flipX ? (gxR - gxL) : (gxL - gxR);
+    float dy = flipY ? (gyU - gyD) : (gyD - gyU);
+    return normalize(vec3(vec2(dx, dy) * normalStrength, 0.05));
+}
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(coord, sizeState.xy))) return;
+    bool keepAlpha = (sizeState.z & 4) == 4;
+    float alpha = texelFetch(alphaSrc, coord, 0).w;
+    if (keepAlpha && alpha <= 0.0) {
+        imageStore(tex, coord, vec4(0.5, 0.5, 1.0, 0.0));
+        return;
+    }
+    vec3 normal = getNormal(coord);
+    normal = clamp(normal * 0.5 + 0.5, 0.0, 1.0);
+    imageStore(tex, coord, vec4(normal, keepAlpha ? alpha : 1.0));
+}

@@ -1,0 +1,17 @@
+OBJ Data:
+    For model, the .mtl file is not necessary; triangles and quads both ok; recommended to use a high-precision model.
+    For Cinema 4D, should exchange the y-axis and z-axis.
+    For performance, obj file shouldn't be bigger than 8 MiB.
+    !!! DO NOT WITH ANY N-GONS !!!
+
+Texture Data:
+    Optional.
+    id: [ship id] for ship / [shot id] for missile / [weapon id] for weapon / [hull style id] for weapon cover / [battle objectives id] for battle objectives
+    frame: optional; index of animated weapon, start from 0.
+    type: ignore case; ENTITY / MISSILE / TURRET / HARDPOINT; and use "entity" type for all of ship / battle objectives
+    subType: ignore case, only for weapon and weapon cover; BASE / BARREL / UNDER / COVERSMALL / COVERMEDIUM / COVERLARGE
+
+Illuminant Data:
+    Optional.
+    id: [shot id] for projectile / [weapon id] for beam / [engine style id] for ship engine(not for missile)
+    type: ignore case; PROJECTILE / BEAM / ENGINE

@@ -1,0 +1,46 @@
+{
+	"BUtil_DefaultGreen":[42,255,128,255],
+	"BUtil_DefaultBG":[2,16,10,255],
+
+	"graphics":{
+		"textures": {
+			"BUtil_TestTiles":"graphics/textures/BUtil_TestTiles.png",
+			"BUtil_NONE":"graphics/textures/BUtil_NONE.png",
+			"BUtil_ZERO":"graphics/textures/BUtil_ZERO.png",
+			"BUtil_ONE":"graphics/textures/BUtil_ONE.png",
+			"BUtil_MID":"graphics/textures/BUtil_MID.png",
+			"BUtil_COMPLEX_DEF":"graphics/textures/BUtil_COMPLEX_DEF.png",
+			"BUtil_X":"graphics/textures/BUtil_X.png",
+			"BUtil_Z":"graphics/textures/BUtil_Z.png",
+		},
+		"icons": {
+			"BUtil_ModIcon": "graphics/icons/BUtil_ModIcon.png",
+			"BUtil_DefaultShaderPacksIcon": "graphics/icons/BUtil_DefaultShaderPacksIcon.png"
+		},
+		"ui": {
+			"BUtil_panel00_center":"graphics/ui/BUtil_panel00_center.png"
+		},
+		"fonts": {
+			"BUtil_OB":"graphics/fonts/orbitron20aabold_0.png",
+			"BUtil_IS":"graphics/fonts/insignia15LTaa_0.png"
+		},
+        "fx": {
+            "BUtil_debris_small": "graphics/fx/BUtil_debris_small.png",
+            "BUtil_debris_medium": "graphics/fx/BUtil_debris_medium.png",
+            "BUtil_debris_large": "graphics/fx/BUtil_debris_large.png",
+            "BUtil_explosion": "graphics/fx/BUtil_explosion.png",
+            "BUtil_explosionRing": "graphics/fx/explosion_ring0.png",
+            "BUtil_smoothParticle": "graphics/fx/particlealpha32sq.png",
+            "BUtil_hitParticle": "graphics/fx/hit_glow.png",
+            "BUtil_negativeParticle": "graphics/fx/particlealpha64linear.png",
+            "BUtil_smoke": "graphics/fx/smoke32.png",
+        }
+	},
+	"designTypeColors":{
+		"BoxUtil":[42,255,128,255]
+    },
+	"plugins": {
+		"BoxConfigGUI":"org.boxutil.config.BoxConfigGUI",
+		"BUtil_CombatEFS":"org.boxutil.backends.core.BUtil_CombatEFS"
+	}
+}

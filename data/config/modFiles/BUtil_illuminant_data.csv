@@ -1,0 +1,4 @@
+id,type,spawnColor,spawnRadius,spawnDuration,bodyColor,bodyRadius,hitColor,hitRadius,hitDuration
+#projectileID,projectile,"[255,255,255,255]",16,2.5,"[255,255,255,255]",16,"[255,255,255,255]",16,1.6
+#beamID,beam,,,,"[255,255,255,255]",16,,,
+#engineStyleID,engine,,,,"[255,255,255,255]",16,,,

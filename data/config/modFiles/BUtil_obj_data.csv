@@ -1,0 +1,20 @@
+obj_id,obj_path,diffuse_path,normal_path,complex_path,emissive_path,tangent_path,isTangentAngleMap,type
+#string key in hashmap,obj file path,can be empty,can be empty,can be empty,can be empty,can be empty,"ignore case; ture for default, ture if sprite at tangent_path is angle map, not a tangent map","ignore case; model vertices data type: F32, F16(default when empty), F8"
+BUtil_box,graphics/objs/BUtil_box.obj,graphics/textures/diffuse/BUtil_box_Diffuse.png,graphics/textures/normal/BUtil_box_Normal.png,,graphics/textures/emissive/BUtil_box_Emissive.png,,,F32
+BUtil_dice,graphics/objs/BUtil_dice.obj,graphics/textures/diffuse/BUtil_dice_Diffuse.png,graphics/textures/normal/BUtil_dice_Normal.png,,graphics/textures/emissive/BUtil_dice_Emissive.png,,,F32
+BUtil_screw,graphics/objs/BUtil_screw.obj,graphics/textures/diffuse/BUtil_screw_Diffuse.png,graphics/textures/normal/BUtil_screw_Normal.png,,,,,F32
+,,,,,,,,
+BUtil_triangle,graphics/objs/BUtil_triangle.obj,,,,,,,F8
+BUtil_quad,graphics/objs/BUtil_quad.obj,graphics/textures/BUtil_TestTiles.png,,,,,,F8
+BUtil_hexagon,graphics/objs/BUtil_hexagon.obj,,,,,,,F8
+BUtil_octagon,graphics/objs/BUtil_octagon.obj,,,,,,,F8
+BUtil_circle,graphics/objs/BUtil_circle.obj,,,,,,,F8
+,,,,,,,,
+BUtil_hexahedron,graphics/objs/BUtil_hexahedron.obj,,,,,,,F8
+BUtil_hexahedron_full,graphics/objs/BUtil_hexahedron_full.obj,graphics/textures/BUtil_TestTiles.png,,,,,,F8
+BUtil_cone,graphics/objs/BUtil_cone.obj,,,,,,,F16
+BUtil_cylinder,graphics/objs/BUtil_cylinder.obj,,,,,,,F16
+BUtil_sphere,graphics/objs/BUtil_sphere.obj,,,,,,,F16
+BUtil_sphereHex,graphics/objs/BUtil_sphereHex.obj,graphics/textures/BUtil_TestTiles.png,,,,,,F16
+BUtil_dodecahedron,graphics/objs/BUtil_dodecahedron.obj,,,,,,,F16
+BUtil_icosahedron,graphics/objs/BUtil_icosahedron.obj,,,,,,,F16

@@ -1,0 +1,14 @@
+{
+	"BUtil_button_in":[
+		{"file":"sounds/ui/BUtil_button_in.ogg","pitch":1,"volume":0.15}
+	],
+	"BUtil_button_down":[
+		{"file":"sounds/ui/BUtil_button_down.ogg","pitch":1,"volume":0.25}
+	],
+	"BUtil_ui_pick":[
+		{"file":"sounds/ui/BUtil_ui_pick.ogg","pitch":1,"volume":0.05}
+	],
+	"BUtil_trackbar_drag":[
+		{"file":"sounds/ui/BUtil_trackbar_drag.ogg","pitch":1,"volume":0.05}
+	]
+}

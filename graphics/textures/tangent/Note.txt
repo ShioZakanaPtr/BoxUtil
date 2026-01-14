@@ -1,0 +1,4 @@
+Ignore alpha channel.
+For angle map format:
+    X/Red = radians [-2π, 2π]
+    Y/Green or Z/Blue = *Ignored.

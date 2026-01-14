@@ -1,0 +1,93 @@
+#version 430
+
+precision highp float;
+precision highp int;
+
+#define RADIUS_SCALE OVERWRITE_RADIUS_SCALE
+
+layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
+
+subroutine vec4 sampleMode(in ivec2 coord);
+subroutine uniform sampleMode sampleModeState;
+
+layout (binding = 0) uniform sampler2D texIn;
+layout (binding = 1) uniform sampler2D texHL;
+layout (binding = 0, rgb10_a2) writeonly uniform image2D texOut;
+layout (binding = 1, rgba8) writeonly uniform image2D texOutFirst;
+
+uniform ivec2 size;
+uniform vec4 targetUVStepDiv;
+uniform int initPass;
+
+const vec2 downCoord[] = vec2[4](
+vec2(-1.0, -1.0) * RADIUS_SCALE, vec2(1.0, -1.0) * RADIUS_SCALE, vec2(-1.0, 1.0) * RADIUS_SCALE, vec2(1.0, 1.0) * RADIUS_SCALE
+);
+
+const vec2 upCoordA[] = vec2[4](
+vec2(0.0, -2.0) * RADIUS_SCALE, vec2(-2.0, 0.0) * RADIUS_SCALE, vec2(2.0, 0.0) * RADIUS_SCALE, vec2(0.0, 2.0) * RADIUS_SCALE
+);
+
+const vec2 upCoordB[] = vec2[4](
+vec2(-1.0, -1.0) * RADIUS_SCALE, vec2(1.0, -1.0) * RADIUS_SCALE, vec2(-1.0, 1.0) * RADIUS_SCALE, vec2(1.0, 1.0) * RADIUS_SCALE
+);
+
+subroutine(sampleMode) vec4 sampleInit(in ivec2 coord) {
+	return max(texelFetch(texIn, coord, 0), texelFetch(texHL, coord, 0));
+}
+
+subroutine(sampleMode) vec4 downSampleFirst(in ivec2 coord) {
+	vec2 uv = vec2(coord) * targetUVStepDiv.zw;
+	vec3 result = texture(texIn, uv).xyz, resultA, weight;
+	weight = result * 0.4;
+	weight = fma(texture(texIn, fma(targetUVStepDiv.xy, vec2(-1.0, -1.0), uv)).xyz, vec3(0.15), weight);
+	weight = fma(texture(texIn, fma(targetUVStepDiv.xy, vec2(1.0, -1.0), uv)).xyz, vec3(0.15), weight);
+	weight = fma(texture(texIn, fma(targetUVStepDiv.xy, vec2(-1.0, 1.0), uv)).xyz, vec3(0.15), weight);
+	weight = fma(texture(texIn, fma(targetUVStepDiv.xy, vec2(1.0, 1.0), uv)).xyz, vec3(0.15), weight);
+
+	resultA = texture(texIn, fma(targetUVStepDiv.xy, downCoord[0], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, downCoord[1], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, downCoord[2], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, downCoord[3], uv)).xyz;
+
+	resultA *= 0.125;
+	result = fma(result, vec3(0.5), resultA);
+	return vec4(result / (0.6666667 + dot(weight, vec3(0.2126729, 0.7151522, 0.0721750))), 1.0);
+}
+
+subroutine(sampleMode) vec4 downSample(in ivec2 coord) {
+	vec2 uv = vec2(coord) * targetUVStepDiv.zw;
+	vec3 result = texture(texIn, uv).xyz, resultA;
+
+	resultA = texture(texIn, fma(targetUVStepDiv.xy, downCoord[0], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, downCoord[1], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, downCoord[2], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, downCoord[3], uv)).xyz;
+
+	resultA *= 0.125;
+	return vec4(fma(result, vec3(0.5), resultA), 1.0);
+}
+
+subroutine(sampleMode) vec4 upSample(in ivec2 coord) {
+	vec2 uv = vec2(coord) * targetUVStepDiv.zw;
+	vec3 result = texelFetch(texHL, coord, 0).xyz, resultA, resultB;
+
+	resultA = texture(texIn, fma(targetUVStepDiv.xy, upCoordA[0], uv)).xyz;
+	resultB = texture(texIn, fma(targetUVStepDiv.xy, upCoordB[0], uv)).xyz;
+	resultB += texture(texIn, fma(targetUVStepDiv.xy, upCoordB[1], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, upCoordA[1], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, upCoordA[2], uv)).xyz;
+	resultB += texture(texIn, fma(targetUVStepDiv.xy, upCoordB[2], uv)).xyz;
+	resultB += texture(texIn, fma(targetUVStepDiv.xy, upCoordB[3], uv)).xyz;
+	resultA += texture(texIn, fma(targetUVStepDiv.xy, upCoordA[3], uv)).xyz;
+
+	resultB *= 0.1666667;
+	result += fma(resultA, vec3(0.0833333), resultB);
+	return vec4(result, 1.0);
+}
+
+void main() {
+	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+	if (any(greaterThanEqual(coord, size))) return;
+	vec4 result = sampleModeState(coord);
+	if (bool(initPass)) imageStore(texOutFirst, coord, result); else imageStore(texOut, coord, result);
+}

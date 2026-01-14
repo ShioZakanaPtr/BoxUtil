@@ -1,0 +1,98 @@
+#version 430
+
+precision OVERWRITE_PRECISION float;
+
+#define WORKGROUP_SIZE WORKGROUP_SIZE_VALUE
+
+layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 4) in;
+
+// 144 byte
+struct Dynamic3D { // binding 6
+    vec4 m00_m01_m02_m21;
+    vec4 m10_m11_m12_m22;
+    vec4 m20_rotateRate;
+
+    vec4 location_velocityX;
+    vec4 rotate_velocityY;
+    vec4 scale_velocityZ;
+    vec4 scaleRate_rd;
+
+    vec4 timer;
+    uvec4 colorBits;
+};
+
+layout(std430, binding = 6) restrict buffer BUtilInstanceData_Dynamic3D
+{
+    Dynamic3D dataDynamic3D[];
+};
+
+uniform float amount;
+uniform ivec2 instanceRange; // offset, edge
+
+float computeTimerX(in vec4 timer) {
+    bool finishSet = timer.x < -2000.0;
+    vec2 timerTmp = finishSet ? vec2(-2048.0) : vec2(timer.w, 0.0);
+    if (timer.x > 2.0) {
+        timerTmp = vec2(timer.y, 2.0);
+    } else if (timer.x > 1.0) {
+        timerTmp = vec2(timer.z, 1.0);
+    }
+    float result = timerTmp.x > -500.0 ? fma(timerTmp.x, -amount, timer.x) : timerTmp.y;
+    if (timer.x <= 0.0 && timer.x > -2000.0) {
+        result = -2048.0;
+    } else if (finishSet) result = -5120.0;
+    return result;
+}
+
+void main() {
+	uint globalIndex = (gl_WorkGroupID.z * gl_NumWorkGroups.x * gl_NumWorkGroups.y + gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x) * WORKGROUP_SIZE;
+	int indexNow = int(gl_LocalInvocationIndex + globalIndex) + instanceRange.x;
+	if (indexNow >= instanceRange.y) return;
+
+    Dynamic3D instanceData = dataDynamic3D[indexNow];
+    vec4 timer = instanceData.timer;
+    if (timer.x < -5000.0) return;
+
+    dataDynamic3D[indexNow].timer.x = computeTimerX(timer);
+
+    // dLoc, dRotate, dScale
+    mat3 dynamic = mat3(
+    instanceData.location_velocityX.w, instanceData.rotate_velocityY.w, instanceData.scale_velocityZ.w,
+    instanceData.m20_rotateRate.yzw,
+    instanceData.scaleRate_rd.xyz
+    );
+    dynamic *= amount;
+
+    vec3 rotate = instanceData.rotate_velocityY.xyz;
+    vec3 scale = instanceData.scale_velocityZ.xyz;
+
+    vec3 pryRotate = radians(rotate * 0.5);
+    vec3 pryCos = cos(pryRotate);
+    vec3 prySin = sin(pryRotate);
+
+    float wq = pryCos.x * pryCos.y * pryCos.z - prySin.x * prySin.y * prySin.z;
+    float xq = prySin.x * pryCos.y * pryCos.z - pryCos.x * prySin.y * prySin.z;
+    float yq = pryCos.x * prySin.y * pryCos.z + prySin.x * pryCos.y * prySin.z;
+    float zq = pryCos.x * pryCos.y * prySin.z + prySin.x * prySin.y * pryCos.z;
+
+    float dqx = xq + xq;
+    float dqy = yq + yq;
+    float dqz = zq + zq;
+    float q00 = dqx * xq;
+    float q11 = dqy * yq;
+    float q22 = dqz * zq;
+    float q01 = dqx * yq;
+    float q02 = dqx * zq;
+    float q03 = dqx * wq;
+    float q12 = dqy * zq;
+    float q13 = dqy * wq;
+    float q23 = dqz * wq;
+
+    dataDynamic3D[indexNow].m00_m01_m02_m21 = vec4(scale.x - (q11 + q22) * scale.x, (q01 + q23) * scale.x, (q02 - q13) * scale.x, (q12 - q03) * scale.z);
+    dataDynamic3D[indexNow].m10_m11_m12_m22 = vec4((q01 - q23) * scale.y, scale.y - (q22 + q00) * scale.y, (q12 + q03) * scale.y, scale.z - (q11 + q00) * scale.z);
+    dataDynamic3D[indexNow].m20_rotateRate.x = (q02 + q13) * scale.z;
+
+    dataDynamic3D[indexNow].location_velocityX.xyz += dynamic[0];
+    dataDynamic3D[indexNow].rotate_velocityY.xyz = mod(rotate + dynamic[1] + 360.0, 360.0);
+    dataDynamic3D[indexNow].scale_velocityZ.xyz += dynamic[2];
+}

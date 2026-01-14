@@ -1,0 +1,909 @@
+﻿   BoxUtil
+  Changelog
+
+若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
+
+v1.5.0 / 2026.01.14
+    现 BoxUtil 大部分功能最低需要 OpenGL 4.3 以支持运作 (若不支持也可正常进行游戏，仅影响是否能显示部分视觉效果)
+    取消配置面板中 使用CPU计算实例化数据(JVM模式) 的选项
+    增加SSBO内存池 InstanceDataMemoryPool 管理类，用于管理实例化渲染时使用的数据，且当前实例化数据的存放改为使用一系列全局SSBO
+    于 org.boxutil.define.struct.instance 下增加 Dynamic2DStruct / Fixed2DStruct / Dynamic3DStruct / Fixed3DStruct 用于更便捷的自行将已格式化的数据上传至SSBO
+    于 org.boxutil.helper 下增加 InstanceDataUpdateHelper 便于自行为分配过内存空间的实例化渲染类上传数据
+    于 org.boxutil.util.concurrent 下增加 SpinLock / ReentrantSpinLock 用于多线程操作需求
+    于 org.boxutil.config 增加 BoxThreadSync 用于参与进系统线程的同步
+    于 org.boxutil.util 添加 SerializationUtil 与 ShadingLUT
+    于 org.boxutil.units.standard 增加 ShaderProgram 替代 BUtil_ShaderProgram 着色器程序实现类
+    于 org.boxutil.helper.legacy 下增加 LegacyNormalMapHelper 类用于在OpenGL支持受限的硬件上，借助GPU加速生成法线纹理
+    于 org.boxutil.base.api.everyframe 下增加 BackgroundEveryFramePlugin 接口插件，该插件将于另一个线程上运行
+    TemporaryCleanupPlugin / TextSubmitFeedbackAPI / BackgroundEveryFramePlugin 皆添加了对应的基础实现类
+
+    IlluminantInstanceDataLayoutAPI 方法形参更改
+    增加 LayerEntityType 与 DirectEntityType 枚举类，取代以往的渲染类类型字段
+    BaseShaderPacksContext 中 applyInfiniteLightShading / applyPointLightShading / applySpotLightShading / applyLinearLightShading / applyAreaLightShading 形参调整
+    ShaderUtil 中 NormalMapGenParam 增加 applyHorizontalRamp / applyVerticalRamp / genMipmap 属性，并微调其余预设值
+    CombatEntityIlluminantData 中 PROJ_normalColor 更名为 PROJ_bodyColor，PROJ_normalRadius 更名为 PROJ_bodyRadius
+
+    部分位于 org.boxutil.units.builtin 中的类移动
+    TemporaryCleanupPlugin / TextSubmitFeedbackAPI 移动至 org.boxutil.base.api.resource
+    LayeredRenderingPlugin 移动至 org.boxutil.base.api.everyframe
+
+    用于光影包渲染的部分资源类，现在拥有了专有的 hashCode 与 equals 计算方法
+    改进 SimpleParticleControlData 的默认计时策略，减少空闲时的计算调用
+    现 ControlDataAPI 中部分方法将会在另一个线程上被运行
+    渲染类的部分方法增加锁以支持多线程
+
+    增加工具类 MeshUtil
+    CommonUtil 中方法移动至 MeshUtil ：
+        Vector3f[] tangentMaker(Vector3f, Vector3f, Vector3f, Vector2f, Vector2f, Vector2f);
+        Vector3f tangentOnlyMaker(Vector3f, Vector3f, Vector3f, Vector2f, Vector2f, Vector2f);
+        Vector3f surfaceNormal(Vector3f, Vector3f, Vector3f);
+
+    RenderingUtil 工具类中增加 SpecialFX 子分类，便于快速生成有别于原版的额外视觉效果
+    RenderingUtil 工具类中增加 VanillaFX 子分类，用于使用 BoxUtil 的引擎渲染贴近原版的对应视觉效果
+    RenderingUtil.VanillaFX 包含的 CombatEngineAPI 类似实现方法：
+        addHitParticle();
+        addSmoothParticle();
+        addNegativeParticle();
+        addSmokeParticle();
+        addNebulaParticle();
+        addNegativeNebulaParticle();
+        addSwirlyNebulaParticle();
+        addNegativeSwirlyNebulaParticle();
+        addNebulaSmokeParticle();
+        addNebulaSmoothParticle();
+        spawnExplosion();
+        spawnDebrisSmall();
+        spawnDebrisMedium();
+        spawnDebrisLarge();
+
+    CombatRenderingManager 新增方法：
+        byte addEntity(RenderDataAPI);
+        boolean containsEntity(CombatEngineLayers, RenderDataAPI);
+        boolean addBackgroundRenderingPlugin(BackgroundEveryFramePlugin);
+        boolean containsBackgroundRenderingPlugin(BackgroundEveryFramePlugin);
+        boolean addBackgroundLogicalPlugin(BackgroundEveryFramePlugin);
+        boolean containsBackgroundLogicalPlugin(BackgroundEveryFramePlugin);
+        ConcurrentMap<String, Object> getCustomData();
+
+    CampaignRenderingManager 新增方法：
+        byte addEntity(RenderDataAPI);
+        boolean containsEntity(CampaignEngineLayers, RenderDataAPI);
+        boolean addBackgroundRenderingPlugin(BackgroundEveryFramePlugin);
+        boolean containsBackgroundRenderingPlugin(BackgroundEveryFramePlugin);
+        boolean addBackgroundLogicalPlugin(BackgroundEveryFramePlugin);
+        boolean containsBackgroundLogicalPlugin(BackgroundEveryFramePlugin);
+        ConcurrentMap<String, Object> getCustomData();
+
+    InstanceRenderAPI 新增方法：
+        void submitInstance();
+        void mallocInstance(InstanceType, int);
+        boolean isMappingInstanceSubmit();
+        void setMappingInstanceSubmit(boolean);
+        MemoryBlock getInstanceMemory();
+        boolean isSharedInstanceData();
+        int getInstanceDataRefreshOffset();
+        void setInstanceDataRefreshOffset(int);
+        int getRenderingOffset();
+        void setRenderingOffset(int);
+        void setRenderingAllInstanceFromCurrentOffset();
+        void setSharedInstanceData(boolean);
+        void setSharedInstanceData(MemoryBlock);
+        void resetMemory(MemoryBlock);
+        void resetMemory();
+
+    DistortionEntity 新增方法：
+        Color fetchInstanceEmissiveColor(float, float, float, float);
+        Color fetchInstanceColor(float, float, float, float);
+
+    TextFieldEntity 新增方法：
+        int directDrawDetachedEnd();
+        void directDrawDetachedProcess();
+        void directDrawDetachedEnd(int);
+
+    TextFieldObject 新增方法：
+        void setFontMap(String);
+        TextData replaceTextAtParagraph(String, float, Color, boolean, int);
+        TextData replaceTextAtParagraph(String, float, int);
+        TextData replaceTextAtParagraph(String, int);
+
+    InstanceDataAPI 新增方法：
+        void reset();
+
+    SimpleParticleControlData 新增方法：
+        InstanceRenderAPI getEntity();
+
+    ShaderCore 新增方法：
+        PublicFBO tryPublicFBO();
+
+    CommonUtil 新增方法：
+        Object[] reverseArray(Object[]);
+        void printThrowable(Logger, Level, String, Throwable);
+        void printThrowable(Logger, String, Throwable);
+
+    CalculateUtil 新增方法：
+        float cross(Vector2f, Vector2f, Vector2f);
+        float cross(Vector2f, Vector2f);
+        boolean isPointInside(Vector2f, Vector2f, Vector2f, Vector2f);
+        Color add(Color, boolean, Color);
+        Color add(Color, boolean, Color...);
+        Color sub(Color, boolean, Color);
+        Color sub(Color, boolean, Color...);
+        Color mul(Color, boolean, Color);
+        Color mul(Color, boolean, Color...);
+        Color div(Color, boolean, Color);
+        Color div(Color, boolean, Color...);
+
+    RenderingUtil 新增方法：
+        TextFieldObject createTextFieldCompatible(String, float, float, String, TextFieldEntity.Alignment, float, Color, boolean, Color, String...);
+        TextFieldObject createTextFieldCompatible(String, float, float, String, float, Color, Color, String...);
+        TextFieldObject createTextFieldCompatible(String, float, float, String, float, String...);
+        TextFieldObject createTextFieldCompatible(String, float, float, String);
+        void debugText(Object, Vector2f, Color, boolean, String);
+        void debugText(Object, Vector2f);
+        void debugText(Object);
+        Instance2Data addDistortion(boolean, float);
+        Instance2Data addSmoothFlare(boolean, float);
+        Instance2Data addSharpFlare(boolean, float);
+
+    TransformUtil 新增方法：
+        Matrix2f inverseRotate(Matrix2f, Matrix2f);
+        Matrix2f inverseRotate(Matrix2f);
+
+    EntityShadingDataManager 新增方法：
+        void loadGraphicsLibLayoutTextureData(String);
+
+    RenderDataAPI 新增方法：
+        void setNegativeBlend();
+        Object entityType();
+
+    CombatRenderingManager 标记弃用方法：
+        byte addEntity(byte, RenderDataAPI);
+        boolean containsEntity(CombatEngineLayers, byte, RenderDataAPI);
+
+    CampaignRenderingManager 标记弃用方法：
+        byte addEntity(byte, RenderDataAPI);
+        boolean containsEntity(CampaignEngineLayers, byte, RenderDataAPI);
+
+    RenderDataAPI 标记弃用方法：
+        boolean isUseCustomDrawShader();
+        byte getUseCustomDrawShader();
+        void setUseCustomDrawShader(boolean);
+
+    InstanceDataAPI 标记弃用方法：
+        float[] getState();
+        byte[] getColorState();
+
+    InstanceRenderAPI 标记弃用方法：
+        byte submitInstanceData();
+        byte mallocInstanceData(int);
+        byte submitFixedInstanceData();
+        byte mallocFixedInstanceData(int);
+        void sysRefreshInstanceData();
+        boolean isCalledFixedSubmit();
+        boolean haveInstanceData();
+        FloatBuffer[][] getInstanceDataTmpBufferJVM();
+        int[][] getInstanceDataTBO();
+        int[][] getInstanceDataTBOTex();
+        void putShaderInstanceData();
+        byte getInstanceDataType();
+        boolean isInstanceData2D();
+        void setUseInstanceData2D();
+        boolean isInstanceData3D();
+        void setUseInstanceData3D();
+        void isInstanceDataCustom();
+        void setUseInstanceDataCustom();
+        void setUseDefaultInstanceData();
+        byte getInstanceDataFormat();
+        boolean isNormalFloatFormatInstanceData();
+        void setUseNormalFormatFloatInstanceData();
+        boolean isHalfFloatFormatInstanceData();
+        void setUseHalfFloatFormatInstanceData();
+        void setUseDefaultFormatInstanceData();
+
+v1.4.9 / 2025.10.03
+    此次更新后，对 0.97a-RC11 版本分支的维护将停止
+
+    FlareEntity 视觉微调，闪烁时除了透明度改变外，还伴随着一定程度的宽度缩放
+    针对光影包部分通用实现进行了调整与优化
+    添加 IlluminantInstanceDataLayoutAPI 接口类用于光影包自定义光源渲染类的实例数据
+    LineLight 更名为 LinearLight
+    AreaLight 用于调整光照纹理映射范围的方法 setLightTextureRange 与其相关getter的参数与返回类型更改为float，从尺寸范围映射变为UV坐标映射
+    现 BoxUtil 在对GL上下文进行支持性检查时，只检查核心功能
+    所有渲染类的数据上传过程进行了些许优化
+    预设的 FXAA Quality 边缘搜索微调
+    修复 Linux 分支系统下 AMD GPU 的某些OpenGL问题
+    光影包配置界面的布局进行了调整
+
+    BaseShaderPacksContext 新增方法：
+        boolean haveCustomInstanceDataLayout();
+        IlluminantInstanceDataLayoutAPI getCustomInstanceDataLayout();
+
+    CommonUtil 新增方法：
+        float float16BitsToFloat(short);
+        void printThrowable(Class, String, Throwable);
+
+v1.4.8 / 2025.09.20
+    修复 TextFieldEntity 提交数据发生GL错误时，Mapping模式的错误分支处理中的GL目标错误的错误
+    现 FontMapData 会为没有空格字符的字体，根据字体尺寸的一半自动生成空格字符的数据
+    CurveEntity / SegmentEntity / TextFieldEntity / TrailEntity 提交相关数据时，进一步降低使用Mapping模式时的阻塞
+    早期代码和JavaDoc描述的改进
+
+v1.4.7 / 2025.09.20
+    对于新存档，此次更新后可在存档保存后，安全从存档中移除Mod；但对于旧存档而言，保存后可能有概率无法安全移除Mod
+    改进字体绘制的视觉表现
+    现在 FontMapData 在被创建时会尝试一并加载本地的贴图文件，并记录更多该字体的信息
+    改进 TextFieldEntity 的实现，且每个字符的显存占用降低 2byte
+    更改 TextFieldEntity 的预留字符值
+    在 graphics/fonts 下增加四种使用 OFL-1.1 许可证的等宽字体文件
+    增加 TextSubmitFeedbackAPI 接口类，用于在文本渲染类提交数据时，捕获字符的绘制参数
+    增加 TemporaryCleanupPlugin 接口类，用于加入渲染管理器中回收一些其后可能无法访问的资源
+    于 org.boxutil.units.builtin.legacy 下增加低版本OpenGL绘制时使用的 LegacyIlluminantObject 光源类，用于配合 LegacyModelData 用以3D物体的绘制
+
+    TextFieldEntity 新增方法：
+        TextSubmitFeedbackAPI getSubmitFeedback();
+        void setSubmitFeedback(TextSubmitFeedbackAPI);
+
+    TextFieldObject 新增方法：
+        TextSubmitFeedbackAPI getSubmitFeedback();
+        void setSubmitFeedback(TextSubmitFeedbackAPI);
+
+    ModelManager 新增方法：
+        boolean haveLegacyModelData(String);
+        LegacyModelData getLegacyModelData(String);
+        LegacyModelData putLegacyModelData(String, LegacyModelData);
+        LegacyModelData deleteLegacyModelData(String);
+        LegacyModelData tryLegacyModelData(String);
+
+    LegacyModelData 新增方法：
+        void glPushAndApplyIllumination(float, Vector4f, Vector4f, Vector4f, Vector4f, Float, boolean, boolean, LegacyIlluminantObject...);
+        void glBindSpriteBeforeDraw(int);
+        void glBindSpriteBeforeDraw(SpriteAPI)
+        void glPopAfterApplyIlluminationAndDraw();
+
+v1.4.6 / 2025.09.16
+    修复一个在默认光影包情况下不读取已保存配置的问题
+
+v1.4.5 / 2025.09.16
+    加入 TextFieldObject 类至 org.boxutil.units.standard.misc
+    增加 FontDataManager 管理类
+    修复 TextFieldEntity 重新提交数据后的某些绘制问题
+    调整 TextFieldEntity 组装图元时的顶点顺序
+    TextFieldEntity 在添加文本时，方法默认 padding 值从 10 调整为 0
+    FontMapData 增加 制表符(\t) 的支持
+    SegmentEntity 在构造时可选择使用 float(f32) 或 half-float(f16) 储存数据，默认为 half-float(f16)
+    InstanceRenderAPI 提交数据方法的实现中减少分支
+    CurveUtil 中曲线方法返回值改动，未造成伤害的情况下 Vector3f 为 null
+    调整绘制前后的服务端属性堆栈保存情况
+    改进部分实现，提高对低版本OpenGL的兼容性
+
+    CurveEntity 新增方法：
+        boolean isMappingModeSubmitData();
+        void setMappingModeSubmitData(boolean);
+
+    SegmentEntity 新增方法：
+        boolean isMappingModeSubmitData();
+        void setMappingModeSubmitData(boolean);
+
+    TrailEntity 新增方法：
+        boolean isMappingModeSubmitData();
+        void setMappingModeSubmitData(boolean);
+
+    TextFieldEntity 新增方法：
+        boolean isMappingModeSubmitData();
+        void setMappingModeSubmitData(boolean);
+        boolean isRefreshRenderingLengthWhenSubmit();
+        void setRefreshRenderingLengthWhenSubmit(boolean);
+        int getAllocatedValidCharLength();
+        boolean haveAllocatedValidCharLength();
+        void setShouldRenderingCharCount(int);
+
+    ModelData 新增方法：
+        void destroy();
+
+    CurveUtil 新增方法：
+        Pair<NodeData[], Vector3f> spawnCurveBeam(CombatEngineAPI, Vector3f, NodeData, NodeData, float, DealtController, int, int, float, float, float, float, float, NodeData, boolean, Matrix3f);
+        Pair<NodeData[], Vector3f> spawnCurveBeam(CombatEngineAPI, Vector3f, NodeData, NodeData, float, DealtController, NodeData, boolean, Matrix3f);
+
+v1.4.4 / 2025.09.09
+    优化 SegmentEntity 的数据结构
+    调整 CurveEntity / SegmentEntity / TextFieldEntity 的数据上传方式
+    修复与优化一些潜在的数据分配问题
+    修复一些UI问题
+    战斗中与生涯大地图中渲染时，除开固定的必要层级外，其余活动的层级变为动态调整
+
+    CurveEntity 新增方法：
+        int getNodesVBO();
+        boolean isValid();
+        boolean isSynchronousSubmit();
+        void setSynchronousSubmit(boolean);
+
+    SegmentEntity 新增方法：
+        int getSegmentID();
+        int getNodesVBO();
+        boolean isValid();
+        boolean isSynchronousSubmit();
+        void setSynchronousSubmit(boolean);
+
+    TrailEntity 新增方法：
+        boolean isValid();
+        boolean isSyncFlick();
+        void setSyncFlick(boolean syncFlick);
+        boolean isStripLineMode();
+        void setStripLineMode(boolean);
+
+    FlareEntity 新增方法：
+        byte getStyleBit();
+
+    TextFieldEntity 新增方法：
+        void directDraw();
+        int getFontFieldVBO();
+        boolean isValid();
+        boolean isSynchronousSubmit();
+        void setSynchronousSubmit(boolean);
+
+    SegmentEntity 标记弃用方法：
+        int[] getNodesTBO();
+        int[] getNodesTBOTex();
+        int getValidRenderingNodeCount();
+        void putShaderSegmentData();
+
+    TrailEntity 标记弃用方法：
+        int getValidRenderingNodeCount();
+
+    TextFieldEntity 标记弃用方法：
+        void directDraw(boolean);
+
+v1.4.3 / 2025.09.05
+    修复一些资源回收的问题
+    优化部分着色器的数据读取方法；且对应的拥有控制输入纹理数据类型的参数布尔值的方法已标记为废除，并添加相应的不包含该参数的新方法（高斯滤波，双边滤波，离散傅里叶正变换）
+    重写并优化 LegacyModelData 的绘制实现
+    调整曲线与直线光束求交算法中的预设初剔除范围补偿量
+    为配置界面中的光影包项目增加提示框
+
+v1.4.2 / 2025.09.01
+    调整绘制时BoxUtil默认帧缓冲中 fragData 通道输出的算法
+    修复 LayeredRenderingPlugin 未能正确渲染的问题
+    于 data/kernels 文件夹中添加 BUtil_InstanceMatrix3D.cl 的Kernel程序示例源文件
+
+v1.4.1 / 2025.08.29
+    修复一些类在硬件OpenGL支持不完整情况下的抛出
+
+v1.4.0 / 2025.08.24
+    BoxUtil 现更改许可类型
+    增加光照着色框架
+    主界面左下角小图标改动
+    配置界面改动，部分原有功能转移至光影包，由光影包实现
+    改进内置Bloom的视觉表现与实现
+    改进渲染实现，并修复一些问题
+    增加 TextureManager 与 EntityShadingDataManager 管理类
+    增加 CombatEntityMaterialData 与 CombatEntityIlluminantData 数据类
+    增加 BaseShaderPacksContext 光影包上下文抽象类，供开发者自行实现独特的光影包
+    增加 IlluminantAPI 接口类，与实现了该类的 BaseIlluminantData 光源父类
+    增加了 InfiniteLight / PointLight / SpotLight / LineLight / AreaLight 五种光源类，皆继承自 BaseIlluminantData 类
+    增加了 LayeredRenderingPlugin 与其实现类 BaseLayeredRenderingPlugin 用于将数据简单的绘制进着色g-buffer中
+    MaterialData 新增纹理层 Complex 与 Tangent，与对应的getter与setter
+    ModelManager 中加载方法改动，对应的CSV中调整相关标头
+    ShaderUtil 高斯滤波与双边滤波的计算过程添加临时纹理，提升数据稳定性
+    SimpleVAOAPI 实现类的绘制方法调整，将不再包含对VAO的绑定
+    取消 ENTITY_CUSTOM 渲染实体的支持
+
+    恢复 OpenCL 功能的实现
+    增加 KernelCore 管理类与 KernelUtil 工具类，与Kernel包装类 BaseKernelData
+
+    SimpleVAOAPI 新增方法：
+        void glBind();
+
+    CommonEntity 新增方法：
+        boolean isCommonDraw();
+        void setCommonDraw(boolean);
+
+    TrailEntity 新增方法：
+        boolean isSynchronousSubmit();
+        void setSynchronousSubmit(boolean);
+
+    TextFieldEntity 新增方法：
+        float[] getBloomColorArray();
+        Color getBloomColorC();
+        Vector4f getBloomColor();
+        float getBloomStrength();
+        void setBloomColor(float, float, float, float);
+        void setBloomColor(Vector4f);
+        void setBloomColor(Color);
+        void setBloomColorStrength(float);
+        boolean isBlendBloomColor();
+        void setBlendBloomColor(boolean);
+
+    MaterialData 新增方法：
+        float getAnisotropic();
+        void setAnisotropic(float);
+
+    CalculateUtil 新增方法：
+        Vector2f getHammersley(int, int);
+
+    RenderingUtil 新增方法：
+        TextFieldEntity createTextField(String, float, float, String, TextFieldEntity.Alignment, float, Color, boolean, boolean, boolean, Color, String...);
+        void glDrawSimpleJitter(SpriteAPI, Vector2f, float, Color, float, int, float, float, boolean, float);
+
+    BoxConfigs 新增(主要的)方法：
+        BaseShaderPacksContext getCurrShaderPacksContext();
+        boolean setShaderPacksContext(BaseShaderPacksContext);
+        Set<BaseShaderPacksContext> getLoadedShaderPacksSetCopy();
+        void addShaderPacks(BaseShaderPacksContext);
+        boolean containsShaderPacks(BaseShaderPacksContext);
+        String getString(String, String);
+        String getString(String);
+
+v1.3.5 / 2025.06.05
+    修复一些渲染显示问题，并调整了一些渲染策略
+
+    MaterialData 新增方法：
+        boolean isIgnoreIllumination();
+        void setIgnoreIllumination(boolean);
+
+    MaterialRenderAPI 废弃方法：
+        byte getDrawMode();
+        void setDrawMode(byte);
+
+    MaterialData 废弃方法：
+        SpriteAPI getAO();
+        int getAOID();
+        void setAO(SpriteAPI);
+        void setAO(int);
+
+v1.3.4 / 2025.05.30
+    优化了用于处理实例化渲染数据的计算着色器
+    微调控制面板的视觉效果，并将部分选项变为滑动条控制
+    进一步将 TextFieldEntity 的部分渲染属性优化为按位储存
+    ShaderUtil 添加预设的法线贴图参数类 NormalMapGenParam
+    ShaderUtil 法线贴图生成方法中加入预处理的分离式双边滤波阶段，并优化计算过程，旧的法线贴图生成方法标记为废弃
+    ShaderUtil 部分方法改动并加入处理每通道16位纹理的开关，且大多数方法变为使用常量纹理
+    InstanceDataAPI 中 Color 与 EmissiveColor 拆分为对应的 low 与 high 部分，根据实例数据自身 timer 当前对应的 alpha 进行混合；使用 Fixed 模式时，则仅使用对应颜色的 high 部分
+    控制台指令 PrintContextInfo 新增数个信息输出
+
+    InstanceDataAPI 新增方法：
+        void setFixedInstanceAlpha(float, byte);
+        void copyFixedInstanceAlphaState(InstanceDataAPI);
+
+    InstanceRenderAPI 新增方法：
+        byte submitFixedInstanceData();
+        byte mallocFixedInstanceData();
+        boolean isCalledFixedSubmit();
+
+    CalculateUtil 新增方法：
+        byte getExponentPOTMin(int);
+        byte getExponentPOTMax(int);
+
+    ShaderUtil 新增方法：
+        void applyImageBilateralFilter(int, boolean, byte, float, float, int, int, int, boolean, boolean);
+        void applyImageBilateralFilter(int, boolean, byte, float, float, int, int, boolean, boolean);
+        int imageDFT(int, boolean, int, int, int, boolean, boolean);
+        int imageDFT(int, boolean, int, int, boolean, boolean);
+        int imageIDFT(int, boolean, int, int, int, boolean, boolean);
+        int imageIDFT(int, boolean, int, int, boolean, boolean);
+        int genNormalMapFromRGB(int, int, int, NormalMapGenParam, int);
+        int genNormalMapFromRGB(int, int, int, NormalMapGenParam);
+
+    ControlDataAPI 新增方法：
+        void controlBeforeRenderingAdvance(RenderDataAPI, float);
+        void controlAfterRenderingAdvance(RenderDataAPI, float);
+
+    FlareEntity 新增方法：
+        float getFlickerAnimationRateMulti();
+        void setFlickerAnimationRateMulti(float);
+        float getDiscRatio();
+        void setDiscRatio(float);
+
+    SimpleParticleControlData 新增方法：
+        void clearParticles();
+        void forceDelete();
+
+v1.3.3 / 2025.05.12
+    FlareEntity 的实例化渲染数据颜色对应从 color => fringe color | emissive color => core color 改为 color => core color | emissive color => fringe color
+    SimpleParticleControlData 现在所有 add 相关方法都会返回对应的实例数据
+    修复了 InstanceRenderAPI 刷新位计算问题，与部分情况下GPU计时问题
+    修复了 DistortionEntity 实例化渲染数据的绑定错误
+    DistortionEntity 视觉调整与优化
+    TextFiledEntity 新增用于控制整体颜色的 GlobalColor 设置
+    大部分着色器针对大量实例化渲染时的光栅化前阶段优化
+
+    InstanceRenderAPI 新增方法：
+        float getInstanceTimerOverride();
+        void setInstanceTimerOverride(float, byte);
+        void copyInstanceTimerOverride(InstanceRenderAPI);
+
+    CommonUtil 新增方法：
+        Pair<int[], ByteBuffer> getGLTexture(int, int, byte);
+        boolean saveBytesImage(String, String, ByteBuffer, int, int, byte);
+        boolean saveGLTexture(String, String, int, int, byte);
+
+    ShaderUtil 新增方法：
+        void applyImageGaussianBlur(int, boolean, byte, int, int, int);
+        void applyImageGaussianBlur(int, boolean, byte, int, int);
+        int genNormalMapFromRGB(int, int, int, byte, float, float, Vector3f, Vector2f, float, boolean, boolean, int);
+        int genNormalMapFromRGB(int, int, int, byte, float, float, Vector3f, Vector2f, float, boolean, boolean);
+
+    RenderDataAPI 新增方法：
+        boolean isTimerPaused();
+        void setTimerPaused(boolean);
+
+    DistortionEntity 新增方法：
+        float[] getInnerOffsetFactorArray();
+        Vector2f getInnerOffsetFactor();
+        void setInnerOffsetFactor(float, float);
+        void setInnerOffsetFactor(Vector2f);
+        float getArcStart();
+        void setArcStart(float);
+        float getArcStartDirect();
+        void setArcStartDirect(float);
+        float getArcEnd();
+        void setArcEnd(float);
+        float getArcEndDirect();
+        void setArcEndDirect(float);
+        void setDefaultArcEnds();
+
+    DistortionEntity 标记弃用方法：
+        float getArc();
+        float getArcDirect();
+
+v1.3.2 / 2025.05.07
+    修复 CurveEntity 因某种原因源文件回档造成的问题
+    FontMapData 另外提供手动设定字体贴图的方法
+
+v1.3.1 / 2025.05.06
+    修复 InstanceRenderAPI 中 submitInstanceData() 用作动态的，持续性多发生成实例化渲染时相关问题
+    改进 SpriteEntity 用于抽取子图块的随机数生成
+    改进 TextFieldEntity 的字体间填充
+    SimpleParticleControlData 添加了更多的预设add方法
+    InstanceRenderAPI 现在默认使用单精度浮点作为实例数据格式
+    FontMapData 中字体数据储存方法更改
+
+    RenderDataAPI 新增方法：
+        void setFacingScale(float, float, float);
+        void setRotateScale(Vector3f, Vector3f);
+
+    InstanceRenderAPI 新增方法：
+        byte getInstanceDataFormat();
+        boolean isNormalFloatFormatInstanceData();
+        void setUseNormalFormatFloatInstanceData();
+        boolean isHalfFloatFormatInstanceData();
+        void setUseHalfFloatFormatInstanceData();
+        void setUseDefaultFormatInstanceData();
+
+    SpriteEntity 新增方法：
+        float getCurrentRandomSeedValue();
+        void setRandomSeedCode(int);
+
+    TextFieldEntity 新增方法：
+        float getCurrentItalicFactor();
+        void setItalicFactor(float);
+        void setItalicFactorDirect(float);
+        void setDefaultItalicFactor();
+
+v1.3.0 / 2025.05.03
+    加入 CurveObject 类至 org.boxutil.units.standard.misc
+    加入 TrailEntity 类至 org.boxutil.units.standard.entity
+    修复曲线与线段求交的 getIntersectionCurveSegment() 相关方法的求根结果剔除问题
+    调整渲染管理器中的barrier
+    改进 SimpleDealtController 的搜寻剔除
+    修复 SimpleParticleControlData 的问题
+    修复 InstanceRenderAPI 中 setInstanceDataRefreshIndex(); setInstanceDataRefreshSize(); setInstanceDataRefreshAllFromCurrentIndex() 的检测问题，大小检测变为依据分配的大小与List长度的更高者
+    CurveEntity; SegmentEntity 类中的类似设定方法同上
+    RenderingUtil 中 createBeamVisual(); addCampaignBeamVisual(); addCombatBeamVisual() 系列方法返回类型中的 CurveEntity 改为 TrailEntity
+
+    CommonUtil 新增方法：
+        ShortBuffer putPackingBytes(ShortBuffer, int, byte, byte);
+        int packingBytesToInt(byte, byte, byte, byte);
+        int[] packingBytesToInt(byte[], byte[], byte[], byte[]);
+        IntBuffer putPackingBytes(IntBuffer, int, byte, byte, byte, byte);
+        IntBuffer putPackingBytes(IntBuffer, byte, byte, byte, byte);
+        IntBuffer putPackingBytes(IntBuffer, byte[], byte[], byte[], byte[]);
+        float packingBytesToFloat(byte, byte, byte, byte);
+        float[] packingBytesToFloat(byte[], byte[], byte[], byte[]);
+        FloatBuffer putPackingBytes(FloatBuffer, int, byte, byte, byte, byte);
+        FloatBuffer putPackingBytes(FloatBuffer, byte, byte, byte, byte);
+        FloatBuffer putPackingBytes(FloatBuffer, byte[], byte[], byte[], byte[]);
+
+    CalculateUtil 新增方法：
+        Vector2f getNearestIntersectionRayShield(Vector2f, float, Vector2f, float);
+        Vector2f getNearestIntersectionSegmentCircle(Vector2f, Vector2f, Vector2f, float);
+        Vector2f getNearestIntersectionSegmentShield(Vector2f, Vector2f, Vector2f, float);
+
+    CurveUtil 新增方法：
+        Pair<Vector2f, Matrix2f> spawnDirectBeam(CombatEngineAPI, Vector2f, Vector2f, float, DealtController);
+        Pair<TrailEntity, Vector3f> spawnDirectBeam(CombatEngineAPI, Vector2f, Vector2f, CombatEntityAPI, float, DamageType, float, boolean, SpriteAPI, Color, SpriteAPI, Color, float, float, float, float, float, CombatEngineLayers);
+
+    ShaderUtil 新增方法：
+        int[] genSDF(int, int, int, int, int, int, float, byte, float, float, int);
+        void applyRadialBlur(int, Vector2f, byte, float, float, boolean);
+        void applyRadialBlur(int, Vector2f, byte, float, float, int, int, int, int, boolean);
+
+    MaterialData 新增方法：
+        int[] getTexturesID();
+        int getDiffuseID();
+        void setDiffuse(int);
+        int getNormalID();
+        void setNormal(int);
+        int getAOID();
+        void setAO(int);
+        int getEmissiveID();
+        void setEmissive(int);
+
+    CurveEntity 新增方法：
+        float getUVOffset();
+        void setUVOffset(float);
+        int getNodeRenderingCount();
+        void setNodeRenderingCount(int);
+
+    FlareEntity 新增方法：
+        float getGlobalAlpha();
+        void setGlobalAlpha(float);
+        float getCurrentFlickerSyncValue();
+        void setFlickerSyncCode(int);
+
+    SegmentEntity 新增方法：
+        float getUVOffset();
+        void setUVOffset(float);
+        int getSegmentsRenderingCount();
+        void setSegmentsRenderingCount(int);
+
+    TexArcObject 新增方法：
+        int getSpriteID();
+        void setSprite(int);
+
+    RenderingUtil 新增方法：
+        Pair<TrailEntity, FlareEntity> spawnEmpArcVisual(Vector2f, float, Vector2f, Vector2f, Color, Color, float, float, float);
+        Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCombatEmpArcVisual(Vector2f, Vector2f, float, Color, Color, float, float, float);
+        Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCombatEmpArcVisual(Vector2f, Vector2f, float, Color, Color);
+        Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCampaignEmpArcVisual(Vector2f, Vector2f, float, Color, Color, float, float, float);
+        Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCampaignEmpArcVisual(Vector2f, Vector2f, float, Color, Color);
+
+v1.2.3 / 2025.04.03
+    为 AtlasSprite 适配 Starsector 0.98a_RC7 中的 SpriteAPI 调整
+
+    添加 PublicFBO 类
+
+    ShaderCore 新增方法：
+        PublicFBO getPublicFBO();
+        boolean isPublicFBOValid();
+        void refreshPublicFBO();
+
+v1.2.2 / 2025.03.30
+    适配至 Starsector 0.98a_RC5
+    调整一些方法的log输出消息
+
+    ShaderUtil 新增方法：
+        int[] genSDF(int, int, int, int, int, int, float, byte, float, float);
+
+v1.2.1 / 2025.03.24
+    调整 CurveUtil 中 spawnCurveBeam 系列方法对 CombatEntityAPI 的初步剔除策略，减少漏检测
+
+v1.2.0 / 2025.03.22
+    移除标记为废弃的OpenCL相关类及方法
+    更改一些log输出消息
+    新增 CurveUtil 工具类
+    TransformUtil 部分方法的实现调整
+    NodeData 数据存取不再缩放，故移除相关Direct方法
+    CommonUtil 中方法 getPointOnSphere(); getRandomPointOnSphere(); scaleFormCenter() 移动至 CalculateUtil
+    RenderingUtil 中方法 nodeInterpolation() 删除，于 CurveUtil 中重写为其他类似的方法
+    TrigUtil 加入使用弧度制做符号判断参数的对应方法，并调整原有方法
+    更正控制台命令描述
+    小规模重构曲线相关着色器代码
+    修复 SegmentEntity 的渲染相关问题，且 NodeData 中的 mixFactor 相关设定生效
+
+    NodeData 新增构造方法：
+        new NodeData(Vector2f);
+
+    CurveEntity 新增方法：
+        int getSubmitLengthCalculatingStep();
+        void setSubmitLengthCalculatingStep(int);
+
+    SegmentEntity 新增方法：
+        int getSubmitLengthCalculatingStep();
+        void setSubmitLengthCalculatingStep(int);
+        float getFillStartAlpha();
+        void setFillStartAlpha(float);
+        float getFillEndAlpha();
+        void setFillEndAlpha(float);
+        float getFillStartFactor();
+        void setFillStartFactor(float);
+        float getFillEndFactor();
+        void setFillEndFactor(float);
+
+    CalculateUtil 新增方法：
+        Vector2f min(Vector2f left, Vector2f right, Vector2f result);
+        Vector3f min(Vector3f left, Vector3f right, Vector3f result);
+        Vector4f min(Vector4f left, Vector4f right, Vector4f result);
+        Vector2f max(Vector2f left, Vector2f right, Vector2f result);
+        Vector3f max(Vector3f left, Vector3f right, Vector3f result);
+        Vector4f max(Vector4f left, Vector4f right, Vector4f result);
+
+    TransformUtil 添加方法：
+        Matrix2f createSimpleRotateMatrix(Vector2f, Matrix2f);
+        Matrix2f createSimpleRotateMatrix(Vector2f, Vector2f, Matrix2f);
+        Matrix2f createSimpleRadiansRotateMatrix(float, Matrix2f);
+        Matrix2f createSimpleRotateMatrix(float, Matrix2f);
+        Vector2f pointTranslateRadiansRotate(Vector2f, float, Vector2f, Vector2f);
+        Vector2f pointTranslateRotate(Vector2f, float, Vector2f, Vector2f);
+        Vector2f pointRadiansRotateTranslate(Vector2f, float, Vector2f, Vector2f);
+        Vector2f pointRotateTranslate(Vector2f, float, Vector2f, Vector2f);
+
+    CurveUtil 添加方法：
+        List<Vector2f> getPointsConvexHull(Vector2f...);
+        List<Vector2f> getCurveConvexHull(NodeData, NodeData);
+        boolean isPointWithinCurveConvexHull(Vector2f, List<Vector2f>);
+
+        Vector2f[] getCurveAABB(NodeData, NodeData);
+        boolean isPointWithinAABB(Vector2f, Vector2f, Vector2f);
+        boolean isPointWithinAABB(Vector2f, Vector2f[]);
+        boolean isPointWithinAABB(Vector2f, float, Vector2f, Vector2f);
+        boolean isPointWithinAABB(Vector2f, float, Vector2f[]);
+        boolean isSegmentWithinOrIntersectAABB(Vector2f, Vector2f, Vector2f, Vector2f);
+        boolean isSegmentWithinOrIntersectAABB(SegmentAPI, Vector2f, Vector2f);
+        boolean isSegmentWithinOrIntersectAABB(Vector2f, Vector2f, Vector2f[]);
+        boolean isSegmentWithinOrIntersectAABB(SegmentAPI, Vector2f[]);
+        boolean isAABBOverlap(Vector2f, Vector2f, Vector2f, Vector2f);
+        boolean isAABBOverlap(Vector2f[], Vector2f[]);
+
+        float getCurveLength(NodeData, NodeData, int);
+
+        Pair<NodeData[], float[]> aligningNode(NodeData, NodeData, Pair<NodeData[], float[]>);
+        Pair<NodeData[], float[]> aligningNodeSegmentBased(NodeData, NodeData, Vector2f, Vector2f, Pair<NodeData[], float[]>);
+        Pair<NodeData[], float[]> aligningNodeSegmentBased(NodeData, NodeData, SegmentAPI, Pair<NodeData[], float[]>);
+
+        Pair<NodeData, float[]> getCurveCircleFitting(float, float, Pair<NodeData, float[]>);
+
+        Vector4f getProjectivePointOnCurve(NodeData, NodeData, Vector2f, int, int, float);
+
+        List<Vector3f> getIntersectionCurveSegment(NodeData, NodeData, Vector2f, Vector2f);
+        List<Vector3f> getIntersectionCurveSegment(NodeData, NodeData, SegmentAPI);
+        Vector3f getNearestIntersectionCurveSegment(NodeData, NodeData, Vector2f, Vector2f);
+        Vector3f getNearestIntersectionCurveSegment(NodeData, NodeData, SegmentAPI);
+
+        List<Vector3f> getIntersectionCurveCurve(NodeData, NodeData, NodeData, NodeData, float, float, float, float);
+        Vector3f getNearestIntersectionCurveCurve(NodeData, NodeData, NodeData, NodeData, float, float, float, float);
+
+        Vector2f getPointOnCurve(NodeData, NodeData, float);
+        Vector2f getCurveDerivative(NodeData, NodeData, float);
+        NodeData[] curveSplitControlPointOnly(NodeData, NodeData, float);
+        NodeData[] curveSplitControl(NodeData, NodeData, float);
+
+        Pair<SegmentEntity, Vector3f> spawnCurveBeam(CombatEngineAPI, Vector3f, NodeData, NodeData, float, DealtController, int, int, float, float, float, float, float);
+        Pair<SegmentEntity, Vector3f> spawnCurveBeam(CombatEngineAPI, Vector3f, NodeData, NodeData, float, DealtController);
+        Pair<SegmentEntity, Vector3f> spawnCurveBeam(CombatEngineAPI, Vector3f, NodeData, NodeData, CombatEntityAPI, float, DamageType, float, boolean, SpriteAPI, Color, SpriteAPI, Color, float, float, float, float, float, CombatEngineLayers);
+
+    加入以下预备内容，预计在未来实现PBR渲染框架：
+        加入 IlluminantAPI 接口
+        加入 BaseIlluminantData 继承于 BaseInstanceRenderData 抽象类，实现 IlluminantAPI 接口与 DirectDrawEntity 标记接口
+        加入 InfiniteLight, PointLight, SpotLight, AreaLight 灯光类，皆继承了 BaseIlluminantData 抽象类
+
+v1.1.1 / 2025.02.06
+    调整渲染管理类的删除管理相关方法
+    调整 TextFieldEntity 类的 submitText() 方法
+
+    TextFieldEntity 添加方法：
+        Alignment getAlignment();
+        void setAlignment(Alignment);
+
+    RenderDataAPI 添加方法：
+        boolean hasDelete();
+
+v1.1.0a / 2025.02.04
+    修复 TextFieldEntity 中 getCurrentVisualWidth() 的一些实现小问题
+
+v1.1.0 / 2025.02.04
+    BoxDatabase 中原 ENTITY_TOTAL_TYPE 改为 ENTITY_TOTAL_TYPE_NORMAL，增加 ENTITY_TOTAL_TYPE_DIRECT
+    加入 DirectDrawEntity 标记接口
+    DistortionEntity 新增实现 DirectDrawEntity 标记接口
+
+    MaterialData 添加方法：
+        Color getColorC();
+        Color getEmissiveColorC();
+
+    InstanceRenderAPI 添加方法：
+        byte mallocInstanceData(int dataNum);
+
+    TextFieldEntity 添加方法：
+        float getCurrentVisualWidth();
+        float getCurrentVisualHeight();
+        byte mallocTextData(int charNum);
+
+    CurveEntity 添加方法：
+        byte mallocNodeData(int nodeNum);
+
+    SegmentEntity 添加方法：
+        byte mallocNodeData(int nodeNum);
+
+v1.0.8c / 2025.01.13
+    修复 ControlDataAPI 中状态判断相关方法的检测问题
+    修复 TransformUtil 中矩阵方法返回参数的一些问题
+    TileMapSprite 更改类名为 AtlasSprite
+    加入类 SimpleParticleControlData 继承自 BaseControlData
+
+    ControlDataAPI 添加方法：
+        boolean controlAlphaBasedTimer(RenderDataAPI);
+
+    InstanceRenderAPI 添加方法：
+        int getRenderingCount();
+        void setRenderingCount(int); // 依情况务必调用
+
+v1.0.8b / 2025.01.04
+    *去除Mod名中的空格*
+
+    RenderingUtil 中修正 createTextField 系列方法名拼写问题
+    修复 CommonUtil 方法 Vector3f HSVToRGB(Vector3f, Vector3f) 第二个输出参数的问题
+
+    BoxUtilModPlugin 添加方法：
+        void initLater();
+    CalculateUtil 添加方法：
+        Vector3f RGBToHSV(Color, Vector3f);
+        Color HSVToRGB(Vector3f);
+        Color HSVToRGB(Vector3f, float);
+    CalculateUtil 添加方法：
+        boolean checkIntersectionRayCircle(Vector2f, float, Vector2f, float);
+        Vector2f getNearestIntersectionRayCircle(Vector2f, float, Vector2f, float);
+    TransformUtil 添加方法：
+        Matrix4f createModelMatrixVanilla(Vector2f, Quaternion, Matrix4f);
+        Matrix3f createModelMatrixVanilla3f(Vector2f, float, Matrix3f);
+        Matrix3f createModelMatrixVanilla3f(Vector2f, float, Vector2f, Matrix3f);
+
+    CommonUtil 方法改变：
+        glDebug(String, int) => glDebug(String, Object)
+
+v1.0.8a / 2024.10.14
+    修复部分OpenGL支持不完整的设备运行时的部分问题
+
+v1.0.8 / 2024.10.09
+    为 ControlDataAPI 内所有方法加入 RenderDataAPI 类型入参，且入参不会为null
+    修复了某些情况下的视觉显示问题
+
+v1.0.7 / 2024.09.07
+    加入另一种曲线渲染实体 SegmentEntity
+    加入带纹理的简易扇形渲染类 TexArcObject
+    CalculateUtil 添加方法：
+        float inverseLerp(float, float, float);
+        Vector2f reflect(Vector2f, Vector2f, Vector2f);
+        Vector3f reflect(Vector3f, Vector3f, Vector3f);
+        boolean pointAtRight(Vector2f, Vector2f);
+        boolean pointAtRight(Vector2f, CombatEntityAPI);
+        boolean pointAtFront(Vector2f, Vector2f);
+        boolean pointAtFront(Vector2f, CombatEntityAPI);
+
+    在配置界面的 其他设置 分类中添加界面语言切换选项，默认值为英语，可更改为简体中文。
+    配置界面的 取消 键快捷键更改为 Esc
+    加入控制台指令 ShowAAStatus 用于显示屏幕中的抗锯齿工作情况(for fun)
+    Bloom效果上调强度，将变得更明显
+
+    原 BaseRenderData 类拆分出 BaseInstanceRenderData，原 BaseMaterialRenderData 类更名为 BaseMIRenderData
+    TextFieldEntity 类从实现 RenderDataAPI 接口类改为继承 BaseRenderData 类
+    改进小部分已有方法的实现与注释
+    改进小部分着色器代码
+
+v1.0.6a / 2024.08.26
+    修复了1.0.6更新后，配置界面点击取消或右击窗体外空白处无法关闭的问题
+
+v1.0.6 / 2024.08.25
+    *重要更新，需要重新创建存档*
+    修复生涯中游戏进程已经处于内存泄漏状态时可能无法保存相关问题
+    调整渲染管理类中最顶层渲染层级的渲染顺序，便于在最顶层渲染未受失真效果等影响的字体等，与之相对，位于渲染顶层的渲染实体没有任何后处理效果，也不会将信息绘制至多通道处理
+
+v1.0.5 / 2024.08.23
+    修复了 TextFieldEntity 改变文本再次提交数据时的位移问题
+    优化了Bloom效果的屏幕边缘显示问题
+    加入接口类 SimpleVAOAPI 与对应实现类 LineObject ，且原 PointObject 与 QuadObject 皆实现了该接口类
+
+v1.0.4 / 2024.08.22
+    TextFieldEntity 每个字符消耗 26Byte => 28Byte ，用于衔接开启下划线或删除线后的字体间空隙
+	修复了 RenderingUtil 中 createTextFlied 系列方法的创建问题
+
+v1.0.3 / 2024.08.20
+	修复了大部分Intel GPU的相关问题（历史遗留问题，可能这就是牙膏厂桌面端显卡发布后一堆问题的原因之一）
+	调整了BoxConfigs类的getter
+
+v1.0.2 / 2024.08.19
+	修复了某些设备环境下资源加载时可能出现的问题，但少数设备因各种原因可能仍无法使用
+
+v1.0.1 / 2024.08.19
+	修复了UI缩放下的显示问题
+
+v1.0.0 / 2024.08.18
+	初版发布

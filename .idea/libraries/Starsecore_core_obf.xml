@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Starsecore_core_obf">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../Fractal Softworks/IDEALIB_098OBF/fs.common_obf.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../Fractal Softworks/IDEALIB_098OBF/fs.sound_obf.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../Fractal Softworks/IDEALIB_098OBF/starfarer_obf.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,0 +1,3 @@
+Ignore alpha channel.
+Builtin render is use OpenGL normal map.
+For DirectX normal map, flip the Y-axis.

@@ -1,0 +1,49 @@
+#version 430
+
+precision OVERWRITE_PRECISION float;
+precision highp int;
+
+layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
+
+subroutine float sampleMethod(in ivec2 sampleCoord);
+subroutine uniform sampleMethod sampleMethodState;
+
+layout(binding = 0) uniform sampler2D checkMap;
+layout(binding = 0, rgba16i) uniform writeonly iimage2D resultMap;
+
+uniform ivec4 sizeState; // ivec2(checkMapSize), ivec2(resultMapSize)
+uniform ivec2 border;
+uniform float threshold;
+
+subroutine(sampleMethod) float fromRed(in ivec2 sampleCoord) {
+    return texelFetch(checkMap, sampleCoord, 0).x;
+}
+
+subroutine(sampleMethod) float fromGreen(in ivec2 sampleCoord) {
+    return texelFetch(checkMap, sampleCoord, 0).y;
+}
+
+subroutine(sampleMethod) float fromBlue(in ivec2 sampleCoord) {
+    return texelFetch(checkMap, sampleCoord, 0).z;
+}
+
+subroutine(sampleMethod) float fromAlpha(in ivec2 sampleCoord) {
+    return texelFetch(checkMap, sampleCoord, 0).w;
+}
+
+subroutine(sampleMethod) float fromRGB(in ivec2 sampleCoord) {
+    return dot(texelFetch(checkMap, sampleCoord, 0).xyz, vec3(LINEAR_VALUES));
+}
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(coord, sizeState.zw))) return;
+    ivec2 coordStore = ivec2(coord + 1);
+    ivec2 checkCoord = coord - border;
+    ivec4 result;
+    if (all(bvec4(greaterThanEqual(coord, border), lessThan(checkCoord, sizeState.xy)))) {
+        result = (sampleMethodState(checkCoord) >= threshold) ? ivec4(coordStore, 0, 0) : ivec4(0, 0, coordStore);
+    } else result = ivec4(0, 0, coordStore);
+    imageStore(resultMap, coord, result);
+}

@@ -1,0 +1,3 @@
+For model, the .mtl file is not necessary; triangles and quads both ok; recommended to use a high-precision model.
+For Cinema 4D, should exchange the y-axis and z-axis.
+!!! DO NOT CONTAIN N-GONS !!!

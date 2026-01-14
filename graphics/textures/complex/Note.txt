@@ -1,0 +1,4 @@
+Ignore alpha channel.
+X/Red = emissive mask
+Y/Green = roughness
+Z/Blue = metalness

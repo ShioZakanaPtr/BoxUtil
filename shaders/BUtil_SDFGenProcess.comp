@@ -1,0 +1,57 @@
+#version 430
+
+precision OVERWRITE_PRECISION float;
+precision highp int;
+
+#define MAX_DISTANCE 268435456.0
+
+layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0) uniform isampler2D coordMapIn;
+layout(binding = 0, rgba16i) uniform iimage2D coordMapOut;
+
+uniform ivec2 size;
+uniform int step;
+
+ivec4 advanceJFA(in ivec2 coord, ivec2 maxIndex) {
+    ivec4 result = ivec4(0);
+
+    ivec2 currCoord = ivec2(0);
+    ivec4 targetCoord;
+    vec4 diffCoord = vec4(0.0);
+    vec2 currDistSQ = vec2(0.0), distSQ = vec2(MAX_DISTANCE);
+    for (int y = -1; y <= 1; ++y) {
+        currCoord.y = y * step + coord.y;
+        for (int x = -1; x <= 1; ++x) {
+            currCoord.x = x * step + coord.x;
+            if (any(bvec4(lessThan(currCoord, ivec2(0)), greaterThanEqual(currCoord, maxIndex)))) continue;
+            targetCoord = texelFetch(coordMapIn, currCoord, 0) - 1;
+
+            if (targetCoord.x > -1) {
+                diffCoord.xy = vec2(coord - targetCoord.xy);
+                currDistSQ.x = dot(diffCoord.xy, diffCoord.xy);
+                if (currDistSQ.x < distSQ.x) {
+                    distSQ.x = currDistSQ.x;
+                    result.xy = targetCoord.xy + 1;
+                }
+            }
+            if (targetCoord.z > -1) {
+                diffCoord.zw = vec2(coord - targetCoord.zw);
+                currDistSQ.y = dot(diffCoord.zw, diffCoord.zw);
+                if (currDistSQ.y < distSQ.y) {
+                    distSQ.y = currDistSQ.y;
+                    result.zw = targetCoord.zw + 1;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(coord, size))) return;
+    ivec2 maxIndex = size - 1;
+    imageStore(coordMapOut, coord, advanceJFA(coord, maxIndex));
+}

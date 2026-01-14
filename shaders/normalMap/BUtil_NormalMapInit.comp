@@ -1,0 +1,75 @@
+#version 430
+
+precision OVERWRITE_PRECISION float;
+precision highp int;
+
+layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
+
+subroutine vec2 texInput(in float luminance, in float alpha, in ivec2 coord);
+subroutine uniform texInput texInputState;
+
+layout(binding = 0) uniform sampler2D texIn;
+layout(binding = 1) uniform sampler2D volumeMap;
+layout(binding = 2) uniform sampler2D detailsMap;
+layout(binding = 0, rgba16) uniform writeonly image2D texOut;
+
+uniform ivec2 size;
+uniform vec4 state[2]; // vec4(srcStrength, srcPowFactor, violumeApply, DetailsApply), vec4(srcBrightness, srcContrast, srcSmoothstepMix, volumeSmoothMix)
+uniform vec2 rampMix;
+
+float extraFix(in float x) {
+    float result = pow(x, state[0].y);
+    result -= 0.5;
+    result *= state[1].y;
+    result += 0.5;
+    result *= state[1].x;
+    result = mix(result, smoothstep(0.0, 1.0, result), state[1].z);
+    return result;
+}
+
+float fi(in float a, in float b) {
+    return 1.0 - (1.0 - a) * (1.0 - b);
+}
+
+float getRamp(in vec2 uv) {
+    float x = 1.0 - abs(uv.x * 2.0 - 1.0);
+    float y = smoothstep(1.0, 0.0, abs(uv.y * 2.0 - 1.0));
+    return fi(x * rampMix.x, y * rampMix.y);
+}
+
+subroutine(texInput) vec2 texOnly(in float luminance, in float alpha, in ivec2 coord) {
+    return vec2(luminance, alpha);
+}
+
+subroutine(texInput) vec2 withVolume(in float luminance, in float alpha, in ivec2 coord) {
+    float volume = 1.0 - min(texelFetch(volumeMap, coord, 0).x * 2.0, 1.0);
+    volume = (state[1].w > 0.0) ? smoothstep(0.0, 1.0, volume) : volume;
+    return vec2(fi(luminance, volume * state[0].z), alpha);
+}
+
+subroutine(texInput) vec2 withDetails(in float luminance, in float alpha, in ivec2 coord) {
+    vec4 detailsRaw = texelFetch(detailsMap, coord, 0);
+    float details = dot(detailsRaw.xyz * detailsRaw.w, vec3(LINEAR_VALUES));
+    details = pow(details, state[0].y);
+    return vec2(mix(luminance, extraFix(details), state[0].w), alpha);
+}
+
+subroutine(texInput) vec2 withBoth(in float luminance, in float alpha, in ivec2 coord) {
+    float volume = 1.0 - min(texelFetch(volumeMap, coord, 0).x * 2.0, 1.0);
+    volume = (state[1].w > 0.0) ? smoothstep(0.0, 1.0, volume) : volume;
+    vec4 detailsRaw = texelFetch(detailsMap, coord, 0);
+    float details = dot(detailsRaw.xyz * detailsRaw.w, vec3(LINEAR_VALUES));
+    return vec2(fi(mix(luminance, extraFix(details), state[0].w), volume * state[0].z), alpha);
+}
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(coord, size))) return;
+    vec4 raw = texelFetch(texIn, coord, 0);
+    float luminance = dot(raw.xyz * raw.w, vec3(LINEAR_VALUES));
+    luminance = extraFix(luminance) * state[0].x;
+    vec2 result = texInputState(luminance, raw.w, coord);
+    if (rampMix.x > 0.0 || rampMix.y > 0.0) result.x = fi(result.x, getRamp(vec2(coord) / vec2(size - 1)));
+    imageStore(texOut, coord, vec4(vec3(result.x), result.y));
+}
