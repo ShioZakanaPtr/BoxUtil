@@ -161,8 +161,8 @@ public final class BUtil_GLDrawInstanceMemoryUsage {
                 _HOVER_TEXT.getTextDataList().get(0).text = String.format(Locale.US, "%,d", usageValue);
                 _HOVER_TEXT.getTextDataList().get(2).text = String.format(Locale.US, "%,d", values.two);
                 _HOVER_TEXT.submitText();
-                _HOVER_TEXT.render(aabb[0], 0, false, Color.BLACK);
-                _HOVER_TEXT.render(aabb[1], 0, false, null);
+                _HOVER_TEXT.render(aabb[1], 0, false, Color.BLACK);
+                _HOVER_TEXT.render(aabb[0], 0, false, null);
             }
 
             drawOffset = -(fixedTextHeight + _BAR_HEIGHT + _SPACE);
