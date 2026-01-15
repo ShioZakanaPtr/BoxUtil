@@ -18,7 +18,7 @@ v1.5.0 / 2026.01.15
     TemporaryCleanupPlugin / TextSubmitFeedbackAPI / BackgroundEveryFramePlugin 皆添加了对应的基础实现类
 
     IlluminantInstanceDataLayoutAPI 方法形参更改
-    增加 LayerEntityType 与 DirectEntityType 枚举类，取代以往的渲染类类型字段
+    增加 LayeredEntityType 与 DirectEntityType 枚举类，取代以往的渲染类类型字段
     BaseShaderPacksContext 中 applyInfiniteLightShading / applyPointLightShading / applySpotLightShading / applyLinearLightShading / applyAreaLightShading 形参调整
     ShaderUtil 中 NormalMapGenParam 增加 applyHorizontalRamp / applyVerticalRamp / genMipmap 属性，并微调其余预设值
     CombatEntityIlluminantData 中 PROJ_normalColor 更名为 PROJ_bodyColor，PROJ_normalRadius 更名为 PROJ_bodyRadius
