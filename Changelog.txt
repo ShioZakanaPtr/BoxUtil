@@ -81,13 +81,11 @@ v1.5.0 / 2026.01.15
         boolean isMappingInstanceSubmit();
         void setMappingInstanceSubmit(boolean);
         MemoryBlock getInstanceMemory();
-        boolean isSharedInstanceData();
         int getInstanceDataRefreshOffset();
         void setInstanceDataRefreshOffset(int);
         int getRenderingOffset();
         void setRenderingOffset(int);
         void setRenderingAllInstanceFromCurrentOffset();
-        void setSharedInstanceData(boolean);
         void setSharedInstanceData(MemoryBlock);
         void resetMemory(MemoryBlock);
         void resetMemory();
@@ -142,9 +140,6 @@ v1.5.0 / 2026.01.15
         void debugText(Object, Vector2f, Color, boolean, String);
         void debugText(Object, Vector2f);
         void debugText(Object);
-        Instance2Data addDistortion(boolean, float);
-        Instance2Data addSmoothFlare(boolean, float);
-        Instance2Data addSharpFlare(boolean, float);
 
     TransformUtil 新增方法：
         Matrix2f inverseRotate(Matrix2f, Matrix2f);
