@@ -35,7 +35,7 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
     protected final static byte _NODE_SIZE_F32 = 9 << 2;
     protected final int _segmentID;
     protected final int _nodesVBO;
-    protected final boolean _isValid;
+    protected volatile boolean _isValid;
     protected final boolean _useHalfFloat;
     protected final byte _currNodeSize;
     protected final byte _currNodeBitOffset;
@@ -124,6 +124,7 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
 
     protected void _deleteExc() {
         super._deleteExc();
+        this._isValid = false;
         this.material = null;
         this._lastNodeLength = 0;
         if (this.nodeList != null) this.nodeList.clear();

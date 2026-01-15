@@ -282,7 +282,7 @@ public abstract class BaseShaderPacksContext {
      * To tell players if this shader pack is usable in current hardware.
      */
     public boolean isUsable(ContextCapabilities glContext) {
-        return BoxConfigs.isBaseGL42Supported();
+        return BoxConfigs.isBaseGL43Supported();
     }
 
     /**

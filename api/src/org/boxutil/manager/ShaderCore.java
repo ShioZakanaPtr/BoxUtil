@@ -115,7 +115,7 @@ public final class ShaderCore {
             closeShader();
             return;
         }
-        if (!BoxConfigs.isGLParallelSupported()) {
+        if (!BoxConfigs.isBaseGL43Supported()) {
             Global.getLogger(ShaderCore.class).warn("'BoxUtil' platform is not supported 'OpenGL4.3'.");
             closeShader();
             return;
@@ -561,7 +561,7 @@ public final class ShaderCore {
     }
 
     private static void initMatrixProgram() {
-        if (BoxConfigs.isGLParallel() && _SHADER_PROGRAM[_MATRIX_2D].isValid() && _SHADER_PROGRAM[_MATRIX_3D].isValid()) {
+        if (_SHADER_PROGRAM[_MATRIX_2D].isValid() && _SHADER_PROGRAM[_MATRIX_3D].isValid()) {
             _SHADER_PROGRAM[_MATRIX_2D].initUniformSize(2)
                     .beginUniform()
                     .loadUniformIndex("amount")

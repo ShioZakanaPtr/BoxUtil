@@ -220,7 +220,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     this.togHanabi = !this.togHanabi;
                 } else if (this.hanabiTogTimer < 0.5f) this.hanabiTogTimer += amount;
 
-                if (BoxConfigs.isShaderEnable() && BoxConfigs.isGLParallelSupported()) {
+                if (BoxConfigs.isShaderEnable() && BoxConfigs.isBaseGL43Supported()) {
                     if (this.particle == null) {
                         this.particle = new SimpleParticleControlData(512, 2.0f, -5120.0f, false);
 

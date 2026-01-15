@@ -45,7 +45,7 @@ public class TextFieldEntity extends BaseRenderData {
     protected final int _textFieldID;
     // for each char: vec4(uvBL, uvTR), vec4(x, y, topStyleUV, bottomStyleUV), float(handelIndex + (invert + channel) + italic + underline + strikeout)), vec4(color), vec4(size, edge)
     protected final int _textFieldVBO;
-    protected final boolean _isValid;
+    protected volatile boolean _isValid;
     protected FontMapData[] fontMapList = null;
     protected final int[] textDataRefreshState = new int[5]; // lastCharSize, index, size, drawMode, shouldDrawCharSize
     protected final float[] textStateAfterSubmit = new float[]{0.0f, 0.0f}; // width, height
@@ -172,6 +172,7 @@ public class TextFieldEntity extends BaseRenderData {
 
     protected void _deleteExc() {
         super._deleteExc();
+        this._isValid = false;
         this.textDataRefreshState[0] = 0;
         if (this._lastTextDataList != null) this._lastTextDataList.clear();
         this._lastTextDataList = null;

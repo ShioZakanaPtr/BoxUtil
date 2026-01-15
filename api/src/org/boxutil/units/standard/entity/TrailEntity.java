@@ -26,7 +26,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
     protected final static byte _BUFFER_DATA_SIZE = 3;
     protected final int _TBO;
     protected final int _TBOTex;
-    protected final boolean _isValid;
+    protected volatile boolean _isValid;
     // {vec2(loc), vec2(tangent left), vec2(tangent right), vec4(color), vec4(emissive), width, mixFactor}
     protected List<Vector2f> nodeList = null;
     protected int _lastNodeLength = 0;
@@ -67,6 +67,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
 
     protected void _deleteExc() {
         super._deleteExc();
+        this._isValid = false;
         this.material = null;
         this._lastNodeLength = 0;
         if (this.nodeList != null) this.nodeList.clear();

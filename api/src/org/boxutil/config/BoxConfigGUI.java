@@ -31,22 +31,20 @@ import java.nio.IntBuffer;
 import java.util.List;
 
 public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
-    private final static byte _TOTAL_TEX = 3;
+    private final static byte _TOTAL_TEX = 2;
     private final static byte _CONFIG_ICON = 0;
-    private final static byte _BASE_ICON = 1;
-    private final static byte _FULL_ICON = 2;
+    private final static byte _FEATURES_ICON = 1;
     private final static float _SCREEN_SCALE = Global.getSettings().getScreenScaleMult();
     private final static float _BORDER_WIDTH = 8.0f;
     private final static float _PADDING_SIMPLE = 5.0f;
     private final static float _ICON_PADDING_SIMPLE = 4.0f;
     private final static float _ICON_SIZE = 96.0f;
-    private final static float _ICON_SMALL_SIZE = 24.0f;
-    private final static float _ICON_SMALL_SPACE = 8.0f;
-    private final static float[] _SIMPLE_FULL_SIZE = new float[]{_ICON_SIZE + _BORDER_WIDTH * 2.0f};
-    private final static float[] _SIMPLE_BLOCK_A = new float[]{_PADDING_SIMPLE + _BORDER_WIDTH, _PADDING_SIMPLE + _BORDER_WIDTH + _ICON_SMALL_SIZE};
-    private final static float[] _SIMPLE_BLOCK_B = new float[]{_SIMPLE_BLOCK_A[1] + _ICON_SMALL_SPACE, _SIMPLE_BLOCK_A[1] + _ICON_SMALL_SPACE + _ICON_SMALL_SIZE};
-    private final static float[] _SIMPLE_MIN_SIZE = new float[]{_ICON_SMALL_SIZE * 2.0f + _BORDER_WIDTH * 2.0f + _ICON_SMALL_SPACE, _ICON_SMALL_SIZE + _BORDER_WIDTH * 2.0f};
-    private final static float[] _SIMPLE_ICON_ANCHOR = new float[]{_SIMPLE_FULL_SIZE[0] * 0.5f - _ICON_SIZE * 0.5f + _PADDING_SIMPLE + _ICON_PADDING_SIMPLE, _SIMPLE_FULL_SIZE[0] * 0.5f + _ICON_SIZE * 0.5f + _PADDING_SIMPLE - _ICON_PADDING_SIMPLE};
+    private final static float _ICON_SMALL_WIDTH = 48.0f;
+    private final static float _ICON_SMALL_HEIGHT = 24.0f;
+    private final static float _SIMPLE_FULL_SIZE = _ICON_SIZE + _BORDER_WIDTH * 2.0f;
+    private final static float[] _SIMPLE_ICON_MIN_ANCHOR = new float[]{_PADDING_SIMPLE + _BORDER_WIDTH, _PADDING_SIMPLE + _BORDER_WIDTH + _ICON_SMALL_WIDTH, _PADDING_SIMPLE + _BORDER_WIDTH + _ICON_SMALL_HEIGHT};
+    private final static float[] _SIMPLE_MIN_SIZE = new float[]{_ICON_SMALL_WIDTH + _BORDER_WIDTH * 2.0f, _ICON_SMALL_HEIGHT + _BORDER_WIDTH * 2.0f};
+    private final static float[] _SIMPLE_ICON_ANCHOR = new float[]{_SIMPLE_FULL_SIZE * 0.5f - _ICON_SIZE * 0.5f + _PADDING_SIMPLE + _ICON_PADDING_SIMPLE, _SIMPLE_FULL_SIZE * 0.5f + _ICON_SIZE * 0.5f + _PADDING_SIMPLE - _ICON_PADDING_SIMPLE};
     private static float[] _GUI_ICON_COLOR = null;
     private static float[] _GUI_POS_COLOR = null;
     private static float[] _GUI_NEG_COLOR = null;
@@ -92,20 +90,10 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
             }
-            if (ids.get(_BASE_ICON) != 0) {
-                _textures[_BASE_ICON] = ids.get(_BASE_ICON);
-                Pair<int[], ByteBuffer> data = CommonUtil.getRawPixels("graphics/ui/BUtil_FeaturesIconBase.png", 4);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_BASE_ICON]);
-                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, data.one[0], data.one[1], 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data.two);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-            }
-            if (ids.get(_FULL_ICON) != 0) {
-                _textures[_FULL_ICON] = ids.get(_FULL_ICON);
-                Pair<int[], ByteBuffer> data = CommonUtil.getRawPixels("graphics/ui/BUtil_FeaturesIconFull.png", 4);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_FULL_ICON]);
+            if (ids.get(_FEATURES_ICON) != 0) {
+                _textures[_FEATURES_ICON] = ids.get(_FEATURES_ICON);
+                Pair<int[], ByteBuffer> data = CommonUtil.getRawPixels("graphics/ui/BUtil_FeaturesIcon.png", 4);
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_FEATURES_ICON]);
                 GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, data.one[0], data.one[1], 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data.two);
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
@@ -282,11 +270,11 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
     private void inputCheck(UIBorderObject border) {
         float mouseX = Mouse.getX() / _SCREEN_SCALE;
         float mouseY = Mouse.getY() / _SCREEN_SCALE;
-        if (mouseX <= ((guiState == GUIState.SIMPLE ? _SIMPLE_FULL_SIZE[0] : _SIMPLE_MIN_SIZE[0]) + _PADDING_SIMPLE) &&
-                mouseY <= ((guiState == GUIState.SIMPLE ? _SIMPLE_FULL_SIZE[0] : _SIMPLE_MIN_SIZE[1]) + _PADDING_SIMPLE)) {
+        if (mouseX <= ((guiState == GUIState.SIMPLE ? _SIMPLE_FULL_SIZE : _SIMPLE_MIN_SIZE[0]) + _PADDING_SIMPLE) &&
+                mouseY <= ((guiState == GUIState.SIMPLE ? _SIMPLE_FULL_SIZE : _SIMPLE_MIN_SIZE[1]) + _PADDING_SIMPLE)) {
             if (!this.stateSwitch) {
                 guiState = GUIState.SIMPLE;
-                if (border != null) border.setSize(_SIMPLE_FULL_SIZE[0], _SIMPLE_FULL_SIZE[0]);
+                if (border != null) border.setSize(_SIMPLE_FULL_SIZE, _SIMPLE_FULL_SIZE);
                 Global.getSoundPlayer().playUISound("BUtil_button_in", 1.0f, 1.0f);
                 this.stateSwitch = true;
             }
@@ -316,53 +304,47 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
 
     private void simpleSettingsGUI(UIBorderObject border) {
         if (border != null) border.render(_PADDING_SIMPLE, _PADDING_SIMPLE);
+        final float[] color = new float[3];
+        float x, y, widthX, heightY;
+        int tex = 0;
         if (guiState == GUIState.SIMPLE) {
-            if (_textures != null && _textures[_CONFIG_ICON] != 0) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_CONFIG_ICON]);
-                GL11.glColor4f(_GUI_ICON_COLOR[0], _GUI_ICON_COLOR[1], _GUI_ICON_COLOR[2], 1.0f);
-                GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-                GL11.glTexCoord2f(0.0f, 0.0f);
-                GL11.glVertex2f(_SIMPLE_ICON_ANCHOR[0], _SIMPLE_ICON_ANCHOR[0]);
-                GL11.glTexCoord2f(0.0f, 1.0f);
-                GL11.glVertex2f(_SIMPLE_ICON_ANCHOR[0], _SIMPLE_ICON_ANCHOR[1]);
-                GL11.glTexCoord2f(1.0f, 0.0f);
-                GL11.glVertex2f(_SIMPLE_ICON_ANCHOR[1], _SIMPLE_ICON_ANCHOR[0]);
-                GL11.glTexCoord2f(1.0f, 1.0f);
-                GL11.glVertex2f(_SIMPLE_ICON_ANCHOR[1], _SIMPLE_ICON_ANCHOR[1]);
-                GL11.glEnd();
-            }
+            if (_textures != null) tex = _textures[_CONFIG_ICON];
+            color[0] = _GUI_ICON_COLOR[0];
+            color[1] = _GUI_ICON_COLOR[1];
+            color[2] = _GUI_ICON_COLOR[2];
+            x = _SIMPLE_ICON_ANCHOR[0];
+            y = _SIMPLE_ICON_ANCHOR[0];
+            widthX = _SIMPLE_ICON_ANCHOR[1];
+            heightY = _SIMPLE_ICON_ANCHOR[1];
         } else {
-            if (BoxConfigs.isBaseGL42Supported()) GL11.glColor4f(_GUI_POS_COLOR[0], _GUI_POS_COLOR[1], _GUI_POS_COLOR[2], 1.0f);
-            else GL11.glColor4f(_GUI_NEG_COLOR[0], _GUI_NEG_COLOR[1], _GUI_NEG_COLOR[2], 1.0f);
-            if (_textures != null && _textures[_BASE_ICON] != 0) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_BASE_ICON]);
-                GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-                GL11.glTexCoord2f(0.0f, 0.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_A[0], _SIMPLE_BLOCK_A[0]);
-                GL11.glTexCoord2f(0.0f, 1.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_A[0], _SIMPLE_BLOCK_A[1]);
-                GL11.glTexCoord2f(1.0f, 0.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_A[1], _SIMPLE_BLOCK_A[0]);
-                GL11.glTexCoord2f(1.0f, 1.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_A[1], _SIMPLE_BLOCK_A[1]);
-                GL11.glEnd();
+            if (_textures != null) tex = _textures[_FEATURES_ICON];
+            if (BoxConfigs.isBaseGL43Supported()) {
+                color[0] = _GUI_POS_COLOR[0];
+                color[1] = _GUI_POS_COLOR[1];
+                color[2] = _GUI_POS_COLOR[2];
+            } else {
+                color[0] = _GUI_NEG_COLOR[0];
+                color[1] = _GUI_NEG_COLOR[1];
+                color[2] = _GUI_NEG_COLOR[2];
             }
-
-            if (BoxConfigs.isGLParallelSupported()) GL11.glColor4f(_GUI_POS_COLOR[0], _GUI_POS_COLOR[1], _GUI_POS_COLOR[2], 1.0f);
-            else GL11.glColor4f(_GUI_NEG_COLOR[0], _GUI_NEG_COLOR[1], _GUI_NEG_COLOR[2], 1.0f);
-            if (_textures != null && _textures[_FULL_ICON] != 0) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_FULL_ICON]);
-                GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-                GL11.glTexCoord2f(0.0f, 0.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_B[0], _SIMPLE_BLOCK_A[0]);
-                GL11.glTexCoord2f(0.0f, 1.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_B[0], _SIMPLE_BLOCK_A[1]);
-                GL11.glTexCoord2f(1.0f, 0.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_B[1], _SIMPLE_BLOCK_A[0]);
-                GL11.glTexCoord2f(1.0f, 1.0f);
-                GL11.glVertex2f(_SIMPLE_BLOCK_B[1], _SIMPLE_BLOCK_A[1]);
-                GL11.glEnd();
-            }
+            x = _SIMPLE_ICON_MIN_ANCHOR[0];
+            y = _SIMPLE_ICON_MIN_ANCHOR[0];
+            widthX = _SIMPLE_ICON_MIN_ANCHOR[1];
+            heightY = _SIMPLE_ICON_MIN_ANCHOR[2];
+        }
+        if (tex > 0) {
+            GL11.glColor4f(color[0], color[1], color[2], 1.0f);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, tex);
+            GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+            GL11.glTexCoord2f(0.0f, 0.0f);
+            GL11.glVertex2f(x, y);
+            GL11.glTexCoord2f(1.0f, 0.0f);
+            GL11.glVertex2f(widthX, y);
+            GL11.glTexCoord2f(0.0f, 1.0f);
+            GL11.glVertex2f(x, heightY);
+            GL11.glTexCoord2f(1.0f, 1.0f);
+            GL11.glVertex2f(widthX, heightY);
+            GL11.glEnd();
         }
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
     }

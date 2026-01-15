@@ -356,8 +356,8 @@ public final class BUtil_BaseConfigPanel implements CustomUIPanelPlugin {
         LabelAPI titleGlobal = maker.addPara(BoxConfigs.getString("BUtil_ConfigPanel_Global"), Misc.getButtonTextColor(), _ITEM_SPACE);
         titleGlobal.setAlignment(Alignment.MID);
         maker.addSpacer(_ITEM_SPACE * 2.0f);
-        for (byte i = 0; i < 4; i++) {
-            Item item = new Item(this, this.state[0], i == 3, (byte) 0, i);
+        for (byte i = 0; i < 3; i++) {
+            Item item = new Item(this, this.state[0], i == 2, (byte) 0, i);
             item.add("BUtil_ConfigPanel_Global_" + indexFill(i), maker, true, false);
             this._items.add(item);
         }
@@ -530,7 +530,7 @@ public final class BUtil_BaseConfigPanel implements CustomUIPanelPlugin {
 
                 this.state[2] = _TRACKBAR_NUM_SPACES;
             } else {
-                this._buttonEnabled = this._ID[0] == 0 && this._ID[1] == 3;
+                this._buttonEnabled = this._ID[0] == 0 && this._ID[1] == 2;
                 if (this._buttonEnabled) this._buttonEnabled = !KernelCore.isValid() || KernelCore.getAllCLDevice().size() < 2;
                 this._buttonEnabled = !this._buttonEnabled;
                 ButtonAPI buttonLeft = makerFixed.addButton("<", false, Misc.getButtonTextColor(), _BUTTON_COLOR_BG, Alignment.MID, CutStyle.ALL, _ITEM_BUTTON_WIDTH, _ITEM_BUTTON_HEIGHT, 0);

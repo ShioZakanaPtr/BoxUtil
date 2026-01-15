@@ -32,7 +32,7 @@ public class CurveEntity extends BaseMIRenderData {
     protected final static byte _NODE_LENGTH = 13;
     protected final int _curveID;
     protected final int _nodesVBO;
-    protected final boolean _isValid;
+    protected volatile boolean _isValid;
     // {vec2(loc), vec2(tangent left), vec2(tangent right), vec4(color), vec4(emissive), width}
     protected List<NodeData> nodeList = null;
     protected int _lastNodeLength = 0;
@@ -100,6 +100,7 @@ public class CurveEntity extends BaseMIRenderData {
 
     protected void _deleteExc() {
         super._deleteExc();
+        this._isValid = false;
         this._lastNodeLength = 0;
         this._lastNodeLengthReal = 0;
         if (this.nodeList != null) this.nodeList.clear();

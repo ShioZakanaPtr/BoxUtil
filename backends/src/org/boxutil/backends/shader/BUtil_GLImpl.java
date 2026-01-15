@@ -1059,7 +1059,7 @@ public final class BUtil_GLImpl {
         public static byte[] applyTexturedAreaLightPreFiltering(int src, int preFiltering, boolean shouldAllocate) {
             byte[] result = new byte[]{BoxEnum.STATE_SUCCESS, 0};
             final byte[] resultFailed = new byte[]{BoxEnum.STATE_SUCCESS, 0};
-            if (!ShaderCore.isAreaLightTexValid() || !BoxConfigs.isGLParallelSupported() || !BoxConfigs.isShaderEnable()) return resultFailed;
+            if (!ShaderCore.isAreaLightTexValid() || !BoxConfigs.isBaseGL43Supported() || !BoxConfigs.isShaderEnable()) return resultFailed;
             BaseShaderData program = ShaderCore.getAreaLightTex();
             final float divA = 1.0f / (BoxDatabase.isGLDeviceAMD() ? 8.0f : 4.0f), divB = 1.0f / 8.0f;
             final int[][] size = new int[7][2];
@@ -1145,7 +1145,7 @@ public final class BUtil_GLImpl {
 
         public static void applyBloom(boolean isMultiPassBloom, int emissiveMap, boolean withHighlightAdd, int highlightMap) {
             BaseShaderData program = ShaderCore.getBloomProgram();
-            if (program == null || !program.isValid() || !BoxConfigs.isGLParallelSupported() || !BoxConfigs.isShaderEnable()) return;
+            if (program == null || !program.isValid() || !BoxConfigs.isBaseGL43Supported() || !BoxConfigs.isShaderEnable()) return;
             BUtil_RenderingBuffer renderingBuffer = ShaderCore.getRenderingBuffer();
             if (renderingBuffer.getLayerCount() < 2) return;
             final float divA = 1.0f / (BoxDatabase.isGLDeviceAMD() ? 8.0f : 4.0f), divB = 1.0f / 8.0f;

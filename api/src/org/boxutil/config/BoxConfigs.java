@@ -33,9 +33,6 @@ public final class BoxConfigs {
     private static boolean BUtil_EnableShader = true;
     private static boolean BUtil_EnableShaderLocal = true;
     private static boolean BUtil_EnableShaderDisplay = true;
-    private static byte BUtil_ParallelType = BoxEnum.PARALLEL_GL;
-    private static byte BUtil_ParallelTypeLocal = BoxEnum.PARALLEL_GL;
-    private static byte BUtil_ParallelTypeDisplay = BoxEnum.PARALLEL_GL;
     private static boolean BUtil_EnableCL = false;
     private static boolean BUtil_EnableCLLocal = false;
     private static boolean BUtil_EnableCLDisplay = false;
@@ -68,7 +65,7 @@ public final class BoxConfigs {
     private static BaseShaderPacksContext BUtil_ShaderPacksContext = _BUtil_NotSelectedShadePacks;
 
     private static boolean BUtil_BaseGL42Supported = false;
-    private static boolean BUtil_GLParallelSupported = false;
+    private static boolean BUtil_BaseGL43Supported = false;
     private static boolean BUtil_GLDebugOutputSupported = false;
     private static boolean BUtil_TBOSupported = false;
     private static boolean BUtil_VAOSupported = false;
@@ -92,16 +89,10 @@ public final class BoxConfigs {
                         break;
                     }
                     case 1: {
-                        result += "01V";
-                        result += BUtil_ParallelType;
-                        result += BoxDatabase.NONE_LANG;
-                        break;
-                    }
-                    case 2: {
                         result = BUtil_EnableCL ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
                         break;
                     }
-                    case 3: {
+                    case 2: {
                         List<CLDevice> deviceList = KernelCore.getAllCLDevice();
                         result = (!deviceList.isEmpty() && KernelCore.isValid()) ? deviceList.get(Math.min(BUtil_CLDeviceDisplay, deviceList.size() - 1)).getInfoString(CL10.CL_DEVICE_NAME) : "NULL";
                         direct = true;
@@ -132,22 +123,14 @@ public final class BoxConfigs {
                     case 0: {
                         result = BUtil_EnableShaderDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
 
-                        valid = isBaseGL42Supported();
+                        valid = isBaseGL43Supported();
                         break;
                     }
                     case 1: {
-                        result += "01V";
-                        result += BUtil_ParallelTypeDisplay;
-                        result += BoxDatabase.NONE_LANG;
-
-                        if (BUtil_ParallelTypeDisplay == BoxEnum.PARALLEL_GL) valid = isGLParallelSupported();
-                        break;
-                    }
-                    case 2: {
                         result = BUtil_EnableCLDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
                         break;
                     }
-                    case 3: {
+                    case 2: {
                         List<CLDevice> deviceList = KernelCore.getAllCLDevice();
                         valid = !deviceList.isEmpty() && KernelCore.isValid();
                         result = valid ? deviceList.get(Math.min(BUtil_CLDeviceDisplay, deviceList.size() - 1)).getInfoString(CL10.CL_DEVICE_NAME) : "NULL";
@@ -209,13 +192,10 @@ public final class BoxConfigs {
                         break;
                     }
                     case 1: {
-                        BUtil_ParallelTypeDisplay = (BUtil_ParallelTypeDisplay == BoxEnum.PARALLEL_GL) ? BoxEnum.PARALLEL_JVM : BoxEnum.PARALLEL_GL;
-                    }
-                    case 2: {
                         BUtil_EnableCLDisplay = !BUtil_EnableCLDisplay;
                         break;
                     }
-                    case 3: {
+                    case 2: {
                         final short range = KernelCore.isValid() ? (short) KernelCore.getAllCLDevice().size() : 0;
                         if (range <= 1) {
                             BUtil_CLDeviceDisplay = 0;
@@ -283,7 +263,7 @@ public final class BoxConfigs {
         final ContextCapabilities cap = GLContext.getCapabilities();
         BUtil_BaseGL42Supported = cap.OpenGL42;
 //        BUtil_BaseGL42Supported = cap.OpenGL42 && cap.GL_ARB_texture_non_power_of_two && cap.GL_ARB_texture_buffer_object && cap.GL_ARB_uniform_buffer_object && cap.GL_ARB_shader_subroutine && cap.GL_ARB_texture_storage;
-        BUtil_GLParallelSupported = cap.OpenGL43;
+        BUtil_BaseGL43Supported = cap.OpenGL43;
 //        BUtil_GLParallelSupported = cap.OpenGL43 && cap.GL_ARB_compute_shader && cap.GL_ARB_shader_image_load_store && cap.GL_ARB_shader_storage_buffer_object;
         BUtil_GLDebugOutputSupported = cap.OpenGL43;
 //        BUtil_GLDebugOutputSupported = cap.OpenGL43 && cap.GL_KHR_debug;
@@ -303,8 +283,6 @@ public final class BoxConfigs {
         if (haveData) {
             BUtil_EnableShader = data.optBoolean("BUtil_EnableShader", true);
             BUtil_EnableShaderLocal = BUtil_EnableShader;
-            BUtil_ParallelType = (byte) data.optInt("BUtil_ParallelType", BoxEnum.PARALLEL_GL);
-            BUtil_ParallelTypeLocal = BUtil_ParallelType;
             BUtil_EnableCL = data.optBoolean("BUtil_EnableCL", false);
             BUtil_EnableCLLocal = BUtil_EnableCL;
             BUtil_CLDevice = (short) data.optInt("BUtil_CLDevice", 0);
@@ -366,14 +344,11 @@ public final class BoxConfigs {
     }
 
     public synchronized static void sysCheck() {
-        if (!ShaderCore.isValid() && !BUtil_InstanceDataMemoryPool.isNotSupported()) {
+        if (!ShaderCore.isValid() || BUtil_InstanceDataMemoryPool.isNotSupported()) {
             BUtil_EnableShader = false;
         }
         if (!KernelCore.isValid()) {
             BUtil_EnableCL = false;
-        }
-        if (isGLParallel() && !ShaderCore.isMatrixProgramValid()) {
-            BUtil_ParallelType = BoxEnum.PARALLEL_JVM;
         }
     }
 
@@ -393,7 +368,6 @@ public final class BoxConfigs {
 
     public synchronized static void setDefault() {
         BUtil_EnableShaderDisplay = true;
-        BUtil_ParallelTypeDisplay = BoxEnum.PARALLEL_GL;
         BUtil_EnableCLDisplay = false;
         BUtil_CLDeviceDisplay = 0;
 
@@ -409,7 +383,6 @@ public final class BoxConfigs {
     public synchronized static void load() {
         try {
             BUtil_EnableShaderDisplay = BUtil_EnableShaderLocal;
-            BUtil_ParallelTypeDisplay = BUtil_ParallelTypeLocal;
             BUtil_EnableCLDisplay = BUtil_EnableCLLocal;
             BUtil_CLDeviceDisplay = BUtil_CLDeviceLocal;
 
@@ -445,7 +418,6 @@ public final class BoxConfigs {
     public synchronized static void save() {
         try {
             data.put("BUtil_EnableShader", BUtil_EnableShaderDisplay);
-            data.put("BUtil_ParallelType", BUtil_ParallelTypeDisplay);
             data.put("BUtil_EnableCL", BUtil_EnableCLDisplay);
             data.put("BUtil_CLDevice", BUtil_CLDeviceDisplay);
 
@@ -467,12 +439,18 @@ public final class BoxConfigs {
         return configInit;
     }
 
+    @Deprecated
     public static boolean isBaseGL42Supported() {
         return BUtil_BaseGL42Supported;
     }
 
+    @Deprecated
     public static boolean isGLParallelSupported() {
-        return BUtil_GLParallelSupported;
+        return BUtil_BaseGL43Supported;
+    }
+
+    public static boolean isBaseGL43Supported() {
+        return BUtil_BaseGL43Supported;
     }
 
     public static boolean isGLDebugOutputSupported() {
@@ -519,12 +497,14 @@ public final class BoxConfigs {
         return BUtil_EnableDistortion;
     }
 
+    @Deprecated
     public static boolean isGLParallel() {
-        return BUtil_ParallelType == BoxEnum.PARALLEL_GL;
+        return true;
     }
 
+    @Deprecated
     public static boolean isJVMParallel() {
-        return BUtil_ParallelType == BoxEnum.PARALLEL_JVM;
+        return false;
     }
 
     public static String getLanguage() {
