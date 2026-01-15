@@ -95,7 +95,7 @@ v1.5.0 / 2026.01.15
         Color fetchInstanceColor(float, float, float, float);
 
     TextFieldEntity 新增方法：
-        int directDrawDetachedEnd();
+        int directDrawDetachedBegin();
         void directDrawDetachedProcess();
         void directDrawDetachedEnd(int);
 

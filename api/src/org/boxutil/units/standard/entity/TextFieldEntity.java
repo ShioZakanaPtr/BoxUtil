@@ -236,7 +236,7 @@ public class TextFieldEntity extends BaseRenderData {
      *
      * @return send to {@link TextFieldEntity#directDrawDetachedEnd(int)}
      */
-    public static int directDrawDetachedEnd() {
+    public static int directDrawDetachedBegin() {
         final var program = ShaderCore.getTextProgram();
         int fboNow = 0;
         if (program != null && program.isValid()) {
