@@ -204,6 +204,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
 
         final int refreshIndex = this.instanceRefreshIndex, refreshOffset = this.instanceRefreshOffset;
         final boolean mappingBuffer = this.mappingSubmit;
+        this._sync_lock.unlock();
 
         BUtil_ThreadResource.Logical.offerSubmitInstance(unused -> {
             if (this._memory.is_free()) return;
@@ -250,12 +251,10 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
             }
             else GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, refreshByteOffset, rawBuffer);
         });
-
-        this._sync_lock.unlock();
     }
 
     public void mallocInstance(InstanceType target, int dataNum) {
-        if (dataNum < 1) return;
+        if (dataNum < 1 || !BoxConfigs.isShaderEnable()) return;
         this.resetMemory(InstanceDataMemoryPool.malloc(target, dataNum));
     }
 
@@ -513,7 +512,10 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     public void setSharedInstanceData(InstanceRenderAPI renderData) {
         this._sync_lock.lock();
         final MemoryBlock renderDataMemory = renderData.getInstanceDataMemory();
-        if (this._memory == renderDataMemory || !renderData.haveValidInstanceData()) return;
+        if (!BoxConfigs.isShaderEnable() || this._memory == renderDataMemory || !renderData.haveValidInstanceData()) {
+            this._sync_lock.unlock();
+            return;
+        }
         if (this._memory != null) InstanceDataMemoryPool.free(this._memory);
         this._memory = InstanceDataMemoryPool.share(renderDataMemory);
         this._sync_lock.unlock();
