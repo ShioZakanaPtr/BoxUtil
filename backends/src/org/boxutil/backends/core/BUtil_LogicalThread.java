@@ -147,7 +147,7 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
     }
 
     private void preComputeInstance() {
-        if (BUtil_InstanceDataMemoryPool.isNotSupported()) return;
+        if (!BoxConfigs.isShaderEnable() || BUtil_InstanceDataMemoryPool.isNotSupported()) return;
         final var instanceType = this._isAux ? InstanceType.DYNAMIC_3D : InstanceType.DYNAMIC_2D;
         final long edge = BUtil_InstanceDataMemoryPool.getBufferEdge(instanceType);
         final int dataSize = instanceType.getSize();

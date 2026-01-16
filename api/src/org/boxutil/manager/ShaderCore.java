@@ -115,13 +115,13 @@ public final class ShaderCore {
             closeShader();
             return;
         }
-        if (!BoxConfigs.isBaseGL43Supported()) {
-            Global.getLogger(ShaderCore.class).warn("'BoxUtil' platform is not supported 'OpenGL4.3'.");
+        if (!BoxConfigs.isShaderEnable()) {
+            Global.getLogger(ShaderCore.class).warn("'BoxUtil' shader core has been disabled.");
             closeShader();
             return;
         }
-        if (!BoxConfigs.isShaderEnable()) {
-            Global.getLogger(ShaderCore.class).warn("'BoxUtil' shader core has been disabled.");
+        if (!BoxConfigs.isBaseGL43Supported()) {
+            Global.getLogger(ShaderCore.class).warn("'BoxUtil' platform is not supported 'OpenGL4.3'.");
             closeShader();
             return;
         }
@@ -263,11 +263,12 @@ public final class ShaderCore {
         _SHADER_PROGRAM[_AREA_LIGHT_PRE_FILTERING] = new ShaderProgram("BoxUtil-AreaLightTexPreFiltering", compAreaTex);
 
         initShaderPrograms();
+        initMatrixProgram();
         refreshRenderingBuffer();
         refreshDefaultVAO();
-        if (!isMainProgramValid() || !isRenderingFramebufferValid() || !isDefaultVAOValid()) {
+        if (!isMainProgramValid() || !isMatrixProgramValid() || !isRenderingFramebufferValid() || !isDefaultVAOValid()) {
             closeShader();
-            Global.getLogger(ShaderCore.class).error("'BoxUtil' base shader resource init failed, main program: " + isMainProgramValid() + ", rendering framebuffer: " + isRenderingFramebufferValid() + ", default VAO: " + isDefaultVAOValid() + ".");
+            Global.getLogger(ShaderCore.class).error("'BoxUtil' base shader resource init failed, main program: " + isMainProgramValid() + ", instance computing program: " + isMatrixProgramValid() + ", rendering framebuffer: " + isRenderingFramebufferValid() + ", default VAO: " + isDefaultVAOValid() + ".");
             return;
         }
         matrixUBO = GL15.glGenBuffers();
@@ -284,7 +285,6 @@ public final class ShaderCore {
         glValid = true;
 
         initDistortionProgram();
-        initMatrixProgram();
         initSDFGenProgram();
         initCompGaussianBlurProgram();
         initCompBilateralFilterProgram();

@@ -197,7 +197,7 @@
 		"BUtil_NotSelectedShaderPacks_Setting_DepthAADesc_zh_cn":"控制使用FXAA抗锯齿工作时是否仅使用深度信息作为采样源。\n使用深度信息时将仅为3D物体边缘进行抗锯齿。\n若关闭，即使用屏幕内容作为采样源，可作为原版抗锯齿的替代，但相对的还会轻微地柔和化整个画面。",
 		"BUtil_NotSelectedShaderPacks_Setting_DepthAADesc_en_us":"To controls whether FXAA sampling source from depth value only.\nOnly apply AA to edge of 3D objects when use depth value.\nSampling source will be the screen if turned off, which serves as an alternative to vanilla AA, but will slightly soften the screen by comparison.",
 
-        "BUtil_ThreadAlertMessage_zh_cn":"于 BoxUtil 后台线程中捕获到异常:\n%s\n\n更多信息请查阅log文件。\n该log文件位于 '游戏根目录'/starsector-core/starsector.log",
-        "BUtil_ThreadAlertMessage_en_us":"Exception caught at BoxUtil background thread:\n%s\n\nCheck the log file for more info.\nThe log file path 'gameroot'/starsector-core/starsector.log"
+        "BUtil_ThreadAlertMessage_zh_cn":"于 BoxUtil 后台线程中捕获到异常:\n%s\n\n更多信息请查阅log文件。\n该log文件位于 '游戏根目录'/starsector-core/starsector.log\n建议将该文件以附件的形式，发送给相关作者以便解决问题。",
+        "BUtil_ThreadAlertMessage_en_us":"Exception caught at BoxUtil background thread:\n%s\n\nCheck the log file for more info.\nThe log file path 'gameroot'/starsector-core/starsector.log\nRecommend that you send the log file as an attachment to the relevant authors, for help they resolve the issue."
 	}
 }
