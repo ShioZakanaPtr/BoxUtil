@@ -2,7 +2,7 @@
 	"id":"BoxUtil",
 	"name":"BoxUtil",
 	"utility": "true",
-	"version":{"major":1, "minor":5, "patch":2},
+	"version":{"major":1, "minor":5, "patch":3},
 	"author":"ShioZakana",
 	"description":"侧重使用GPU的简单图形渲染器，并使用为之实现了简单易懂的调用方法。提供导入并渲染\"WaveFrontOBJ格式\"三维模型文件的功能，以及其他优化的渲染方式或实用方法。本身不添加实质性游戏内容，是一个方便开发者进行创作的Lib性质Mod。\n附带3个测试模型与13个基础的平面或立体模型供使用。\n\n\n本Mod首发于远行星号中文论坛(fossic.org)，于其他非通常渠道(包括但不限于整合包)获取的该mod而引发的问题请自行解决。",
 	"gameVersion":"0.98a-RC8",
