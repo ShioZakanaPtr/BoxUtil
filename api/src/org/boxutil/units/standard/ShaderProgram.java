@@ -6,7 +6,73 @@ import org.boxutil.util.ShaderUtil;
 
 import java.util.HashMap;
 
-// For
+/**
+ * For example how use it:
+ * <pre>
+ * {@code
+ * // program init
+ * final String vertSrc, fragSrc;
+ * final var program = new ShaderProgram("YourShaderProgramTag-TheCommonDraw", vertSrc, fragSrc);
+ * if (program.isValid()) {
+ *     // If have uniform
+ *     program.initUniformSize(2)
+ *             .beginUniform()
+ *             .loadUniformIndex("u00")
+ *             .loadUniformIndex("u01")
+ *
+ *             // if have UBO
+ *             .initUniformBlockSize(1)
+ *             .beginUniformBlock()
+ *             .loadAndSetUniformBlockIndex("BUtilGlobalData", ShaderCore.getMatrixUBOBinding())
+ *
+ *             // if have subroutine
+ *             .initSubroutineSize(5, 2)
+ *             .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
+ *             .loadSubroutineIndex("funA_v00") // of "funA_vu"
+ *             .loadSubroutineIndex("funA_v01") // of "funA_vu"
+ *             .loadSubroutineIndex("funA_v02") // of "funA_vu"
+ *             .loadSubroutineIndex("funB_v00") // of "funB_vu"
+ *             .loadSubroutineIndex("funB_v01") // of "funB_vu"
+ *             .beginSubroutine(1, GL20.GL_FRAGMENT_SHADER)
+ *             .loadSubroutineIndex("fun_f00")
+ *             .loadSubroutineIndex("fun_f01")
+ *
+ *             .initSubroutineUniformSize(2, 1)
+ *             .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
+ *             .loadSubroutineUniformIndex("funA_vu") // index 0
+ *             .loadSubroutineUniformIndex("funB_vu") // index 1
+ *             .beginSubroutineUniform(1, GL20.GL_FRAGMENT_SHADER)
+ *             .loadSubroutineUniformIndex("fun_fu")
+ *             .computeSubroutineUniformRoute();
+ * }
+ *
+ *
+ *
+ * // When running
+ * // set uniform
+ * GL20.glUniform1i(program.uniform("u00"), 2); // put 2 to "u00" that use GL13.GL_TEXTURE2, if "u00" is a 'sampler2D' type uniform
+ * //GL20.glUniform1i(program.location[0], 2); // or use index
+ * final int texID;
+ * program.bindTexture2D(2, texID); // bind to "u00"
+ *
+ * GL20.glUniform2f(program.uniform("u01"), 1.0f, 0.0f); // put vec2(1.0f, 0.0f) to "u01", if "u01" is a 'vec2' type uniform
+ * //GL20.glUniform2f(program.location[1], 1.0f, 0.0f); // or use index
+ *
+ *
+ * // put "funA_v00" to "funA_vu" and put "funB_v00" to "funB_vu"
+ * final int[] vertexSub = new int[2];
+ * vertexSub[0] = program.subroutine(0, "funA_v00"); // "funA_vu" at index-0
+ * //vertexSub[0] = program.subroutineLocation[0][0]; // or use index
+ * vertexSub[1] = program.subroutine(0, "funB_v00"); // "funB_vu" at index-1
+ * //vertexSub[1] = program.subroutineLocation[0][3]; // or use index
+ * program.putUniformSubroutines(GL20.GL_VERTEX_SHADER, 0, vertexSub);
+ *
+ *
+ * // put "fun_f00" to "fun_fu"
+ * program.putUniformSubroutine(GL20.GL_VERTEX_SHADER, 1, 0);
+ * }
+ * </pre>
+ */
 public class ShaderProgram extends BaseShaderData {
     protected final HashMap<String, Integer> uniformMap = new HashMap<>(8);
     protected final HashMap<String, Integer> uniformBlockMap = new HashMap<>(4);
