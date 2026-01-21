@@ -3,6 +3,7 @@ package org.boxutil;
 import com.fs.starfarer.Version;
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.ModSpecAPI;
 import org.boxutil.backends.core.BUtil_CampaignEFS;
 import org.boxutil.backends.core.BUtil_ThreadResource;
 import org.boxutil.config.BoxConfigGUI;
@@ -17,7 +18,7 @@ import org.boxutil.manager.*;
  * <blockquote>For how to use <strong>BoxUtil</strong> as lib: <a href="https://www.fossic.org/thread-15746-1-1.html">This Website</a></blockquote>
  * @since 2024.08.18
  * @author ShioZakana
- * @version 2026.01.16 - 1.5.2
+ * @version 2026.01.21 - 1.5.3
  */
 public final class BoxUtilModPlugin extends BaseModPlugin {
     private static final String _ADAPTATION_VERSION = "0.98";
@@ -28,7 +29,9 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
      */
     public synchronized static void initPre() {
         if (isPreInitialized) return;
-        Global.getSettings().getModManager().getModSpec(BoxDatabase.MOD_ID).setSortString("\t\t\t\t\tBoxUtil");
+        final var modSpec = Global.getSettings().getModManager().getModSpec(BoxDatabase.MOD_ID);
+        modSpec.setSortString("\t\t\t\t\tBoxUtil");
+        Global.getLogger(BoxUtilModPlugin.class).info("BoxUtil' version '" + modSpec.getVersionInfo().getString() + "' pre-initializing...");
         BoxDatabase.initGLState();
         BoxConfigs.init();
         ShaderCore.initScreenSize();

@@ -1136,7 +1136,7 @@ public final class RenderingUtil {
                     entity.setFlick(true);
                     entity.setFlickWhenPaused(false);
                     if (isSharp) entity.setSharpDisc(); else entity.setSmoothDisc();
-                    entity.setGlowPower(0.25f);
+                    entity.setGlowPower(1.0f);
                     entity.setAdditiveBlend();
                     entity.autoAspect();
                     entity.setLayer(defaultFXLayer(isCampaign));

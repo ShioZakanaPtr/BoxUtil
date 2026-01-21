@@ -271,21 +271,20 @@ subroutine(uvMappingState) void commonUV(out vec2 uvStartP, out vec2 uvEndP) {
 
 subroutine(uvMappingState) void tileUV(out vec2 uvStartP, out vec2 uvEndP) {
 	float tileX = mod(statePackage[TILE_STATE].z, statePackage[TILE_STATE].x);
-	float tileY = ceil((statePackage[TILE_STATE].z - tileX) / statePackage[TILE_STATE].y);
+	float tileY = ceil((statePackage[TILE_STATE].z - tileX) / statePackage[TILE_STATE].x);
 	vec2 tileSizeVec = 1.0 / statePackage[TILE_STATE].xy * (statePackage[UV_START_END].zw - statePackage[UV_START_END].xy);
 	uvStartP = tileSizeVec * vec2(tileX, tileY) + statePackage[UV_START_END].xy;
 	uvEndP = uvStartP + tileSizeVec;
 }
 
 subroutine(uvMappingState) void tileRUV(out vec2 uvStartP, out vec2 uvEndP) {
-	vec4 tileState = statePackage[TILE_STATE];
 	vec2 seed = vec2(statePackage[ENTITY_STATE].x, 0.0);
-	if (tileState.w > 0.0) seed.y = float(gl_InstanceID << 1 + 7);
-	float finalIndex = round(hash12(seed) * statePackage[ENTITY_STATE].y) + tileState.z;
+	if (statePackage[TILE_STATE].w > 0.0) seed.y = float(gl_InstanceID << 1 + 7);
+	float finalIndex = round(hash12(seed) * statePackage[ENTITY_STATE].y) + statePackage[TILE_STATE].z;
 	if (finalIndex >= statePackage[ENTITY_STATE].y) finalIndex -= statePackage[ENTITY_STATE].y;
-	float tileX = mod(finalIndex, tileState.x);
-	float tileY = ceil((finalIndex - tileX) / tileState.y);
-	vec2 tileSizeVec = 1.0 / tileState.xy * (statePackage[UV_START_END].zw - statePackage[UV_START_END].xy);
+	float tileX = mod(finalIndex, statePackage[TILE_STATE].x);
+	float tileY = round((finalIndex - tileX) / statePackage[TILE_STATE].x);
+	vec2 tileSizeVec = 1.0 / statePackage[TILE_STATE].xy * (statePackage[UV_START_END].zw - statePackage[UV_START_END].xy);
 	uvStartP = tileSizeVec * vec2(tileX, tileY) + statePackage[UV_START_END].xy;
 	uvEndP = uvStartP + tileSizeVec;
 }

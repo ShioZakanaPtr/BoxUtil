@@ -6,6 +6,7 @@ import org.boxutil.util.ShaderUtil;
 
 import java.util.HashMap;
 
+// For
 public class ShaderProgram extends BaseShaderData {
     protected final HashMap<String, Integer> uniformMap = new HashMap<>(8);
     protected final HashMap<String, Integer> uniformBlockMap = new HashMap<>(4);
