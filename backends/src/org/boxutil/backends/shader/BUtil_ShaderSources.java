@@ -271,7 +271,7 @@ subroutine(uvMappingState) void commonUV(out vec2 uvStartP, out vec2 uvEndP) {
 
 subroutine(uvMappingState) void tileUV(out vec2 uvStartP, out vec2 uvEndP) {
 	float tileX = mod(statePackage[TILE_STATE].z, statePackage[TILE_STATE].x);
-	float tileY = ceil((statePackage[TILE_STATE].z - tileX) / statePackage[TILE_STATE].x);
+	float tileY = round((statePackage[TILE_STATE].z - tileX) / statePackage[TILE_STATE].x);
 	vec2 tileSizeVec = 1.0 / statePackage[TILE_STATE].xy * (statePackage[UV_START_END].zw - statePackage[UV_START_END].xy);
 	uvStartP = tileSizeVec * vec2(tileX, tileY) + statePackage[UV_START_END].xy;
 	uvEndP = uvStartP + tileSizeVec;
