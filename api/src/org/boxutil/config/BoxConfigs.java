@@ -260,16 +260,16 @@ public final class BoxConfigs {
      */
     public static void init() {
         if (configInit) return;
-        final ContextCapabilities cap = GLContext.getCapabilities();
-        BUtil_BaseGL42Supported = cap.OpenGL42;
+        final var cap = BoxDatabase.getGLState();
+        BUtil_BaseGL42Supported = cap.GL_GL42;
 //        BUtil_BaseGL42Supported = cap.OpenGL42 && cap.GL_ARB_texture_non_power_of_two && cap.GL_ARB_texture_buffer_object && cap.GL_ARB_uniform_buffer_object && cap.GL_ARB_shader_subroutine && cap.GL_ARB_texture_storage;
-        BUtil_BaseGL43Supported = cap.OpenGL43;
+        BUtil_BaseGL43Supported = cap.BOXUTIL_VALID;
 //        BUtil_GLParallelSupported = cap.OpenGL43 && cap.GL_ARB_compute_shader && cap.GL_ARB_shader_image_load_store && cap.GL_ARB_shader_storage_buffer_object;
-        BUtil_GLDebugOutputSupported = cap.OpenGL43;
+        BUtil_GLDebugOutputSupported = cap.GL_GL43;
 //        BUtil_GLDebugOutputSupported = cap.OpenGL43 && cap.GL_KHR_debug;
-        BUtil_TBOSupported = cap.OpenGL31;
+        BUtil_TBOSupported = cap.GL_TBO;
 //        BUtil_TBOSupported = cap.OpenGL31 && cap.GL_ARB_texture_buffer_object;
-        BUtil_VAOSupported = cap.OpenGL30;
+        BUtil_VAOSupported = cap.GL_GL30;
 //        BUtil_VAOSupported = cap.OpenGL30 && cap.GL_ARB_vertex_array_object && cap.GL_ARB_vertex_buffer_object;
         boolean haveData = true;
         try {

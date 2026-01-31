@@ -190,10 +190,12 @@ public final class BUtil_InstanceDataMemoryPool {
     }
 
     public static void init() {
-        if (_INIT || !BoxDatabase.getGLState().GL_SSBO || BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS < 8L) return;
+        if (_INIT) return;
+        _INIT = true;
+
+        if (!BoxDatabase.getGLState().BOXUTIL_VALID || BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS < 8L) return;
         _IMMUTABLE = BoxDatabase.getGLState().GL_GL44;
         _INVALID = false;
-        _INIT = true;
     }
 
     public static boolean isNotSupported() {

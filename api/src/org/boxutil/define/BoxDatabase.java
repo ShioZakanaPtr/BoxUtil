@@ -155,6 +155,7 @@ public final class BoxDatabase {
         public final int GL_MAX_WORK_ITEMS; // Local total, x * y * z
 
         public final int DEVICE_MAX_INSTANCE_DATA_SIZE;
+        public final boolean BOXUTIL_VALID;
 
         public GLState() {
             final ContextCapabilities cap = GLContext.getCapabilities();
@@ -229,6 +230,7 @@ public final class BoxDatabase {
             for (InstanceType type : InstanceType.values()) maxInstanceDataSize = Math.max(maxInstanceDataSize, type.getSize());
             if (maxInstanceDataSize < 1) maxInstanceDataSize = 1;
             this.DEVICE_MAX_INSTANCE_DATA_SIZE = Math.min(Integer.MAX_VALUE / maxInstanceDataSize, Math.toIntExact(MAX_SHADER_STORAGE_BLOCK_SIZE / maxInstanceDataSize));
+            this.BOXUTIL_VALID = this.GL_GL43 && this.GL_GL42 && cap.OpenGL41 && cap.OpenGL40 && cap.OpenGL32 && cap.OpenGL31 && cap.OpenGL30 && cap.OpenGL20;
         }
 
         public String getPrintInfo() {
@@ -286,7 +288,8 @@ public final class BoxDatabase {
                     + "\nGL_MAX_LOCAL_SIZE_Z: " + this.GL_MAX_LOCAL_SIZE_Z
                     + "\nGL_MAX_WORK_ITEMS: " + this.GL_MAX_WORK_ITEMS + '\n'
 
-                    + "\nMAX_INSTANCE_DATA_TEX_SIZE: " + this.DEVICE_MAX_INSTANCE_DATA_SIZE;
+                    + "\nMAX_INSTANCE_DATA_TEX_SIZE: " + this.DEVICE_MAX_INSTANCE_DATA_SIZE
+                    + "\nBOXUTIL_VALID: " + this.BOXUTIL_VALID;
         }
 
         public void print() {
