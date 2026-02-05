@@ -197,8 +197,8 @@ public class Instance2Data implements InstanceDataAPI {
         return new Vector2f(this.scale[0], this.scale[1]);
     }
 
-    public void setScale(@NotNull Vector2f rotate) {
-        this.setScale(rotate.x, rotate.y);
+    public void setScale(@NotNull Vector2f factor) {
+        this.setScale(factor.x, factor.y);
     }
 
     public void setScale(float x, float y) {
@@ -259,8 +259,8 @@ public class Instance2Data implements InstanceDataAPI {
         return new Vector2f(this.scaleRate[0], this.scaleRate[1]);
     }
 
-    public void setScaleRate(@NotNull Vector2f rotate) {
-        this.setScaleRate(rotate.x, rotate.y);
+    public void setScaleRate(@NotNull Vector2f factor) {
+        this.setScaleRate(factor.x, factor.y);
     }
 
     public void setScaleRate(float x, float y) {

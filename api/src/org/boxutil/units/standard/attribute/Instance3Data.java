@@ -241,8 +241,8 @@ public class Instance3Data implements InstanceDataAPI {
         return new Vector3f(this.scale[0], this.scale[1], this.scale[2]);
     }
 
-    public void setScale(@NotNull Vector3f rotate) {
-        this.setScale(rotate.x, rotate.y, rotate.z);
+    public void setScale(@NotNull Vector3f factor) {
+        this.setScale(factor.x, factor.y, factor.z);
     }
 
     public void setScale(float x, float y, float z) {
@@ -342,8 +342,8 @@ public class Instance3Data implements InstanceDataAPI {
         return new Vector3f(this.scaleRate[0], this.scaleRate[1], this.scaleRate[2]);
     }
 
-    public void setScaleRate(@NotNull Vector3f rotate) {
-        this.setScaleRate(rotate.x, rotate.y, rotate.z);
+    public void setScaleRate(@NotNull Vector3f factor) {
+        this.setScaleRate(factor.x, factor.y, factor.z);
     }
 
     public void setScaleRate(float x, float y, float z) {
