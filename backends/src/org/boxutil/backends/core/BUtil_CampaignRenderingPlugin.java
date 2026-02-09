@@ -85,7 +85,7 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
             BUtil_GLImpl.IlluminationRender.processResultPass(viewport, true, context);
 
             notMultiPass &= BoxConfigs.isMultiPassBeauty() || BoxConfigs.isMultiPassColor();
-            GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
+            if (notMultiPass) GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
             BUtil_GLImpl.MeshRender.processDistortionEntity(BoxConfigs.isDistortionEnable() && notMultiPass, BUtil_ThreadResource._CAMPAIGN_DIRECT_MAP.get(DirectEntityType.DISTORTION), viewport);
 
             if (BoxConfigs.isMultiPassBeauty()) context.applyPostEffectPass(viewport, true);
