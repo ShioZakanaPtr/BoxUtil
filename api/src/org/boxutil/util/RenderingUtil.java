@@ -1185,7 +1185,7 @@ public final class RenderingUtil {
         }
 
         /**
-         * All inner parameter was <code>1.0f</code>, and <code>0.0f</code> power for in and out.
+         * All inner parameter was <code>1.0f</code>, and <code>0.0f</code> power for in and out stage.
          *
          * @param maximumDurationTime Required, the total value about <code>fadeIn + full + fadeOut</code> time.
          *
