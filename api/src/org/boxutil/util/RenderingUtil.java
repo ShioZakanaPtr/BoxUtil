@@ -1097,8 +1097,33 @@ public final class RenderingUtil {
 
     public final static class SpecialFX {
         public final static class Controllers {
+            public static SimpleParticleControlData getDefaultDistortion(final boolean isCampaign) {
+                final var key = "BUtil_SpecialFX_getDefaultDistortion";
+
+                final var lock = getControllerLock(isCampaign, key);
+                lock.lock();
+                var controller = getControllerFromMap(isCampaign, key);
+
+                if (controller == null || controller.isEntityExpired()) {
+                    controller = new SimpleParticleControlData(8192, 6.4f, -5120.0f, false);
+
+                    DistortionEntity entity = new DistortionEntity();
+                    entity.setPowerIn(0.0f);
+                    entity.setPowerFull(1.0f);
+                    entity.setPowerOut(0.0f);
+                    entity.setInnerIn(1.0f, 1.0f);
+                    entity.setInnerFull(1.0f, 1.0f);
+                    entity.setInnerOut(1.0f, 1.0f);
+                    entity.setControlData(controller);
+
+                    putControllerFromMap(isCampaign, entity, key, controller);
+                }
+                lock.unlock();
+                return controller;
+            }
+
             public static SimpleParticleControlData getImpactDistortion(final boolean isCampaign) {
-                final var key = "BUtil_SpecialFX_addDistortion";
+                final var key = "BUtil_SpecialFX_addImpactDistortion";
 
                 final var lock = getControllerLock(isCampaign, key);
                 lock.lock();
@@ -1157,6 +1182,19 @@ public final class RenderingUtil {
             }
             
             private Controllers() {}
+        }
+
+        /**
+         * All inner parameter was <code>1.0f</code>, and <code>0.0f</code> power for in and out.
+         *
+         * @param maximumDurationTime Required, the total value about <code>fadeIn + full + fadeOut</code> time.
+         *
+         * @return <code>null</code> when failed, and don't store it, just setting the parameter it when get it.
+         */
+        public static @Nullable Instance2Data addDefaultDistortion(boolean isCampaign, float maximumDurationTime) {
+            final var controller = Controllers.getDefaultDistortion(isCampaign);
+            controller.refreshRemainingTimeToReset(Math.max(maximumDurationTime, 0.0f));
+            return controller.addParticle();
         }
 
         /**

@@ -6,6 +6,9 @@
 v1.5.4 / 2026.02.11
     部分OpenGL问题的修复
 
+    RenderingUtil.SpecialFX 新增方法：
+        addDefaultDistortion(boolean, float);
+
 v1.5.3 / 2026.01.21
     修复 SpriteEntity 用作帧动画播放时帧索引切分不正确的问题
     RenderingUtil.SpecialFX 中Flare的泛光强度更改至最大
