@@ -18,7 +18,7 @@ import org.boxutil.manager.*;
  * <blockquote>For how to use <strong>BoxUtil</strong> as lib: <a href="https://www.fossic.org/thread-15746-1-1.html">This Website</a></blockquote>
  * @since 2024.08.18
  * @author ShioZakana
- * @version 2026.01.21 - 1.5.3
+ * @version 2026.02.11 - 1.5.4
  */
 public final class BoxUtilModPlugin extends BaseModPlugin {
     private static final String _ADAPTATION_VERSION = "0.98";

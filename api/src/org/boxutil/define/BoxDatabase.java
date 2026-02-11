@@ -198,7 +198,7 @@ public final class BoxDatabase {
 //            this.GL_TEXTURE_STORAGE = cap.GL_ARB_texture_storage && cap.OpenGL42;
             this.GL_CL_EVENT = cap.GL_ARB_cl_event;
             this.GL_SYNC = cap.GL_ARB_sync && cap.OpenGL32;
-            this.GL_CORE_SYNC = cap.OpenGL32;
+            this.GL_CORE_SYNC = cap.OpenGL32; // wtf some gpu got ture but with nullptr func
             this.ARB_shading_language_include = cap.GL_ARB_shading_language_include;
 
             this.MAX_TEXTURE_BUFFER_SIZE = cap.OpenGL31 ? GL11.glGetInteger(GL31.GL_MAX_TEXTURE_BUFFER_SIZE) : 0;
@@ -230,7 +230,7 @@ public final class BoxDatabase {
             for (InstanceType type : InstanceType.values()) maxInstanceDataSize = Math.max(maxInstanceDataSize, type.getSize());
             if (maxInstanceDataSize < 1) maxInstanceDataSize = 1;
             this.DEVICE_MAX_INSTANCE_DATA_SIZE = Math.min(Integer.MAX_VALUE / maxInstanceDataSize, Math.toIntExact(MAX_SHADER_STORAGE_BLOCK_SIZE / maxInstanceDataSize));
-            this.BOXUTIL_VALID = this.GL_GL43 && this.GL_GL42 && cap.OpenGL41 && cap.OpenGL40 && cap.OpenGL32 && cap.OpenGL31 && cap.OpenGL30 && cap.OpenGL20;
+            this.BOXUTIL_VALID = this.GL_GL43 && this.GL_GL42 && cap.OpenGL41 && cap.OpenGL40 && cap.OpenGL33 && cap.OpenGL32 && cap.OpenGL31 && cap.OpenGL30 && cap.OpenGL21 && cap.OpenGL20 && cap.OpenGL15 && cap.OpenGL14 && cap.OpenGL13 && cap.OpenGL12 && cap.OpenGL11;
         }
 
         public String getPrintInfo() {

@@ -11,7 +11,7 @@
 			"BUtil_MID":"graphics/textures/BUtil_MID.png",
 			"BUtil_COMPLEX_DEF":"graphics/textures/BUtil_COMPLEX_DEF.png",
 			"BUtil_X":"graphics/textures/BUtil_X.png",
-			"BUtil_Z":"graphics/textures/BUtil_Z.png",
+			"BUtil_Z":"graphics/textures/BUtil_Z.png"
 		},
 		"icons": {
 			"BUtil_ModIcon": "graphics/icons/BUtil_ModIcon.png",
@@ -33,7 +33,7 @@
             "BUtil_smoothParticle": "graphics/fx/particlealpha32sq.png",
             "BUtil_hitParticle": "graphics/fx/hit_glow.png",
             "BUtil_negativeParticle": "graphics/fx/particlealpha64linear.png",
-            "BUtil_smoke": "graphics/fx/smoke32.png",
+            "BUtil_smoke": "graphics/fx/smoke32.png"
         }
 	},
 	"designTypeColors":{

@@ -207,7 +207,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         this._sync_lock.unlock();
 
         BUtil_ThreadResource.Logical.offerSubmitInstance(unused -> {
-            if (this._memory.is_free()) return;
+            if (this._memory == null || this._memory.is_free()) return;
             final boolean isFixed = this._memory.is_type_fixed();
             final var type = this._memory.type();
             final var _lock = BUtil_InstanceDataMemoryPool.getGPULock(type);

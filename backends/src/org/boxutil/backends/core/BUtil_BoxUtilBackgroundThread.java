@@ -2,16 +2,13 @@ package org.boxutil.backends.core;
 
 import com.fs.starfarer.api.Global;
 import org.apache.log4j.Logger;
-import org.boxutil.define.BoxDatabase;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.LWJGLException;
-import org.lwjgl.Sys;
 import org.lwjgl.opengl.*;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public final class BUtil_BoxUtilBackgroundThread {
     private final static ExecutorService __POOL = Executors.newFixedThreadPool(3, r -> {
@@ -19,57 +16,67 @@ public final class BUtil_BoxUtilBackgroundThread {
         thread.setDaemon(true);
         return thread;
     });
-    private static BUtil_RenderingThread __RENDERING_THREAD = null;
-    private static BUtil_LogicalThread __LOGICAL_THREAD = null;
-    private static BUtil_LogicalThread __LOGICAL_AUX_THREAD = null;
+    private static BUtil_RenderingThread __RENDERING_THREAD_RB = null;
+    private static BUtil_LogicalThread __LOGICAL_THREAD_RB = null;
+    private static BUtil_LogicalThread __LOGICAL_AUX_THREAD_RB = null;
 
     private static boolean _INIT = false;
     private static boolean _VALID = false;
+
+    private static Thread RENDERING_THREAD = null;
+    private static Thread LOGICAL_THREAD = null;
+    private static Thread LOGICAL_AUX_THREAD = null;
 
     public static boolean initWithFailedCheck() {
         if (_INIT) return _VALID;
         _INIT = true;
 
+        // rendering
         {
             try {
-                __RENDERING_THREAD = new BUtil_RenderingThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()));
-                __POOL.execute(__RENDERING_THREAD);
-                __RENDERING_THREAD._INIT_SYNC.await();
-                __RENDERING_THREAD._INIT_SYNC = null;
+                __RENDERING_THREAD_RB = new BUtil_RenderingThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()));
+                __POOL.execute(__RENDERING_THREAD_RB);
+                __RENDERING_THREAD_RB._INIT_SYNC.await();
+                __RENDERING_THREAD_RB._INIT_SYNC = null;
+                RENDERING_THREAD = __RENDERING_THREAD_RB._CURR_THREAD;
             } catch (Exception e) {
                 if (e instanceof LWJGLException lwjglException)
                     CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' rendering additional thread failed: ", lwjglException);
             }
-            _VALID |= __RENDERING_THREAD._FAILED.get();
-            __RENDERING_THREAD.clearTmpSync();
+            _VALID |= __RENDERING_THREAD_RB._FAILED.get();
+            __RENDERING_THREAD_RB.clearTmpSync();
         }
 
+        // logical
         {
             try {
-                __LOGICAL_THREAD = new BUtil_LogicalThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), false);
-                __POOL.execute(__LOGICAL_THREAD);
-                __LOGICAL_THREAD._INIT_SYNC.await();
-                __LOGICAL_THREAD._INIT_SYNC = null;
+                __LOGICAL_THREAD_RB = new BUtil_LogicalThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), false);
+                __POOL.execute(__LOGICAL_THREAD_RB);
+                __LOGICAL_THREAD_RB._INIT_SYNC.await();
+                __LOGICAL_THREAD_RB._INIT_SYNC = null;
+                LOGICAL_THREAD = __LOGICAL_THREAD_RB._CURR_THREAD;
             } catch (Exception e) {
                 if (e instanceof LWJGLException lwjglException)
                     CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' logical additional thread failed: ", lwjglException);
             }
-            _VALID |= __LOGICAL_THREAD._FAILED.get();
-            __LOGICAL_THREAD.clearTmpSync();
+            _VALID |= __LOGICAL_THREAD_RB._FAILED.get();
+            __LOGICAL_THREAD_RB.clearTmpSync();
         }
 
+        // logical aux
         {
             try {
-                __LOGICAL_AUX_THREAD = new BUtil_LogicalThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), true);
-                __POOL.execute(__LOGICAL_AUX_THREAD);
-                __LOGICAL_AUX_THREAD._INIT_SYNC.await();
-                __LOGICAL_AUX_THREAD._INIT_SYNC = null;
+                __LOGICAL_AUX_THREAD_RB = new BUtil_LogicalThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), true);
+                __POOL.execute(__LOGICAL_AUX_THREAD_RB);
+                __LOGICAL_AUX_THREAD_RB._INIT_SYNC.await();
+                __LOGICAL_AUX_THREAD_RB._INIT_SYNC = null;
+                LOGICAL_AUX_THREAD = __LOGICAL_AUX_THREAD_RB._CURR_THREAD;
             } catch (Exception e) {
                 if (e instanceof LWJGLException lwjglException)
                     CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' logical-aux additional thread failed: ", lwjglException);
             }
-            _VALID |= __LOGICAL_AUX_THREAD._FAILED.get();
-            __LOGICAL_AUX_THREAD.clearTmpSync();
+            _VALID |= __LOGICAL_AUX_THREAD_RB._FAILED.get();
+            __LOGICAL_AUX_THREAD_RB.clearTmpSync();
         }
         return _VALID;
     }
@@ -81,6 +88,8 @@ public final class BUtil_BoxUtilBackgroundThread {
         protected final Thread _HOST_THREAD;
         protected final Drawable _DRAWABLE;
         protected final Logger _LOG;
+
+        protected Thread _CURR_THREAD = null;
 
         _ThreadTemplate(final Thread hostThread, final Drawable sharedDrawable) {
             this._HOST_THREAD = hostThread;
@@ -122,13 +131,13 @@ public final class BUtil_BoxUtilBackgroundThread {
         protected abstract void runBody();
 
         public void run() {
-            final var currentThread = Thread.currentThread();
-            currentThread.setName(currentThread.getName() + "-AS-" + this.getClass().getSimpleName());
+            this._CURR_THREAD = Thread.currentThread();
+            this._CURR_THREAD.setName(this._CURR_THREAD.getName() + "-AS-" + this.getClass().getSimpleName());
             this.glInit();
             if (this._FAILED.get()) this.destroyDrawable(); else this.logicalInit();
             this._LOG.info("'BoxUtil' additional thread running.");
 
-            try { while (!currentThread.isInterrupted()) {
+            try { while (!this._CURR_THREAD.isInterrupted()) {
                 if (this._HOST_THREAD == null || !this._HOST_THREAD.isAlive()) break;
                 this.runBody();
             }} catch (Throwable e) {
@@ -143,5 +152,17 @@ public final class BUtil_BoxUtilBackgroundThread {
             this.logicalDestroy();
             this._LOG.info("'BoxUtil' additional thread destroy.");
         }
+    }
+
+    public static Thread getRenderingThread() {
+        return RENDERING_THREAD;
+    }
+
+    public static Thread getLogicalThread() {
+        return LOGICAL_THREAD;
+    }
+
+    public static Thread getLogicalAuxThread() {
+        return LOGICAL_AUX_THREAD;
     }
 }
