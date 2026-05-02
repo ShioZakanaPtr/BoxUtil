@@ -939,7 +939,9 @@ public final class ShaderCore {
         _SHADER_PROGRAM[_DIRECT].active();
         GL20.glUniform1f(_SHADER_PROGRAM[_DIRECT].location[0], 1.0f);
         _SHADER_PROGRAM[_DIRECT].bindTexture2D(0, texture);
+        defaultQuadObject.glBind();
         defaultQuadObject.glDraw();
+        defaultQuadObject.glReleaseBind();
         _SHADER_PROGRAM[_DIRECT].close();
         return true;
     }
@@ -1251,8 +1253,7 @@ public final class ShaderCore {
     }
 
     public static PublicFBO tryPublicFBO() {
-        if (publicFBO == null) refreshPublicFBO();
-        else if (!publicFBO.isFinished()) refreshPublicFBO();
+        if (publicFBO == null || !publicFBO.isFinished()) refreshPublicFBO();
         return publicFBO;
     }
 

@@ -14,8 +14,8 @@ public class LinearLight extends BaseIlluminantData {
     protected final float[] state = new float[]{64.0f, 1.0f}; // length, radius
     protected boolean endCaps = false;
 
-    public void reset() {
-        super.reset();
+    protected void _resetExc() {
+        super._resetExc();
         this.state[0] = 64.0f;
         this.state[1] = 1.0f;
         this.endCaps = false;

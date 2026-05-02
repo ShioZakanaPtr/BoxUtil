@@ -65,7 +65,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
 
     public void delete() {
         this._sync_lock.lock();
-        this._deleteExc();
+        if (!this._hasDelete) this._deleteExc();
         this._sync_lock.unlock();
     }
 

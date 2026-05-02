@@ -51,6 +51,13 @@ public final class CombatRenderingManager {
     }
 
     /**
+     * @return returns <code>true</code> if this entity has finished deleted.
+     */
+    public static boolean removeEntity(RenderDataAPI entity) {
+        return BUtil_ThreadResource.Rendering.Combat.removeEntity(entity);
+    }
+
+    /**
      * @param plugin you should not add lots of plugin, and you must know where the layer you want to render.
      */
     public static void addRenderingPlugin(@NotNull LayeredRenderingPlugin plugin) {

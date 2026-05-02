@@ -39,6 +39,9 @@ public final class BoxConfigs {
     private static short BUtil_CLDevice = 0;
     private static short BUtil_CLDeviceLocal = 0;
     private static short BUtil_CLDeviceDisplay = 0;
+    private static boolean BUtil_CompatibleSync = false;
+    private static boolean BUtil_CompatibleSyncLocal = false;
+    private static boolean BUtil_CompatibleSyncDisplay = false;
 
     // Dynamic config values.
     private static int BUtil_InstanceClamp = 8192;
@@ -96,6 +99,10 @@ public final class BoxConfigs {
                         List<CLDevice> deviceList = KernelCore.getAllCLDevice();
                         result = (!deviceList.isEmpty() && KernelCore.isValid()) ? deviceList.get(Math.min(BUtil_CLDeviceDisplay, deviceList.size() - 1)).getInfoString(CL10.CL_DEVICE_NAME) : "NULL";
                         direct = true;
+                        break;
+                    }
+                    case 3: {
+                        result = BUtil_CompatibleSync ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
                     }
                 }
                 break;
@@ -135,6 +142,10 @@ public final class BoxConfigs {
                         valid = !deviceList.isEmpty() && KernelCore.isValid();
                         result = valid ? deviceList.get(Math.min(BUtil_CLDeviceDisplay, deviceList.size() - 1)).getInfoString(CL10.CL_DEVICE_NAME) : "NULL";
                         direct = true;
+                        break;
+                    }
+                    case 3: {
+                        result = BUtil_CompatibleSyncDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
                     }
                 }
                 break;
@@ -204,6 +215,10 @@ public final class BoxConfigs {
                             if (BUtil_CLDeviceDisplay < 0) BUtil_CLDeviceDisplay = (short) (range - 1);
                             if (BUtil_CLDeviceDisplay >= range) BUtil_CLDeviceDisplay = 0;
                         }
+                        break;
+                    }
+                    case 3: {
+                        BUtil_CompatibleSyncDisplay = !BUtil_CompatibleSyncDisplay;
                     }
                 }
                 break;
@@ -287,6 +302,8 @@ public final class BoxConfigs {
             BUtil_EnableCLLocal = BUtil_EnableCL;
             BUtil_CLDevice = (short) data.optInt("BUtil_CLDevice", 0);
             BUtil_CLDeviceLocal = BUtil_CLDevice;
+            BUtil_CompatibleSync = data.optBoolean("BUtil_CompatibleSync", false);
+            BUtil_CompatibleSyncLocal = BUtil_CompatibleSync;
 
             BUtil_EnableDebug = data.optBoolean("BUtil_EnableDebug", false);
             BUtil_EnableDebugLocal = BUtil_EnableDebug;
@@ -370,6 +387,7 @@ public final class BoxConfigs {
         BUtil_EnableShaderDisplay = true;
         BUtil_EnableCLDisplay = false;
         BUtil_CLDeviceDisplay = 0;
+        BUtil_CompatibleSyncDisplay = false;
 
         BUtil_InstanceClamp = 8192;
         BUtil_CurveNode = 32;
@@ -385,6 +403,7 @@ public final class BoxConfigs {
             BUtil_EnableShaderDisplay = BUtil_EnableShaderLocal;
             BUtil_EnableCLDisplay = BUtil_EnableCLLocal;
             BUtil_CLDeviceDisplay = BUtil_CLDeviceLocal;
+            BUtil_CompatibleSyncDisplay = BUtil_CompatibleSyncLocal;
 
             {
                 int value = data.optInt("BUtil_InstanceClamp", 8192);
@@ -420,6 +439,7 @@ public final class BoxConfigs {
             data.put("BUtil_EnableShader", BUtil_EnableShaderDisplay);
             data.put("BUtil_EnableCL", BUtil_EnableCLDisplay);
             data.put("BUtil_CLDevice", BUtil_CLDeviceDisplay);
+            data.put("BUtil_CompatibleSync", BUtil_CompatibleSyncDisplay);
 
             data.put("BUtil_InstanceClamp", BUtil_InstanceClamp);
             data.put("BUtil_CurveNode", BUtil_CurveNode);
@@ -483,6 +503,10 @@ public final class BoxConfigs {
 
     public static short getCLDeviceIndex() {
         return BUtil_CLDevice;
+    }
+
+    public static boolean isCompatibleSync() {
+        return BUtil_CompatibleSync;
     }
 
     public static short getMaxCurveNodeSize() {

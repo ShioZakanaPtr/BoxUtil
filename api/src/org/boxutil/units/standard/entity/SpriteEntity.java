@@ -92,16 +92,16 @@ public class SpriteEntity extends BaseMIRenderData {
         return this.baseSize[1];
     }
 
-    public void setBaseWidthPerTiles(float width) {
-        this.baseSize[0] = width;
+    public void setBaseWidthPerTiles(float widthHalf) {
+        this.baseSize[0] = widthHalf;
     }
 
-    public void setBaseHeightPerTiles(float height) {
-        this.baseSize[1] = height;
+    public void setBaseHeightPerTiles(float heightHalf) {
+        this.baseSize[1] = heightHalf;
     }
 
-    public void setBaseSizePerTiles(float width, float height) {
-        this.setBaseWidthPerTiles(width);
+    public void setBaseSizePerTiles(float widthHalf, float height) {
+        this.setBaseWidthPerTiles(widthHalf);
         this.setBaseHeightPerTiles(height);
     }
 

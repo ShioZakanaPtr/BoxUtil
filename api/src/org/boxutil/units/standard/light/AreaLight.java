@@ -29,8 +29,8 @@ public class AreaLight extends BaseIlluminantData {
         return 3;
     }
 
-    public void delete() {
-        super.delete();
+    protected void _deleteExc() {
+        super._deleteExc();
         if (this.texturedLightingState[1] > 0) {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
             GL11.glDeleteTextures(this.texturedLightingState[1]);
@@ -38,8 +38,8 @@ public class AreaLight extends BaseIlluminantData {
         }
     }
 
-    public void reset() {
-        super.reset();
+    protected void _resetExc() {
+        super._resetExc();
         this.size[0] = 32.0f;
         this.size[1] = 32.0f;
         this.texturedLightingMapping[0] = 0.0f;

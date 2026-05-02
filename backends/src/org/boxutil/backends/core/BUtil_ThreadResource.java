@@ -295,6 +295,11 @@ public final class BUtil_ThreadResource {
                 return targetList != null && targetList.contains(entity);
             }
 
+            public static boolean removeEntity(RenderDataAPI entity) {
+                entity.delete();
+                return entity.hasDelete();
+            }
+
             public static void addRenderingPlugin(@NotNull LayeredRenderingPlugin plugin) {
                 for (var layer : plugin.getCombatActiveLayers()) {
                     __OP_LOCK.lock();
@@ -472,6 +477,11 @@ public final class BUtil_ThreadResource {
                 return targetList != null && targetList.contains(entity);
             }
 
+            public static boolean removeEntity(RenderDataAPI entity) {
+                entity.delete();
+                return entity.hasDelete();
+            }
+
             public static void addRenderingPlugin(@NotNull LayeredRenderingPlugin plugin) {
                 for (var layers : plugin.getCampaignActiveLayers()) {
                     __OP_LOCK.lock();
@@ -525,6 +535,11 @@ public final class BUtil_ThreadResource {
     }
 
     static void sendGLSync(AtomicReference<GLSync> target) {
+        if (BoxConfigs.isCompatibleSync()) {
+            GL11.glFlush();
+            return;
+        }
+
         if (!BoxDatabase.getGLState().GL_CORE_SYNC) return;
         final GLSync sync = GL32.glFenceSync(GL32.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
         if (target.compareAndSet(null, sync)) GL11.glFlush();
@@ -532,6 +547,8 @@ public final class BUtil_ThreadResource {
     }
 
     static void tryGLSync(AtomicReference<GLSync> target) {
+        if (BoxConfigs.isCompatibleSync()) return;
+
         if (!BoxDatabase.getGLState().GL_CORE_SYNC) return;
         GLSync glSync = target.getAndSet(null);
         if (glSync != null) {

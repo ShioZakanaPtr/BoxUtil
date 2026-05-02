@@ -356,7 +356,7 @@ public final class BUtil_BaseConfigPanel implements CustomUIPanelPlugin {
         LabelAPI titleGlobal = maker.addPara(BoxConfigs.getString("BUtil_ConfigPanel_Global"), Misc.getButtonTextColor(), _ITEM_SPACE);
         titleGlobal.setAlignment(Alignment.MID);
         maker.addSpacer(_ITEM_SPACE * 2.0f);
-        for (byte i = 0; i < 3; i++) {
+        for (byte i = 0; i < 4; i++) {
             Item item = new Item(this, this.state[0], i == 2, (byte) 0, i);
             item.add("BUtil_ConfigPanel_Global_" + indexFill(i), maker, true, false);
             this._items.add(item);

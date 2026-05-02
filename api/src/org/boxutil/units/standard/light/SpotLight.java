@@ -12,8 +12,8 @@ import java.nio.FloatBuffer;
 public class SpotLight extends BaseIlluminantData {
     protected final float[] state = new float[]{1.0f, 0.0f}; // innerCone, outerCone
 
-    public void reset() {
-        super.reset();
+    protected void _resetExc() {
+        super._resetExc();
         this.state[0] = 1.0f;
         this.state[1] = 0.0f;
     }

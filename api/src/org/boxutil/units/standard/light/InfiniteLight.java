@@ -15,8 +15,8 @@ public class InfiniteLight extends BaseIlluminantData {
         this.resetAttenuationRadius();
     }
 
-    public void reset() {
-        super.reset();
+    protected void _resetExc() {
+        super._resetExc();
         this.resetAttenuationRadius();
     }
 

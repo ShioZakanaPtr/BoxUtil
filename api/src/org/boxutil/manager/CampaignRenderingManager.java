@@ -43,11 +43,19 @@ public final class CampaignRenderingManager {
         return BUtil_ThreadResource.Rendering.Campaign.containsEntity(layer, entity);
     }
 
+
     /**
      * @param layer <code>null</code> for any direct draw entity.
      */
     public static boolean containsEntity(@Nullable CampaignEngineLayers layer, RenderDataAPI entity) {
         return BUtil_ThreadResource.Rendering.Campaign.containsEntity(layer, entity);
+    }
+
+    /**
+     * @return returns <code>true</code> if this entity has finished deleted.
+     */
+    public static boolean removeEntity(RenderDataAPI entity) {
+        return BUtil_ThreadResource.Rendering.Campaign.removeEntity(entity);
     }
 
     /**

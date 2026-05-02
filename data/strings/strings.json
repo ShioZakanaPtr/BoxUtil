@@ -132,6 +132,11 @@
 		"BUtil_ConfigPanel_Global_02P_zh_cn":"控制OpenCL相关调用所使用的设备。\n\n在OpenCL模块未启用时为Null。",
 		"BUtil_ConfigPanel_Global_02P_en_us":"To controls which device will be used for OpenCL calls.\n\nNull when the OpenCL module disabled.",
 
+        "BUtil_ConfigPanel_Global_03_zh_cn":"启用兼容性同步",
+        "BUtil_ConfigPanel_Global_03_en_us":"Enable Compatible synchronization",
+        "BUtil_ConfigPanel_Global_03P_zh_cn":"部分硬件设备与系统环境组合可能出现相关函数寻址异常导致游戏关闭，需启用该功能来确保游戏运行。",
+        "BUtil_ConfigPanel_Global_03P_en_us":"Some hardware and system environment combinations may cause function addressing exceptions then game will going crash, enable this feature to ensure the game runs properly.",
+
 		"BUtil_ConfigPanel_Common_00_zh_cn":"实例渲染上限",
 		"BUtil_ConfigPanel_Common_00_en_us":"Instanced rendering limit",
 		"BUtil_ConfigPanel_Common_00P_zh_cn":"控制正常游戏流程实例化渲染时最大的数量。\n\n常用于控制单种粒子的生成上限，会阻止超出该数值部分的粒子生成。\n同时也限制着曲线段实体的节点数量 (该值的一半)，以及尾迹实体的节点数量 (等于该值)。\n而在实际执行时，还受限于硬件所支持的数量，该值只能通过更换硬件调整。",
