@@ -2,7 +2,7 @@ package org.boxutil.util;
 
 import com.fs.starfarer.api.combat.BoundsAPI;
 import com.fs.starfarer.api.util.Pair;
-import org.boxutil.backends.array.BUtil_Stack2i;
+import org.boxutil.backends.struct.BUtil_Stack2i;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;

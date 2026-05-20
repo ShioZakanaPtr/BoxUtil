@@ -2,6 +2,7 @@ package org.boxutil.manager;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.Pair;
+import org.apache.log4j.Logger;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
@@ -22,6 +23,8 @@ public final class TextureManager {
     private final static HashMap<String, Integer> _PATH_TEX = new HashMap<>(64);
     private final static HashMap<Integer, Integer> _AUTO_NORMAL = new HashMap<>(64);
     public final static ShaderUtil.NormalMapGenParam DEFAULT_AUTO_NORMAL_PARAM = new ShaderUtil.NormalMapGenParam();
+
+    private final static Logger _LOG = Global.getLogger(TextureManager.class);
 
     public static boolean haveTexture(String file) {
         return _PATH_TEX.containsKey(file);
@@ -101,7 +104,7 @@ public final class TextureManager {
             GL11.glTexParameteri(target, GL11.GL_TEXTURE_MIN_FILTER, sampler);
             GL11.glTexParameteri(target, GL11.GL_TEXTURE_MAG_FILTER, sampler);
             GL11.glBindTexture(target, 0);
-            Global.getLogger(TextureManager.class).info("'BoxUtil' OpenGL texture loading finished: '" + file + "' with ID: " + result[0]);
+            _LOG.info("'BoxUtil' OpenGL texture loading finished: '" + file + "' with ID: " + result[0]);
         }
         putTexture(file, result[0]);
         return result;
@@ -161,7 +164,7 @@ public final class TextureManager {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            Global.getLogger(TextureManager.class).info("'BoxUtil' OpenGL tangent texture loading finished: '" + file + "' with ID: " + result[0]);
+            _LOG.info("'BoxUtil' OpenGL tangent texture loading finished: '" + file + "' with ID: " + result[0]);
         }
         putTexture(file, result[0]);
         return result;

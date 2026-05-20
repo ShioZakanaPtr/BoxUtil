@@ -23,7 +23,6 @@ import java.util.List;
  * For all result texture, recommend to use storage texture for performance.
  */
 public final class ShaderUtil {
-    private final static Logger _LOG = Global.getLogger(ShaderUtil.class);
     private final static int[] _GEN_SDF_FORMAT = new int[]{GL30.GL_RGBA16UI, GL30.GL_R8, GL30.GL_R16};
     private final static HashMap<Integer, String> _SHADER_TYPE = new HashMap<>();
     private final static HashMap<String, Integer> _SHADER_FORMAT = new HashMap<>();
@@ -45,6 +44,8 @@ public final class ShaderUtil {
         _SHADER_FORMAT.put("comp", GL43.GL_COMPUTE_SHADER);
         _SHADER_FORMAT.put("csh", GL43.GL_COMPUTE_SHADER);
     }
+
+    private final static Logger _LOG = Global.getLogger(ShaderUtil.class);
 
     public static String getShaderName(int type) {
         if (!_SHADER_TYPE.containsKey(type)) return "Shader type '" + type + "' not found.";

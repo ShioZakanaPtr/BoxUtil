@@ -3,11 +3,13 @@ package org.boxutil.manager;
 import com.fs.starfarer.api.Global;
 import de.unkrig.commons.nullanalysis.Nullable;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.units.legacy.LegacyModelData;
-import org.boxutil.backends.array.BUtil_Stack2f;
-import org.boxutil.backends.array.BUtil_Stack3f;
-import org.boxutil.backends.array.BUtil_TriIndex;
+import org.boxutil.backends.struct.BUtil_Stack2f;
+import org.boxutil.backends.struct.BUtil_Stack3f;
+import org.boxutil.backends.struct.BUtil_TriIndex;
 import org.boxutil.units.standard.attribute.ModelData;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +30,8 @@ public final class ModelManager {
     private static final HashMap<String, ModelData> _MODEL_DATA = new HashMap<>();
     private static final HashMap<String, LegacyModelData> _LEGACY_MODEL = new HashMap<>();
 
+    private static final Logger _LOG = Global.getLogger(ModelManager.class);
+
     /**
      * General method for reading model files, when game starting.<p>
      * Cannot import any files then bigger than <code>8 MiB</code> for user's device.<p>
@@ -37,7 +41,7 @@ public final class ModelManager {
         try {
             return wavefrontOBJCSVLoadCore(path);
         } catch (JSONException | IOException e) {
-            Global.getLogger(ModelManager.class).log(Level.ERROR, "'BoxUtil' models csv data loading failed at: '" + path + "': " + e.getMessage());
+            _LOG.log(Level.ERROR, "'BoxUtil' models csv data loading failed at: '" + path + "': " + e.getMessage());
             return null;
         }
     }
@@ -52,7 +56,7 @@ public final class ModelManager {
         try {
             return addOBJDataCore(initID, objPath, diffusePath, normalPath, complexPath, emissivePath, tangentPath, isAngleMap, type);
         } catch (IOException e) {
-            Global.getLogger(ModelManager.class).log(Level.ERROR, "'BoxUtil' loading '" + initID + "' failed at: '" + objPath + "': " + e.getMessage());
+            _LOG.log(Level.ERROR, "'BoxUtil' loading '" + initID + "' failed at: '" + objPath + "': " + e.getMessage());
             return null;
         }
     }
@@ -106,7 +110,7 @@ public final class ModelManager {
         try {
             return putLegacyModelData(file, getLegacyModelDataCore(file));
         } catch (IOException e) {
-            Global.getLogger(ModelManager.class).log(Level.ERROR, "'BoxUtil' model data loading failed at: '" + file + "'." + e.getMessage());
+            _LOG.log(Level.ERROR, "'BoxUtil' model data loading failed at: '" + file + "'." + e.getMessage());
             return null;
         }
     }
@@ -119,7 +123,7 @@ public final class ModelManager {
     private static ModelData addOBJDataCore(String initID, String objPath, String diffusePath, String normalPath, String complexPath, String emissivePath, String tangentPath, boolean isAngleMap, int type) throws IOException {
         String objFile = Global.getSettings().loadText(objPath);
         if (objFile.getBytes().length > BoxDatabase.MAX_MODEL_FILE_SIZE) {
-            Global.getLogger(ModelManager.class).log(Level.WARN, "'BoxUtil' model ID '" + initID + "' at path '" + objPath + "' was too bigger than 8 MiB.");
+            _LOG.log(Level.WARN, "'BoxUtil' model ID '" + initID + "' at path '" + objPath + "' was too bigger than 8 MiB.");
             return null;
         }
         BufferedReader reader = new BufferedReader(new StringReader(objFile));
@@ -164,14 +168,14 @@ public final class ModelManager {
         }
 
         int diffuse, normalMap, complex, emissive, tangent;
-        if (diffusePath == null || diffusePath.isEmpty()) diffuse = BoxDatabase.BUtil_ONE.getTextureId(); else diffuse = TextureManager.tryTexture(diffusePath);
-        if (normalPath == null || normalPath.isEmpty()) normalMap = BoxDatabase.BUtil_Z.getTextureId(); else normalMap = TextureManager.tryTextureChannel3(normalPath);
-        if (complexPath == null || complexPath.isEmpty()) complex = BoxDatabase.BUtil_COMPLEX_DEF.getTextureId(); else complex = TextureManager.tryTextureChannel3(complexPath);
-        if (emissivePath == null || emissivePath.isEmpty()) emissive = BoxDatabase.BUtil_NONE.getTextureId(); else emissive = TextureManager.tryTexture(emissivePath);
-        if (tangentPath == null || tangentPath.isEmpty()) tangent = BoxDatabase.BUtil_X.getTextureId(); else tangent = TextureManager.tryTangent(tangentPath, isAngleMap, true, false);
+        if (diffusePath == null || diffusePath.isEmpty()) diffuse = BoxDatabase.BUtil_ONE.getTextureId(); else diffuse = BUtil_MiscUtil.tryTexture(diffusePath, TextureManager::tryTexture);
+        if (normalPath == null || normalPath.isEmpty()) normalMap = BoxDatabase.BUtil_Z.getTextureId(); else normalMap = BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3);
+        if (complexPath == null || complexPath.isEmpty()) complex = BoxDatabase.BUtil_COMPLEX_DEF.getTextureId(); else complex = BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3);
+        if (emissivePath == null || emissivePath.isEmpty()) emissive = BoxDatabase.BUtil_NONE.getTextureId(); else emissive = BUtil_MiscUtil.tryTexture(emissivePath, TextureManager::tryTexture);
+        if (tangentPath == null || tangentPath.isEmpty()) tangent = BoxDatabase.BUtil_X.getTextureId(); else tangent = BUtil_MiscUtil.tryTangentTexture(tangentPath, isAngleMap, true, false);
 
-        Global.getLogger(ModelManager.class).info("'BoxUtil' loaded common OBJ data with ID: '" + initID + "', at path: '" + objPath + "'.");
-        Global.getLogger(ModelManager.class).info("'BoxUtil' OBJ data ID: '" + initID + "' have vertices count: " + vertex.size() + " and triangles count: " + tri.size() + ".");
+        _LOG.info("'BoxUtil' loaded common OBJ data with ID: '" + initID + "', at path: '" + objPath + "'.");
+        _LOG.info("'BoxUtil' OBJ data ID: '" + initID + "' have vertices count: " + vertex.size() + " and triangles count: " + tri.size() + ".");
         return _MODEL_DATA.put(initID, new ModelData(initID, vertex, normal, uv, tri, diffuse, normalMap, complex, emissive, tangent, type));
     }
 
@@ -205,7 +209,7 @@ public final class ModelManager {
     private static LegacyModelData getLegacyModelDataCore(String modelPath) throws IOException {
         String objFile = Global.getSettings().loadText(modelPath);
         if (objFile.getBytes().length > BoxDatabase.MAX_MODEL_FILE_SIZE) {
-            Global.getLogger(ModelManager.class).log(Level.WARN, "'BoxUtil' model file at '" + modelPath + "' was too bigger than 8 MiB.");
+            _LOG.log(Level.WARN, "'BoxUtil' model file at '" + modelPath + "' was too bigger than 8 MiB.");
             return null;
         }
         BufferedReader reader = new BufferedReader(new StringReader(objFile));
@@ -247,7 +251,7 @@ public final class ModelManager {
             }
         }
 
-        Global.getLogger(ModelManager.class).info("'BoxUtil' loaded legacy OBJ data at path: '" + modelPath + "'.");
+        _LOG.info("'BoxUtil' loaded legacy OBJ data at path: '" + modelPath + "'.");
         return new LegacyModelData(vertex.toArray(new BUtil_Stack3f[0]), vNormal.toArray(new BUtil_Stack3f[0]), vUV.toArray(new BUtil_Stack2f[0]), tri.toArray(new BUtil_TriIndex[0]));
     }
 

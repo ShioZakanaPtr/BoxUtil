@@ -7,12 +7,16 @@ import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
 import org.boxutil.base.api.everyframe.LayeredRenderingPlugin;
 import org.boxutil.base.api.resource.TemporaryCleanupPlugin;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.define.BoxEnum;
-import de.unkrig.commons.nullanalysis.Nullable;
+import org.boxutil.units.standard.attribute.StaticTrailData;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector4f;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class CampaignRenderingManager {
     /**
@@ -56,6 +60,23 @@ public final class CampaignRenderingManager {
      */
     public static boolean removeEntity(RenderDataAPI entity) {
         return BUtil_ThreadResource.Rendering.Campaign.removeEntity(entity);
+    }
+
+    /**
+     * @param locationTacker the input is current frame time <code>amount</code> in second;<p>the returns were current frame state that <code>{location.x, location.y, facingVector.x, facingVector.y}</code>;<p>will remove this trail tracker when returns <code>null</code>.
+     *
+     * @return returns <code>true</code> when trail data was existed, else <code>false</code> if not exist.
+     */
+    public static boolean addStaticTrailGenerator(@NotNull final StaticTrailData trailData, @NotNull final CampaignEngineLayers layer, @NotNull final Function<Float, Vector4f> locationTacker) {
+        // todo
+        return false;
+    }
+
+    /**
+     * @return returns <code>true</code> when trail data was existed before call this method, else <code>false</code> if not exist.
+     */
+    public static boolean removeStaticTrailGenerator(@NotNull final StaticTrailData trailData) {
+        return false;
     }
 
     /**

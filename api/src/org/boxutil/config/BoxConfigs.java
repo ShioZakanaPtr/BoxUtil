@@ -39,9 +39,9 @@ public final class BoxConfigs {
     private static short BUtil_CLDevice = 0;
     private static short BUtil_CLDeviceLocal = 0;
     private static short BUtil_CLDeviceDisplay = 0;
-    private static boolean BUtil_CompatibleSync = false;
-    private static boolean BUtil_CompatibleSyncLocal = false;
-    private static boolean BUtil_CompatibleSyncDisplay = false;
+    private static boolean BUtil_CompatibleSync = true;
+    private static boolean BUtil_CompatibleSyncLocal = true;
+    private static boolean BUtil_CompatibleSyncDisplay = true;
 
     // Dynamic config values.
     private static int BUtil_InstanceClamp = 8192;
@@ -302,7 +302,7 @@ public final class BoxConfigs {
             BUtil_EnableCLLocal = BUtil_EnableCL;
             BUtil_CLDevice = (short) data.optInt("BUtil_CLDevice", 0);
             BUtil_CLDeviceLocal = BUtil_CLDevice;
-            BUtil_CompatibleSync = data.optBoolean("BUtil_CompatibleSync", false);
+            BUtil_CompatibleSync = data.optBoolean("BUtil_CompatibleSync", true);
             BUtil_CompatibleSyncLocal = BUtil_CompatibleSync;
 
             BUtil_EnableDebug = data.optBoolean("BUtil_EnableDebug", false);
@@ -387,7 +387,7 @@ public final class BoxConfigs {
         BUtil_EnableShaderDisplay = true;
         BUtil_EnableCLDisplay = false;
         BUtil_CLDeviceDisplay = 0;
-        BUtil_CompatibleSyncDisplay = false;
+        BUtil_CompatibleSyncDisplay = true;
 
         BUtil_InstanceClamp = 8192;
         BUtil_CurveNode = 32;

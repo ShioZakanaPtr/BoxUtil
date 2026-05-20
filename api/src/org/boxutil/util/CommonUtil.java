@@ -28,6 +28,8 @@ public final class CommonUtil {
     private final static int[] _IMAGE_SAVE_MASK = new int[]{0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000};
     private final static byte[] _IMAGE_SAVE_MOVE = new byte[]{16, 8, 0, 24};
     private final static ThreadLocal<Integer> _GL_TRANSFER_FBO = new ThreadLocal<>();
+    
+    private final static Logger _LOG = Global.getLogger(CommonUtil.class);
 
     public final static class Kelvin {
         public final static Color K_1000 = new Color(255, 68, 0);
@@ -710,7 +712,7 @@ public final class CommonUtil {
         final byte channel = (byte) Math.max(Math.min(channelNum, 4), 1);
         Pair<int[], ByteBuffer> result = new Pair<>(new int[10], null);
         double[] avc = new double[channel];
-        if (file == null || file.isEmpty()) return result;
+        if (file == null || file.isBlank()) return result;
         try (InputStream inputStream = Global.getSettings().openStream(file)) {
             BufferedImage imageBuffer = ImageIO.read(new BufferedInputStream(inputStream));
             Raster data = imageBuffer.getData();
@@ -721,7 +723,7 @@ public final class CommonUtil {
             final boolean isPNG = format.contentEquals("png");
             final boolean formatCheck = format.contentEquals("bmp") || format.contentEquals("jpg") || format.contentEquals("jpeg") || isPNG;
             if (!formatCheck) {
-                Global.getLogger(CommonUtil.class).error("'BoxUtil' cannot loading file: '" + file + "', only support to reading 'bmp/jpg/jpeg/png'");
+                _LOG.error("'BoxUtil' cannot loading file: '" + file + "', only support to reading 'bmp/jpg/jpeg/png'");
                 return result;
             }
             result.one[0] = data.getWidth();
@@ -730,7 +732,7 @@ public final class CommonUtil {
             result.one[3] = result.one[0] * result.one[1];
             result.two = BufferUtils.createByteBuffer(result.one[3] * channel);
 
-            Global.getLogger(CommonUtil.class).info("'BoxUtil' loading sprite file: '" + file + "', with width " + result.one[0] + " and height " + result.one[1] + ", pixel have " + channel + " channels.");
+            _LOG.info("'BoxUtil' loading sprite file: '" + file + "', with width " + result.one[0] + " and height " + result.one[1] + ", pixel have " + channel + " channels.");
 
             int[] pixels = new int[4];
             for (int y = result.one[1] - 1; y >= 0; --y) {
@@ -818,11 +820,11 @@ public final class CommonUtil {
      */
     public static boolean saveBytesImage(@Nullable String path, @Nullable String saveFileName, ByteBuffer buffer, int width, int height, byte bufferChannel) {
         if (!BUtil_RefMethod.VALID) {
-            Global.getLogger(CommonUtil.class).error("'BoxUtil' image save failed, method is invalid.");
+            _LOG.error("'BoxUtil' image save failed, method is invalid.");
             return false;
         }
         if (width < 1 || height < 1 || bufferChannel < 1) {
-            Global.getLogger(CommonUtil.class).error("'BoxUtil' image save failed, no a valid parameters: width= " + width + ", height= " + height + ", bufferChannel= " + bufferChannel);
+            _LOG.error("'BoxUtil' image save failed, no a valid parameters: width= " + width + ", height= " + height + ", bufferChannel= " + bufferChannel);
             return false;
         }
         try {
@@ -833,7 +835,7 @@ public final class CommonUtil {
             String absolutePath = gameRoot == null ? gameRootCore.toString() : gameRoot.toString();
             String fixedSavePath = path;
             if (fixedSavePath == null) absolutePath += BUtil_RefMethod.java_io_File_SEPARATOR + "saves" + BUtil_RefMethod.java_io_File_SEPARATOR + "images";
-            else if (!fixedSavePath.isEmpty()) {
+            else if (!fixedSavePath.isBlank()) {
                 for (char check : _checkChar) fixedSavePath = fixedSavePath.replace(check, '_');
                 absolutePath += BUtil_RefMethod.java_io_File_SEPARATOR + fixedSavePath;
             }
@@ -841,12 +843,12 @@ public final class CommonUtil {
             if (!(boolean) BUtil_RefMethod.java_io_File_exists(file)) BUtil_RefMethod.java_io_File_mkdirs(file);
             String fixedSaveFileName = saveFileName;
             long currTime = System.currentTimeMillis();
-            if (fixedSaveFileName == null || fixedSaveFileName.isEmpty()) {
+            if (fixedSaveFileName == null || fixedSaveFileName.isBlank()) {
                 fixedSaveFileName = "";
             } else {
                 for (char check : _checkChar) fixedSaveFileName = fixedSaveFileName.replace(check, '_');
             }
-            if (fixedSaveFileName.isEmpty()) fixedSaveFileName = "SavedTexture_" + currTime;
+            if (fixedSaveFileName.isBlank()) fixedSaveFileName = "SavedTexture_" + currTime;
             else if (fixedSaveFileName.length() > 100) fixedSaveFileName = fixedSaveFileName.substring(0, 100);
             absolutePath += BUtil_RefMethod.java_io_File_SEPARATOR + fixedSaveFileName + ".png";
             file = BUtil_RefMethod.java_io_File__newFile(absolutePath);
@@ -866,8 +868,8 @@ public final class CommonUtil {
                 }
             }
             boolean success = BUtil_RefMethod._javax_imageio_ImageIO_write(image, "png", file);
-            if (success) Global.getLogger(CommonUtil.class).info("'BoxUtil' image saved: " + absolutePath);
-            else Global.getLogger(CommonUtil.class).error("'BoxUtil' image save failed, no appropriate writer is found: " + absolutePath);
+            if (success) _LOG.info("'BoxUtil' image saved: " + absolutePath);
+            else _LOG.error("'BoxUtil' image save failed, no appropriate writer is found: " + absolutePath);
             return success;
         } catch (Throwable e) {
             printThrowable(CommonUtil.class, "'BoxUtil' image save failed: ", e);
@@ -894,8 +896,8 @@ public final class CommonUtil {
     }
 
     public static void glDebug(String tags, Object info) throws OpenGLException {
-        Global.getLogger(CommonUtil.class).info(tags + info);
-        Global.getLogger(CommonUtil.class).info(GLU.gluErrorString(GL11.glGetError()));
+        _LOG.info(tags + info);
+        _LOG.info(GLU.gluErrorString(GL11.glGetError()));
         Util.checkGLError();
     }
 

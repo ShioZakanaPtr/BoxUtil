@@ -1,6 +1,7 @@
 package org.boxutil.util;
 
 import com.fs.starfarer.api.Global;
+import org.apache.log4j.Logger;
 import org.boxutil.backends.reflect.BUtil_RefMethod;
 import org.lwjgl.BufferUtils;
 
@@ -10,6 +11,8 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 public final class SerializationUtil {
+    private final static Logger _LOG = Global.getLogger(SerializationUtil.class);
+    
     public static FloatBuffer loadFloatLUT(String file) {
         if (!BUtil_RefMethod.VALID) return null;
 
@@ -18,7 +21,7 @@ public final class SerializationUtil {
             Object binary = BUtil_RefMethod.java_io_DataInputStream__newDataInputStream(inputStream);
             int length = BUtil_RefMethod.java_io_DataInputStream_readInt(binary);
             if (length < 1) {
-                Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
+                _LOG.error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
             }
             result = BufferUtils.createFloatBuffer(length);
             for (int i = 0; i < length; ++i) {
@@ -27,7 +30,7 @@ public final class SerializationUtil {
             result.position(0);
             result.limit(result.capacity());
         } catch (Throwable e) {
-            Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + "' failed: " + e);
+            _LOG.error("'BoxUtil' loading lut '" + file + "' failed: " + e);
         }
         return result;
     }
@@ -40,7 +43,7 @@ public final class SerializationUtil {
             Object binary = BUtil_RefMethod.java_io_DataInputStream__newDataInputStream(inputStream);
             int length = BUtil_RefMethod.java_io_DataInputStream_readInt(binary);
             if (length < 1) {
-                Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
+                _LOG.error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
             }
             result = BufferUtils.createShortBuffer(length);
             for (int i = 0; i < length; ++i) {
@@ -49,7 +52,7 @@ public final class SerializationUtil {
             result.position(0);
             result.limit(result.capacity());
         } catch (Throwable e) {
-            Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + "' failed: " + e);
+            _LOG.error("'BoxUtil' loading lut '" + file + "' failed: " + e);
         }
         return result;
     }
@@ -62,7 +65,7 @@ public final class SerializationUtil {
             Object binary = BUtil_RefMethod.java_io_DataInputStream__newDataInputStream(inputStream);
             int length = BUtil_RefMethod.java_io_DataInputStream_readInt(binary);
             if (length < 1) {
-                Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
+                _LOG.error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
             }
             result = BufferUtils.createByteBuffer(length);
             for (int i = 0; i < length; ++i) {
@@ -71,7 +74,7 @@ public final class SerializationUtil {
             result.position(0);
             result.limit(result.capacity());
         } catch (Throwable e) {
-            Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + "' failed: " + e);
+            _LOG.error("'BoxUtil' loading lut '" + file + "' failed: " + e);
         }
         return result;
     }
@@ -84,7 +87,7 @@ public final class SerializationUtil {
             Object binary = BUtil_RefMethod.java_io_DataInputStream__newDataInputStream(inputStream);
             int length = BUtil_RefMethod.java_io_DataInputStream_readInt(binary);
             if (length < 1) {
-                Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
+                _LOG.error("'BoxUtil' loading lut '" + file + " failed: invalid file.");
             }
             result = BufferUtils.createByteBuffer(length);
             for (int i = 0; i < length; ++i) {
@@ -93,7 +96,7 @@ public final class SerializationUtil {
             result.position(0);
             result.limit(result.capacity());
         } catch (Throwable e) {
-            Global.getLogger(CommonUtil.class).error("'BoxUtil' loading lut '" + file + "' failed: " + e);
+            _LOG.error("'BoxUtil' loading lut '" + file + "' failed: " + e);
         }
         return result;
     }

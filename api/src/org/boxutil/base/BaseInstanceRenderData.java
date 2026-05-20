@@ -1,6 +1,5 @@
 package org.boxutil.base;
 
-import com.fs.starfarer.api.Global;
 import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
 import org.boxutil.backends.core.BUtil_ThreadResource;
 import org.boxutil.define.InstanceType;
@@ -192,6 +191,20 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         return BoxEnum.STATE_SUCCESS;
     }
 
+    private void _packingInstanceData(ByteBuffer rawBuffer, final InstanceType type, final int index, final int limit, final boolean isFixed) {
+        FloatBuffer buffer = rawBuffer.asFloatBuffer();
+        InstanceDataAPI data;
+        float[] ptr;
+        int pos = 0;
+        for (int i = index; i < limit; ++i) {
+            data = this.instanceData.get(i);
+            if (data == null) ptr = new float[type.getCompactComponent()];
+            else ptr = isFixed ? data._pickFixed_ssbo() : data._pickDynamic_ssbo();
+
+            buffer.put(pos + type.getCompactOffset(), ptr, 0, type.getCompactComponent());
+            pos += type.getComponent();
+        }
+    }
 
     public void submitInstance() {
         this._sync_lock.lock();
@@ -207,49 +220,44 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         this._sync_lock.unlock();
 
         BUtil_ThreadResource.Logical.offerSubmitInstance(unused -> {
-            if (this._memory == null || this._memory.is_free()) return;
+            if (this._memory == null) return;
             final boolean isFixed = this._memory.is_type_fixed();
             final var type = this._memory.type();
             final var _lock = BUtil_InstanceDataMemoryPool.getGPULock(type);
-            final int ssbo = InstanceDataMemoryPool.getBufferID(type), refreshLimit = refreshIndex + refreshSize;
-            final long refreshByteSize = (long) type.getSize() * refreshSize,
-                    refreshByteOffset = this._memory.address() + (long) type.getSize() * refreshOffset;
 
-            ByteBuffer rawBuffer;
-            FloatBuffer buffer;
+            final int ssbo = InstanceDataMemoryPool.getBufferID(type), refreshLimit = refreshIndex + refreshSize;
+            final long refreshByteSize = (long) type.getSize() * refreshSize;
+
+            ByteBuffer rawBuffer = null;
+            if (!mappingBuffer) {
+                rawBuffer = BufferUtils.createByteBuffer((int) refreshByteSize);
+                this._packingInstanceData(rawBuffer, type, refreshIndex, refreshLimit, isFixed);
+            }
+
+            _lock.lock();
+            if (this._memory.is_free() || ssbo < 1) {
+                _lock.unlock();
+                return;
+            }
+            final long refreshByteOffset = this._memory.address() + (long) type.getSize() * refreshOffset;
+
             GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
             if (mappingBuffer) {
                 final int _access = GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
-                _lock.lock();
                 rawBuffer = GL30.glMapBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, refreshByteOffset, refreshByteSize, _access, null);
-                if (rawBuffer == null) {
+                if (rawBuffer == null || rawBuffer.capacity() < refreshByteSize) {
                     GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
                     _lock.unlock();
                     return;
                 }
-            } else {
-                rawBuffer = BufferUtils.createByteBuffer((int) refreshByteSize);
-            }
-            buffer = rawBuffer.asFloatBuffer();
 
-            InstanceDataAPI data;
-            float[] ptr;
-            int pos = 0;
-            for (int i = refreshIndex; i < refreshLimit; ++i) {
-                data = this.instanceData.get(i);
-                if (data == null) ptr = new float[type.getCompactComponent()];
-                else ptr = isFixed ? data._pickFixed_ssbo() : data._pickDynamic_ssbo();
-
-                buffer.put(pos + type.getCompactOffset(), ptr, 0, type.getCompactComponent());
-                pos += type.getComponent();
+                this._packingInstanceData(rawBuffer, type, refreshIndex, refreshLimit, isFixed);
             }
 
-            rawBuffer.position(0).limit(rawBuffer.capacity());
-            if (mappingBuffer) {
-                GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
-                _lock.unlock();
-            }
+            rawBuffer.position(0).limit(rawBuffer.capacity()); // assert not null
+            if (mappingBuffer) GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
             else GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, refreshByteOffset, rawBuffer);
+            _lock.unlock();
         });
     }
 

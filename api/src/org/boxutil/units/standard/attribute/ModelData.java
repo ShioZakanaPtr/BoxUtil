@@ -2,7 +2,7 @@ package org.boxutil.units.standard.attribute;
 
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
-import org.boxutil.backends.array.BUtil_TriIndex;
+import org.boxutil.backends.struct.BUtil_TriIndex;
 import org.boxutil.util.CommonUtil;
 import org.boxutil.util.MeshUtil;
 import org.lwjgl.BufferUtils;

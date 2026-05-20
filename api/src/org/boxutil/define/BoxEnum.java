@@ -21,6 +21,16 @@ public final class BoxEnum {
     public final static byte TIMER_ONCE = 13;
     public final static byte TIMER_INVALID = 14;
 
+    public final static byte ENTITY_VANILLA_PRIME_MATRIX = 0;
+    public final static byte ENTITY_PERSPECTIVE_PRIME_MATRIX = 1;
+    public final static byte ENTITY_CUSTOM_PRIME_MATRIX = 2;
+    public final static byte ENTITY_NONE_PRIME_MATRIX = 3;
+
+    public final static byte ENTITY_NORMAL_BLEND = 0;
+    public final static byte ENTITY_ADDITIVE_BLEND = 1;
+    public final static byte ENTITY_OTHER_BLEND = 2;
+    public final static byte ENTITY_DISABLED_BLEND = 2;
+
     public final static byte ENTITY_COMMON = 0;
     public final static byte ENTITY_SPRITE = 1;
     public final static byte ENTITY_CURVE = 2;

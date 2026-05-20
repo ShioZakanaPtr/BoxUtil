@@ -1,4 +1,4 @@
-package org.boxutil.backends.array;
+package org.boxutil.backends.struct;
 
 public record BUtil_TriIndex(BUtil_Stack3i[] index) {
     public BUtil_TriIndex(String p1, String p2, String p3) {

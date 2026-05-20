@@ -25,8 +25,8 @@ import org.lwjgl.util.vector.Vector3f;
 import java.nio.FloatBuffer;
 
 public abstract class BaseRenderData implements RenderDataAPI {
-    protected byte primeMatrixState = 0;
-    protected byte _blendState = 0;
+    protected byte primeMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
+    protected byte _blendState = BoxEnum.ENTITY_NORMAL_BLEND;
     protected boolean timingWhenPaused = false;
     protected boolean isTimerPaused = false;
     protected volatile boolean _hasDelete;
@@ -99,14 +99,14 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.globalTimer[2] = -512.0f;
         this.globalTimer[3] = -512.0f;
         Matrix4f.setIdentity(this.primeMatrix);
-        this.primeMatrixState = 0;
+        this.primeMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
         Matrix4f.setIdentity(this.modelMatrix);
         this.blendConfig[0] = GL11.GL_SRC_ALPHA;
         this.blendConfig[1] = GL11.GL_SRC_ALPHA;
         this.blendConfig[2] = GL11.GL_ONE_MINUS_SRC_ALPHA;
         this.blendConfig[3] = GL11.GL_ONE_MINUS_SRC_ALPHA;
         this.blendConfig[4] = GL14.GL_FUNC_ADD;
-        this._blendState = 0;
+        this._blendState = BoxEnum.ENTITY_NORMAL_BLEND;
         this.layer = null;
     }
 
@@ -245,7 +245,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
      * @param primeMatrix for usual, this is a matrix as <strong>[Projection * Look-at]</strong>.
      */
     public void setPrimeMatrix(Matrix4f primeMatrix) {
-        if (primeMatrix == null) this.primeMatrixState = 0;
+        if (primeMatrix == null) this.primeMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
         this.primeMatrix = primeMatrix;
     }
 
@@ -254,19 +254,19 @@ public abstract class BaseRenderData implements RenderDataAPI {
     }
 
     public void setVanillaPrimeMatrix() {
-        this.primeMatrixState = 0;
+        this.primeMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
     }
 
     public void setPerspectivePrimeMatrix() {
-        this.primeMatrixState = 1;
+        this.primeMatrixState = BoxEnum.ENTITY_PERSPECTIVE_PRIME_MATRIX;
     }
 
     public void setCustomPrimeMatrix() {
-        this.primeMatrixState = 2;
+        this.primeMatrixState = BoxEnum.ENTITY_CUSTOM_PRIME_MATRIX;
     }
 
     public void setNonePrimeMatrix() {
-        this.primeMatrixState = 3;
+        this.primeMatrixState = BoxEnum.ENTITY_NONE_PRIME_MATRIX;
     }
 
     public Matrix4f getModelMatrix() {
@@ -401,7 +401,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[1] = dstFactor;
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
-        this._blendState = 2;
+        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     /**
@@ -412,7 +412,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[1] = dstColorFactor;
         this.blendConfig[2] = srcAlphaFactor;
         this.blendConfig[3] = dstAlphaFactor;
-        this._blendState = 2;
+        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     /**
@@ -420,7 +420,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
      */
     public void setBlendEquation(int mode) {
         this.blendConfig[4] = mode;
-        this._blendState = 2;
+        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     public void setAdditiveBlend() {
@@ -429,7 +429,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
         this.blendConfig[4] = GL14.GL_FUNC_ADD;
-        this._blendState = 1;
+        this._blendState = BoxEnum.ENTITY_ADDITIVE_BLEND;
     }
 
     /**
@@ -441,7 +441,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
         this.blendConfig[4] = GL14.GL_FUNC_ADD;
-        this._blendState = 0;
+        this._blendState = BoxEnum.ENTITY_NORMAL_BLEND;
     }
 
     /**
@@ -453,11 +453,11 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
         this.blendConfig[4] = GL14.GL_FUNC_REVERSE_SUBTRACT;
-        this._blendState = 2;
+        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     public void setDisableBlend() {
-        this._blendState = 3;
+        this._blendState = BoxEnum.ENTITY_DISABLED_BLEND;
     }
 
     public Object getLayer() {

@@ -4,6 +4,8 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.BattleObjectiveAPI;
 import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
+import org.apache.log4j.Logger;
+import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.util.CommonUtil;
@@ -13,6 +15,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * For fetch key of weapon, use {@link EntityShadingDataManager#getWeaponKey(String, WeaponPartType, byte)}.<p>
@@ -34,6 +38,12 @@ public final class EntityShadingDataManager {
     private final static HashMap<String, ProjectileIlluminantData> _PROJ_ILLUM = new HashMap<>(32);
     private final static HashMap<String, IsoIlluminantData> _BEAM_ILLUM = new HashMap<>(32);
     private final static HashMap<String, IsoIlluminantData> _ENGINE_ILLUM = new HashMap<>(8);
+
+    private final static Set<String> _CACHED_TEXTURE_PATH = new HashSet<>(32);
+    private final static Set<String> _CACHED_GRAPHICS_LIB_LAYOUT_TEXTURE_PATH = new HashSet<>(32);
+    private final static Set<String> _CACHED_ILLUMINANT_PATH = new HashSet<>(32);
+
+    private static final Logger _LOG = Global.getLogger(EntityShadingDataManager.class);
 
     public enum WeaponPartType {
         BASE,
@@ -504,6 +514,7 @@ public final class EntityShadingDataManager {
     }
 
     public static void loadTextureData(String path) {
+        _CACHED_TEXTURE_PATH.add(path);
         try {
             JSONArray objDataArray = Global.getSettings().loadCSV(path);
             JSONObject objData;
@@ -517,70 +528,67 @@ public final class EntityShadingDataManager {
                 picker = null;
                 objData = objDataArray.getJSONObject(i);
                 texKey = objData.optString("id");
-                texType = objData.optString("type").toUpperCase();
+                texType = objData.optString("type");
+                if (texKey.isBlank() || texType.isBlank()) {
+                    _LOG.warn("'BoxUtil' shading texture csv data have empty id/type at lines '" + i + "' in: '" + path + "'.");
+                    continue;
+                }
+
+                texType = texType.toUpperCase();
                 normal = complex = emissive = -1;
-                if (!texKey.isEmpty() && !texType.isEmpty()) {
-                    valid = false;
-                    if (texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[0])) {
+
+                valid = false;
+                if (texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[0])) {
+                    valid = true;
+                    picker = _ENTITY;
+                } else if (texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[1])) {
+                    valid = true;
+                    picker = _MISSILE;
+                } else {
+                    isHardpoint = texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[3]);
+                    texSubType = objData.optString("subType").toUpperCase();
+                    if ((texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[2]) || isHardpoint) && !texSubType.isEmpty()) {
                         valid = true;
-                        picker = _ENTITY;
-                    } else if (texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[1])) {
-                        valid = true;
-                        picker = _MISSILE;
-                    } else {
-                        isHardpoint = texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[3]);
-                        texSubType = objData.optString("subType").toUpperCase();
-                        if ((texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[2]) || isHardpoint) && !texSubType.isEmpty()) {
-                            valid = true;
-                            frame = (byte) objData.optInt("frame", -1);
-                            weaponSlotPicker = isHardpoint ? BoxEnum.TRUE : BoxEnum.FALSE;
-                            if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[0])) {
-                                texKey = getWeaponKey(texKey, WeaponPartType.BASE, frame);
-                                picker = _WEAPON[weaponSlotPicker];
-                            } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[1])) {
-                                texKey = getWeaponKey(texKey, WeaponPartType.BARREL, frame);
-                                picker = _WEAPON[weaponSlotPicker];
-                            } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[2])) {
-                                texKey = getWeaponKey(texKey, WeaponPartType.UNDER, frame);
-                                picker = _WEAPON[weaponSlotPicker];
-                            } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[3])) {
-                                picker = _WEAPON_COVER[weaponSlotPicker][0];
-                            } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[4])) {
-                                picker = _WEAPON_COVER[weaponSlotPicker][1];
-                            } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[5])) {
-                                picker = _WEAPON_COVER[weaponSlotPicker][2];
-                            } else valid = false;
-                        }
-                    }
-                    if (valid) {
-                        normalPath = objData.optString("normal_path");
-                        complexPath = objData.optString("complex_path");
-                        emissivePath = objData.optString("emissive_path");
-                        SpriteAPI vanillaSprite;
-                        if (!normalPath.isEmpty()) {
-                            vanillaSprite = Global.getSettings().getSprite(normalPath);
-                            normal = vanillaSprite != null ? vanillaSprite.getTextureId() : TextureManager.tryTextureChannel3(normalPath);
-                        }
-                        if (!complexPath.isEmpty()) {
-                            vanillaSprite = Global.getSettings().getSprite(complexPath);
-                            complex = vanillaSprite != null ? vanillaSprite.getTextureId() : TextureManager.tryTextureChannel3(complexPath);
-                        }
-                        if (!emissivePath.isEmpty()) {
-                            vanillaSprite = Global.getSettings().getSprite(emissivePath);
-                            emissive = vanillaSprite != null ? vanillaSprite.getTextureId() : TextureManager.tryTexture(emissivePath);
-                        }
-                        texSet = new TextureSet(normal, complex, emissive);
-                        picker.put(texKey, texSet);
+                        frame = (byte) objData.optInt("frame", -1);
+                        weaponSlotPicker = isHardpoint ? BoxEnum.TRUE : BoxEnum.FALSE;
+                        if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[0])) {
+                            texKey = getWeaponKey(texKey, WeaponPartType.BASE, frame);
+                            picker = _WEAPON[weaponSlotPicker];
+                        } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[1])) {
+                            texKey = getWeaponKey(texKey, WeaponPartType.BARREL, frame);
+                            picker = _WEAPON[weaponSlotPicker];
+                        } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[2])) {
+                            texKey = getWeaponKey(texKey, WeaponPartType.UNDER, frame);
+                            picker = _WEAPON[weaponSlotPicker];
+                        } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[3])) {
+                            picker = _WEAPON_COVER[weaponSlotPicker][0];
+                        } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[4])) {
+                            picker = _WEAPON_COVER[weaponSlotPicker][1];
+                        } else if (texSubType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_SUBTYPE[5])) {
+                            picker = _WEAPON_COVER[weaponSlotPicker][2];
+                        } else valid = false;
                     }
                 }
+                if (valid) {
+                    normalPath = objData.optString("normal_path");
+                    complexPath = objData.optString("complex_path");
+                    emissivePath = objData.optString("emissive_path");
+                    if (!normalPath.isBlank()) normal = BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3);
+                    if (!complexPath.isBlank()) complex = BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3);
+                    if (!emissivePath.isBlank()) emissive = BUtil_MiscUtil.tryTexture(emissivePath, TextureManager::tryTexture);
+
+                    texSet = new TextureSet(normal, complex, emissive);
+                    picker.merge(texKey, texSet, (oldValue, newValue) -> newValue);
+                } else _LOG.warn("'BoxUtil' shading texture csv data have invalid type at lines '" + i + "' in: '" + path + "'.");
             }
-            Global.getLogger(EntityShadingDataManager.class).info("'BoxUtil' texture csv data loading finished: '" + path + "'.");
+            _LOG.info("'BoxUtil' texture csv data loading finished: '" + path + "'.");
         } catch (JSONException | IOException e) {
             CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' texture csv data loading failed at: '" + path + "': ", e);
         }
     }
 
     public static void loadGraphicsLibLayoutTextureData(String path) {
+        _CACHED_GRAPHICS_LIB_LAYOUT_TEXTURE_PATH.add(path);
         try {
             JSONArray objDataArray = Global.getSettings().loadCSV(path);
             JSONObject objData;
@@ -594,78 +602,79 @@ public final class EntityShadingDataManager {
                 mapPicker = null;
                 objData = objDataArray.getJSONObject(i);
                 texKey = objData.optString("id");
-                texType = objData.optString("type").toUpperCase();
+                texType = objData.optString("type");
+                texPath = objData.optString("path");
+                if (texKey.isBlank() || texType.isBlank() || texPath.isBlank()) {
+                    _LOG.warn("'BoxUtil' shading texture csv data have empty id/type/path at lines '" + i + "' in: '" + path + "'.");
+                    continue;
+                }
+
                 texDataType = objData.optString("map").toUpperCase();
                 isNormalMap = "NORMAL".contentEquals(texDataType);
                 isComplexMap = "SURFACE".contentEquals(texDataType);
-                texPath = objData.optString("path").toUpperCase();
-                frame = (byte) objData.optInt("frame", -1);
-                if (!texKey.isEmpty() && !texType.isEmpty() && !texPath.isEmpty() && (isNormalMap || isComplexMap)) {
-                    valid = true;
-                    switch (texType) {
-                        case "SHIP" -> mapPicker = _ENTITY;
-                        case "MISSILE" -> mapPicker = _MISSILE;
-                        case "TURRET" -> {
-                            texKey = getWeaponKey(texKey, WeaponPartType.BASE, frame);
-                            mapPicker = _WEAPON[0];
-                        }
-                        case "TURRETBARREL" -> {
-                            texKey = getWeaponKey(texKey, WeaponPartType.BARREL, frame);
-                            mapPicker = _WEAPON[0];
-                        }
-                        case "TURRETUNDER" -> {
-                            texKey = getWeaponKey(texKey, WeaponPartType.UNDER, frame);
-                            mapPicker = _WEAPON[0];
-                        }
-                        case "HARDPOINT" -> {
-                            texKey = getWeaponKey(texKey, WeaponPartType.BASE, frame);
-                            mapPicker = _WEAPON[1];
-                        }
-                        case "HARDPOINTBARREL" -> {
-                            texKey = getWeaponKey(texKey, WeaponPartType.BARREL, frame);
-                            mapPicker = _WEAPON[1];
-                        }
-                        case "HARDPOINTUNDER" -> {
-                            texKey = getWeaponKey(texKey, WeaponPartType.UNDER, frame);
-                            mapPicker = _WEAPON[1];
-                        }
-                        case "TURRETCOVERSMALL" -> mapPicker = _WEAPON_COVER[0][0];
-                        case "TURRETCOVERMEDIUM" -> mapPicker = _WEAPON_COVER[0][1];
-                        case "TURRETCOVERLARGE" -> mapPicker = _WEAPON_COVER[0][2];
-                        case "HARDPOINTCOVERSMALL" -> mapPicker = _WEAPON_COVER[1][0];
-                        case "HARDPOINTCOVERMEDIUM" -> mapPicker = _WEAPON_COVER[1][1];
-                        case "HARDPOINTCOVERLARGE" -> mapPicker = _WEAPON_COVER[1][2];
-                        default -> valid = false;
-                    }
-                    if (valid) {
-                        texSet = mapPicker.get(texKey);
-                        if (texSet == null) {
-                            texSet = new TextureSet(-1, -1, -1);
-                            mapPicker.put(texKey, texSet);
-                        }
-
-                        SpriteAPI vanillaSprite = Global.getSettings().getSprite(texPath);
-                        texID = vanillaSprite != null ? vanillaSprite.getTextureId() : TextureManager.tryTextureChannel3(texPath);
-                        if (isNormalMap) texSet.setNormal(texID); else texSet.setComplex(texID);
-                    }
+                if (texDataType.isBlank() || !(isNormalMap || isComplexMap)) {
+                    _LOG.warn("'BoxUtil' shading texture csv data have invalid type at lines '" + i + "' in: '" + path + "'.");
+                    continue;
                 }
-            }
-            Global.getLogger(EntityShadingDataManager.class).info("'BoxUtil' texture csv data loading finished: '" + path + "'.");
-        } catch (JSONException | IOException e) {
-            CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' texture csv data loading failed at: '" + path + "': ", e);
-        }
-    }
 
-    private static void getColorArray(String colorArray, byte[] array) {
-        if (colorArray.length() < 9) return;
-        byte index = 0;
-        for (String str : colorArray.substring(1, colorArray.length() - 1).split(",")) {
-            array[index] = Byte.parseByte(str);
-            ++index;
+                frame = (byte) objData.optInt("frame", -1);
+                texType = texType.toUpperCase();
+
+                valid = true;
+                switch (texType) {
+                    case "SHIP" -> mapPicker = _ENTITY;
+                    case "MISSILE" -> mapPicker = _MISSILE;
+                    case "TURRET" -> {
+                        texKey = getWeaponKey(texKey, WeaponPartType.BASE, frame);
+                        mapPicker = _WEAPON[0];
+                    }
+                    case "TURRETBARREL" -> {
+                        texKey = getWeaponKey(texKey, WeaponPartType.BARREL, frame);
+                        mapPicker = _WEAPON[0];
+                    }
+                    case "TURRETUNDER" -> {
+                        texKey = getWeaponKey(texKey, WeaponPartType.UNDER, frame);
+                        mapPicker = _WEAPON[0];
+                    }
+                    case "HARDPOINT" -> {
+                        texKey = getWeaponKey(texKey, WeaponPartType.BASE, frame);
+                        mapPicker = _WEAPON[1];
+                    }
+                    case "HARDPOINTBARREL" -> {
+                        texKey = getWeaponKey(texKey, WeaponPartType.BARREL, frame);
+                        mapPicker = _WEAPON[1];
+                    }
+                    case "HARDPOINTUNDER" -> {
+                        texKey = getWeaponKey(texKey, WeaponPartType.UNDER, frame);
+                        mapPicker = _WEAPON[1];
+                    }
+                    case "TURRETCOVERSMALL" -> mapPicker = _WEAPON_COVER[0][0];
+                    case "TURRETCOVERMEDIUM" -> mapPicker = _WEAPON_COVER[0][1];
+                    case "TURRETCOVERLARGE" -> mapPicker = _WEAPON_COVER[0][2];
+                    case "HARDPOINTCOVERSMALL" -> mapPicker = _WEAPON_COVER[1][0];
+                    case "HARDPOINTCOVERMEDIUM" -> mapPicker = _WEAPON_COVER[1][1];
+                    case "HARDPOINTCOVERLARGE" -> mapPicker = _WEAPON_COVER[1][2];
+                    default -> valid = false;
+                }
+                if (valid) {
+                    texSet = mapPicker.get(texKey);
+                    if (texSet == null) {
+                        texSet = new TextureSet(-1, -1, -1);
+                        mapPicker.merge(texKey, texSet, (oldValue, newValue) -> newValue);
+                    }
+
+                    texID = BUtil_MiscUtil.tryTexture(texPath, TextureManager::tryTextureChannel3);
+                    if (isNormalMap) texSet.setNormal(texID); else texSet.setComplex(texID);
+                } else _LOG.warn("'BoxUtil' shading texture csv data have invalid type at lines '" + i + "' in: '" + path + "'.");
+            }
+            _LOG.info("'BoxUtil' shading texture csv data loading finished: '" + path + "'.");
+        } catch (JSONException | IOException e) {
+            CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' shading texture csv data loading failed at: '" + path + "': ", e);
         }
     }
 
     public static void loadIlluminantData(String path) {
+        _CACHED_ILLUMINANT_PATH.add(path);
         try {
             JSONArray objDataArray = Global.getSettings().loadCSV(path);
             JSONObject objData;
@@ -673,27 +682,52 @@ public final class EntityShadingDataManager {
             byte[] spawnColor = new byte[4], bodyColor = new byte[4], hitColor = new byte[4];
             for (int i = 0; i < objDataArray.length(); i++) {
                 objData = objDataArray.getJSONObject(i);
+
                 illuminantKey = objData.optString("id");
-                illuminantType = objData.optString("type").toUpperCase();
-                if (!illuminantKey.isEmpty() && !illuminantType.isEmpty()) {
-                    if (illuminantType.contentEquals(BoxDatabase.SHADING_ILLUMINANT_DATA_TYPE[0])) {
-                        getColorArray(objData.optString("spawnColor"), spawnColor);
-                        getColorArray(objData.optString("bodyColor"), bodyColor);
-                        getColorArray(objData.optString("hitColor"), hitColor);
-                        _PROJ_ILLUM.put(illuminantKey, new ProjectileIlluminantData(spawnColor, bodyColor, hitColor, (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d)));
-                    } else if (illuminantType.contentEquals(BoxDatabase.SHADING_ILLUMINANT_DATA_TYPE[1])) {
-                        getColorArray(objData.optString("bodyColor"), bodyColor);
-                        _BEAM_ILLUM.put(illuminantKey, new IsoIlluminantData(bodyColor[0], bodyColor[1], bodyColor[2], bodyColor[3], (float) objData.optDouble("bodyRadius", 0.0d)));
-                    } else if (illuminantType.contentEquals(BoxDatabase.SHADING_ILLUMINANT_DATA_TYPE[2])) {
-                        getColorArray(objData.optString("bodyColor"), bodyColor);
-                        _ENGINE_ILLUM.put(illuminantKey, new IsoIlluminantData(bodyColor[0], bodyColor[1], bodyColor[2], bodyColor[3], (float) objData.optDouble("bodyRadius", 0.0d)));
+                illuminantType = objData.optString("type");
+                if (illuminantKey.isBlank() || illuminantType.isBlank()) {
+                    _LOG.warn("'BoxUtil' illuminant csv data have empty id or type at lines '" + i + "' in: '" + path + "'.");
+                    continue;
+                }
+                illuminantType = illuminantType.toUpperCase();
+
+                if (illuminantType.contentEquals(BoxDatabase.SHADING_ILLUMINANT_DATA_TYPE[0])) {
+                    BUtil_MiscUtil.getColorArray(objData.optString("spawnColor"), spawnColor);
+                    BUtil_MiscUtil.getColorArray(objData.optString("bodyColor"), bodyColor);
+                    BUtil_MiscUtil.getColorArray(objData.optString("hitColor"), hitColor);
+
+                    final ProjectileIlluminantData data = new ProjectileIlluminantData(spawnColor, bodyColor, hitColor, (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d), (float) objData.optDouble("", 0.0d));
+                    _PROJ_ILLUM.merge(illuminantKey, data, (oldValue, newValue) -> newValue);
+                } else {
+                    final boolean typeBeam = illuminantType.contentEquals(BoxDatabase.SHADING_ILLUMINANT_DATA_TYPE[1]),
+                            typeEngine = illuminantType.contentEquals(BoxDatabase.SHADING_ILLUMINANT_DATA_TYPE[2]);
+                    if (!(typeBeam || typeEngine)) {
+                        _LOG.warn("'BoxUtil' illuminant csv data have invalid type at lines '" + i + "' in: '" + path + "'.");
+                        continue;
                     }
+
+                    BUtil_MiscUtil.getColorArray(objData.optString("bodyColor"), bodyColor);
+
+                    final IsoIlluminantData data = new IsoIlluminantData(bodyColor[0], bodyColor[1], bodyColor[2], bodyColor[3], (float) objData.optDouble("bodyRadius", 0.0d));
+
+                    final HashMap<String, IsoIlluminantData> map = typeBeam ? _BEAM_ILLUM : _ENGINE_ILLUM;
+                    map.merge(illuminantKey, data, (oldValue, newValue) -> newValue);
                 }
             }
-            Global.getLogger(EntityShadingDataManager.class).info("'BoxUtil' illuminant csv data loading finished: '" + path + "'.");
+            _LOG.info("'BoxUtil' illuminant csv data loading finished: '" + path + "'.");
         } catch (JSONException | IOException e) {
             CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' illuminant csv data loading failed at: '" + path + "': ", e);
         }
+    }
+
+    /**
+     * Will overwrite all the data or add ones with (new or existed)id, but never clear them.<p>
+     * Must be only call it by game dev mode F8 reload, do not use it in mod.
+     */
+    public static void _devModeReload() {
+        for (String path : _CACHED_TEXTURE_PATH) loadTextureData(path);
+        for (String path : _CACHED_GRAPHICS_LIB_LAYOUT_TEXTURE_PATH) loadGraphicsLibLayoutTextureData(path);
+        for (String path : _CACHED_ILLUMINANT_PATH) loadIlluminantData(path);
     }
 
     private EntityShadingDataManager() {}

@@ -3,6 +3,25 @@
 
 若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
 
+v1.5.6 / 2026.06.32
+    增加托管于内置系统进行自动生成与管理的多线程尾迹系统
+    于 org.boxutil.manager 增加 StaticTrailManager 管理类，用于加载可被内置系统自动生成并管理的尾迹
+    于 org.boxutil.units.standard.attribute 增加 StaticTrailData 用于设定专用自定义尾迹的状态
+
+    实例化数据 submitInstance 阶段逻辑调整
+    初次安装或更新到1.5.5+版本后，兼容性同步改为默认开启
+
+    MaterialData 新增构造方法：
+        MaterialData(MaterialData);
+
+    CombatRenderingManager 新增方法：
+        boolean addStaticTrailGenerator(StaticTrailData, CombatEngineLayers, Supplier<Vector4f>);
+        boolean removeStaticTrialGenerator(StaticTrailData);
+
+    CampaignRenderingManager 新增方法：
+        boolean addStaticTrailGenerator(StaticTrailData, CampaignEngineLayers, Supplier<Vector4f>);
+        boolean removeStaticTrialGenerator(StaticTrailData);
+
 v1.5.5 / 2026.05.03
     修复部分设备某些情况下，多通道输出阶段潜在的资源绑定问题
     增加一个选项用于修复特定情况下的出现的OpenGL错误 (对应游戏崩溃时 hs_err 相关log中出现的 glFenceSync 寻址问题)

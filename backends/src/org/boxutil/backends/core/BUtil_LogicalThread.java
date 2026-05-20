@@ -1,7 +1,6 @@
 package org.boxutil.backends.core;
 
 import org.boxutil.base.BaseIlluminantData;
-import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.api.ControlDataAPI;
 import org.boxutil.base.api.InstanceRenderAPI;
 import org.boxutil.base.api.RenderDataAPI;
@@ -21,6 +20,8 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTemplate {
+    private final static long _MEMORY_POOL_COMPACT_DELAY = 20_000_000_000L;
+
     private final static class ComputeNum {
         int begin;
         int end;
@@ -132,17 +133,17 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
     }
 
     private static void compactMemoryPoolTarget(final InstanceType target) {
-        if (System.nanoTime() - BUtil_InstanceDataMemoryPool.getLastCompactTimeStampNano(target) > 20_000_000_000L) BUtil_InstanceDataMemoryPool._compact(target);
+        if (System.nanoTime() - BUtil_InstanceDataMemoryPool.getLastCompactTimeStampNano(target) > _MEMORY_POOL_COMPACT_DELAY) BUtil_InstanceDataMemoryPool._compact(target);
     }
 
     private void compactMemoryPool() {
         if (BUtil_InstanceDataMemoryPool.isNotSupported()) return;
         if (this._isAux) {
-            compactMemoryPoolTarget(InstanceType.DYNAMIC_3D);
+            compactMemoryPoolTarget(InstanceType.FIXED_2D);
             compactMemoryPoolTarget(InstanceType.FIXED_3D);
         } else {
             compactMemoryPoolTarget(InstanceType.DYNAMIC_2D);
-            compactMemoryPoolTarget(InstanceType.FIXED_2D);
+            compactMemoryPoolTarget(InstanceType.DYNAMIC_3D);
         }
     }
 

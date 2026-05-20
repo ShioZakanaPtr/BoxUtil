@@ -15,15 +15,23 @@ import java.awt.*;
 
 // The material is only 2D-Texture supported.
 public class MaterialData {
+    protected byte cullFace = 0;
     // diffuse, normal, complex, emissive, tangent
     protected final SpriteAPI[] textures = new SpriteAPI[]{BoxDatabase.BUtil_ONE, BoxDatabase.BUtil_Z, BoxDatabase.BUtil_COMPLEX_DEF, BoxDatabase.BUtil_NONE, BoxDatabase.BUtil_X};
     protected final int[] glTex = new int[]{this.textures[0].getTextureId(), this.textures[1].getTextureId(), this.textures[2].getTextureId(), this.textures[3].getTextureId(), this.textures[4].getTextureId()};
-    protected byte cullFace = 0;
     // vec4(color), vec4(emissive), vec4(alphaMix, colorMix, glowPower, anisotropic)
     protected final float[] state = new float[]{BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, 0.0f, BoxEnum.ONE, 0.0f};
     protected final boolean[] stateB = new boolean[]{true, false}; // additionEmissive, ignoreIllumination
 
     public MaterialData() {}
+
+    public MaterialData(MaterialData material) {
+        this.cullFace = material.cullFace;
+        System.arraycopy(material.textures, 0, this.textures, 0, this.textures.length);
+        System.arraycopy(material.glTex, 0, this.glTex, 0, this.glTex.length);
+        System.arraycopy(material.state, 0, this.state, 0, this.state.length);
+        System.arraycopy(material.stateB, 0, this.stateB, 0, this.stateB.length);
+    }
 
     public void clearTextures() {
         this.textures[0] = BoxDatabase.BUtil_ONE;

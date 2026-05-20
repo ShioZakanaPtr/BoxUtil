@@ -3,7 +3,6 @@ package org.boxutil;
 import com.fs.starfarer.Version;
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.ModSpecAPI;
 import org.boxutil.backends.core.BUtil_CampaignEFS;
 import org.boxutil.backends.core.BUtil_ThreadResource;
 import org.boxutil.config.BoxConfigGUI;
@@ -83,5 +82,10 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
 
     public void afterGameSave() {
         initCampaignPlugin();
+    }
+
+    public void onDevModeF8Reload() {
+        EntityShadingDataManager._devModeReload();
+        StaticTrailManager._devModeReload();
     }
 }

@@ -2,6 +2,7 @@ package org.boxutil.manager;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.ViewportAPI;
+import org.apache.log4j.Logger;
 import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.api.SimpleVAOAPI;
@@ -103,25 +104,27 @@ public final class ShaderCore {
     private static final int[] screenSizeFix = new int[2];
     private static final float[] screenSizeUV = new float[2];
 
+    private static final Logger _LOG = Global.getLogger(ShaderCore.class);
+
     /**
      * Loading after {@link BoxConfigs#init()}.
      */
     public static void init() {
         if (glFinished) return;
         glFinished = true;
-        Global.getLogger(ShaderCore.class).info("'BoxUtil' OpenGL context running on: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_NAME + "' with drive version: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_VERSION + "'.");
+        _LOG.info("'BoxUtil' OpenGL context running on: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_NAME + "' with drive version: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_VERSION + "'.");
         if (BUtil_BoxUtilBackgroundThread.initWithFailedCheck()) {
-            Global.getLogger(ShaderCore.class).warn("'BoxUtil' logical thread gl context failed.");
+            _LOG.warn("'BoxUtil' logical thread gl context failed.");
             closeShader();
             return;
         }
         if (!BoxConfigs.isShaderEnable()) {
-            Global.getLogger(ShaderCore.class).warn("'BoxUtil' shader core has been disabled.");
+            _LOG.warn("'BoxUtil' shader core has been disabled.");
             closeShader();
             return;
         }
         if (!BoxConfigs.isBaseGL43Supported()) {
-            Global.getLogger(ShaderCore.class).warn("'BoxUtil' platform is not supported 'OpenGL4.3'.");
+            _LOG.warn("'BoxUtil' platform is not supported 'OpenGL4.3'.");
             closeShader();
             return;
         }
@@ -268,13 +271,13 @@ public final class ShaderCore {
         refreshDefaultVAO();
         if (!isMainProgramValid() || !isMatrixProgramValid() || !isRenderingFramebufferValid() || !isDefaultVAOValid()) {
             closeShader();
-            Global.getLogger(ShaderCore.class).error("'BoxUtil' base shader resource init failed, main program: " + isMainProgramValid() + ", instance computing program: " + isMatrixProgramValid() + ", rendering framebuffer: " + isRenderingFramebufferValid() + ", default VAO: " + isDefaultVAOValid() + ".");
+            _LOG.error("'BoxUtil' base shader resource init failed, main program: " + isMainProgramValid() + ", instance computing program: " + isMatrixProgramValid() + ", rendering framebuffer: " + isRenderingFramebufferValid() + ", default VAO: " + isDefaultVAOValid() + ".");
             return;
         }
         matrixUBO = GL15.glGenBuffers();
         if (matrixUBO == 0) {
             closeShader();
-            Global.getLogger(ShaderCore.class).error("'BoxUtil' shader UBO init failed. ");
+            _LOG.error("'BoxUtil' shader UBO init failed. ");
             return;
         }
 
@@ -557,7 +560,7 @@ public final class ShaderCore {
                     .loadSubroutineUniformIndex("instanceState")
                     .computeSubroutineUniformRoute();
             glDistortionValid = true;
-        } else Global.getLogger(ShaderCore.class).warn("'BoxUtil' distortion program init failed.");
+        } else _LOG.warn("'BoxUtil' distortion program init failed.");
     }
 
     private static void initMatrixProgram() {
@@ -572,7 +575,7 @@ public final class ShaderCore {
                     .loadUniformIndex("amount")
                     .loadUniformIndex("instanceRange");
             glInstanceMatrixValid = true;
-        } else Global.getLogger(ShaderCore.class).warn("'BoxUtil' matrix program init failed.");
+        } else _LOG.warn("'BoxUtil' matrix program init failed.");
     }
 
     private static void initSDFGenProgram() {
@@ -616,7 +619,7 @@ public final class ShaderCore {
                     .loadSubroutineUniformIndex("formatPickerStoreState")
                     .computeSubroutineUniformRoute();
             glSDFGenValid = true;
-        } else Global.getLogger(ShaderCore.class).warn("'BoxUtil' SDF-generate program init failed.");
+        } else _LOG.warn("'BoxUtil' SDF-generate program init failed.");
     }
 
     private static void initRadialBlurProgram() {
@@ -671,7 +674,7 @@ public final class ShaderCore {
                     .loadSubroutineUniformIndex("workModeState")
                     .computeSubroutineUniformRoute();
             glCompGaussianBlurValid = true;
-        } else Global.getLogger(ShaderCore.class).warn("'BoxUtil' comp-gaussian blur program init failed.");
+        } else _LOG.warn("'BoxUtil' comp-gaussian blur program init failed.");
     }
 
     private static void initCompBilateralFilterProgram() {
@@ -708,7 +711,7 @@ public final class ShaderCore {
                     .loadSubroutineUniformIndex("formatPickerStoreState")
                     .computeSubroutineUniformRoute();
             glCompBilateralFilterValid = true;
-        } else Global.getLogger(ShaderCore.class).warn("'BoxUtil' comp-bilateral filter program init failed.");
+        } else _LOG.warn("'BoxUtil' comp-bilateral filter program init failed.");
     }
 
     private static void initDiscreteFourierProgram() {
@@ -747,7 +750,7 @@ public final class ShaderCore {
                     .loadSubroutineUniformIndex("formatPickerStoreState")
                     .computeSubroutineUniformRoute();
             glDiscreteFourierValid = true;
-        } else Global.getLogger(ShaderCore.class).warn("'BoxUtil' discrete fourier program init failed.");
+        } else _LOG.warn("'BoxUtil' discrete fourier program init failed.");
     }
 
     private static void initNormalMapGenProgram() {
@@ -775,7 +778,7 @@ public final class ShaderCore {
                     .loadUniformIndex("sizeState")
                     .loadUniformIndex("normalStrength");
             glNormalMapGenValid = true;
-        } else Global.getLogger(ShaderCore.class).warn("'BoxUtil' normal map generate program init failed.");
+        } else _LOG.warn("'BoxUtil' normal map generate program init failed.");
     }
 
     private static void initFXAAProgram() {
@@ -1229,8 +1232,8 @@ public final class ShaderCore {
         renderingBuffer = new BUtil_RenderingBuffer();
         for (byte i = 0; i < BUtil_RenderingBuffer.getBufferCount(); i++) {
             if (renderingBuffer.isFinished(i))
-                Global.getLogger(ShaderCore.class).info("'BoxUtil' rendering framebuffer-" + i + " has refreshed.");
-            else Global.getLogger(ShaderCore.class).error("'BoxUtil' rendering framebuffer-" + i + " refresh failed.");
+                _LOG.info("'BoxUtil' rendering framebuffer-" + i + " has refreshed.");
+            else _LOG.error("'BoxUtil' rendering framebuffer-" + i + " refresh failed.");
         }
         BUtil_GLImpl.Operations.refreshFBOResource(renderingBuffer);
     }
@@ -1248,8 +1251,8 @@ public final class ShaderCore {
 
         publicFBO = new PublicFBO();
         int instance = publicFBO.hashCode();
-        if (publicFBO.isFinished()) Global.getLogger(ShaderCore.class).info("'BoxUtil' public framebuffer \"" + instance + "\" has refreshed.");
-        else Global.getLogger(ShaderCore.class).error("'BoxUtil' public framebuffer \"" + instance + "\" refresh failed.");
+        if (publicFBO.isFinished()) _LOG.info("'BoxUtil' public framebuffer \"" + instance + "\" has refreshed.");
+        else _LOG.error("'BoxUtil' public framebuffer \"" + instance + "\" refresh failed.");
     }
 
     public static PublicFBO tryPublicFBO() {
@@ -1265,8 +1268,8 @@ public final class ShaderCore {
         if (defaultPointObject != null) defaultPointObject.destroy();
         defaultPointObject = new PointObject();
         if (defaultPointObject.isValid())
-            Global.getLogger(ShaderCore.class).info("'BoxUtil' default point object has refreshed.");
-        else Global.getLogger(ShaderCore.class).error("'BoxUtil' default point object refresh failed.");
+            _LOG.info("'BoxUtil' default point object has refreshed.");
+        else _LOG.error("'BoxUtil' default point object refresh failed.");
     }
 
     public static SimpleVAOAPI getDefaultLineObject() {
@@ -1277,8 +1280,8 @@ public final class ShaderCore {
         if (defaultLineObject != null) defaultLineObject.destroy();
         defaultLineObject = new LineObject();
         if (defaultLineObject.isValid())
-            Global.getLogger(ShaderCore.class).info("'BoxUtil' default line object has refreshed.");
-        else Global.getLogger(ShaderCore.class).error("'BoxUtil' default line object refresh failed.");
+            _LOG.info("'BoxUtil' default line object has refreshed.");
+        else _LOG.error("'BoxUtil' default line object refresh failed.");
     }
 
     public static SimpleVAOAPI getDefaultQuadObject() {
@@ -1289,8 +1292,8 @@ public final class ShaderCore {
         if (defaultQuadObject != null) defaultQuadObject.destroy();
         defaultQuadObject = new QuadObject();
         if (defaultQuadObject.isValid())
-            Global.getLogger(ShaderCore.class).info("'BoxUtil' default quad object has refreshed.");
-        else Global.getLogger(ShaderCore.class).error("'BoxUtil' default quad object refresh failed.");
+            _LOG.info("'BoxUtil' default quad object has refreshed.");
+        else _LOG.error("'BoxUtil' default quad object refresh failed.");
     }
 
     public static boolean isDefaultVAOValid() {

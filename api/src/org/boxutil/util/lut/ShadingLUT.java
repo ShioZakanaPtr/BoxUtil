@@ -166,12 +166,11 @@ public final class ShadingLUT {
             return 0.5f / result;
         }
 
-        private static Vector3f ImportanceSampleGGX_Emu(Vector2f Xi, float alpha, Vector3f result) {
+        private static void ImportanceSampleGGX_Emu(Vector2f Xi, float alpha, Vector3f result) {
             float phi = TrigUtil.PI2_F * Xi.x;
             float cosTheta = (float) Math.sqrt((1.0f - Xi.y) / (1.0f + (alpha * alpha - 1.0f) * Xi.y));
             float sinTheta = (float) Math.sqrt(1.0f - cosTheta * cosTheta);
             result.set((float) Math.sin(phi) * sinTheta, -(float) Math.cos(phi) * sinTheta, cosTheta);
-            return result;
         }
 
         /**

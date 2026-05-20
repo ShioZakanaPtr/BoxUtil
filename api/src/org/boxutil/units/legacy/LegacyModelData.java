@@ -1,10 +1,10 @@
 package org.boxutil.units.legacy;
 
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import org.boxutil.backends.array.BUtil_Stack2f;
-import org.boxutil.backends.array.BUtil_Stack3f;
-import org.boxutil.backends.array.BUtil_Stack3i;
-import org.boxutil.backends.array.BUtil_TriIndex;
+import org.boxutil.backends.struct.BUtil_Stack2f;
+import org.boxutil.backends.struct.BUtil_Stack3f;
+import org.boxutil.backends.struct.BUtil_Stack3i;
+import org.boxutil.backends.struct.BUtil_TriIndex;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
 import org.lwjgl.BufferUtils;

@@ -2,6 +2,7 @@ package org.boxutil.manager;
 
 import com.fs.starfarer.api.Global;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.BufferUtils;
@@ -25,6 +26,8 @@ public final class KernelCore {
     private static CLCommandQueue clQueue = null;
     private static boolean clValid = false;
     private static boolean clFinished = false;
+    
+    private static final Logger _LOG = Global.getLogger(KernelCore.class);
 
     /**
      * Loading after {@link BoxConfigs#init()}.
@@ -33,35 +36,35 @@ public final class KernelCore {
         if (clFinished) return;
         clFinished = true;
         if (!BoxConfigs.isCLEnable()) {
-            Global.getLogger(KernelCore.class).warn("'BoxUtil' OpenCL module was disabled.");
+            _LOG.warn("'BoxUtil' OpenCL module was disabled.");
             return;
         }
         if (CL.isCreated()) {
-            Global.getLogger(KernelCore.class).error("'BoxUtil' OpenCL was created.");
+            _LOG.error("'BoxUtil' OpenCL was created.");
             return;
         }
         try {
             IntBuffer errorCode = BufferUtils.createIntBuffer(1);
             CL.create();
-            Global.getLogger(KernelCore.class).info("'BoxUtil' CL program has created.");
+            _LOG.info("'BoxUtil' CL program has created.");
             for (CLPlatform checkPlatform : CLPlatform.getPlatforms()) {
                 if (checkPlatform != null && checkPlatform.isValid()) {
                     CLPlatformCapabilities cap = CLCapabilities.getPlatformCapabilities(checkPlatform);
                     if (cap.majorVersion < 1 || !(cap.CL_KHR_gl_sharing || cap.CL_APPLE_gl_sharing)) continue;
                     clPlatformCap = cap;
                     clPlatform = checkPlatform;
-                    Global.getLogger(KernelCore.class).info("'BoxUtil' CL platform init: '" + checkPlatform.getInfoString(CL10.CL_PLATFORM_NAME) + "', platform version: '" + checkPlatform.getInfoString(CL10.CL_PLATFORM_VERSION) + "'.");
-                    Global.getLogger(KernelCore.class).info("'BoxUtil' CL platform cl version: '" + cap.majorVersion + "." + cap.minorVersion +  "'.");
+                    _LOG.info("'BoxUtil' CL platform init: '" + checkPlatform.getInfoString(CL10.CL_PLATFORM_NAME) + "', platform version: '" + checkPlatform.getInfoString(CL10.CL_PLATFORM_VERSION) + "'.");
+                    _LOG.info("'BoxUtil' CL platform cl version: '" + cap.majorVersion + "." + cap.minorVersion +  "'.");
                     break;
                 }
             }
             if (clPlatform == null) {
-                Global.getLogger(KernelCore.class).error("'BoxUtil' platform cannot support OpenCL.");
+                _LOG.error("'BoxUtil' platform cannot support OpenCL.");
                 destroy();
                 return;
             }
 
-            Global.getLogger(KernelCore.class).info("===== 'BoxUtil' CL device init stage =====");
+            _LOG.info("===== 'BoxUtil' CL device init stage =====");
             final Filter<CLDevice> glSharingFilter = new Filter<CLDevice>() {
                 public boolean accept(final CLDevice device) {
                     final CLDeviceCapabilities cap = CLCapabilities.getDeviceCapabilities(device);
@@ -78,20 +81,20 @@ public final class KernelCore {
                     CLDeviceCapabilities cap = CLCapabilities.getDeviceCapabilities(checkDevice);
                     CL_DEVICES.add(checkDevice);
                     CL_DEVICE_CAPS.add(CLCapabilities.getDeviceCapabilities(checkDevice));
-                    Global.getLogger(KernelCore.class).info("'BoxUtil' CL device found: '" + checkDevice.getInfoString(CL10.CL_DEVICE_NAME) + "', driver version: '" + checkDevice.getInfoString(CL10.CL_DRIVER_VERSION) + "'.");
-                    Global.getLogger(KernelCore.class).info("'BoxUtil' CL device cl version: '" + cap.majorVersion + "." + cap.minorVersion +  "'.");
+                    _LOG.info("'BoxUtil' CL device found: '" + checkDevice.getInfoString(CL10.CL_DEVICE_NAME) + "', driver version: '" + checkDevice.getInfoString(CL10.CL_DRIVER_VERSION) + "'.");
+                    _LOG.info("'BoxUtil' CL device cl version: '" + cap.majorVersion + "." + cap.minorVersion +  "'.");
                 }
             }
             if (CL_DEVICES.isEmpty()) {
-                Global.getLogger(KernelCore.class).log(Level.ERROR, "'BoxUtil' CL device cannot found a valid device.");
+                _LOG.log(Level.ERROR, "'BoxUtil' CL device cannot found a valid device.");
                 destroy();
                 return;
             }
 
-            Global.getLogger(KernelCore.class).info("===== 'BoxUtil' CL context init stage =====");
+            _LOG.info("===== 'BoxUtil' CL context init stage =====");
             Drawable drawable = Display.getDrawable();
             if (drawable == null) {
-                Global.getLogger(KernelCore.class).log(Level.ERROR, "'BoxUtil' CL found drawable failed.");
+                _LOG.log(Level.ERROR, "'BoxUtil' CL found drawable failed.");
                 destroy();
                 return;
             }
@@ -101,14 +104,14 @@ public final class KernelCore {
                 }
             }, drawable, errorCode);
             if (clContext == null || !clContext.isValid()) {
-                Global.getLogger(KernelCore.class).log(Level.ERROR, "'BoxUtil' CL context create error, error code: '" + errorCode.get(0) + "'.");
+                _LOG.log(Level.ERROR, "'BoxUtil' CL context create error, error code: '" + errorCode.get(0) + "'.");
                 destroy();
                 return;
             }
-            Global.getLogger(KernelCore.class).info("'BoxUtil' CL context has created.");
+            _LOG.info("'BoxUtil' CL context has created.");
             errorCode.position(0);
 
-            Global.getLogger(KernelCore.class).info("===== 'BoxUtil' CL command queue init stage =====");
+            _LOG.info("===== 'BoxUtil' CL command queue init stage =====");
             CLDevice selectedDevice = CL_DEVICES.get(Math.min(BoxConfigs.getCLDeviceIndex(), CL_DEVICES.size() - 1));
             CLCommandQueue queue;
             if (selectedDevice == null || !selectedDevice.isValid()) {
@@ -118,13 +121,13 @@ public final class KernelCore {
                 queue.checkValid();
             }
             if (queue == null || !queue.isValid()) {
-                Global.getLogger(KernelCore.class).log(Level.ERROR, "'BoxUtil' CL command queue create error for selected device, error code: '" + errorCode.get(0) + "'.");
+                _LOG.log(Level.ERROR, "'BoxUtil' CL command queue create error for selected device, error code: '" + errorCode.get(0) + "'.");
                 destroy();
                 return;
             }
             clQueue = queue;
-            Global.getLogger(KernelCore.class).info("'BoxUtil' CL command queue on device: '" + selectedDevice.getInfoString(CL10.CL_DEVICE_NAME) + "' has created.");
-            Global.getLogger(KernelCore.class).info("'BoxUtil' OpenCL context create finished.");
+            _LOG.info("'BoxUtil' CL command queue on device: '" + selectedDevice.getInfoString(CL10.CL_DEVICE_NAME) + "' has created.");
+            _LOG.info("'BoxUtil' OpenCL context create finished.");
             clValid = true;
         } catch (LWJGLException e) {
             destroy();
