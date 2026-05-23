@@ -29,11 +29,11 @@ public final class BUtil_BoxUtilBackgroundThread {
     private static boolean _VALID = false;
 
     @FunctionalInterface
-    private interface _ThreadInit<_ThreadTemplate, Thread, SharedDrawable, Object> {
+    private interface _ThreadInit {
         _ThreadTemplate apply(Thread thread, SharedDrawable drawable, Object args);
     }
 
-    private static void setupThread(final byte target, final _ThreadInit<_ThreadTemplate, Thread, SharedDrawable, Object> thread, final Object args, final String name) {
+    private static void setupThread(final byte target, final _ThreadInit thread, final Object args, final String name) {
         try {
             _THREAD_RUNNABLE[target] = thread.apply(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), args);
             __POOL.execute(_THREAD_RUNNABLE[target]);
