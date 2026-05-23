@@ -1,17 +1,17 @@
-package org.boxutil.backends.struct;
+package org.boxutil.backends.units;
 
 import org.boxutil.units.standard.attribute.StaticTrailData;
 import org.boxutil.util.CommonUtil;
 import org.boxutil.util.concurrent.ReentrantSpinLock;
+import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Deque;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public record BUtil_StaticTrailSysObject(StaticTrailData trailData, Deque<TrackerMemory> trackerQueue) {
+public record BUtil_StaticTrailSysObject(StaticTrailData trailData, float maxDur, Deque<TrackerMemory> trackerQueue) {
     public int hashCode() {
         return this.trailData().hashCode();
     }
@@ -23,16 +23,17 @@ public record BUtil_StaticTrailSysObject(StaticTrailData trailData, Deque<Tracke
     }
 
     public final static class TrackerMemory {
-        private boolean isValid = true;
+        private boolean isInvalid = false;
         private int nodeAddress;
         private int totalNode = 0;
         private float timer = 0.0f;
         private final float maxDur;
         private long address;
+        private final Vector2f lastLoc = new Vector2f();
         private final Function<Float, Vector4f> tracker;
 
         private TrackerMemory() {
-            this.isValid = false;
+            this.isInvalid = true;
             this.timer = -1.0f;
             this.maxDur = 0.0f;
             this.tracker = null;
@@ -43,14 +44,27 @@ public record BUtil_StaticTrailSysObject(StaticTrailData trailData, Deque<Tracke
             this.tracker = tracker;
         }
 
+        private static float distSq(final float x_src, final float y_src, final float x_dst, final float y_dst) {
+            final float x_diff = x_dst - x_src, y_diff = y_dst - y_src;
+            return x_diff * x_diff + y_diff * y_diff;
+        }
+
         public void computeData(final FloatBuffer buffer, final ReentrantSpinLock lock, final IntBuffer piFirst, final IntBuffer piCount, final float elapsedTime, final float amount) {
+            if (this.isInvalid) return;
             final Vector4f node = this.tracker.apply(amount);
             if (node == null) {
+                this.timer -= amount;
+                if (this.timer < 0.0f) this.isInvalid = true;
+                return;
+            }
+            if (distSq(node.x, node.y, this.lastLoc.x, this.lastLoc.y) < 0.01f) { // ignored tiny pixel offset
                 this.timer -= amount;
                 return;
             }
             this.timer = this.maxDur;
             this.totalNode++;
+            this.lastLoc.x = node.x;
+            this.lastLoc.y = node.y;
 
             final float packingFacingVector = Float.intBitsToFloat(CommonUtil.float16ToShort(node.w) << 16 & 0xFFFF | CommonUtil.float16ToShort(node.z));
             lock.lock();

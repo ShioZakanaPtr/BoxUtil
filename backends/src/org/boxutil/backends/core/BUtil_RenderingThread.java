@@ -7,8 +7,8 @@ import org.lwjgl.opengl.*;
 import java.util.Iterator;
 
 final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread._ThreadTemplate {
-    BUtil_RenderingThread(Thread hostThread, Drawable sharedDrawable) {
-        super(hostThread, sharedDrawable);
+    BUtil_RenderingThread(Thread hostThread, Drawable sharedDrawable, Object ignored) {
+        super(hostThread, sharedDrawable, ignored);
     }
 
     private enum ExcFun {
@@ -37,20 +37,23 @@ final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread._ThreadT
     }
 
     private void sendBeginRenderingSync() {
+        if (this._FAILED) return;
         BUtil_ThreadResource.sendGLSync(BUtil_ThreadResource.__SYNC_BEGIN_RENDERING);
     }
 
     private void sendBeginIlluminationSync() {
+        if (this._FAILED) return;
         BUtil_ThreadResource.sendGLSync(BUtil_ThreadResource.__SYNC_BEGIN_ILLUMINATION);
     }
 
     private void sendAfterRenderingSync() {
+        if (this._FAILED) return;
         BUtil_ThreadResource.sendGLSync(BUtil_ThreadResource.__SYNC_AFTER_RENDERING);
     }
 
     protected void runBody() {
         BoxThreadSync.Rendering.beforeRendering().arriveAndAwaitAdvance();
-        BUtil_ThreadResource.tryGLSync(BUtil_ThreadResource.__SYNC_FINISH_ADVANCE_HOST);
+        if (!this._FAILED) BUtil_ThreadResource.tryGLSync(BUtil_ThreadResource.__SYNC_FINISH_ADVANCE_HOST);
         BUtil_ThreadResource.Logical.runEntitySubmit(true);
 
         BoxThreadSync.Rendering.beginRendering().arriveAndAwaitAdvance();

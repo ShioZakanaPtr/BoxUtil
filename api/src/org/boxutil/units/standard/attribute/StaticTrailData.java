@@ -9,18 +9,30 @@ import org.lwjgl.util.vector.Vector4f;
  * Recommended to use const function for all.
  */
 public abstract class StaticTrailData {
+    /**
+     * <b>MUST BE the const function.</b>
+     */
     public abstract String id();
     
     public abstract MaterialData getMaterial();
 
+    /**
+     * <b>MUST BE the const function.</b>
+     */
     public float getFadeInTime() {
         return 0.1f;
     }
 
+    /**
+     * <b>MUST BE the const function.</b>
+     */
     public float getFullTime() {
         return 0.4f;
     }
 
+    /**
+     * <b>MUST BE the const function.</b>
+     */
     public float getFadeOutTime() {
         return 1.0f;
     }

@@ -8,7 +8,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.*;
 
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public final class BUtil_BoxUtilBackgroundThread {
     private final static ExecutorService __POOL = Executors.newFixedThreadPool(3, r -> {
@@ -16,74 +16,51 @@ public final class BUtil_BoxUtilBackgroundThread {
         thread.setDaemon(true);
         return thread;
     });
-    private static BUtil_RenderingThread __RENDERING_THREAD_RB = null;
-    private static BUtil_LogicalThread __LOGICAL_THREAD_RB = null;
-    private static BUtil_LogicalThread __LOGICAL_AUX_THREAD_RB = null;
+
+    private final static byte _RENDERING_THREAD = 0;
+    private final static byte _LOGICAL_THREAD = 1;
+    private final static byte _LOGICAL_AUX_THREAD = 2;
+    private final static byte _STATIC_TRAIL_THREAD = 3;
+    private final static byte _TOTAL_THREAD = 4;
+    private final static _ThreadTemplate[] _THREAD_RUNNABLE = new _ThreadTemplate[_TOTAL_THREAD];
+    private final static Thread[] _THREAD = new Thread[_TOTAL_THREAD];
 
     private static boolean _INIT = false;
     private static boolean _VALID = false;
 
-    private static Thread RENDERING_THREAD = null;
-    private static Thread LOGICAL_THREAD = null;
-    private static Thread LOGICAL_AUX_THREAD = null;
+    @FunctionalInterface
+    private interface _ThreadInit<_ThreadTemplate, Thread, SharedDrawable, Object> {
+        _ThreadTemplate apply(Thread thread, SharedDrawable drawable, Object args);
+    }
+
+    private static void setupThread(final byte target, final _ThreadInit<_ThreadTemplate, Thread, SharedDrawable, Object> thread, final Object args, final String name) {
+        try {
+            _THREAD_RUNNABLE[target] = thread.apply(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), args);
+            __POOL.execute(_THREAD_RUNNABLE[target]);
+            _THREAD_RUNNABLE[target]._INIT_SYNC.await();
+            _THREAD[target] = _THREAD_RUNNABLE[target]._CURR_THREAD;
+        } catch (Exception e) {
+            if (e instanceof LWJGLException lwjglException) CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' " + name + " additional thread failed: ", lwjglException);
+        } finally {
+            _VALID |= _THREAD_RUNNABLE[target]._FAILED;
+            _THREAD_RUNNABLE[target].clearTmpSync();
+        }
+    }
 
     public static boolean initWithFailedCheck() {
         if (_INIT) return _VALID;
         _INIT = true;
 
-        // rendering
-        {
-            try {
-                __RENDERING_THREAD_RB = new BUtil_RenderingThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()));
-                __POOL.execute(__RENDERING_THREAD_RB);
-                __RENDERING_THREAD_RB._INIT_SYNC.await();
-                __RENDERING_THREAD_RB._INIT_SYNC = null;
-                RENDERING_THREAD = __RENDERING_THREAD_RB._CURR_THREAD;
-            } catch (Exception e) {
-                if (e instanceof LWJGLException lwjglException)
-                    CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' rendering additional thread failed: ", lwjglException);
-            }
-            _VALID |= __RENDERING_THREAD_RB._FAILED.get();
-            __RENDERING_THREAD_RB.clearTmpSync();
-        }
-
-        // logical
-        {
-            try {
-                __LOGICAL_THREAD_RB = new BUtil_LogicalThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), false);
-                __POOL.execute(__LOGICAL_THREAD_RB);
-                __LOGICAL_THREAD_RB._INIT_SYNC.await();
-                __LOGICAL_THREAD_RB._INIT_SYNC = null;
-                LOGICAL_THREAD = __LOGICAL_THREAD_RB._CURR_THREAD;
-            } catch (Exception e) {
-                if (e instanceof LWJGLException lwjglException)
-                    CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' logical additional thread failed: ", lwjglException);
-            }
-            _VALID |= __LOGICAL_THREAD_RB._FAILED.get();
-            __LOGICAL_THREAD_RB.clearTmpSync();
-        }
-
-        // logical aux
-        {
-            try {
-                __LOGICAL_AUX_THREAD_RB = new BUtil_LogicalThread(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), true);
-                __POOL.execute(__LOGICAL_AUX_THREAD_RB);
-                __LOGICAL_AUX_THREAD_RB._INIT_SYNC.await();
-                __LOGICAL_AUX_THREAD_RB._INIT_SYNC = null;
-                LOGICAL_AUX_THREAD = __LOGICAL_AUX_THREAD_RB._CURR_THREAD;
-            } catch (Exception e) {
-                if (e instanceof LWJGLException lwjglException)
-                    CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' logical-aux additional thread failed: ", lwjglException);
-            }
-            _VALID |= __LOGICAL_AUX_THREAD_RB._FAILED.get();
-            __LOGICAL_AUX_THREAD_RB.clearTmpSync();
-        }
+        setupThread(_RENDERING_THREAD, BUtil_RenderingThread::new, null, "rendering");
+        setupThread(_LOGICAL_THREAD, BUtil_LogicalThread::new, false, "logical");
+        setupThread(_LOGICAL_AUX_THREAD, BUtil_LogicalThread::new, true, "logical-aux");
+//        setupThread(_STATIC_TRAIL_THREAD, BUtil_StaticTrailThread::new, null, "static trail");
         return _VALID;
     }
 
     static abstract class _ThreadTemplate implements Runnable {
-        CountDownLatch _INIT_SYNC = new CountDownLatch(1);
-        AtomicBoolean _FAILED = new AtomicBoolean(true);
+        protected CountDownLatch _INIT_SYNC = new CountDownLatch(1);
+        protected boolean _FAILED = true;
 
         protected final Thread _HOST_THREAD;
         protected final Drawable _DRAWABLE;
@@ -91,7 +68,7 @@ public final class BUtil_BoxUtilBackgroundThread {
 
         protected Thread _CURR_THREAD = null;
 
-        _ThreadTemplate(final Thread hostThread, final Drawable sharedDrawable) {
+        _ThreadTemplate(final Thread hostThread, final Drawable sharedDrawable, final Object args) {
             this._HOST_THREAD = hostThread;
             this._DRAWABLE = sharedDrawable;
             this._LOG = Global.getLogger(this.getClass());
@@ -103,7 +80,6 @@ public final class BUtil_BoxUtilBackgroundThread {
 
         void clearTmpSync() {
             this._INIT_SYNC = null;
-            this._FAILED = null;
         }
 
         private void glInit() {
@@ -121,7 +97,7 @@ public final class BUtil_BoxUtilBackgroundThread {
                     CommonUtil.printThrowable(this._LOG, "'BoxUtil' additional thread gl-context failed: ", new OpenGLException(_glError));
                     this._INIT_SYNC.countDown();
                     return;
-                } else this._FAILED.set(false);
+                } else this._FAILED = false;
             }
             this._INIT_SYNC.countDown();
         }
@@ -134,13 +110,15 @@ public final class BUtil_BoxUtilBackgroundThread {
             this._CURR_THREAD = Thread.currentThread();
             this._CURR_THREAD.setName(this._CURR_THREAD.getName() + "-AS-" + this.getClass().getSimpleName());
             this.glInit();
-            if (this._FAILED.get()) this.destroyDrawable(); else this.logicalInit();
+            if (this._FAILED) this.destroyDrawable(); else this.logicalInit();
             this._LOG.info("'BoxUtil' additional thread running.");
 
-            try { while (!this._CURR_THREAD.isInterrupted()) {
-                if (this._HOST_THREAD == null || !this._HOST_THREAD.isAlive()) break;
-                this.runBody();
-            }} catch (Throwable e) {
+            try {
+                while (!this._CURR_THREAD.isInterrupted()) {
+                    if (this._HOST_THREAD == null || !this._HOST_THREAD.isAlive()) break;
+                    this.runBody();
+                }
+            } catch (Throwable e) {
                 CommonUtil.printThrowable(this._LOG, "'BoxUtil' additional thread catch: \n", e);
                 this.destroyDrawable();
                 this.logicalDestroy();
@@ -155,14 +133,18 @@ public final class BUtil_BoxUtilBackgroundThread {
     }
 
     public static Thread getRenderingThread() {
-        return RENDERING_THREAD;
+        return _THREAD[_RENDERING_THREAD];
     }
 
     public static Thread getLogicalThread() {
-        return LOGICAL_THREAD;
+        return _THREAD[_LOGICAL_THREAD];
     }
 
     public static Thread getLogicalAuxThread() {
-        return LOGICAL_AUX_THREAD;
+        return _THREAD[_LOGICAL_AUX_THREAD];
+    }
+
+    public static Thread getStaticTrailThread() {
+        return _THREAD[_STATIC_TRAIL_THREAD];
     }
 }

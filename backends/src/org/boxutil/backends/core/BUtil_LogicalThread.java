@@ -38,9 +38,9 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
     private final Deque<RenderDataAPI> _tmpQueue_entity = new ConcurrentLinkedDeque<>();
     private final boolean _isAux;
 
-    BUtil_LogicalThread(Thread hostThread, Drawable sharedDrawable, boolean isAux) {
-        super(hostThread, sharedDrawable);
-        this._isAux = isAux;
+    BUtil_LogicalThread(Thread hostThread, Drawable sharedDrawable, Object isAux) {
+        super(hostThread, sharedDrawable, isAux);
+        this._isAux = (boolean) isAux;
     }
 
     private void runThreadPlugin(final boolean isBegin) {
@@ -199,16 +199,18 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
     }
 
     private void sendBeginAdvanceSync() {
+        if (this._FAILED) return;
         BUtil_ThreadResource.sendGLSync(this._isAux ? BUtil_ThreadResource.__SYNC_AUX_BEGIN_ADVANCE : BUtil_ThreadResource.__SYNC_BEGIN_ADVANCE);
     }
 
     private void sendFinishAdvanceSync() {
+        if (this._FAILED) return;
         BUtil_ThreadResource.sendGLSync(this._isAux ? BUtil_ThreadResource.__SYNC_AUX_FINISH_ADVANCE : BUtil_ThreadResource.__SYNC_FINISH_ADVANCE);
     }
 
     protected void runBody() {
         BoxThreadSync.Logical.beginAdvance().arriveAndAwaitAdvance();
-        BUtil_ThreadResource.tryGLSync(this._isAux ? BUtil_ThreadResource.__SYNC_AUX_AFTER_RENDERING_HOST : BUtil_ThreadResource.__SYNC_AFTER_RENDERING_HOST);
+        if (!this._FAILED) BUtil_ThreadResource.tryGLSync(this._isAux ? BUtil_ThreadResource.__SYNC_AUX_AFTER_RENDERING_HOST : BUtil_ThreadResource.__SYNC_AFTER_RENDERING_HOST);
         if (!this._tmpQueue_plugin.isEmpty()) BUtil_ThreadResource.Logical.addAllThreadPlugin(this._tmpQueue_plugin);
         this.runThreadPlugin(true);
         this.runEntityAdvance();

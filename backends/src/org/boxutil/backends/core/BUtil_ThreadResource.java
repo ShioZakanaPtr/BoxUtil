@@ -7,7 +7,7 @@ import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.impl.campaign.ids.Factions;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import org.boxutil.backends.struct.BUtil_StaticTrailSysObject;
+import org.boxutil.backends.units.BUtil_StaticTrailSysObject;
 import org.boxutil.base.api.DirectDrawEntity;
 import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
