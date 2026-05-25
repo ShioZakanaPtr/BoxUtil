@@ -9,7 +9,26 @@ v1.5.6 / 2026.06.32
     于 org.boxutil.units.standard.attribute 增加 StaticTrailData 用于设定专用自定义尾迹的状态
 
     实例化数据 submitInstance 阶段逻辑调整
-    初次安装或更新到1.5.5+版本后，兼容性同步改为默认开启
+
+    BoxConfigs 新增方法：
+        boolean isBackgroundThreadGLValid();
+
+    ShaderUtil 新增方法：
+        int createShaderVF(String, Supplier<Boolean>, String, String);
+        int createShaderVFFormPath(String, Supplier<Boolean>, String, String);
+        int createShaderVGF(String, Supplier<Boolean>, String, String, String);
+        int createShaderVGFFromPath(String, Supplier<Boolean>, String, String, String);
+        int createShaderVGFFromPath(String, String, String, String);
+        int createShaderVTF(String, Supplier<Boolean>, String, String, String, String);
+        int createShaderVTFFromPath(String, Supplier<Boolean>, String, String, String, String);
+        int createShaderVTFFromPath(String,, String, String, String, String);
+        int createShaderVTGF(String, Supplier<Boolean>, String, String, String, String, String);
+        int createShaderVTGFFromPath(String, Supplier<Boolean>, String, String, String, String, String);
+        int createShaderVTGFFromPath(String, String, String, String, String, String);
+        int createComputeShadersFormPath(String, Supplier<Boolean>, String...);
+        int createComputeShaders(String, Supplier<Boolean>, String...);
+        int createShaderProgramFromPath(String, Supplier<Boolean>, String...);
+        int createShaderProgram(String, Supplier<Boolean>, int[], String...);
 
     MaterialData 新增构造方法：
         MaterialData(MaterialData);

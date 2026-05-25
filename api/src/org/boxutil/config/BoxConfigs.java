@@ -3,6 +3,7 @@ package org.boxutil.config;
 import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.Pair;
+import org.boxutil.backends.core.BUtil_BoxUtilBackgroundThread;
 import org.boxutil.backends.core.BUtil_ThreadResource;
 import org.boxutil.base.BaseShaderPacksContext;
 import org.boxutil.define.BoxDatabase;
@@ -39,9 +40,9 @@ public final class BoxConfigs {
     private static short BUtil_CLDevice = 0;
     private static short BUtil_CLDeviceLocal = 0;
     private static short BUtil_CLDeviceDisplay = 0;
-    private static boolean BUtil_CompatibleSync = true;
-    private static boolean BUtil_CompatibleSyncLocal = true;
-    private static boolean BUtil_CompatibleSyncDisplay = true;
+    private static boolean BUtil_CompatibleSync = false;
+    private static boolean BUtil_CompatibleSyncLocal = false;
+    private static boolean BUtil_CompatibleSyncDisplay = false;
 
     // Dynamic config values.
     private static int BUtil_InstanceClamp = 8192;
@@ -302,7 +303,7 @@ public final class BoxConfigs {
             BUtil_EnableCLLocal = BUtil_EnableCL;
             BUtil_CLDevice = (short) data.optInt("BUtil_CLDevice", 0);
             BUtil_CLDeviceLocal = BUtil_CLDevice;
-            BUtil_CompatibleSync = data.optBoolean("BUtil_CompatibleSync", true);
+            BUtil_CompatibleSync = data.optBoolean("BUtil_CompatibleSync", false);
             BUtil_CompatibleSyncLocal = BUtil_CompatibleSync;
 
             BUtil_EnableDebug = data.optBoolean("BUtil_EnableDebug", false);
@@ -471,6 +472,10 @@ public final class BoxConfigs {
 
     public static boolean isBaseGL43Supported() {
         return BUtil_BaseGL43Supported;
+    }
+
+    public static boolean isBackgroundThreadGLValid() {
+        return BUtil_BoxUtilBackgroundThread.isGLValid();
     }
 
     public static boolean isGLDebugOutputSupported() {

@@ -3,6 +3,7 @@ package org.boxutil.backends.core;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.Pair;
 import org.apache.log4j.Logger;
+import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.define.InstanceType;
@@ -193,7 +194,7 @@ public final class BUtil_InstanceDataMemoryPool {
         if (_INIT) return;
         _INIT = true;
 
-        if (!BoxDatabase.getGLState().BOXUTIL_VALID || BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS < 8L) return;
+        if (!BoxDatabase.getGLState().BOXUTIL_VALID || !BoxConfigs.isBackgroundThreadGLValid() || BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS < 8L) return;
         _IMMUTABLE = BoxDatabase.getGLState().GL_GL44;
         _INVALID = false;
     }

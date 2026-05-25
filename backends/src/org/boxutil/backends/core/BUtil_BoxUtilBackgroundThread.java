@@ -20,8 +20,7 @@ public final class BUtil_BoxUtilBackgroundThread {
     private final static byte _RENDERING_THREAD = 0;
     private final static byte _LOGICAL_THREAD = 1;
     private final static byte _LOGICAL_AUX_THREAD = 2;
-    private final static byte _STATIC_TRAIL_THREAD = 3;
-    private final static byte _TOTAL_THREAD = 4;
+    private final static byte _TOTAL_THREAD = 3;
     private final static _ThreadTemplate[] _THREAD_RUNNABLE = new _ThreadTemplate[_TOTAL_THREAD];
     private final static Thread[] _THREAD = new Thread[_TOTAL_THREAD];
 
@@ -54,7 +53,6 @@ public final class BUtil_BoxUtilBackgroundThread {
         setupThread(_RENDERING_THREAD, BUtil_RenderingThread::new, null, "rendering");
         setupThread(_LOGICAL_THREAD, BUtil_LogicalThread::new, false, "logical");
         setupThread(_LOGICAL_AUX_THREAD, BUtil_LogicalThread::new, true, "logical-aux");
-//        setupThread(_STATIC_TRAIL_THREAD, BUtil_StaticTrailThread::new, null, "static trail");
         return _VALID;
     }
 
@@ -110,7 +108,8 @@ public final class BUtil_BoxUtilBackgroundThread {
             this._CURR_THREAD = Thread.currentThread();
             this._CURR_THREAD.setName(this._CURR_THREAD.getName() + "-AS-" + this.getClass().getSimpleName());
             this.glInit();
-            if (this._FAILED) this.destroyDrawable(); else this.logicalInit();
+            if (this._FAILED) this.destroyDrawable();
+            this.logicalInit();
             this._LOG.info("'BoxUtil' additional thread running.");
 
             try {
@@ -144,7 +143,7 @@ public final class BUtil_BoxUtilBackgroundThread {
         return _THREAD[_LOGICAL_AUX_THREAD];
     }
 
-    public static Thread getStaticTrailThread() {
-        return _THREAD[_STATIC_TRAIL_THREAD];
+    public static boolean isGLValid() {
+        return _VALID;
     }
 }

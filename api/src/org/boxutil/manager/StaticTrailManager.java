@@ -40,11 +40,12 @@ public final class StaticTrailManager {
 
     /**
      * @param id the id of <strong>projectile spec</strong>.
+     *
+     * @return <code>true</code> if not contain this trail data.
      */
-    public static HashSet<StaticTrailData> putTrailData(final String id, final StaticTrailData trailData) {
+    public static boolean putTrailData(final String id, final StaticTrailData trailData) {
         HashSet<StaticTrailData> result = _PROJ_TRAIL.computeIfAbsent(id, k -> new HashSet<>(2));
-        result.add(trailData);
-        return result;
+        return result.add(trailData);
     }
 
     /**

@@ -36,6 +36,10 @@ final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread._ThreadT
         }
     }
 
+    private void updateTrailData() {
+        // todo
+    }
+
     private void sendBeginRenderingSync() {
         if (this._FAILED) return;
         BUtil_ThreadResource.sendGLSync(BUtil_ThreadResource.__SYNC_BEGIN_RENDERING);
@@ -65,6 +69,7 @@ final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread._ThreadT
         this.sendAfterRenderingSync();
 
         BoxThreadSync.Rendering.afterRendering().arriveAndAwaitAdvance();
+        this.updateTrailData();
         this.runThreadPlugin(ExcFun.AFTER_RENDERING);
         this.sendBeginRenderingSync();
     }

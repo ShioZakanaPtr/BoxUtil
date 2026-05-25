@@ -12,7 +12,9 @@ public final class BoxEnum {
     public final static byte NEG_ONE = -1;
     public final static byte ONE_COLOR = -1;
 
+    @Deprecated
     public final static byte MODE_COMMON = 0;
+    @Deprecated
     public final static byte MODE_COLOR = 1;
 
     public final static byte TIMER_IN = 10;
@@ -31,21 +33,34 @@ public final class BoxEnum {
     public final static byte ENTITY_OTHER_BLEND = 2;
     public final static byte ENTITY_DISABLED_BLEND = 2;
 
+    @Deprecated
     public final static byte ENTITY_COMMON = 0;
+    @Deprecated
     public final static byte ENTITY_SPRITE = 1;
+    @Deprecated
     public final static byte ENTITY_CURVE = 2;
+    @Deprecated
     public final static byte ENTITY_SEGMENT = 3;
+    @Deprecated
     public final static byte ENTITY_FLARE = 4;
     @Deprecated
     public final static byte ENTITY_CUSTOM = 5;
+    @Deprecated
     public final static byte ENTITY_TEXT = 6;
+    @Deprecated
     public final static byte ENTITY_TRAIL = 7;
 
+    @Deprecated
     public final static byte ENTITY_DISTORTION = 0;
+    @Deprecated
     public final static byte ENTITY_INFINITE_LIGHT = 1;
+    @Deprecated
     public final static byte ENTITY_POINT_LIGHT = 2;
+    @Deprecated
     public final static byte ENTITY_SPOT_LIGHT = 3;
+    @Deprecated
     public final static byte ENTITY_LINE_LIGHT = 4;
+    @Deprecated
     public final static byte ENTITY_AREA_LIGHT = 5;
 
     public final static byte MP_BEAUTY = 0;
@@ -57,11 +72,16 @@ public final class BoxEnum {
     public final static byte MP_MATERIAL = 6;
     public final static byte MP_BLOOM = 7;
 
+    @Deprecated
     public final static byte AA_DISABLE = 30;
+    @Deprecated
     public final static byte AA_FXAA_CONSOLE = 31;
+    @Deprecated
     public final static byte AA_FXAA_QUALITY = 32;
 
+    @Deprecated
     public final static byte PARALLEL_JVM = 0;
+    @Deprecated
     public final static byte PARALLEL_GL = 1;
 
     public final static byte GL_DEVICE_AMD_ATI = 0;
