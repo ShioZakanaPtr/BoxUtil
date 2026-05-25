@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * For all result texture, recommend to use storage texture for performance.
@@ -65,6 +65,25 @@ public final class ShaderUtil {
         return _SHADER_FORMAT.get(lower);
     }
 
+    /**
+     * @param target <code>0</code> for vertex attrib location, <code>1</code> for fragment output, location.
+     * @param location vertex attrib index or color attachment index.
+     * @param name the field name that what them in shader source is.
+     */
+    public record BindingLocationStruct(byte target, int location, String name) {}
+
+    public static Function<Integer, Boolean> makeShaderBindingLocation(final BindingLocationStruct... bindingLocations) {
+        return (programID) -> {
+            for (BindingLocationStruct bindingLocation : bindingLocations) {
+                switch (bindingLocation.target) {
+                    case 0: GL20.glBindAttribLocation(programID, bindingLocation.location, bindingLocation.name); break;
+                    case 1: GL30.glBindFragDataLocation(programID, bindingLocation.location, bindingLocation.name); break;
+                }
+            }
+            return false;
+        };
+    }
+
     private static String[] _loadShaderFile(final String tag, final String... path) {
         final int size = path.length;
         final String[] result = new String[size];
@@ -82,9 +101,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVF(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vert, final String frag) {
+    public static int createShaderVF(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vert, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         if (!GLContext.getCapabilities().OpenGL20) {
             _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");
@@ -103,9 +122,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVFFormPath(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vertPath, final String fragPath) {
+    public static int createShaderVFFormPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vertPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         final String[] src = _loadShaderFile(tag, vertPath, fragPath);
         if (src == null) return 0;
@@ -121,9 +140,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVGF(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vert, final String geom, final String frag) {
+    public static int createShaderVGF(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vert, final String geom, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         if (!GLContext.getCapabilities().OpenGL32) {
             _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");
@@ -142,9 +161,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVGFFromPath(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vertPath, final String geomPath, final String fragPath) {
+    public static int createShaderVGFFromPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vertPath, final String geomPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         final String[] src = _loadShaderFile(tag, vertPath, geomPath, fragPath);
         if (src == null) return 0;
@@ -160,9 +179,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVTF(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vert, final String tessC, final String tessE, final String frag) {
+    public static int createShaderVTF(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vert, final String tessC, final String tessE, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         if (!GLContext.getCapabilities().OpenGL40) {
             _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");
@@ -181,9 +200,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVTFFromPath(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vertPath, final String tessCPath, final String tessEPath, final String fragPath) {
+    public static int createShaderVTFFromPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vertPath, final String tessCPath, final String tessEPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         final String[] src = _loadShaderFile(tag, vertPath, tessCPath, tessEPath, fragPath);
         if (src == null) return 0;
@@ -199,9 +218,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVTGF(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vert, final String tessC, final String tessE, final String geom, final String frag) {
+    public static int createShaderVTGF(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vert, final String tessC, final String tessE, final String geom, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         if (!GLContext.getCapabilities().OpenGL40) {
             _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");
@@ -220,9 +239,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderVTGFFromPath(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String vertPath, final String tessCPath, final String tessEPath, final String geomPath, final String fragPath) {
+    public static int createShaderVTGFFromPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String vertPath, final String tessCPath, final String tessEPath, final String geomPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         final String[] src = _loadShaderFile(tag, vertPath, tessCPath, tessEPath, geomPath, fragPath);
         if (src == null) return 0;
@@ -238,10 +257,10 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      * @param source may only have one shader source normally.
      */
-    public static int createComputeShaders(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String... source) {
+    public static int createComputeShaders(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String... source) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         if (!GLContext.getCapabilities().OpenGL43) {
             _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");
@@ -263,10 +282,10 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      * @param shadersPath may only have one shader source normally.
      */
-    public static int createComputeShadersFormPath(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String... shadersPath) {
+    public static int createComputeShadersFormPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String... shadersPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         final String[] src = _loadShaderFile(tag, shadersPath);
         if (src == null) return 0;
@@ -307,9 +326,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderProgramFromPath(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final String... shadersPath) {
+    public static int createShaderProgramFromPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String... shadersPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
         int length = shadersPath.length;
         int[] types = new int[length];
@@ -353,9 +372,9 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls,  returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
      */
-    public static int createShaderProgram(@Nullable final String loggerTag, @Nullable final Supplier<Boolean> beforeLinkExc, final int[] types, final String... shaders) {
+    public static int createShaderProgram(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final int[] types, final String... shaders) {
         if (!GLContext.getCapabilities().OpenGL20) {
             _LOG.warn("'BoxUtil' platform is not supported OpenGL2.0.");
             return 0;
@@ -378,7 +397,7 @@ public final class ShaderUtil {
             GL20.glAttachShader(programID, shaderID);
             tmpShaders.add(shaderID);
         }
-        if (beforeLinkExc != null && beforeLinkExc.get()) {
+        if (beforeLinkExc != null && beforeLinkExc.apply(programID)) {
             _LOG.error("'BoxUtil' shader has error occurred when executing the before-link function(from 'beforeLinkExc' parameter), creating program has canceled.");
             return _clearAndDeleteShader(programID, tmpShaders);
         }

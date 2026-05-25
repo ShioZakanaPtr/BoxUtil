@@ -14,21 +14,22 @@ v1.5.6 / 2026.06.32
         boolean isBackgroundThreadGLValid();
 
     ShaderUtil 新增方法：
-        int createShaderVF(String, Supplier<Boolean>, String, String);
-        int createShaderVFFormPath(String, Supplier<Boolean>, String, String);
-        int createShaderVGF(String, Supplier<Boolean>, String, String, String);
-        int createShaderVGFFromPath(String, Supplier<Boolean>, String, String, String);
+        Function<Integer, Boolean> makeShaderBindingLocation(BindingLocationStruct...);
+        int createShaderVF(String, Function<Integer, Boolean>, String, String);
+        int createShaderVFFormPath(String, Function<Integer, Boolean>, String, String);
+        int createShaderVGF(String, Function<Integer, Boolean>, String, String, String);
+        int createShaderVGFFromPath(String, Function<Integer, Boolean>, String, String, String);
         int createShaderVGFFromPath(String, String, String, String);
-        int createShaderVTF(String, Supplier<Boolean>, String, String, String, String);
-        int createShaderVTFFromPath(String, Supplier<Boolean>, String, String, String, String);
+        int createShaderVTF(String, Function<Integer, Boolean>, String, String, String, String);
+        int createShaderVTFFromPath(String, Function<Integer, Boolean>, String, String, String, String);
         int createShaderVTFFromPath(String,, String, String, String, String);
-        int createShaderVTGF(String, Supplier<Boolean>, String, String, String, String, String);
-        int createShaderVTGFFromPath(String, Supplier<Boolean>, String, String, String, String, String);
+        int createShaderVTGF(String, Function<Integer, Boolean>, String, String, String, String, String);
+        int createShaderVTGFFromPath(String, Function<Integer, Boolean>, String, String, String, String, String);
         int createShaderVTGFFromPath(String, String, String, String, String, String);
-        int createComputeShadersFormPath(String, Supplier<Boolean>, String...);
-        int createComputeShaders(String, Supplier<Boolean>, String...);
-        int createShaderProgramFromPath(String, Supplier<Boolean>, String...);
-        int createShaderProgram(String, Supplier<Boolean>, int[], String...);
+        int createComputeShadersFormPath(String, Function<Integer, Boolean>, String...);
+        int createComputeShaders(String, Function<Integer, Boolean>, String...);
+        int createShaderProgramFromPath(String, Function<Integer, Boolean>, String...);
+        int createShaderProgram(String, Function<Integer, Boolean>, int[], String...);
 
     MaterialData 新增构造方法：
         MaterialData(MaterialData);
