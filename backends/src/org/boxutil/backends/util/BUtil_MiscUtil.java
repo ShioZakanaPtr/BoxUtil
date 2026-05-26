@@ -53,12 +53,12 @@ public final class BUtil_MiscUtil {
 
     public static int tryTexture(final String path, final Function<String, Integer> customLoad) {
         final SpriteAPI vanillaSprite = Global.getSettings().getSprite(path);
-        return vanillaSprite != null ? vanillaSprite.getTextureId() : customLoad.apply(path);
+        return (vanillaSprite != null && vanillaSprite.getTextureId() > 0) ? vanillaSprite.getTextureId() : customLoad.apply(path);
     }
 
     public static int tryTangentTexture(final String path, final boolean isAngleMap, final boolean useTextureStorage, final boolean potAligned) {
         final SpriteAPI vanillaSprite = Global.getSettings().getSprite(path);
-        return vanillaSprite != null ? vanillaSprite.getTextureId() : TextureManager.tryTangent(path, isAngleMap, useTextureStorage, potAligned);
+        return (vanillaSprite != null && vanillaSprite.getTextureId() > 0) ? vanillaSprite.getTextureId() : TextureManager.tryTangent(path, isAngleMap, useTextureStorage, potAligned);
     }
 
     private BUtil_MiscUtil() {}

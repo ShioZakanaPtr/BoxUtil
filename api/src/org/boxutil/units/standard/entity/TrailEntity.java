@@ -48,7 +48,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
     public TrailEntity() {
         this._TBO = BoxConfigs.isTBOSupported() ? GL15.glGenBuffers() : 0;
         this._TBOTex = BoxConfigs.isTBOSupported() ? GL11.glGenTextures() : 0;
-        this._isValid = this.getNodesTBO() > 0 && this.getNodesTBOTex() > 0;
+        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getNodesTBO() > 0 && this.getNodesTBOTex() > 0;
         this.getMaterialData().setDisableCullFace();
         this.getMaterialData().setIgnoreIllumination(true);
     }

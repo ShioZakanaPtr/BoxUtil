@@ -25,7 +25,7 @@ public final class BUtil_BoxUtilBackgroundThread {
     private final static Thread[] _THREAD = new Thread[_TOTAL_THREAD];
 
     private static boolean _INIT = false;
-    private static boolean _VALID = false;
+    private static boolean _VALID = true;
 
     @FunctionalInterface
     private interface _ThreadInit {
@@ -41,7 +41,7 @@ public final class BUtil_BoxUtilBackgroundThread {
         } catch (Exception e) {
             if (e instanceof LWJGLException lwjglException) CommonUtil.printThrowable(ShaderCore.class, "'BoxUtil' " + name + " additional thread failed: ", lwjglException);
         } finally {
-            _VALID |= _THREAD_RUNNABLE[target]._FAILED;
+            _VALID &= !_THREAD_RUNNABLE[target]._FAILED;
             _THREAD_RUNNABLE[target].clearTmpSync();
         }
     }
@@ -89,13 +89,14 @@ public final class BUtil_BoxUtilBackgroundThread {
                 return;
             }
             {
-                int _glError = GL11.glGetError();
-                if (_glError != 0) {
+                final int _glError = GL11.glGetError();
+                this._FAILED = _glError != 0;
+                if (this._FAILED) {
                     this.destroyDrawable();
                     CommonUtil.printThrowable(this._LOG, "'BoxUtil' additional thread gl-context failed: ", new OpenGLException(_glError));
                     this._INIT_SYNC.countDown();
                     return;
-                } else this._FAILED = false;
+                }
             }
             this._INIT_SYNC.countDown();
         }

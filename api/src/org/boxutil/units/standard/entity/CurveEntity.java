@@ -73,7 +73,7 @@ public class CurveEntity extends BaseMIRenderData {
     public CurveEntity() {
         this._curveID = BoxConfigs.isVAOSupported() ? GL30.glGenVertexArrays() : 0;
         this._nodesVBO = BoxConfigs.isVAOSupported() ? GL15.glGenBuffers() : 0;
-        this._isValid = this.getCurveID() > 0 && this.getNodesVBO() > 0;
+        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getCurveID() > 0 && this.getNodesVBO() > 0;
         this.getMaterialData().setDisableCullFace();
         this.getMaterialData().setIgnoreIllumination(true);
 

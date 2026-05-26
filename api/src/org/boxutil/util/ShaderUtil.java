@@ -65,8 +65,11 @@ public final class ShaderUtil {
         return _SHADER_FORMAT.get(lower);
     }
 
+    public final static byte BIND_VERTEX_ATTRIB = 0;
+    public final static byte BIND_FRAGMENT_OUTPUT = 1;
+
     /**
-     * @param target <code>0</code> for vertex attrib location, <code>1</code> for fragment output, location.
+     * @param target {@link ShaderUtil#BIND_VERTEX_ATTRIB} for vertex attrib location, {@link ShaderUtil#BIND_FRAGMENT_OUTPUT} for fragment output, location.
      * @param location vertex attrib index or color attachment index.
      * @param name the field name that what them in shader source is.
      */
@@ -76,8 +79,8 @@ public final class ShaderUtil {
         return (programID) -> {
             for (BindingLocationStruct bindingLocation : bindingLocations) {
                 switch (bindingLocation.target) {
-                    case 0: GL20.glBindAttribLocation(programID, bindingLocation.location, bindingLocation.name); break;
-                    case 1: GL30.glBindFragDataLocation(programID, bindingLocation.location, bindingLocation.name); break;
+                    case BIND_VERTEX_ATTRIB: GL20.glBindAttribLocation(programID, bindingLocation.location, bindingLocation.name); break;
+                    case BIND_FRAGMENT_OUTPUT: GL30.glBindFragDataLocation(programID, bindingLocation.location, bindingLocation.name); break;
                 }
             }
             return false;
@@ -324,41 +327,6 @@ public final class ShaderUtil {
         }
     }
 
-    /**
-     * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
-     */
-    public static int createShaderProgramFromPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String... shadersPath) {
-        String tag = loggerTag == null ? "None marked" : loggerTag;
-        int length = shadersPath.length;
-        int[] types = new int[length];
-        String[] sources = new String[length];
-        _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");
-        try {
-            for (int i = 0; i < length; i++) {
-                String path = shadersPath[i];
-                int type = getTypeFromPath(path);
-                if (type == 0) {
-                    _LOG.error("'BoxUtil' error file format at: '" + path + "'.");
-                    return 0;
-                }
-                sources[i] = Global.getSettings().loadText(path);
-                types[i] = type;
-            }
-        } catch (IOException ex) {
-            _LOG.error("'BoxUtil' shader file(s) loading error." + ex.getMessage());
-            return 0;
-        }
-        return createShaderProgram(loggerTag, beforeLinkExc, types, sources);
-    }
-
-    /**
-     * @param loggerTag for locating in log when created or failed.
-     */
-    public static int createShaderProgramFromPath(@Nullable final String loggerTag, final String... shadersPath) {
-        return createShaderProgramFromPath(loggerTag, null, shadersPath);
-    }
-
     private static byte _clearAndDeleteShader(final int programID, final List<Integer> tmpShaders) {
         if (!tmpShaders.isEmpty()) {
             for (int toDelete : tmpShaders) {
@@ -419,6 +387,59 @@ public final class ShaderUtil {
      */
     public static int createShaderProgram(@Nullable final String loggerTag, final int[] types, final String... shaders) {
         return createShaderProgram(loggerTag, null, types, shaders);
+    }
+
+    /**
+     * @param loggerTag for locating in log when created or failed.
+     * @param beforeLinkExc executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param shadersPath should be in the format:<table border = "1">
+     *                    <tr><th>Shader Type</th><th>Legal Format</th></tr>
+     *                    <tr><th>Vertex</th><th>*.vert *.vsh</th></tr>
+     *                    <tr><th>Tess-Control</th><th>*.tesc</th></tr>
+     *                    <tr><th>Tess-Evaluation</th><th>*.tese</th></tr>
+     *                    <tr><th>Geometry</th><th>*.geom *.gsh</th></tr>
+     *                    <tr><th>Fragment</th><th>*.frag *.fsh</th></tr>
+     *                    <tr><th>Compute</th><th>*.comp *.csh</th></tr>
+     *                    </table>
+     */
+    public static int createShaderProgramFromPath(@Nullable final String loggerTag, @Nullable final Function<Integer, Boolean> beforeLinkExc, final String... shadersPath) {
+        String tag = loggerTag == null ? "None marked" : loggerTag;
+        int length = shadersPath.length;
+        int[] types = new int[length];
+        String[] sources = new String[length];
+        _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");
+        try {
+            for (int i = 0; i < length; i++) {
+                String path = shadersPath[i];
+                int type = getTypeFromPath(path);
+                if (type == 0) {
+                    _LOG.error("'BoxUtil' error file format at: '" + path + "'.");
+                    return 0;
+                }
+                sources[i] = Global.getSettings().loadText(path);
+                types[i] = type;
+            }
+        } catch (IOException ex) {
+            _LOG.error("'BoxUtil' shader file(s) loading error." + ex.getMessage());
+            return 0;
+        }
+        return createShaderProgram(loggerTag, beforeLinkExc, types, sources);
+    }
+
+    /**
+     * @param loggerTag for locating in log when created or failed.
+     * @param shadersPath should be in the format:<table border = "1">
+     *                    <tr><th>Shader Type</th><th>Legal Format</th></tr>
+     *                    <tr><th>Vertex</th><th>*.vert *.vsh</th></tr>
+     *                    <tr><th>Tess-Control</th><th>*.tesc</th></tr>
+     *                    <tr><th>Tess-Evaluation</th><th>*.tese</th></tr>
+     *                    <tr><th>Geometry</th><th>*.geom *.gsh</th></tr>
+     *                    <tr><th>Fragment</th><th>*.frag *.fsh</th></tr>
+     *                    <tr><th>Compute</th><th>*.comp *.csh</th></tr>
+     *                    </table>
+     */
+    public static int createShaderProgramFromPath(@Nullable final String loggerTag, final String... shadersPath) {
+        return createShaderProgramFromPath(loggerTag, null, shadersPath);
     }
 
     public static long createBindlessTexture(int texture) {

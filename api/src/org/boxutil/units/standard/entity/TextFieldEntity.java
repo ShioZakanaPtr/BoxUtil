@@ -96,7 +96,7 @@ public class TextFieldEntity extends BaseRenderData {
     public TextFieldEntity(boolean dynamicRefresh) {
         this._textFieldID = BoxConfigs.isVAOSupported() ? GL30.glGenVertexArrays() : 0;
         this._textFieldVBO = BoxConfigs.isVAOSupported() ? GL15.glGenBuffers() : 0;
-        this._isValid = this.getFontFieldID() > 0 && this.getFontFieldVBO() > 0;
+        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getFontFieldID() > 0 && this.getFontFieldVBO() > 0;
         this.textDataRefreshState[3] = dynamicRefresh ? GL15.GL_DYNAMIC_DRAW : GL15.GL_STATIC_DRAW;
 
         if (this.isValid()) this.initResourceLayout();

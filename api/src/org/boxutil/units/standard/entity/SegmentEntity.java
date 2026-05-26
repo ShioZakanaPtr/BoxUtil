@@ -92,7 +92,7 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
     public SegmentEntity(boolean useHalfFloat) {
         this._segmentID = BoxConfigs.isVAOSupported() ? GL30.glGenVertexArrays() : 0;
         this._nodesVBO = BoxConfigs.isVAOSupported() ? GL15.glGenBuffers() : 0;
-        this._isValid = this.getSegmentID() > 0 && this.getNodesVBO() > 0;
+        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getSegmentID() > 0 && this.getNodesVBO() > 0;
         this._useHalfFloat = useHalfFloat;
         this._currNodeSize = this.isHalfFloatData() ? _NODE_SIZE_F16 : _NODE_SIZE_F32;
         this._currNodeBitOffset = (byte) (this.isHalfFloatData() ? 1 : 2);

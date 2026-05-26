@@ -113,7 +113,7 @@ public final class ShaderCore {
         if (glFinished) return;
         glFinished = true;
         _LOG.info("'BoxUtil' OpenGL context running on: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_NAME + "' with drive version: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_VERSION + "'.");
-        if (BUtil_BoxUtilBackgroundThread.initWithFailedCheck()) {
+        if (!BUtil_BoxUtilBackgroundThread.initWithFailedCheck()) {
             _LOG.warn("'BoxUtil' logical thread gl context failed.");
             closeShader();
             return;
