@@ -92,7 +92,7 @@ public final class ShaderUtil {
         final String[] result = new String[size];
         try {
             for (int i = 0; i < size; i++) {
-                result[i] = Global.getSettings().loadText(path[i]);;
+                result[i] = Global.getSettings().loadText(path[i]);
             }
         } catch (IOException ex) {
             _LOG.info("'BoxUtil' shader creating tag: '" + tag + "'.");

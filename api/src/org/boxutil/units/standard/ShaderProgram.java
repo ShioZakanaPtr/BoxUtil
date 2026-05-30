@@ -81,28 +81,48 @@ public class ShaderProgram extends BaseShaderData {
     protected HashMap<String, Integer>[] subroutineUniformMap = null;
     protected final int[] _tmpIndex = new int[3];
 
-    public ShaderProgram(int id) {
+    public ShaderProgram(final int id) {
         super(id);
     }
 
+    public ShaderProgram(final boolean fromPath, @Nullable String loggerTag, String vert, String frag) {
+        this(fromPath ? ShaderUtil.createShaderVFFormPath(loggerTag, vert, frag) : ShaderUtil.createShaderVF(loggerTag, vert, frag));
+    }
+
     public ShaderProgram(@Nullable String loggerTag, String vert, String frag) {
-        this(ShaderUtil.createShaderVF(loggerTag, vert, frag));
+        this(false, loggerTag, vert, frag);
+    }
+
+    public ShaderProgram(final boolean fromPath, @Nullable String loggerTag, String vert, String geom, String frag) {
+        this(fromPath ? ShaderUtil.createShaderVGFFromPath(loggerTag, vert, geom, frag) : ShaderUtil.createShaderVGF(loggerTag, vert, geom, frag));
     }
 
     public ShaderProgram(@Nullable String loggerTag, String vert, String geom, String frag) {
-        this(ShaderUtil.createShaderVGF(loggerTag, vert, geom, frag));
+        this(false, loggerTag, vert, geom, frag);
+    }
+
+    public ShaderProgram(final boolean fromPath, @Nullable String loggerTag, String vert, String tessC, String tessE, String frag) {
+        this(fromPath ? ShaderUtil.createShaderVTFFromPath(loggerTag, vert, tessC, tessE, frag) : ShaderUtil.createShaderVTF(loggerTag, vert, tessC, tessE, frag));
     }
 
     public ShaderProgram(@Nullable String loggerTag, String vert, String tessC, String tessE, String frag) {
-        this(ShaderUtil.createShaderVTF(loggerTag, vert, tessC, tessE, frag));
+        this(false, loggerTag, vert, tessC, tessE, frag);
+    }
+
+    public ShaderProgram(final boolean fromPath, @Nullable String loggerTag, String vert, String tessC, String tessE, String geom, String frag) {
+        this(fromPath ? ShaderUtil.createShaderVTGFFromPath(loggerTag, vert, tessC, tessE, geom, frag) : ShaderUtil.createShaderVTGF(loggerTag, vert, tessC, tessE, geom, frag));
     }
 
     public ShaderProgram(@Nullable String loggerTag, String vert, String tessC, String tessE, String geom, String frag) {
-        this(ShaderUtil.createShaderVTGF(loggerTag, vert, tessC, tessE, geom, frag));
+        this(false, loggerTag, vert, tessC, tessE, geom, frag);
+    }
+
+    public ShaderProgram(final boolean fromPath, @Nullable String loggerTag, String... source) {
+        this(fromPath ? ShaderUtil.createComputeShadersFormPath(loggerTag, source) : ShaderUtil.createComputeShaders(loggerTag, source));
     }
 
     public ShaderProgram(@Nullable String loggerTag, String... source) {
-        this(ShaderUtil.createComputeShaders(loggerTag, source));
+        this(false, loggerTag, source);
     }
 
     public ShaderProgram initUniformSize(int size) {

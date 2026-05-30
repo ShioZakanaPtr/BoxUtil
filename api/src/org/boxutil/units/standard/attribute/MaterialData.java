@@ -15,7 +15,7 @@ import java.awt.*;
 
 // The material is only 2D-Texture supported.
 public class MaterialData {
-    protected byte cullFace = 0;
+    protected byte cullFace = BoxEnum.MATERIAL_CULL_BACK;
     // diffuse, normal, complex, emissive, tangent
     protected final SpriteAPI[] textures = new SpriteAPI[]{BoxDatabase.BUtil_ONE, BoxDatabase.BUtil_Z, BoxDatabase.BUtil_COMPLEX_DEF, BoxDatabase.BUtil_NONE, BoxDatabase.BUtil_X};
     protected final int[] glTex = new int[]{this.textures[0].getTextureId(), this.textures[1].getTextureId(), this.textures[2].getTextureId(), this.textures[3].getTextureId(), this.textures[4].getTextureId()};
@@ -58,7 +58,7 @@ public class MaterialData {
      * Without textures.
      */
     public void reset() {
-        this.cullFace = 0;
+        this.cullFace = BoxEnum.MATERIAL_CULL_BACK;
         this.state[0] = BoxEnum.ONE;
         this.state[1] = BoxEnum.ONE;
         this.state[2] = BoxEnum.ONE;
@@ -260,24 +260,24 @@ public class MaterialData {
         this.glTex[4] = Math.max(tangent, 0);
     }
 
-    public void setDisableCullFace() {
-        this.cullFace = 3;
-    }
-
     public byte getCullFace() {
         return this.cullFace;
     }
 
     public void setCullBack() {
-        this.cullFace = 0;
+        this.cullFace = BoxEnum.MATERIAL_CULL_BACK;
     }
 
     public void setCullFront() {
-        this.cullFace = 1;
+        this.cullFace = BoxEnum.MATERIAL_CULL_FRONT;
     }
 
     public void setCullFrontAndBack() {
-        this.cullFace = 2;
+        this.cullFace = BoxEnum.MATERIAL_CULL_FRONT_BACK;
+    }
+
+    public void setDisableCullFace() {
+        this.cullFace = BoxEnum.MATERIAL_CULL_DISABLED;
     }
 
     public float[] getColorArray() {

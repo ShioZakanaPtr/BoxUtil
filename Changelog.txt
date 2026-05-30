@@ -8,6 +8,7 @@ v1.5.6 / 2026.06.32
     于 org.boxutil.manager 增加 StaticTrailManager 管理类，用于加载可被内置系统自动生成并管理的尾迹
     于 org.boxutil.units.standard.attribute 增加 StaticTrailData 用于设定专用自定义尾迹的状态
 
+    着色器文件转为本地文件加载
     实例化数据 submitInstance 阶段逻辑调整
 
     BoxConfigs 新增方法：

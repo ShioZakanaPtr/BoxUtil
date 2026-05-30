@@ -3,7 +3,6 @@ package org.boxutil.manager;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import org.apache.log4j.Logger;
-import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.api.SimpleVAOAPI;
 import org.boxutil.config.BoxConfigs;
@@ -12,8 +11,6 @@ import org.boxutil.define.BoxEnum;
 import org.boxutil.backends.buffer.BUtil_RenderingBuffer;
 import org.boxutil.backends.core.BUtil_BoxUtilBackgroundThread;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import org.boxutil.backends.shader.BUtil_ShaderSources;
-import org.boxutil.define.InstanceType;
 import org.boxutil.units.standard.ShaderProgram;
 import org.boxutil.units.standard.misc.LineObject;
 import org.boxutil.units.standard.misc.PointObject;
@@ -26,10 +23,11 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Matrix4f;
 
+import java.io.IOException;
 import java.nio.FloatBuffer;
 
 public final class ShaderCore {
-    private final static byte _SHADER_COUNT = 33;
+    private final static byte _SHADER_COUNT = 34;
     private final static byte _COMMON = 0;
     private final static byte _SPRITE = 1;
     private final static byte _CURVE = 2;
@@ -63,6 +61,8 @@ public final class ShaderCore {
     private final static byte _AREA_LIGHT_PRE_FILTERING = 30;
     private final static byte _LEGACY_NORMAL_BLUR = 31;
     private final static byte _LEGACY_NORMAL_RESULT = 32;
+    private final static byte _STATIC_TRAIL_SYSTEM = 33;
+    private final static String _SHADER_PATH_ROOT = "data/shaders/";
     private final static String _GLSL_VERSION = "430";
     private final static String _GLSL_VERSION_TITLE = "OVERWRITE_VERSION";
     private final static String _GLSL_PRECISION = "highp";
@@ -99,12 +99,23 @@ public final class ShaderCore {
     private static boolean glDiscreteFourierValid = false;
     private static boolean glNormalMapGenValid = false;
     private static boolean glLegacyNormalMapGenValid = false;
+    private static boolean glStaticTrailSystemValid = false;
     private static final int[] screenSize = new int[2];
     private static final int[] screenSizeScale = new int[2];
     private static final int[] screenSizeFix = new int[2];
     private static final float[] screenSizeUV = new float[2];
 
     private static final Logger _LOG = Global.getLogger(ShaderCore.class);
+
+    private static String _loadLocalFile(final String path) {
+        String result;
+        try {
+            result = Global.getSettings().loadText(_SHADER_PATH_ROOT + path);
+        } catch (IOException e) {
+            throw new RuntimeException("File load failed in '" + _SHADER_PATH_ROOT + path + "' cause: " + e.getMessage());
+        }
+        return result;
+    }
 
     /**
      * Loading after {@link BoxConfigs#init()}.
@@ -154,87 +165,87 @@ public final class ShaderCore {
         final String gl_screenXStep = String.format("%.7f", 1.0f / (float) ShaderCore.getScreenScaleWidth());
         final String gl_screenYStep = String.format("%.7f", 1.0f / (float) ShaderCore.getScreenScaleHeight());
         final String gl_bloomRadius = Float.toString(Global.getSettings().getScreenScaleMult());
-        instanceHeader = BUtil_ShaderSources.InstanceMatrix.STRUCT;
-        vertCommon = BUtil_ShaderSources.Common.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        instanceHeader = _loadLocalFile("include/BUtil_InstanceDataSSBO.h");
+        vertCommon = _loadLocalFile("BUtil_CommonShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
-        fragCommon = BUtil_ShaderSources.Common.FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragCommon = _loadLocalFile("BUtil_CommonShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        vertSprite = BUtil_ShaderSources.Sprite.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertSprite = _loadLocalFile("BUtil_SpriteShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
-        fragSprite = BUtil_ShaderSources.Sprite.FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragSprite = _loadLocalFile("BUtil_SpriteShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        vertCurve = BUtil_ShaderSources.Curve.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertCurve = _loadLocalFile("BUtil_CurveShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
-        tescCurve = BUtil_ShaderSources.Curve.TESC.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        tescCurve = _loadLocalFile("BUtil_CurveShader.tesc").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        teseCurve = BUtil_ShaderSources.Curve.TESE.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        teseCurve = _loadLocalFile("BUtil_CurveShader.tese").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        geomCurve = BUtil_ShaderSources.Curve.GEOM.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        geomCurve = _loadLocalFile("BUtil_CurveShader.geom").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        fragCurve = BUtil_ShaderSources.Curve.FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragCurve = _loadLocalFile("BUtil_CurveShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        vertSeg = BUtil_ShaderSources.Segment.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertSeg = _loadLocalFile("BUtil_SegmentShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        tescSeg = BUtil_ShaderSources.Segment.TESC.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        tescSeg = _loadLocalFile("BUtil_SegmentShader.tesc").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        teseSeg = BUtil_ShaderSources.Segment.TESE.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        teseSeg = _loadLocalFile("BUtil_SegmentShader.tese").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        vertTrail = BUtil_ShaderSources.Trail.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertTrail = _loadLocalFile("BUtil_TrailShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        geomTrail = BUtil_ShaderSources.Trail.GEOM.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        geomTrail = _loadLocalFile("BUtil_TrailShader.geom").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        fragTrail = BUtil_ShaderSources.Trail.FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragTrail = _loadLocalFile("BUtil_TrailShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        vertFlare = BUtil_ShaderSources.Flare.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertFlare = _loadLocalFile("BUtil_FlareShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
-        fragFlare = BUtil_ShaderSources.Flare.FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragFlare = _loadLocalFile("BUtil_FlareShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        vertText = BUtil_ShaderSources.TextField.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertText = _loadLocalFile("BUtil_TextFieldShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        geomText = BUtil_ShaderSources.TextField.GEOM.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        geomText = _loadLocalFile("BUtil_TextFieldShader.geom").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        fragText = BUtil_ShaderSources.TextField.FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragText = _loadLocalFile("BUtil_TextFieldShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        vertDist = BUtil_ShaderSources.Distortion.VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertDist = _loadLocalFile("BUtil_DistortionShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
-        fragDist = BUtil_ShaderSources.Distortion.FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragDist = _loadLocalFile("BUtil_DistortionShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        vertPost = BUtil_ShaderSources.Share.POST_VERT.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        vertPost = _loadLocalFile("misc/BUtil_PostShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        fragDirect = BUtil_ShaderSources.Share.DIRECT_FRAG.replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
+        fragDirect = _loadLocalFile("misc/BUtil_DirectShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
-        compMatrix2D = BUtil_ShaderSources.InstanceMatrix.INSTANCE_2D.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compMatrix2D = _loadLocalFile("BUtil_Instance2DMatrix.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDim).replace(_GLSL_WORKGROUP_SIZE_TITLE, gl_localWorkSize);
-        compMatrix3D = BUtil_ShaderSources.InstanceMatrix.INSTANCE_3D.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compMatrix3D = _loadLocalFile("BUtil_Instance3DMatrix.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDim).replace(_GLSL_WORKGROUP_SIZE_TITLE, gl_localWorkSize);
-        compSDFInit = BUtil_ShaderSources.SDF.INIT.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compSDFInit = _loadLocalFile("sdf/BUtil_SDFGenInit.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF).replace(_GLSL_WEIGHTED_LUMINANCE_TITLE, gl_linear);
-        compSDFProcess = BUtil_ShaderSources.SDF.PROCESS.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compSDFProcess = _loadLocalFile("sdf/BUtil_SDFGenProcess.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compSDFResult = BUtil_ShaderSources.SDF.RESULT.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compSDFResult = _loadLocalFile("sdf/BUtil_SDFGenResult.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compGaussianBlur = BUtil_ShaderSources.GaussianBlur.RGBA.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compGaussianBlur = _loadLocalFile("filter/BUtil_GaussianBlur.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compGaussianBlurRed = BUtil_ShaderSources.GaussianBlur.RED.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compGaussianBlurRed = _loadLocalFile("filter/BUtil_GaussianBlurRed.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compBilateralFilter = BUtil_ShaderSources.BilateralFilter.RGBA.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compBilateralFilter = _loadLocalFile("filter/BUtil_BilateralFilter.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compBilateralFilterRed = BUtil_ShaderSources.BilateralFilter.RED.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compBilateralFilterRed = _loadLocalFile("filter/BUtil_BilateralFilterRed.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compDFT = BUtil_ShaderSources.FourierTransform.DFT.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compDFT = _loadLocalFile("fourier/BUtil_DFT.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compDFTRed = BUtil_ShaderSources.FourierTransform.DFT_RED.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compDFTRed = _loadLocalFile("fourier/BUtil_DFTRed.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
-        compNormalInit = BUtil_ShaderSources.NormalMapGen.INIT.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compNormalInit = _loadLocalFile("normalMap/BUtil_NormalMapInit.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF).replace(_GLSL_WEIGHTED_LUMINANCE_TITLE, gl_linear);
-        compNormalResult = BUtil_ShaderSources.NormalMapGen.RESULT.replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
+        compNormalResult = _loadLocalFile("normalMap/BUtil_NormalMapResult.comp").replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION)
                 .replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
 
-        vertPostSimple = BUtil_ShaderSources.Share.POST_VERT_SIMPLE;
-        fragFXAAC = BUtil_ShaderSources.FXAA.CONSOLE.replace("OVERWRITE_SCREEN_X", gl_screenXStep).replace("OVERWRITE_SCREEN_Y", gl_screenYStep);
-        fragFXAAQ = BUtil_ShaderSources.FXAA.QUALITY.replace("OVERWRITE_SCREEN_X", gl_screenXStep).replace("OVERWRITE_SCREEN_Y", gl_screenYStep);
-        compBloom = BUtil_ShaderSources.Bloom.COMP.replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF).replace("OVERWRITE_RADIUS_SCALE", gl_bloomRadius);
-        compAreaTex = BUtil_ShaderSources.Illumination.AREA_TEX.replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
+        vertPostSimple = _loadLocalFile("misc/BUtil_PostSimpleShader.vert");
+        fragFXAAC = _loadLocalFile("shaderpacks/BUtil_FXAACShader.frag").replace("OVERWRITE_SCREEN_X", gl_screenXStep).replace("OVERWRITE_SCREEN_Y", gl_screenYStep);
+        fragFXAAQ = _loadLocalFile("shaderpacks/BUtil_FXAAQShader.frag").replace("OVERWRITE_SCREEN_X", gl_screenXStep).replace("OVERWRITE_SCREEN_Y", gl_screenYStep);
+        compBloom = _loadLocalFile("shaderpacks/BUtil_BloomShader.comp").replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF).replace("OVERWRITE_RADIUS_SCALE", gl_bloomRadius);
+        compAreaTex = _loadLocalFile("shaderpacks/BUtil_AreaLightPreFilteringShader.comp").replace(_GLSL_COMPUTE_DIM_REPLACE_TITLE, gl_localWorkDimSDF);
         _SHADER_PROGRAM[_COMMON] = new ShaderProgram("BoxUtil-CommonShader", vertCommon, fragCommon);
         _SHADER_PROGRAM[_SPRITE] = new ShaderProgram("BoxUtil-SpriteShader", vertSprite, fragSprite);
         _SHADER_PROGRAM[_CURVE] = new ShaderProgram("BoxUtil-CurveShader", vertCurve, tescCurve, teseCurve, geomCurve, fragCurve);
@@ -299,13 +310,21 @@ public final class ShaderCore {
         initAreaLightTex();
     }
 
+    private static ShaderProgram _createShaderProgramVF(final String name, final String file) {
+        return new ShaderProgram(true, name, _SHADER_PATH_ROOT + file + ".vert", _SHADER_PATH_ROOT + file + ".frag");
+    }
+
+    private static ShaderProgram _createShaderProgramVGF(final String name, final String file) {
+        return new ShaderProgram(true, name, _SHADER_PATH_ROOT + file + ".vert", _SHADER_PATH_ROOT + file + ".geom", _SHADER_PATH_ROOT + file + ".frag");
+    }
+
     public static void initMiscShaderPrograms() {
         if (_miscShaderInit) return;
         _miscShaderInit = true;
-        _SHADER_PROGRAM[_SIMPLE_NUMBER] = new ShaderProgram("BoxUtil-NumberShader", BUtil_ShaderSources.Number.VERT, BUtil_ShaderSources.Number.FRAG);
-        _SHADER_PROGRAM[_SIMPLE_ARC] = new ShaderProgram("BoxUtil-ArcShader", BUtil_ShaderSources.Arc.VERT, BUtil_ShaderSources.Arc.FRAG);
-        _SHADER_PROGRAM[_SIMPLE_TEX_ARC] = new ShaderProgram("BoxUtil-TexArcShader", BUtil_ShaderSources.Arc.VERT, BUtil_ShaderSources.TexArc.FRAG);
-        _SHADER_PROGRAM[_MISSION_BG] = new ShaderProgram("BoxUtil-TestMissionShader", BUtil_ShaderSources.Mission.VERT, BUtil_ShaderSources.Mission.FRAG);
+        _SHADER_PROGRAM[_SIMPLE_NUMBER] = _createShaderProgramVF("BoxUtil-NumberShader", "BUtil_NumberShader");
+        _SHADER_PROGRAM[_SIMPLE_ARC] = _createShaderProgramVF("BoxUtil-ArcShader", "BUtil_ArcShader");
+        _SHADER_PROGRAM[_SIMPLE_TEX_ARC] = new ShaderProgram(true, "BoxUtil-TexArcShader", _SHADER_PATH_ROOT + "BUtil_ArcShader.vert", _SHADER_PATH_ROOT + "BUtil_TexArcShader.frag");
+        _SHADER_PROGRAM[_MISSION_BG] = _createShaderProgramVF("BoxUtil-TestMissionShader", "misc/BUtil_TestMissionShader");
         if (_SHADER_PROGRAM[_SIMPLE_NUMBER].isValid()) {
             _SHADER_PROGRAM[_SIMPLE_NUMBER].initUniformSize(2)
                     .beginUniform()
@@ -334,6 +353,7 @@ public final class ShaderCore {
 
         initRadialBlurProgram();
         initLegacyNormalGen();
+        initStaticTrailSystem();
     }
 
     private static void closeShader() {
@@ -623,7 +643,7 @@ public final class ShaderCore {
     }
 
     private static void initRadialBlurProgram() {
-        _SHADER_PROGRAM[_RADIAL_BLUR] = new ShaderProgram("BoxUtil-RadialBlurShader", BUtil_ShaderSources.RadialBlur.VERT, BUtil_ShaderSources.RadialBlur.FRAG);
+        _SHADER_PROGRAM[_RADIAL_BLUR] = _createShaderProgramVF("BoxUtil-RadialBlurShader", "filter/BUtil_RadialBlurShader");
         if (_SHADER_PROGRAM[_RADIAL_BLUR].isValid()) {
             _SHADER_PROGRAM[_RADIAL_BLUR].initUniformSize(3)
                     .beginUniform()
@@ -860,8 +880,8 @@ public final class ShaderCore {
     }
 
     public static void initLegacyNormalGen() {
-        _SHADER_PROGRAM[_LEGACY_NORMAL_BLUR] = new ShaderProgram("BoxUtil-LegacyNormalMapBlurShader", BUtil_ShaderSources.NormalMapGen.LEGACY_VERT, BUtil_ShaderSources.NormalMapGen.LEGACY_BLUR);
-        _SHADER_PROGRAM[_LEGACY_NORMAL_RESULT] = new ShaderProgram("BoxUtil-LegacyNormalMapResultShader", BUtil_ShaderSources.NormalMapGen.LEGACY_VERT, BUtil_ShaderSources.NormalMapGen.LEGACY_RESULT);
+        _SHADER_PROGRAM[_LEGACY_NORMAL_BLUR] = new ShaderProgram(true, "BoxUtil-LegacyNormalMapBlurShader", _SHADER_PATH_ROOT + "normalMap/BUtil_NormalMapSharedLegacy.vert", _SHADER_PATH_ROOT + "normalMap/BUtil_NormalMapBlurLegacy.frag");
+        _SHADER_PROGRAM[_LEGACY_NORMAL_RESULT] = new ShaderProgram(true, "BoxUtil-LegacyNormalMapResultShader", _SHADER_PATH_ROOT + "normalMap/BUtil_NormalMapSharedLegacy.vert", _SHADER_PATH_ROOT + "normalMap/BUtil_NormalMapResultLegacy.frag");
         if (_SHADER_PROGRAM[_LEGACY_NORMAL_BLUR].isValid() && _SHADER_PROGRAM[_LEGACY_NORMAL_RESULT].isValid()) {
             _SHADER_PROGRAM[_LEGACY_NORMAL_BLUR].initUniformSize(3)
                     .beginUniform()
@@ -877,6 +897,24 @@ public final class ShaderCore {
         }
     }
 
+    public static void initStaticTrailSystem() {
+        if (true) return;
+        final boolean fullFeatures = isValid();
+        final String gl_matrixUBO = Byte.toString(_GLSL_MATRIX_UBO_BINDING);
+        final String vert = (fullFeatures ? _loadLocalFile("trailSystem/BUtil_StaticTrail.vert") : _loadLocalFile("trailSystem/BUtil_StaticTrailLegacy.vert")).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO),
+                geom = (fullFeatures ? _loadLocalFile("trailSystem/BUtil_StaticTrail.geom") : _loadLocalFile("trailSystem/BUtil_StaticTrailLegacy.geom")).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO),
+                frag = (fullFeatures ? _loadLocalFile("trailSystem/BUtil_StaticTrail.frag") : _loadLocalFile("trailSystem/BUtil_StaticTrailLegacy.frag")).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
+        _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM] = new ShaderProgram("BoxUtil-StaticTrailSystemShader", vert, geom, frag);
+        if (_SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].isValid()) {
+            if (fullFeatures) {
+
+            } else {
+
+            }
+            glStaticTrailSystemValid = true;
+        }
+    }
+
     public static void glBeginDraw() {
         GL11.glPushClientAttrib(GL11.GL_ALL_CLIENT_ATTRIB_BITS);
         GL11.glPushAttrib(_GL_ATTRIB_BITS);
@@ -885,28 +923,24 @@ public final class ShaderCore {
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
         GL11.glDisable(GL11.GL_STENCIL_TEST);
         GL11.glDisable(GL13.GL_MULTISAMPLE);
-        GL11.glEnable(GL32.GL_DEPTH_CLAMP);
+        if (BoxDatabase.getGLState().GL_GL32) GL11.glEnable(GL32.GL_DEPTH_CLAMP);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glCullFace(GL11.GL_BACK);
         GL11.glFrontFace(GL11.GL_CCW);
         GL11.glDepthFunc(GL11.GL_LESS);
-        GL41.glDepthRangef(-1.0f, 1.0f);
+        if (BoxDatabase.getGLState().GL_GL41) GL41.glDepthRangef(-1.0f, 1.0f);
         GL11.glDepthMask(true);
         GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
         GL14.glBlendEquation(GL14.GL_FUNC_ADD);
         GL11.glColorMask(true, true, true, true);
-        final byte lastAttIndex = (byte) (BUtil_RenderingBuffer.getAttachmentCount(BoxEnum.ZERO) - 1);
-        for (byte i = 1; i < BUtil_RenderingBuffer.getAttachmentCount(BoxEnum.ZERO); ++i) {
-            if (i != lastAttIndex) GL40.glBlendFuncSeparatei(i, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-            else GL40.glBlendFuncSeparatei(i, GL11.GL_ONE, GL11.GL_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-            GL40.glBlendEquationi(i, GL14.GL_FUNC_ADD);
-        }
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE); // but changes color attachment 0 and 1
+        GL14.glBlendEquation(GL14.GL_FUNC_ADD);
     }
 
     public static void glEndDraw() {
-        GL30.glBindVertexArray(0);
+        if (BoxDatabase.getGLState().GL_GL30) GL30.glBindVertexArray(0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
+        if (BoxDatabase.getGLState().GL_GL31) GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glPopAttrib();
         GL11.glPopClientAttrib();
@@ -1381,6 +1415,10 @@ public final class ShaderCore {
 
     public static boolean isLegacyNormalMapGenValid() {
         return glLegacyNormalMapGenValid;
+    }
+
+    public static boolean isStaticTrailSystemValid() {
+        return glStaticTrailSystemValid;
     }
 
     private ShaderCore() {}

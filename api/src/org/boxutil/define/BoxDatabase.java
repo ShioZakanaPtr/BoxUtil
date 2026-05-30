@@ -108,6 +108,11 @@ public final class BoxDatabase {
         public final boolean GL_GL15;
         public final boolean GL_GL20;
         public final boolean GL_GL30;
+        public final boolean GL_GL31;
+        public final boolean GL_GL32;
+        public final boolean GL_GL33;
+        public final boolean GL_GL40;
+        public final boolean GL_GL41;
         public final boolean GL_GL42;
         public final boolean GL_GL43;
         public final boolean GL_GL44;
@@ -170,6 +175,11 @@ public final class BoxDatabase {
             this.GL_GL15 = cap.OpenGL15;
             this.GL_GL20 = cap.OpenGL20;
             this.GL_GL30 = cap.OpenGL30;
+            this.GL_GL31 = cap.OpenGL31;
+            this.GL_GL32 = cap.OpenGL32;
+            this.GL_GL33 = cap.OpenGL33;
+            this.GL_GL40 = cap.OpenGL40;
+            this.GL_GL41 = cap.OpenGL41;
             this.GL_GL42 = cap.OpenGL42;
             this.GL_GL43 = cap.OpenGL43;
             this.GL_GL44 = cap.OpenGL44;
@@ -242,6 +252,11 @@ public final class BoxDatabase {
                     + "\nGL_GL15: " + this.GL_GL15
                     + "\nGL_GL20: " + this.GL_GL20
                     + "\nGL_GL30: " + this.GL_GL30
+                    + "\nGL_GL31: " + this.GL_GL31
+                    + "\nGL_GL32: " + this.GL_GL32
+                    + "\nGL_GL33: " + this.GL_GL33
+                    + "\nGL_GL40: " + this.GL_GL40
+                    + "\nGL_GL41: " + this.GL_GL41
                     + "\nGL_GL42: " + this.GL_GL42
                     + "\nGL_GL43: " + this.GL_GL43
                     + "\nGL_GL44: " + this.GL_GL44

@@ -90,5 +90,5 @@ void main()
     fragWorldNormal = ignoreIllum ? vec4(0.0, 0.0, 1.0, 0.0) : normalRaw;
     fragWorldTangent = ignoreIllum ? vec4(1.0, 0.0, 0.0, 0.0) : ((statePackage[EMISSIVE_SA].w == 0.0) ? vec4(1.0, 0.0, 0.0, diffuse.w) : vec4(vb_data.fragTBN * texture(tangentMap, vb_data.fragUV).xyz, diffuse.w));
     fragMaterial = ignoreIllum ? vec4(0.0, 0.0, 0.0, 0.0) : vec4(complexRaw.yz, statePackage[EMISSIVE_SA].w, diffuse.w);
-    fragData = (cullAlpha > 0.0) ? uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), additionEmissive_DataBit_InstanceOffset.y, 0u) : uvec4(uvec3(0u), 1u);
+    fragData = (cullAlpha > 0.0) ? uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), additionEmissive_DataBit_InstanceOffset.y, 1u) : uvec4(0u);
 }

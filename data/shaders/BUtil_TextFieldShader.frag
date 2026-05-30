@@ -50,5 +50,5 @@ void main()
     if (bool(blendBloom)) result.xyz *= globalColor[1].xyz; else result.xyz = globalColor[1].xyz;
     result.w = min(result.w * globalColor[1].w, 1.0);
     fragEmissive = result;
-    fragData = (invalidFrag) ? uvec4(uvec3(0u), 1u) : uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), dataBit, 0u);
+    fragData = invalidFrag ? uvec4(0u) : uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), dataBit, 1u);
 }

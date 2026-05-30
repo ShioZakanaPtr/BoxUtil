@@ -11,17 +11,18 @@ layout (std140, binding = OVERWRITE_MATRIX_UBO) uniform BUtilGlobalData
     vec4 gameScreenBorder; // vec4(screenLB, screenSize)
 };
 
-in GEOM_FRAG_BLOCK {
+in VERTEX_BLOCK {
     mat3 fragTBN;
     vec2 fragUV;
     vec3 fragPos;
     vec4 fragEntityColor;
     vec4 fragMixEmissive;
-} gfb_data;
+} vb_data;
 
-// vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic), vec4(interpolationFloat + 1, texturePixels, globalUV, time), vec4(fillStart, fillEnd, startFactor, endFactor)
-uniform vec4 statePackage[5];
-uniform uvec2 additionEmissive_DataBit;
+// vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic)
+// [vec2(tile), startIndex, randomEach], [vec2(start), vec2(end)], hashCode, totalTilesMinusOne, vec2(baseSize)
+uniform vec4 statePackage[6];
+uniform uvec3 additionEmissive_DataBit_InstanceOffset;
 
 layout (binding = 0) uniform sampler2D diffuseMap;
 layout (binding = 1) uniform sampler2D normalMap;
@@ -43,27 +44,27 @@ vec3 encodePos(in vec3 posRaw) {
 
 void main()
 {
-    vec4 diffuse = texture(diffuseMap, gfb_data.fragUV) * gfb_data.fragEntityColor;
-    vec4 emissive = texture(emissiveMap, gfb_data.fragUV) * gfb_data.fragMixEmissive;
+    vec4 diffuse = texture(diffuseMap, vb_data.fragUV) * vb_data.fragEntityColor;
+    vec4 emissive = texture(emissiveMap, vb_data.fragUV) * vb_data.fragMixEmissive;
     if (diffuse.w + emissive.w <= ALPHA_THRESHOLD) discard;
 
-    bool ignoreIllum = (additionEmissive_DataBit.y & 2u) == 2u;
-    vec4 normalRaw = texture(normalMap, gfb_data.fragUV);
+    bool ignoreIllum = (additionEmissive_DataBit_InstanceOffset.y & 2u) == 2u;
+    vec4 normalRaw = texture(normalMap, vb_data.fragUV);
     normalRaw.xyz = fma(normalRaw.xyz, vec3(2.0), vec3(-1.0));
-    if (normalRaw.w <= 0.0) normalRaw.xyz = vec3(0.0, 0.0, 1.0); else normalRaw.xyz = gfb_data.fragTBN * normalRaw.xyz;
+    if (normalRaw.w <= 0.0) normalRaw.xyz = vec3(0.0, 0.0, 1.0); else normalRaw.xyz = vb_data.fragTBN * normalRaw.xyz;
     normalRaw.w = diffuse.w;
-    vec3 complexRaw = texture(complexMap, gfb_data.fragUV).xyz;
+    vec3 complexRaw = texture(complexMap, vb_data.fragUV).xyz;
     emissive.xyz += diffuse.xyz * complexRaw.x;
 
     diffuse.w = min(diffuse.w, 1.0);
-    fragColor = additionEmissive_DataBit.x == 1u ? (diffuse + emissive * emissive.w) : mix(diffuse, emissive, emissive.w);
+    fragColor = additionEmissive_DataBit_InstanceOffset.x == 1u ? (diffuse + emissive * emissive.w) : mix(diffuse, emissive, emissive.w);
     emissive *= statePackage[EMISSIVE_SA].z;
     emissive.w = min(emissive.w, 1.0);
     float cullAlpha = max(diffuse.w, emissive.w);
     fragEmissive = emissive;
-    fragWorldPos = ignoreIllum ? vec4(0.0) : vec4(encodePos(gfb_data.fragPos), step(ALPHA_THRESHOLD, cullAlpha));
+    fragWorldPos = ignoreIllum ? vec4(0.0) : vec4(encodePos(vb_data.fragPos), step(ALPHA_THRESHOLD, cullAlpha));
     fragWorldNormal = ignoreIllum ? vec4(0.0, 0.0, 1.0, 0.0) : normalRaw;
-    fragWorldTangent = ignoreIllum ? vec4(1.0, 0.0, 0.0, 0.0) : ((statePackage[EMISSIVE_SA].w == 0.0) ? vec4(1.0, 0.0, 0.0, diffuse.w) : vec4(gfb_data.fragTBN * texture(tangentMap, gfb_data.fragUV).xyz, diffuse.w));
+    fragWorldTangent = ignoreIllum ? vec4(1.0, 0.0, 0.0, 0.0) : ((statePackage[EMISSIVE_SA].w == 0.0) ? vec4(1.0, 0.0, 0.0, diffuse.w) : vec4(vb_data.fragTBN * texture(tangentMap, vb_data.fragUV).xyz, diffuse.w));
     fragMaterial = ignoreIllum ? vec4(0.0, 0.0, 0.0, 0.0) : vec4(complexRaw.yz, statePackage[EMISSIVE_SA].w, diffuse.w);
-    fragData = (cullAlpha > 0.0) ? uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), additionEmissive_DataBit.y, 0u) : uvec4(uvec3(0u), 1u);
+    fragData = (cullAlpha > 0.0) ? uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), additionEmissive_DataBit_InstanceOffset.y, 1u) : uvec4(0u);
 }

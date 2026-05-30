@@ -31,7 +31,12 @@ public final class BoxEnum {
     public final static byte ENTITY_NORMAL_BLEND = 0;
     public final static byte ENTITY_ADDITIVE_BLEND = 1;
     public final static byte ENTITY_OTHER_BLEND = 2;
-    public final static byte ENTITY_DISABLED_BLEND = 2;
+    public final static byte ENTITY_DISABLED_BLEND = 3;
+
+    public final static byte MATERIAL_CULL_BACK = 0;
+    public final static byte MATERIAL_CULL_FRONT = 1;
+    public final static byte MATERIAL_CULL_FRONT_BACK = 2;
+    public final static byte MATERIAL_CULL_DISABLED = 3;
 
     @Deprecated
     public final static byte ENTITY_COMMON = 0;

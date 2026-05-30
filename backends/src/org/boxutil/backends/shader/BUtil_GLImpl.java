@@ -873,43 +873,43 @@ public final class BUtil_GLImpl {
 
         public static void matrixCheckA(RenderDataAPI entity) {
             switch (entity.getPrimeMatrixState()) {
-                case 0:
+                case BoxEnum.ENTITY_VANILLA_PRIME_MATRIX:
                     break;
-                case 1: {
+                case BoxEnum.ENTITY_PERSPECTIVE_PRIME_MATRIX: {
                     ShaderCore.refreshGameViewportMatrix(_PERSPECTIVE_MATRIX);
                     break;
                 }
-                case 2: {
+                case BoxEnum.ENTITY_CUSTOM_PRIME_MATRIX: {
                     ShaderCore.refreshGameViewportMatrix(entity.pickPrimeMatrixPackage_mat4());
                     break;
                 }
-                default: {
+                default: { // BoxEnum.ENTITY_NONE_PRIME_MATRIX
                     ShaderCore.refreshGameViewportMatrixNone();
                 }
             }
         }
 
         public static void matrixCheckB(RenderDataAPI entity) {
-            if (entity.getPrimeMatrixState() != 0) ShaderCore.refreshGameViewportMatrix(_VANILLA_MATRIX);
+            if (entity.getPrimeMatrixState() != BoxEnum.ENTITY_VANILLA_PRIME_MATRIX) ShaderCore.refreshGameViewportMatrix(_VANILLA_MATRIX);
         }
 
         public static void blendCheckA(RenderDataAPI entity) {
             switch (entity.getBlendState()) {
-                case 0:
+                case BoxEnum.ENTITY_NORMAL_BLEND:
                     break;
-                case 1: {
+                case BoxEnum.ENTITY_ADDITIVE_BLEND: {
                     GL40.glBlendFunci(0, entity.getBlendColorSRC(), entity.getBlendColorDST());
                     GL40.glBlendFunci(1, entity.getBlendColorSRC(), entity.getBlendColorDST());
                     break;
                 }
-                case 2: {
+                case BoxEnum.ENTITY_OTHER_BLEND: {
                     GL40.glBlendFuncSeparatei(0, entity.getBlendColorSRC(), entity.getBlendColorDST(), entity.getBlendAlphaSRC(), entity.getBlendAlphaDST());
                     GL40.glBlendEquationi(0, entity.getBlendEquation());
                     GL40.glBlendFuncSeparatei(1, entity.getBlendColorSRC(), entity.getBlendColorDST(), entity.getBlendAlphaSRC(), entity.getBlendAlphaDST());
                     GL40.glBlendEquationi(1, entity.getBlendEquation());
                     break;
                 }
-                default: {
+                default: { // BoxEnum.ENTITY_DISABLED_BLEND
                     GL11.glDisable(GL11.GL_BLEND);
                 }
             }
@@ -917,21 +917,21 @@ public final class BUtil_GLImpl {
 
         public static void blendCheckB(RenderDataAPI entity) {
             switch (entity.getBlendState()) {
-                case 0:
+                case BoxEnum.ENTITY_NORMAL_BLEND:
                     break;
-                case 1: {
+                case BoxEnum.ENTITY_ADDITIVE_BLEND: {
                     GL40.glBlendFunci(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
                     GL40.glBlendFunci(1, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
                     break;
                 }
-                case 2: {
+                case BoxEnum.ENTITY_OTHER_BLEND: {
                     GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
                     GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
                     GL40.glBlendFuncSeparatei(1, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
                     GL40.glBlendEquationi(1, GL14.GL_FUNC_ADD);
                     break;
                 }
-                default: {
+                default: { // BoxEnum.ENTITY_DISABLED_BLEND
                     GL11.glEnable(GL11.GL_BLEND);
                 }
             }
@@ -939,16 +939,16 @@ public final class BUtil_GLImpl {
 
         public static void cullCheckA(MaterialData material) {
             switch (material.getCullFace()) {
-                case 0: break;
-                case 1: {
+                case BoxEnum.MATERIAL_CULL_BACK: break;
+                case BoxEnum.MATERIAL_CULL_FRONT: {
                     GL11.glCullFace(GL11.GL_FRONT);
                     break;
                 }
-                case 2: {
+                case BoxEnum.MATERIAL_CULL_FRONT_BACK: {
                     GL11.glCullFace(GL11.GL_FRONT_AND_BACK);
                     break;
                 }
-                default: {
+                default: { // BoxEnum.MATERIAL_CULL_DISABLED
                     GL11.glDisable(GL11.GL_CULL_FACE);
                 }
             }
@@ -956,31 +956,31 @@ public final class BUtil_GLImpl {
 
         public static void cullCheckB(MaterialData material) {
             switch (material.getCullFace()) {
-                case 0: break;
-                case 1:
-                case 2: {
+                case BoxEnum.MATERIAL_CULL_BACK: break;
+                case BoxEnum.MATERIAL_CULL_FRONT:
+                case BoxEnum.MATERIAL_CULL_FRONT_BACK: {
                     GL11.glCullFace(GL11.GL_BACK);
                     break;
                 }
-                default: {
+                default: { // BoxEnum.MATERIAL_CULL_DISABLED
                     GL11.glEnable(GL11.GL_CULL_FACE);
                 }
             }
         }
 
         public static void cullCheckA_B(MaterialData material) {
-            if (material.getCullFace() != 3)  {
+            if (material.getCullFace() != BoxEnum.MATERIAL_CULL_DISABLED)  {
                 GL11.glEnable(GL11.GL_CULL_FACE);
             }
             switch (material.getCullFace()) {
-                case 0:
+                case BoxEnum.MATERIAL_CULL_BACK:
                     GL11.glCullFace(GL11.GL_BACK);
                     break;
-                case 1: {
+                case BoxEnum.MATERIAL_CULL_FRONT: {
                     GL11.glCullFace(GL11.GL_FRONT);
                     break;
                 }
-                case 2: {
+                case BoxEnum.MATERIAL_CULL_FRONT_BACK: {
                     GL11.glCullFace(GL11.GL_FRONT_AND_BACK);
                     break;
                 }
@@ -988,7 +988,7 @@ public final class BUtil_GLImpl {
         }
 
         public static void cullCheckB_B(MaterialData material) {
-            if (material.getCullFace() != 3)  {
+            if (material.getCullFace() != BoxEnum.MATERIAL_CULL_DISABLED)  {
                 GL11.glDisable(GL11.GL_CULL_FACE);
             }
         }

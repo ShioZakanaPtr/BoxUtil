@@ -17,7 +17,7 @@ import org.boxutil.manager.*;
  * <blockquote>For how to use <strong>BoxUtil</strong> as lib: <a href="https://www.fossic.org/thread-15746-1-1.html">This Website</a></blockquote>
  * @since 2024.08.18
  * @author ShioZakana
- * @version 2026.05.03 - 1.5.5
+ * @version 2026.06.32 - 1.5.6
  */
 public final class BoxUtilModPlugin extends BaseModPlugin {
     private static final String _ADAPTATION_VERSION = "0.98";
@@ -58,7 +58,7 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
 
     public void onApplicationLoad() {
         if (!Version.versionInfoForMods.getMajor().contentEquals(_ADAPTATION_VERSION)) {
-            String version = Global.getSettings().getModManager().getModSpec(BoxDatabase.MOD_ID).getVersionInfo().getString();
+            final String version = Global.getSettings().getModManager().getModSpec(BoxDatabase.MOD_ID).getVersionInfo().getString();
             throw new RuntimeException("'BoxUtil' this mod with version '" + version + "' should running at Starsector '" + _ADAPTATION_VERSION + "', current game major version is '" + Version.versionInfoForMods.getMajor() + "'.");
         }
         initPre();

@@ -106,5 +106,5 @@ void main()
     fragColor = finalColor;
     finalColor.xyz *= statePackage[STATE_B].z;
     fragEmissive = finalColor;
-    fragData = (invalidFrag) ? uvec4(uvec3(0u), 1u) : uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), finalColor.w) * 1023.0), dataBit, 0u);
+    fragData = invalidFrag ? uvec4(0u) : uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), finalColor.w) * 1023.0), dataBit, 1u);
 }

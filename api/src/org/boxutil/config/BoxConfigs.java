@@ -21,7 +21,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.lwjgl.opencl.CL10;
 import org.lwjgl.opencl.CLDevice;
-import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GLContext;
 
 import java.io.IOException;
@@ -43,6 +42,9 @@ public final class BoxConfigs {
     private static boolean BUtil_CompatibleSync = false;
     private static boolean BUtil_CompatibleSyncLocal = false;
     private static boolean BUtil_CompatibleSyncDisplay = false;
+    private static boolean BUtil_EnableTrailSystem = true;
+    private static boolean BUtil_EnableTrailSystemLocal = true;
+    private static boolean BUtil_EnableTrailSystemDisplay = true;
 
     // Dynamic config values.
     private static int BUtil_InstanceClamp = 8192;
@@ -104,6 +106,10 @@ public final class BoxConfigs {
                     }
                     case 3: {
                         result = BUtil_CompatibleSync ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        break;
+                    }
+                    case 4: {
+                        result = BUtil_EnableTrailSystem ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
                     }
                 }
                 break;
@@ -147,6 +153,12 @@ public final class BoxConfigs {
                     }
                     case 3: {
                         result = BUtil_CompatibleSyncDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        break;
+                    }
+                    case 4: {
+                        result = BUtil_EnableTrailSystemDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+
+                        valid = BoxDatabase.getGLState().GL_GL32;
                     }
                 }
                 break;
@@ -220,6 +232,10 @@ public final class BoxConfigs {
                     }
                     case 3: {
                         BUtil_CompatibleSyncDisplay = !BUtil_CompatibleSyncDisplay;
+                        break;
+                    }
+                    case 4: {
+                        BUtil_EnableTrailSystemDisplay = !BUtil_EnableTrailSystemDisplay;
                     }
                 }
                 break;
@@ -305,6 +321,8 @@ public final class BoxConfigs {
             BUtil_CLDeviceLocal = BUtil_CLDevice;
             BUtil_CompatibleSync = data.optBoolean("BUtil_CompatibleSync", false);
             BUtil_CompatibleSyncLocal = BUtil_CompatibleSync;
+            BUtil_EnableTrailSystem = data.optBoolean("BUtil_EnableTrailSystem", true);
+            BUtil_EnableTrailSystemLocal = BUtil_EnableTrailSystem;
 
             BUtil_EnableDebug = data.optBoolean("BUtil_EnableDebug", false);
             BUtil_EnableDebugLocal = BUtil_EnableDebug;
@@ -362,12 +380,9 @@ public final class BoxConfigs {
     }
 
     public synchronized static void sysCheck() {
-        if (!ShaderCore.isValid() || BUtil_InstanceDataMemoryPool.isNotSupported()) {
-            BUtil_EnableShader = false;
-        }
-        if (!KernelCore.isValid()) {
-            BUtil_EnableCL = false;
-        }
+        BUtil_EnableShader &= ShaderCore.isValid() && !BUtil_InstanceDataMemoryPool.isNotSupported();
+        BUtil_EnableCL &= KernelCore.isValid();
+        BUtil_EnableTrailSystem &= BoxDatabase.getGLState().GL_GL32 && ShaderCore.isStaticTrailSystemValid();
     }
 
     /**
@@ -388,7 +403,8 @@ public final class BoxConfigs {
         BUtil_EnableShaderDisplay = true;
         BUtil_EnableCLDisplay = false;
         BUtil_CLDeviceDisplay = 0;
-        BUtil_CompatibleSyncDisplay = true;
+        BUtil_CompatibleSyncDisplay = false;
+        BUtil_EnableTrailSystemDisplay = true;
 
         BUtil_InstanceClamp = 8192;
         BUtil_CurveNode = 32;
@@ -405,6 +421,7 @@ public final class BoxConfigs {
             BUtil_EnableCLDisplay = BUtil_EnableCLLocal;
             BUtil_CLDeviceDisplay = BUtil_CLDeviceLocal;
             BUtil_CompatibleSyncDisplay = BUtil_CompatibleSyncLocal;
+            BUtil_EnableTrailSystemDisplay = BUtil_EnableTrailSystemLocal;
 
             {
                 int value = data.optInt("BUtil_InstanceClamp", 8192);
@@ -441,6 +458,7 @@ public final class BoxConfigs {
             data.put("BUtil_EnableCL", BUtil_EnableCLDisplay);
             data.put("BUtil_CLDevice", BUtil_CLDeviceDisplay);
             data.put("BUtil_CompatibleSync", BUtil_CompatibleSyncDisplay);
+            data.put("BUtil_EnableTrailSystem", BUtil_EnableTrailSystemDisplay);
 
             data.put("BUtil_InstanceClamp", BUtil_InstanceClamp);
             data.put("BUtil_CurveNode", BUtil_CurveNode);
@@ -512,6 +530,10 @@ public final class BoxConfigs {
 
     public static boolean isCompatibleSync() {
         return BUtil_CompatibleSync;
+    }
+
+    public static boolean isTrailSystemEnable() {
+        return BUtil_EnableTrailSystem;
     }
 
     public static short getMaxCurveNodeSize() {
