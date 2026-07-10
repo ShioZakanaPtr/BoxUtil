@@ -8,7 +8,7 @@ precision OVERWRITE_PRECISION float;
 layout(isolines, equal_spacing, ccw) in;
 
 // vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic), vec4(interpolationFloat + 1, texturePixels, reversed, time), vec4(fillStart, fillEnd, startFactor, endFactor)
-uniform vec4 statePackage[5];
+uniform vec4 u_statePackage[5];
 
 in TESC_TESE_BLOCK {
     flat mat4 teseMatrix;
@@ -29,9 +29,8 @@ out TESE_GEOM_BLOCK {
     flat float geomUV;
 } tgb_data;
 
-void main()
-{
-    bool directCheck = statePackage[CURVE_STATE].x <= 1.0;
+void main() {
+    bool directCheck = u_statePackage[CURVE_STATE].x <= 1.0;
     float factor1 = gl_TessCoord.x;
     float factor1P2 = factor1 + factor1;
     float factor2 = factor1 * factor1;
@@ -51,11 +50,11 @@ void main()
     vec2 tmpT2 = (factor1P2 - factor2 - factor2P2) * midPoints.zw;
     vec2 tmpT3 = factor2 * gl_in[1].gl_Position.xy * 3.0;
 
-    vec2 uv = vec2(ttb_datas[0].teseDistance, ttb_datas[1].teseDistance) / statePackage[CURVE_STATE].y;
+    vec2 uv = vec2(ttb_datas[0].teseDistance, ttb_datas[1].teseDistance) / u_statePackage[CURVE_STATE].y;
     tgb_data.geomMatrix = ttb_datas[0].teseMatrix;
     vec2 currentTangent = directCheck ? (gl_in[1].gl_Position.xy - gl_in[0].gl_Position.xy) : vec2(tmpT0 + tmpT1 + tmpT2 + tmpT3);
     tgb_data.geomNormal = normalize(vec2(-currentTangent.y, currentTangent.x));
-    vec2 fillMix = smoothstep(statePackage[CURVE_FILL].zw, vec2(1.0), vec2(1.0 - factor1, factor1)) * (1.0 - statePackage[CURVE_FILL].xy);
+    vec2 fillMix = smoothstep(u_statePackage[CURVE_FILL].zw, vec2(1.0), vec2(1.0 - factor1, factor1)) * (1.0 - u_statePackage[CURVE_FILL].xy);
     fillMix = 1.0 - fillMix;
     float fillFactor = clamp(fillMix.x * fillMix.y, 0.0, 1.0);
     vec4 color = mix(ttb_datas[0].teseColor, ttb_datas[1].teseColor, mixFactor);
@@ -65,6 +64,6 @@ void main()
     emissive.w *= fillFactor;
     tgb_data.geomEmissiveColor = emissive;
     tgb_data.geomWidth = mix(ttb_datas[0].teseWidth, ttb_datas[1].teseWidth, mixFactor);
-    tgb_data.geomUV = mix(uv.x, uv.y, factor1) - statePackage[CURVE_STATE].w;
+    tgb_data.geomUV = mix(uv.x, uv.y, factor1) - u_statePackage[CURVE_STATE].w;
     gl_Position = directCheck ? gl_in[uint(factor1)].gl_Position : vec4(tmp0 + tmp1 + tmp2 + tmp3, 0.0, 1.0);
 }

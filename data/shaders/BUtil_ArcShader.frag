@@ -3,10 +3,10 @@
 #define RIGHT vec2(1.0, 0.0)
 
 // vec2(inner), ringHardness, innerHardness, vec4(color)
-uniform vec4 statePackage[2];
-uniform float arcValue;
+uniform vec4 u_statePackage[2];
+uniform float u_arcValue;
 
-varying vec2 fragUV;
+varying vec2 vf_fragUV;
 
 float smoothStep(float edgeL, float edgeR, float value) {
     float result = clamp((value - edgeL) / (edgeR - edgeL), 0.0, 1.0);
@@ -14,10 +14,10 @@ float smoothStep(float edgeL, float edgeR, float value) {
 }
 
 void main() {
-    float ring = length(fragUV);
-    float inner = length(fragUV / statePackage[0].xy);
-    inner = statePackage[0].w >= 1.0 ? step(inner, 1.0) : smoothStep(1.0, statePackage[0].w, inner);
-    float result = (statePackage[0].z >= 1.0 ? step(ring, 1.0) : smoothStep(1.0, statePackage[0].z, ring)) - inner;
-    if (dot(normalize(fragUV), RIGHT) <= arcValue) result = 0.0;
-    gl_FragColor = result * statePackage[1];
+    float ring = length(vf_fragUV);
+    float inner = length(vf_fragUV / u_statePackage[0].xy);
+    inner = u_statePackage[0].w >= 1.0 ? step(inner, 1.0) : smoothStep(1.0, u_statePackage[0].w, inner);
+    float result = (u_statePackage[0].z >= 1.0 ? step(ring, 1.0) : smoothStep(1.0, u_statePackage[0].z, ring)) - inner;
+    if (dot(normalize(vf_fragUV), RIGHT) <= u_arcValue) result = 0.0;
+    gl_FragColor = result * u_statePackage[1];
 }

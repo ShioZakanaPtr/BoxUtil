@@ -2,10 +2,10 @@
 
 precision OVERWRITE_PRECISION float;
 
-uniform sampler2D fontMap[4];
-uniform vec4 globalColor[2];
-uniform uint dataBit;
-uniform int blendBloom;
+uniform sampler2D u_fontMap[4];
+uniform vec4 u_globalColor[2];
+uniform uint u_dataBit;
+uniform vec2 u_blendBloom_globalTimerAlpha;
 
 in GEOM_FRAG_BLOCK {
     vec3 fragUV;
@@ -17,9 +17,9 @@ in GEOM_FRAG_BLOCK {
     flat uvec3 fragState; // cahnnel, texIndex, reserved
 } gfb_data;
 
-layout (location = 0) out vec4 fragColor; // draw to RGB8
-layout (location = 1) out vec4 fragEmissive; // draw to RGB8
-layout (location = 6) out uvec4 fragData; // depth, alpha, flag; draw to RGB10_A2UI, alpha write ignored.
+layout (location = 0) out vec4 o_fragColor; // draw to RGB8
+layout (location = 1) out vec4 o_fragEmissive; // draw to RGB8
+layout (location = 6) out uvec4 o_fragData; // depth, alpha, flag; draw to RGB10_A2UI, alpha write ignored.
 
 float getUnderline(in float uv, in float offset) {
     return smoothstep(0.04, 0.03, abs(uv - offset));
@@ -29,9 +29,8 @@ float getStrikeout(in float uv, in float offset) {
     return smoothstep(0.055, 0.04, abs(uv - offset));
 }
 
-void main()
-{
-    vec4 result = texture(fontMap[gfb_data.fragState.y], gfb_data.fragUV.xy);
+void main() {
+    vec4 result = texture(u_fontMap[gfb_data.fragState.y], gfb_data.fragUV.xy);
     if (gfb_data.fragState.x == 4u) result = vec4(result.x);
     if (gfb_data.fragState.x == 8u) result = vec4(result.y);
     if (gfb_data.fragState.x == 12u) result = vec4(result.z);
@@ -46,9 +45,9 @@ void main()
     float cullAlpha = result.w;
     bool invalidFrag = result.w <= 0.0;
     if (invalidFrag) discard;
-    fragColor = result;
-    if (bool(blendBloom)) result.xyz *= globalColor[1].xyz; else result.xyz = globalColor[1].xyz;
-    result.w = min(result.w * globalColor[1].w, 1.0);
-    fragEmissive = result;
-    fragData = invalidFrag ? uvec4(0u) : uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), dataBit, 1u);
+    o_fragColor = result;
+    if (u_blendBloom_globalTimerAlpha.x > 0.0f) result.xyz *= u_globalColor[1].xyz; else result.xyz = u_globalColor[1].xyz;
+    result.w = min(result.w * u_globalColor[1].w, 1.0);
+    o_fragEmissive = result;
+    o_fragData = invalidFrag ? uvec4(0u) : uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), u_dataBit, 1u);
 }

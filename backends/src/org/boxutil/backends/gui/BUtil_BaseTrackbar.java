@@ -17,7 +17,7 @@ import java.util.List;
 
 public class BUtil_BaseTrackbar extends BaseCustomUIPanelPlugin {
     protected final static float _SCREEN_SCALE_DIV = 1.0f / Global.getSettings().getScreenScaleMult();
-    protected static int _GLOBAL_LOCK = -1;
+    protected static int _GLOBAL_LOCK = 0;
     protected final int _fixedID = this.hashCode();
     private final UIComponentAPI _component;
     private final LabelAPI _value;
@@ -31,11 +31,11 @@ public class BUtil_BaseTrackbar extends BaseCustomUIPanelPlugin {
     private PositionAPI inputCheck = null;
 
     public static boolean haveDraggingEvent() {
-        return _GLOBAL_LOCK > 0;
+        return _GLOBAL_LOCK != 0;
     }
 
     public static void resetEvent() {
-        _GLOBAL_LOCK = -1;
+        _GLOBAL_LOCK = 0;
     }
 
     public static int getEventID() {

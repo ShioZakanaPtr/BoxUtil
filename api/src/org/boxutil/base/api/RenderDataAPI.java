@@ -3,7 +3,6 @@ package org.boxutil.base.api;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.combat.CombatEntityAPI;
-import org.boxutil.define.LayeredEntityType;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
 import org.lwjgl.util.vector.Matrix4f;
@@ -32,6 +31,19 @@ public interface RenderDataAPI {
     void setUseCustomDrawShader(boolean enable);
 
     void reset();
+
+    boolean isAutoSubmitEntityData();
+
+    /**
+     * Enabling auto-submit incurs a slight memory copy overhead (default behavior, also with potential heap memory allocation).<p>
+     * If data changes are infrequent, you may disable this feature and use {@link RenderDataAPI#submitEntityData()} for manual submits instead, which can reduce unnecessary memory copies to a certain extent.
+     */
+    void setAutoSubmitEntityData(boolean toggleAuto);
+
+    /**
+     * Without matrix data or timer settings.
+     */
+    void submitEntityData();
 
     ControlDataAPI getControlData();
 
@@ -84,10 +96,31 @@ public interface RenderDataAPI {
 
     Matrix4f getPrimeMatrix();
 
+    /**
+     * When upload a custom prime matrix, call {@link RenderDataAPI#setCustomPrimeMatrix()} with this method.
+     *
+     * @return 4x4 matrix in buffer with 16 capacity.
+     */
+    FloatBuffer getPrimeMatrixBuffer();
+
+    boolean isAutoSubmitPrimeMatrix();
+
+    /**
+     * Enabling auto-submit incurs a slight memory copy overhead (default behavior, also with potential heap memory allocation).<p>
+     * If data changes are infrequent, you may disable this feature and use {@link RenderDataAPI#submitPrimeMatrix()} for manual submits instead, which can reduce unnecessary memory copies to a certain extent.<p>
+     * Alternatively, use {@link RenderDataAPI#getPrimeMatrixBuffer()} to directly operate on the corresponding buffer after this feature was disabled;
+     */
+    void setAutoSubmitPrimeMatrix(boolean toggleAuto);
+
+    /**
+     * Only required when use a custom prime matrix.
+     */
+    void submitPrimeMatrix();
+
     void initIdentityPrimeMatrix();
 
     /**
-     * Generally, it is viewport and camera matrix.<p>
+     * Generally, in there it is viewport and camera matrix, means 'main' not 'prime matrix'.<p>
      * In shader program: <strong>[this matrix * model matrix * vertex]</strong><p>
      * Must call {@link RenderDataAPI#setCustomPrimeMatrix()} if use it.
      *
@@ -106,6 +139,22 @@ public interface RenderDataAPI {
     void setNonePrimeMatrix();
 
     Matrix4f getModelMatrix();
+
+    /**
+     * @return 4x4 matrix in buffer with 16 capacity.
+     */
+    FloatBuffer getModelMatrixBuffer();
+
+    boolean isAutoSubmitModelMatrix();
+
+    /**
+     * Enabling auto-submit incurs a slight memory copy overhead (default behavior, also with potential heap memory allocation).<p>
+     * If data changes are infrequent, you may disable this feature and use {@link RenderDataAPI#submitModelMatrix()} for manual submits instead, which can reduce unnecessary memory copies to a certain extent.<p>
+     * Alternatively, use {@link RenderDataAPI#getModelMatrixBuffer()} to directly operate on the corresponding buffer after this feature was disabled;
+     */
+    void setAutoSubmitModelMatrix(boolean toggleAuto);
+
+    void submitModelMatrix();
 
     void initIdentityModelMatrix();
 
@@ -138,10 +187,19 @@ public interface RenderDataAPI {
 
     void appendToEntity(CombatEntityAPI target);
 
+    /**
+     * Only for system rendering calls, not applicable to developer.
+     */
     FloatBuffer pickPrimeMatrixPackage_mat4();
 
+    /**
+     * Only for system rendering calls, not applicable to developer.
+     */
     FloatBuffer pickModelMatrixPackage_mat4();
 
+    /**
+     * Only for system rendering calls, not applicable to developer.
+     */
     FloatBuffer pickDataPackage_vec4();
 
     int getBlendColorSRC();

@@ -18,7 +18,6 @@ import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
@@ -665,7 +664,7 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         this.material = material == null ? new MaterialData() : material;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
+    public void submitEntityData() {
         final float iPO = this.interpolation + 1;
         this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
         this._statePackageBuffer.put(12, iPO);
@@ -673,7 +672,6 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         this._statePackageBuffer.put(16, this.state, 2, 4);
         this._statePackageBuffer.position(0);
         this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
-        return this._statePackageBuffer;
     }
 
     public Object entityType() {

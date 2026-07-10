@@ -838,9 +838,7 @@ public final class CurveUtil {
         }
 
         public boolean isIgnore(CombatEntityAPI target) {
-            boolean isFighter = false;
-            boolean parentIsSource = false;
-            boolean inPhased = false;
+            boolean isFighter = false, parentIsSource = false, inPhased = false;
             if (target instanceof ShipAPI shipTarget) {
                 isFighter = shipTarget.isFighter();
                 parentIsSource = shipTarget.getParentStation() == this.source;

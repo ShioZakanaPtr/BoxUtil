@@ -7,16 +7,16 @@ precision OVERWRITE_PRECISION float;
 #define EMISSIVE_SA 2
 #define CURVE_STATE 3
 
-subroutine void instanceStateCompute(out mat4 model, out vec4 mColor, out vec4 mEColor);
-subroutine uniform instanceStateCompute instanceState;
+subroutine void t_instanceStateCompute(out mat4 model, out vec4 mColor, out vec4 mEColor);
+subroutine uniform t_instanceStateCompute f_instanceState;
 
-layout (location = 0) in vec2 nodeLocation;
-layout (location = 1) in vec4 nodeTangent;
-layout (location = 2) in float nodeWidth;
-layout (location = 3) in float nodeMixFactor;
-layout (location = 4) in float nodeDistance;
-layout (location = 5) in vec4 nodeColor;
-layout (location = 6) in vec4 nodeEmissive;
+layout (location = 0) in vec2 a_nodeLocation;
+layout (location = 1) in vec4 a_nodeTangent;
+layout (location = 2) in float a_nodeWidth;
+layout (location = 3) in float a_nodeMixFactor;
+layout (location = 4) in float a_nodeDistance;
+layout (location = 5) in vec4 a_nodeColor;
+layout (location = 6) in vec4 a_nodeEmissive;
 
 layout (std140, binding = OVERWRITE_MATRIX_UBO) uniform BUtilGlobalData
 {
@@ -24,11 +24,11 @@ layout (std140, binding = OVERWRITE_MATRIX_UBO) uniform BUtilGlobalData
 	vec4 gameScreenBorder; // vec4(screenLB, screenSize)
 };
 
-uniform mat4 modelMatrix;
+uniform mat4 u_modelMatrix;
 // vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic), vec4(interpolationFloat + 1, texturePixels, globalUV, time), vec4(fillStart, fillEnd, startFactor, endFactor)
-uniform vec4 statePackage[5];
-uniform float globalTimerAlpha;
-uniform int instanceOffset;
+uniform vec4 u_statePackage[5];
+uniform float u_globalTimerAlpha;
+uniform int u_instanceOffset;
 
 out VERT_TESC_BLOCK {
 	flat mat4 tescMatrix;
@@ -43,64 +43,63 @@ out VERT_TESC_BLOCK {
 
 #include "BUtil_InstanceDataSSBO.h"
 
-subroutine(instanceStateCompute) void noneData(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-	model = modelMatrix;
-	mColor = statePackage[COLOR] * globalTimerAlpha;
-	mEColor = statePackage[EMISSIVE_COLOR] * globalTimerAlpha;
+subroutine(t_instanceStateCompute) void p_noneData(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+	model = u_modelMatrix;
+	mColor = u_statePackage[COLOR] * u_globalTimerAlpha;
+	mEColor = u_statePackage[EMISSIVE_COLOR] * u_globalTimerAlpha;
 }
 
-subroutine(instanceStateCompute) void haveData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Dynamic2D data = dataDynamic2D[instanceOffset + gl_InstanceID];
-    model = modelMatrix * fetchDynamic2DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Dynamic2D data = b_dataDynamic2D[u_instanceOffset + gl_InstanceID];
+    model = u_modelMatrix * fetchDynamic2DMatrix(data);
 
-    decodeDynamicColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.timer.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeDynamicColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.timer.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-subroutine(instanceStateCompute) void haveFixedData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Fixed2D data = dataFixed2D[instanceOffset + gl_InstanceID];
-    model = modelMatrix * fetchFixed2DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveFixedData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Fixed2D data = b_dataFixed2D[u_instanceOffset + gl_InstanceID];
+    model = u_modelMatrix * fetchFixed2DMatrix(data);
 
-    decodeFixedColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.alpha_Facing_Location.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeFixedColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.alpha_Facing_Location.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-subroutine(instanceStateCompute) void haveData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Dynamic3D data = dataDynamic3D[instanceOffset + gl_InstanceID];
-    model = modelMatrix * fetchDynamic3DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Dynamic3D data = b_dataDynamic3D[u_instanceOffset + gl_InstanceID];
+    model = u_modelMatrix * fetchDynamic3DMatrix(data);
 
-    decodeDynamicColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.timer.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeDynamicColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.timer.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-subroutine(instanceStateCompute) void haveFixedData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Fixed3D data = dataFixed3D[instanceOffset + gl_InstanceID];
-    model = modelMatrix * fetchFixed3DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveFixedData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Fixed3D data = b_dataFixed3D[u_instanceOffset + gl_InstanceID];
+    model = u_modelMatrix * fetchFixed3DMatrix(data);
 
-    decodeFixedColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.alpha_LocationZ.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeFixedColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.alpha_LocationZ.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-void main()
-{
+void main() {
 	mat4 currentMatrix;
 	vec4 entityColor;
 	vec4 entityEmissiveColor;
-	instanceState(currentMatrix, entityColor, entityEmissiveColor);
-	entityColor *= nodeColor;
-	entityEmissiveColor *= nodeEmissive;
+	f_instanceState(currentMatrix, entityColor, entityEmissiveColor);
+	entityColor *= a_nodeColor;
+	entityEmissiveColor *= a_nodeEmissive;
 
 	vtb_data.tescMatrix = currentMatrix;
-	vtb_data.tescPoints = nodeLocation.xyxy + nodeTangent;
+	vtb_data.tescPoints = a_nodeLocation.xyxy + a_nodeTangent;
 	vtb_data.tescColor = entityColor;
-	vtb_data.tescEmissiveColor = mix(entityEmissiveColor, entityEmissiveColor * entityColor, vec4(vec3(statePackage[EMISSIVE_SA].y), statePackage[EMISSIVE_SA].x));
-	vtb_data.tescWidth = nodeWidth;
-	vtb_data.tescMixFactor = nodeMixFactor;
+	vtb_data.tescEmissiveColor = mix(entityEmissiveColor, entityEmissiveColor * entityColor, vec4(vec3(u_statePackage[EMISSIVE_SA].y), u_statePackage[EMISSIVE_SA].x));
+	vtb_data.tescWidth = a_nodeWidth;
+	vtb_data.tescMixFactor = a_nodeMixFactor;
 	vtb_data.tescID = gl_VertexID == 0 ? 0.0 : ceil(float(gl_VertexID) / 2.0);
-	vtb_data.tescDistance = nodeDistance;
-	gl_Position = vec4(nodeLocation, 0.0, 1.0);
+	vtb_data.tescDistance = a_nodeDistance;
+	gl_Position = vec4(a_nodeLocation, 0.0, 1.0);
 }

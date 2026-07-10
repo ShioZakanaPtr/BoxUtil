@@ -48,13 +48,12 @@ public class LinearLight extends BaseIlluminantData {
         this.endCaps = withEndCaps;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
-        FloatBuffer buffer = super.pickDataPackage_vec4();
-        buffer.put(6, this.state[0]);
-        buffer.put(7, this.state[1]);
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+    public void submitEntityData() {
+        super.submitEntityData();
+        this._statePackageBuffer.put(6, this.state[0]);
+        this._statePackageBuffer.put(7, this.state[1]);
+        this._statePackageBuffer.position(0);
+        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
     }
 
     public Object entityType() {

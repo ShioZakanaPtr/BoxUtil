@@ -5,7 +5,7 @@ precision OVERWRITE_PRECISION float;
 layout (points) in;
 layout (triangle_strip, max_vertices = 16) out;
 
-uniform float italicFactor;
+uniform float u_italicFactor;
 
 in VERT_GEOM_BLOCK {
 	mat4 geomMatrix;
@@ -29,28 +29,27 @@ out GEOM_FRAG_BLOCK {
 	flat uvec3 fragState; // cahnnel, texIndex, reserved
 } gfb_data;
 
-void main()
-{
+void main() {
 	mat4 matrix = vgb_datas[0].geomMatrix;
 	vec4 size = vgb_datas[0].geomSize;
 	vec4 uv = vgb_datas[0].geomUV;
 	vec4 styleUV = vgb_datas[0].geomStyleUV;
 	vec2 fillBase = vgb_datas[0].geomFillBase;
 	vec2 basePoint = gl_in[0].gl_Position.xy;
-    float baselineAlignedEdge = italicFactor * fillBase.y;
+    float baselineAlignedEdge = u_italicFactor * fillBase.y;
 
 	bool isItalic = vgb_datas[0].geomStyleState.y == 1u;
 	vec4 upPoint = vec4(basePoint, 0.0, 1.0);
-	if (isItalic) upPoint.x += italicFactor * (size.y + size.w) - baselineAlignedEdge;
+	if (isItalic) upPoint.x += u_italicFactor * (size.y + size.w) - baselineAlignedEdge;
 	vec4 upPointM = matrix * upPoint;
 	vec4 bottomPoint = vec4(basePoint.x, basePoint.y - size.y, 0.0, 1.0);
-	if (isItalic) bottomPoint.x += italicFactor * size.w - baselineAlignedEdge;
+	if (isItalic) bottomPoint.x += u_italicFactor * size.w - baselineAlignedEdge;
 	vec4 bottomPointM = matrix * bottomPoint;
 
 	vec2 upEdgeUpPoint = vec2(basePoint.x, basePoint.y + size.z);
 	vec2 bottomEdgeBottomPoint = vec2(basePoint.x, basePoint.y - size.y - size.w);
 	if (isItalic) {
-        upEdgeUpPoint.x += italicFactor * (size.y + size.z + size.w) - baselineAlignedEdge;
+        upEdgeUpPoint.x += u_italicFactor * (size.y + size.z + size.w) - baselineAlignedEdge;
         bottomEdgeBottomPoint.x -= baselineAlignedEdge;
     }
 	vec4 topEdgeL = vec4(upEdgeUpPoint, 0.0, 1.0);

@@ -1,11 +1,11 @@
 #version 110
 
 // vec4(center, radiusSamples, samplesInv)
-uniform vec4 statePackage;
+uniform vec4 u_statePackage;
 
-varying vec2 fragUV;
+varying vec2 vf_fragUV;
 
 void main() {
-	fragUV = max(gl_Vertex.xy, vec2(0.0)) - statePackage.xy;
+    vf_fragUV = max(gl_Vertex.xy, vec2(0.0)) - u_statePackage.xy;
 	gl_Position = gl_Vertex;
 }

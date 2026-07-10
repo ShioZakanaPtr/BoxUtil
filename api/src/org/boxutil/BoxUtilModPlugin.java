@@ -9,6 +9,11 @@ import org.boxutil.config.BoxConfigGUI;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.manager.*;
+import org.lwjgl.Sys;
+
+import java.io.PrintStream;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A multi-thread OpenGL based lib/engine of the game <a href="https://fractalsoftworks.com/">Starsector</a>.

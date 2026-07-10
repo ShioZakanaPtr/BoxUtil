@@ -73,13 +73,12 @@ public class SpotLight extends BaseIlluminantData {
         this.setOuterConeDirect(angleCosValue);
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
-        FloatBuffer buffer = super.pickDataPackage_vec4();
-        buffer.put(6, Math.max(this.state[0] - this.state[1], 0.0f));
-        buffer.put(7, this.state[1]);
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+    public void submitEntityData() {
+        super.submitEntityData();
+        this._statePackageBuffer.put(6, Math.max(this.state[0] - this.state[1], 0.0f));
+        this._statePackageBuffer.put(7, this.state[1]);
+        this._statePackageBuffer.position(0);
+        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
     }
 
     public Object entityType() {

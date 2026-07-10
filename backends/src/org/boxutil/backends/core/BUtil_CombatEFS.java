@@ -149,6 +149,7 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
                 return;
             }
 
+            BUtil_GLImpl.StandardShaderPacks.activateBloomStage();
             if (shaderEnable) {
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
                 if (!this._highestLayer) {
@@ -160,6 +161,7 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
             }
 
             BUtil_GLImpl.Operations.processMeshCurrentLayout(this._layerBits, this.layer, notMultiPass, viewport, meshArray, pluginSet);
+            BUtil_GLImpl.Operations.resetGLAttrib();
             if (notMultiPass) {
                 if (!this._highestLayer) {
                     GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);

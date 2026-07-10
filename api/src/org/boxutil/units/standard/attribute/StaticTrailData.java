@@ -6,32 +6,33 @@ import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
 /**
- * Recommended to use const function for all.
+ * Recommended to use const returns for all.
  */
 public abstract class StaticTrailData {
     /**
-     * <b>MUST BE the const function.</b>
+     * <b>IMPORTANT, the unique ID in game.</b><p>
+     * <b>MUST BE the const returns.</b>
      */
     public abstract String id();
     
     public abstract MaterialData getMaterial();
 
     /**
-     * <b>MUST BE the const function.</b>
+     * <b>MUST BE the const returns, and greater than or equal to zero.</b>
      */
     public float getFadeInTime() {
         return 0.1f;
     }
 
     /**
-     * <b>MUST BE the const function.</b>
+     * <b>MUST BE the const returns, and greater than or equal to zero.</b>
      */
     public float getFullTime() {
         return 0.4f;
     }
 
     /**
-     * <b>MUST BE the const function.</b>
+     * <b>MUST BE the const returns, and greater than or equal to zero.</b>
      */
     public float getFadeOutTime() {
         return 1.0f;
@@ -72,7 +73,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * Based on facing.
+     * Based on forward direction.
      *
      * @return <code>{minVelocity.xy, maxVelocity.xy}</code>, returns <code>null</code> for none of velocity applied
      */
@@ -81,7 +82,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * Based on facing.
+     * Based on forward direction.
      *
      * @return <code>{minVelocity.xy, maxVelocity.xy}</code>, returns <code>null</code> for none of velocity applied
      */
@@ -90,7 +91,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * Based on facing.
+     * Based on forward direction.
      *
      * @return <code>{minAngular, maxAngular}</code>, returns <code>null</code> for none of angular applied
      */
@@ -99,7 +100,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * Based on facing.
+     * Based on forward direction.
      *
      * @return <code>{minAngular, maxAngular}</code>, returns <code>null</code> for none of angular applied
      */
@@ -108,14 +109,15 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * <b>Must be const value.</b>
+     * <b>MUST BE the const returns.</b>
      */
     public boolean isAdditiveBlend() {
         return true;
     }
 
     /**
-     * Based on facing.
+     * <b>Only for system-gen trail, invalid for custom trail.</b><p>
+     * Based on forward direction.
      *
      * @return <code>{minOffset.xy, maxOffset.xy}</code>, returns <code>null</code> for none of offset
      */
@@ -124,7 +126,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * Only for system-gen trail, invalid for custom trail.
+     * <b>Only for system-gen trail, invalid for custom trail.</b>
      *
      * @return use the facing of entity for forward direction when <code>false</code>, use the velocity of entity when <code>true</code>
      */
@@ -133,7 +135,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * Only for system-gen trail, invalid for custom trail.
+     * <b>Only for system-gen trail, invalid for custom trail.</b>
      *
      * @return rendering at {@link CombatEngineLayers#BELOW_INDICATORS_LAYER} when <code>false</code>, at {@link CombatEngineLayers#ABOVE_SHIPS_LAYER} when <code>true</code>
      */

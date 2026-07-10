@@ -7,10 +7,10 @@
 #define NEG 448.0
 
 // vec2(length), number, invert, vec4(color)
-uniform vec4 statePackage[2];
-uniform float charLength;
+uniform vec4 u_statePackage[2];
+uniform float u_charLength;
 
-varying vec2 fragUV;
+varying vec2 vf_fragUV;
 
 float getNumber(int digit) {
     float result = 31599.0;
@@ -35,23 +35,23 @@ float getSprite(float sprite, vec2 uv) {
 }
 
 void main() {
-    vec2 uv = fragUV * SIZE;
-    uv.x *= charLength * SIZE_FACTOR;
+    vec2 uv = vf_fragUV * SIZE;
+    uv.x *= u_charLength * SIZE_FACTOR;
     vec2 offset = vec2(0.0);
     float number, clip, result, step;
-    bool negative = statePackage[0].z < 0.0;
-    number = abs(statePackage[0].z);
+    bool negative = u_statePackage[0].z < 0.0;
+    number = abs(u_statePackage[0].z);
     clip = result = step = 0.0;
     int digit = 0;
-    for(int i = int(statePackage[0].x); i >= -int(statePackage[0].y); i--) {
+    for(int i = int(u_statePackage[0].x); i >= -int(u_statePackage[0].y); i--) {
         clip = float(number > pow(10.0, float(i)) || i == 0);
         digit = int(mod(number / pow(10.0, float(i)), 10.0));
         step = SPACING * clip;
-        if (negative && i == int(statePackage[0].x)) {
+        if (negative && i == int(u_statePackage[0].x)) {
             result += getSprite(NEG, uv - offset);
             offset.x += SPACING;
         }
-        if(statePackage[0].x != 0.0 && i == -1) {
+        if(u_statePackage[0].x != 0.0 && i == -1) {
             result += getSprite(POINT, uv - offset) * clip;
             offset.x += step;
         }
@@ -59,6 +59,6 @@ void main() {
         offset.x += step;
     }
     vec4 col = vec4(result);
-    if (statePackage[0].w == 1.0) col = 1.0 - col;
-    gl_FragColor = col * statePackage[1];
+    if (u_statePackage[0].w == 1.0) col = 1.0 - col;
+    gl_FragColor = col * u_statePackage[1];
 }

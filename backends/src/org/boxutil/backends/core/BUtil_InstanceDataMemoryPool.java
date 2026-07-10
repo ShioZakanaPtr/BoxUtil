@@ -910,19 +910,24 @@ public final class BUtil_InstanceDataMemoryPool {
             GL11.glColor4ub(BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ONE_COLOR);
             GL11.glRectf(0.0f, 0.0f, 1.0f, 1.0f);
         } else {
-            double div = 1.0d / _MEM_INFO[t][_INFO_TOTAL];
-            int colorBits, alphaBits;
-            byte[] rgb = new byte[3];
+            final byte[] rgb = new byte[3];
+            final double div = 1.0d / _MEM_INFO[t][_INFO_TOTAL];
+            int colorSeed;
+
             for (BUtil_MemoryBlock block : _MEM[t]) {
                 if (block == null) continue;
                 if (block.is_free()) {
                     rgb[0] = rgb[1] = rgb[2] = BoxEnum.ZERO;
                 } else {
-                    colorBits = Long.hashCode(block.address) ^ Long.hashCode(block.size);
-                    alphaBits = (colorBits >>> 24) ^ 0b10001000;
-                    rgb[0] = (byte) ((colorBits >>> 16 ^ alphaBits) & 0xFF);
-                    rgb[1] = (byte) ((colorBits >>> 8 ^ alphaBits) & 0xFF);
-                    rgb[2] = (byte) ((colorBits ^ alphaBits) & 0xFF);
+                    colorSeed = Long.hashCode(block.address) ^ Long.hashCode(block.size);
+                    colorSeed ^= colorSeed >> 16;
+                    colorSeed *= 0x85ebca6b;
+                    colorSeed ^= colorSeed >> 13;
+                    colorSeed *= 0xc2b2ae35;
+                    colorSeed ^= colorSeed >> 16;
+                    rgb[0] = (byte) (colorSeed >>> 16 & 0xff);
+                    rgb[1] = (byte) (colorSeed >>> 8 & 0xff);
+                    rgb[2] = (byte) (colorSeed & 0xff);
                 }
                 GL11.glColor4ub(rgb[0], rgb[1], rgb[2], BoxEnum.ONE_COLOR);
                 GL11.glRectd(block.address * div, 0.0d, (block.address + block.size) * div, 1.0d);

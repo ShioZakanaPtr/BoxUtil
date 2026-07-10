@@ -12,7 +12,6 @@ import org.boxutil.util.RenderingUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
-import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.awt.*;
@@ -161,10 +160,9 @@ public class BaseIlluminantData extends BaseInstanceRenderData implements Illumi
         this.stateBaseBit |= 0b11;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
+    public void submitEntityData() {
         this._statePackageBuffer.put(0, this.stateBase, 0, 5);
         this._statePackageBuffer.put(6, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
-        return this._statePackageBuffer;
     }
 
     @Deprecated

@@ -10,11 +10,11 @@ public interface TemporaryCleanupPlugin {
      * When turn to title from combat, or vice versa.<p>
      * And back into campaign from combat.
      */
-    void cleanupCombatOnce();
+    default void cleanupCombatOnce() {}
 
     /**
      * When player fleet goto new map, or back to title (whether active in combat).<p>
      * And before game save stage.
      */
-    void cleanupCampaignOnce();
+    default void cleanupCampaignOnce() {}
 }

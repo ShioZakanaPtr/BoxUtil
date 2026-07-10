@@ -1,10 +1,8 @@
 #version 110
 
-uniform float time;
-
-varying vec2 fragUV;
+varying vec2 vf_fragUV;
 
 void main() {
 	gl_Position = gl_Vertex;
-	fragUV = max(gl_Vertex.xy, 0.0);
+	vf_fragUV = max(gl_Vertex.xy, 0.0);
 }

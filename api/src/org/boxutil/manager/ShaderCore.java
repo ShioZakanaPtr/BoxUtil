@@ -18,10 +18,10 @@ import org.boxutil.units.standard.misc.PublicFBO;
 import org.boxutil.units.standard.misc.QuadObject;
 import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
+import org.boxutil.util.ShaderUtil;
 import org.boxutil.util.TransformUtil;
-import org.lwjgl.BufferUtils;
+import org.boxutil.util.concurrent.SpinLock;
 import org.lwjgl.opengl.*;
-import org.lwjgl.util.vector.Matrix4f;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
@@ -73,7 +73,9 @@ public final class ShaderCore {
     private final static String _GLSL_COMPUTE_DIM_REPLACE_TITLE = "RESET_VALUE";
     private final static String _GLSL_INCLUDE_INSTANCE_DATA_TITLE = "#include \"BUtil_InstanceDataSSBO.h\"";
     private final static byte _GLSL_MATRIX_UBO_BINDING = 0;
-    private final static FloatBuffer _NONE_GAME_MATRIX = CommonUtil.createFloatBuffer(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    private final static SpinLock _UPLOAD_MATRIX_LOCK = new SpinLock();
+    private final static FloatBuffer _NONE_GAME_MATRIX = CommonUtil.createIdentityMatrix4x4f();
+    private final static FloatBuffer _UPLOAD_MATRIX_BUFFER = CommonUtil.createFloatBuffer(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     private final static ShaderProgram[] _SHADER_PROGRAM = new ShaderProgram[_SHADER_COUNT];
     private final static int _GL_ATTRIB_BITS = GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BITS | GL11.GL_ENABLE_BIT | GL11.GL_POLYGON_BIT | GL11.GL_SCISSOR_BIT | GL11.GL_STENCIL_BUFFER_BIT | GL11.GL_VIEWPORT_BIT;
     private static BUtil_RenderingBuffer renderingBuffer = null;
@@ -139,7 +141,7 @@ public final class ShaderCore {
             closeShader();
             return;
         }
-        String instanceHeader,
+        String gBufferToolH, instanceDataH,
                 vertCommon, fragCommon,
                 vertSprite, fragSprite,
                 vertCurve, tescCurve, teseCurve, geomCurve, fragCurve,
@@ -165,17 +167,18 @@ public final class ShaderCore {
         final String gl_screenXStep = String.format("%.7f", 1.0f / (float) ShaderCore.getScreenScaleWidth());
         final String gl_screenYStep = String.format("%.7f", 1.0f / (float) ShaderCore.getScreenScaleHeight());
         final String gl_bloomRadius = Float.toString(Global.getSettings().getScreenScaleMult());
-        instanceHeader = _loadLocalFile("include/BUtil_InstanceDataSSBO.h");
+        gBufferToolH = _loadLocalFile("include/BUtil_GBufferTool.h");
+        instanceDataH = _loadLocalFile("include/BUtil_InstanceDataSSBO.h");
         vertCommon = _loadLocalFile("BUtil_CommonShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
-                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
+                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceDataH);
         fragCommon = _loadLocalFile("BUtil_CommonShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
         vertSprite = _loadLocalFile("BUtil_SpriteShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
-                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
+                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceDataH);
         fragSprite = _loadLocalFile("BUtil_SpriteShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
         vertCurve = _loadLocalFile("BUtil_CurveShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
-                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
+                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceDataH);
         tescCurve = _loadLocalFile("BUtil_CurveShader.tesc").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
         teseCurve = _loadLocalFile("BUtil_CurveShader.tese").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
@@ -197,7 +200,7 @@ public final class ShaderCore {
         fragTrail = _loadLocalFile("BUtil_TrailShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
         vertFlare = _loadLocalFile("BUtil_FlareShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
-                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
+                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceDataH);
         fragFlare = _loadLocalFile("BUtil_FlareShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
         vertText = _loadLocalFile("BUtil_TextFieldShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
@@ -207,7 +210,7 @@ public final class ShaderCore {
         fragText = _loadLocalFile("BUtil_TextFieldShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
         vertDist = _loadLocalFile("BUtil_DistortionShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
-                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceHeader);
+                .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO).replace(_GLSL_INCLUDE_INSTANCE_DATA_TITLE, instanceDataH);
         fragDist = _loadLocalFile("BUtil_DistortionShader.frag").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
                 .replace(_GLSL_PRECISION_TITLE, _GLSL_PRECISION);
         vertPost = _loadLocalFile("misc/BUtil_PostShader.vert").replace(_GLSL_VERSION_TITLE, _GLSL_VERSION)
@@ -285,17 +288,6 @@ public final class ShaderCore {
             _LOG.error("'BoxUtil' base shader resource init failed, main program: " + isMainProgramValid() + ", instance computing program: " + isMatrixProgramValid() + ", rendering framebuffer: " + isRenderingFramebufferValid() + ", default VAO: " + isDefaultVAOValid() + ".");
             return;
         }
-        matrixUBO = GL15.glGenBuffers();
-        if (matrixUBO == 0) {
-            closeShader();
-            _LOG.error("'BoxUtil' shader UBO init failed. ");
-            return;
-        }
-
-        GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, matrixUBO);
-        GL15.glBufferData(GL31.GL_UNIFORM_BUFFER, 20 * BoxDatabase.FLOAT_SIZE, GL15.GL_DYNAMIC_DRAW);
-        GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
-        GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, _GLSL_MATRIX_UBO_BINDING, matrixUBO);
         glValid = true;
 
         initDistortionProgram();
@@ -318,6 +310,26 @@ public final class ShaderCore {
         return new ShaderProgram(true, name, _SHADER_PATH_ROOT + file + ".vert", _SHADER_PATH_ROOT + file + ".geom", _SHADER_PATH_ROOT + file + ".frag");
     }
 
+    public static void initGlobalDataUBO() {
+        if (!BoxDatabase.getGLState().GL_GL31) {
+            closeShader();
+            _LOG.error("'BoxUtil' platform is not supported Uniform buffer object. ");
+            return;
+        }
+        matrixUBO = GL15.glGenBuffers();
+        if (matrixUBO == 0) {
+            closeShader();
+            _LOG.error("'BoxUtil' shader UBO init failed. ");
+            return;
+        }
+
+        GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, matrixUBO);
+        GL15.glBufferData(GL31.GL_UNIFORM_BUFFER, 20 * BoxDatabase.FLOAT_SIZE, GL15.GL_DYNAMIC_DRAW);
+        GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
+        GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, _GLSL_MATRIX_UBO_BINDING, matrixUBO);
+        glValid = true;
+    }
+
     public static void initMiscShaderPrograms() {
         if (_miscShaderInit) return;
         _miscShaderInit = true;
@@ -328,27 +340,27 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_SIMPLE_NUMBER].isValid()) {
             _SHADER_PROGRAM[_SIMPLE_NUMBER].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("charLength");
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_charLength");
         }
 
         if (_SHADER_PROGRAM[_SIMPLE_ARC].isValid()) {
             _SHADER_PROGRAM[_SIMPLE_ARC].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("arcValue");
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_arcValue");
         }
 
         if (_SHADER_PROGRAM[_SIMPLE_TEX_ARC].isValid()) {
             _SHADER_PROGRAM[_SIMPLE_TEX_ARC].initUniformSize(1)
                     .beginUniform()
-                    .loadUniformIndex("statePackage");
+                    .loadUniformIndex("u_statePackage");
         }
 
         if (_SHADER_PROGRAM[_MISSION_BG].isValid()) {
             _SHADER_PROGRAM[_MISSION_BG].initUniformSize(1)
                     .beginUniform()
-                    .loadUniformIndex("time");
+                    .loadUniformIndex("u_time");
         }
 
         initRadialBlurProgram();
@@ -364,10 +376,10 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_COMMON].isValid()) {
             _SHADER_PROGRAM[_COMMON].initUniformSize(4)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("baseSize")
-                    .loadUniformIndex("additionEmissive_DataBit_InstanceOffset")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_baseSize")
+                    .loadUniformIndex("u_additionEmissive_DataBit_InstanceOffset")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -375,30 +387,30 @@ public final class ShaderCore {
 
                     .initSubroutineSize(5, 2)
                     .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineIndex("noneData")
-                    .loadSubroutineIndex("haveData2D")
-                    .loadSubroutineIndex("haveFixedData2D")
-                    .loadSubroutineIndex("haveData3D")
-                    .loadSubroutineIndex("haveFixedData3D")
+                    .loadSubroutineIndex("p_noneData")
+                    .loadSubroutineIndex("p_haveData2D")
+                    .loadSubroutineIndex("p_haveFixedData2D")
+                    .loadSubroutineIndex("p_haveData3D")
+                    .loadSubroutineIndex("p_haveFixedData3D")
                     .beginSubroutine(1, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineIndex("commonMode")
-                    .loadSubroutineIndex("colorMode")
+                    .loadSubroutineIndex("p_commonMode")
+                    .loadSubroutineIndex("p_colorMode")
 
                     .initSubroutineUniformSize(1, 1)
                     .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineUniformIndex("instanceState")
+                    .loadSubroutineUniformIndex("f_instanceState")
                     .beginSubroutineUniform(1, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineUniformIndex("surfaceState")
+                    .loadSubroutineUniformIndex("f_surfaceState")
                     .computeSubroutineUniformRoute();
         } else glMainProgramValid = false;
 
         if (_SHADER_PROGRAM[_SPRITE].isValid()) {
             _SHADER_PROGRAM[_SPRITE].initUniformSize(4)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("additionEmissive_DataBit_InstanceOffset")
-                    .loadUniformIndex("globalTimerAlpha")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_additionEmissive_DataBit_InstanceOffset")
+                    .loadUniformIndex("u_globalTimerAlpha")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -406,31 +418,31 @@ public final class ShaderCore {
 
                     .initSubroutineSize(8)
                     .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineIndex("commonUV")
-                    .loadSubroutineIndex("tileUV")
-                    .loadSubroutineIndex("tileRUV")
-                    .loadSubroutineIndex("noneData")
-                    .loadSubroutineIndex("haveData2D")
-                    .loadSubroutineIndex("haveFixedData2D")
-                    .loadSubroutineIndex("haveData3D")
-                    .loadSubroutineIndex("haveFixedData3D")
+                    .loadSubroutineIndex("p_commonUV")
+                    .loadSubroutineIndex("p_tileUV")
+                    .loadSubroutineIndex("p_tileRUV")
+                    .loadSubroutineIndex("p_noneData")
+                    .loadSubroutineIndex("p_haveData2D")
+                    .loadSubroutineIndex("p_haveFixedData2D")
+                    .loadSubroutineIndex("p_haveData3D")
+                    .loadSubroutineIndex("p_haveFixedData3D")
 
                     .initSubroutineUniformSize(2)
                     .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineUniformIndex("uvMapping")
-                    .loadSubroutineUniformIndex("instanceState")
+                    .loadSubroutineUniformIndex("f_uvMapping")
+                    .loadSubroutineUniformIndex("f_instanceState")
                     .computeSubroutineUniformRoute();
         } else glMainProgramValid = false;
 
         if (_SHADER_PROGRAM[_CURVE].isValid()) {
             _SHADER_PROGRAM[_CURVE].initUniformSize(6)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("totalNodes")
-                    .loadUniformIndex("additionEmissive_DataBit")
-                    .loadUniformIndex("globalTimerAlpha")
-                    .loadUniformIndex("instanceOffset")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_totalNodes")
+                    .loadUniformIndex("u_additionEmissive_DataBit")
+                    .loadUniformIndex("u_globalTimerAlpha")
+                    .loadUniformIndex("u_instanceOffset")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -438,25 +450,25 @@ public final class ShaderCore {
 
                     .initSubroutineSize(5)
                     .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineIndex("noneData")
-                    .loadSubroutineIndex("haveData2D")
-                    .loadSubroutineIndex("haveFixedData2D")
-                    .loadSubroutineIndex("haveData3D")
-                    .loadSubroutineIndex("haveFixedData3D")
+                    .loadSubroutineIndex("p_noneData")
+                    .loadSubroutineIndex("p_haveData2D")
+                    .loadSubroutineIndex("p_haveFixedData2D")
+                    .loadSubroutineIndex("p_haveData3D")
+                    .loadSubroutineIndex("p_haveFixedData3D")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineUniformIndex("instanceState")
+                    .loadSubroutineUniformIndex("f_instanceState")
                     .computeSubroutineUniformRoute();
         } else glMainProgramValid = false;
 
         if (_SHADER_PROGRAM[_SEGMENT].isValid()) {
             _SHADER_PROGRAM[_SEGMENT].initUniformSize(4)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("additionEmissive_DataBit")
-                    .loadUniformIndex("globalTimerAlpha")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_additionEmissive_DataBit")
+                    .loadUniformIndex("u_globalTimerAlpha")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -466,10 +478,10 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_TRAIL].isValid()) {
             _SHADER_PROGRAM[_TRAIL].initUniformSize(4)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex( "extraData")
-                    .loadUniformIndex("additionEmissive_DataBit")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_extraData")
+                    .loadUniformIndex("u_additionEmissive_DataBit")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -477,22 +489,22 @@ public final class ShaderCore {
 
                     .initSubroutineSize(2)
                     .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineIndex("lineStripMode")
-                    .loadSubroutineIndex("linesMode")
+                    .loadSubroutineIndex("p_lineStripMode")
+                    .loadSubroutineIndex("p_linesMode")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineUniformIndex("lineModeState")
+                    .loadSubroutineUniformIndex("f_lineModeState")
                     .computeSubroutineUniformRoute();
         } else glMainProgramValid = false;
 
         if (_SHADER_PROGRAM[_FLARE].isValid()) {
             _SHADER_PROGRAM[_FLARE].initUniformSize(4)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("dataBit")
-                    .loadUniformIndex("instanceOffset")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_dataBit")
+                    .loadUniformIndex("u_instanceOffset")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -500,37 +512,37 @@ public final class ShaderCore {
 
                     .initSubroutineSize(5, 4)
                     .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineIndex("noneData")
-                    .loadSubroutineIndex("haveData2D")
-                    .loadSubroutineIndex("haveFixedData2D")
-                    .loadSubroutineIndex("haveData3D")
-                    .loadSubroutineIndex("haveFixedData3D")
+                    .loadSubroutineIndex("p_noneData")
+                    .loadSubroutineIndex("p_haveData2D")
+                    .loadSubroutineIndex("p_haveFixedData2D")
+                    .loadSubroutineIndex("p_haveData3D")
+                    .loadSubroutineIndex("p_haveFixedData3D")
                     .beginSubroutine(1, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineIndex("smoothMode")
-                    .loadSubroutineIndex("sharpMode")
-                    .loadSubroutineIndex("smoothDiscMode")
-                    .loadSubroutineIndex("sharpDiscMode")
+                    .loadSubroutineIndex("p_smoothMode")
+                    .loadSubroutineIndex("p_sharpMode")
+                    .loadSubroutineIndex("p_smoothDiscMode")
+                    .loadSubroutineIndex("sp_harpDiscMode")
 
                     .initSubroutineUniformSize(1, 1)
                     .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineUniformIndex("instanceState")
+                    .loadSubroutineUniformIndex("f_instanceState")
                     .beginSubroutineUniform(1, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineUniformIndex("flareState")
+                    .loadSubroutineUniformIndex("f_flareState")
                     .computeSubroutineUniformRoute();
         } else glMainProgramValid = false;
 
         if (_SHADER_PROGRAM[_TEXT].isValid()) {
             _SHADER_PROGRAM[_TEXT].initUniformSize(9)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("fontMap[0]")
-                    .loadUniformIndex("fontMap[1]")
-                    .loadUniformIndex("fontMap[2]")
-                    .loadUniformIndex("fontMap[3]")
-                    .loadUniformIndex("italicFactor")
-                    .loadUniformIndex("globalColor")
-                    .loadUniformIndex("dataBit")
-                    .loadUniformIndex("blendBloom")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_fontMap[0]")
+                    .loadUniformIndex("u_fontMap[1]")
+                    .loadUniformIndex("u_fontMap[2]")
+                    .loadUniformIndex("u_fontMap[3]")
+                    .loadUniformIndex("u_italicFactor")
+                    .loadUniformIndex("u_globalColor")
+                    .loadUniformIndex("u_dataBit")
+                    .loadUniformIndex("u_blendBloom_globalTimerAlpha")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -544,10 +556,10 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_DIRECT].isValid()) {
             _SHADER_PROGRAM[_DIRECT].initUniformSize(4)
                     .beginUniform()
-                    .loadUniformIndex("alphaFix")
-                    .loadUniformIndex("level")
-                    .loadUniformIndex("uvStart")
-                    .loadUniformIndex("uvEnd");
+                    .loadUniformIndex("u_alphaFix")
+                    .loadUniformIndex("u_level")
+                    .loadUniformIndex("u_uvStart")
+                    .loadUniformIndex("u_uvEnd");
             GL41.glProgramUniform1f(_SHADER_PROGRAM[_DIRECT].getId(), _SHADER_PROGRAM[_DIRECT].location[1], 0.0f);
             GL41.glProgramUniform2f(_SHADER_PROGRAM[_DIRECT].getId(), _SHADER_PROGRAM[_DIRECT].location[2], 0.0f, 0.0f);
             GL41.glProgramUniform2f(_SHADER_PROGRAM[_DIRECT].getId(), _SHADER_PROGRAM[_DIRECT].location[3], 1.0f, 1.0f);
@@ -558,10 +570,10 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_DIST].isValid()) {
             _SHADER_PROGRAM[_DIST].initUniformSize(4)
                     .beginUniform()
-                    .loadUniformIndex("modelMatrix")
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("screenScale")
-                    .loadUniformIndex("instanceDataOffset")
+                    .loadUniformIndex("u_modelMatrix")
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_screenScale")
+                    .loadUniformIndex("u_instanceDataOffset")
 
                     .initUniformBlockSize(1)
                     .beginUniformBlock()
@@ -569,15 +581,15 @@ public final class ShaderCore {
 
                     .initSubroutineSize(5)
                     .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineIndex("noneData")
-                    .loadSubroutineIndex("haveData2D")
-                    .loadSubroutineIndex("haveFixedData2D")
-                    .loadSubroutineIndex("haveData3D")
-                    .loadSubroutineIndex("haveFixedData3D")
+                    .loadSubroutineIndex("p_noneData")
+                    .loadSubroutineIndex("p_haveData2D")
+                    .loadSubroutineIndex("p_haveFixedData2D")
+                    .loadSubroutineIndex("p_haveData3D")
+                    .loadSubroutineIndex("p_haveFixedData3D")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
-                    .loadSubroutineUniformIndex("instanceState")
+                    .loadSubroutineUniformIndex("f_instanceState")
                     .computeSubroutineUniformRoute();
             glDistortionValid = true;
         } else _LOG.warn("'BoxUtil' distortion program init failed.");
@@ -587,13 +599,13 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_MATRIX_2D].isValid() && _SHADER_PROGRAM[_MATRIX_3D].isValid()) {
             _SHADER_PROGRAM[_MATRIX_2D].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("amount")
-                    .loadUniformIndex("instanceRange");
+                    .loadUniformIndex("u_amount")
+                    .loadUniformIndex("u_instanceRange");
 
             _SHADER_PROGRAM[_MATRIX_3D].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("amount")
-                    .loadUniformIndex("instanceRange");
+                    .loadUniformIndex("u_amount")
+                    .loadUniformIndex("u_instanceRange");
             glInstanceMatrixValid = true;
         } else _LOG.warn("'BoxUtil' matrix program init failed.");
     }
@@ -602,41 +614,41 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_SDF_INIT].isValid() && _SHADER_PROGRAM[_SDF_PROCESS].isValid() && _SHADER_PROGRAM[_SDF_RESULT].isValid()) {
             _SHADER_PROGRAM[_SDF_INIT].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("sizeState")
-                    .loadUniformIndex("border")
-                    .loadUniformIndex("threshold")
+                    .loadUniformIndex("u_sizeState")
+                    .loadUniformIndex("u_border")
+                    .loadUniformIndex("u_threshold")
 
                     .initSubroutineSize(5)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("fromRed")
-                    .loadSubroutineIndex("fromGreen")
-                    .loadSubroutineIndex("fromBlue")
-                    .loadSubroutineIndex("fromAlpha")
-                    .loadSubroutineIndex("fromRGB")
+                    .loadSubroutineIndex("p_fromRed")
+                    .loadSubroutineIndex("p_fromGreen")
+                    .loadSubroutineIndex("p_fromBlue")
+                    .loadSubroutineIndex("p_fromAlpha")
+                    .loadSubroutineIndex("p_fromRGB")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("sampleMethodState")
+                    .loadSubroutineUniformIndex("f_sampleMethodState")
                     .computeSubroutineUniformRoute();
 
             _SHADER_PROGRAM[_SDF_PROCESS].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("size")
-                    .loadUniformIndex("step");
+                    .loadUniformIndex("u_size")
+                    .loadUniformIndex("u_step");
 
             _SHADER_PROGRAM[_SDF_RESULT].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("size")
-                    .loadUniformIndex("preMultiply")
+                    .loadUniformIndex("u_size")
+                    .loadUniformIndex("u_preMultiply")
 
                     .initSubroutineSize(2)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("bit8Store")
-                    .loadSubroutineIndex("bit16Store")
+                    .loadSubroutineIndex("p_bit8Store")
+                    .loadSubroutineIndex("p_bit16Store")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("formatPickerStoreState")
+                    .loadSubroutineUniformIndex("f_formatPickerStoreState")
                     .computeSubroutineUniformRoute();
             glSDFGenValid = true;
         } else _LOG.warn("'BoxUtil' SDF-generate program init failed.");
@@ -647,9 +659,9 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_RADIAL_BLUR].isValid()) {
             _SHADER_PROGRAM[_RADIAL_BLUR].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("statePackage")
-                    .loadUniformIndex("alphaStrength")
-                    .loadUniformIndex("tex");
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_alphaStrength")
+                    .loadUniformIndex("u_tex");
             glRadialBlurValid = true;
         }
     }
@@ -658,40 +670,40 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_GAUSSIAN_BLUR].isValid() && _SHADER_PROGRAM[_GAUSSIAN_BLUR_RED].isValid()) {
             _SHADER_PROGRAM[_GAUSSIAN_BLUR].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("sizeStep")
-                    .loadUniformIndex("vertical")
-                    .loadUniformIndex("perStep")
+                    .loadUniformIndex("u_sizeStep")
+                    .loadUniformIndex("u_vertical")
+                    .loadUniformIndex("u_perStep")
 
                     .initSubroutineSize(4)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("bit8Store")
-                    .loadSubroutineIndex("bit16Store")
-                    .loadSubroutineIndex("filterMode")
-                    .loadSubroutineIndex("copyMode")
+                    .loadSubroutineIndex("p_bit8Store")
+                    .loadSubroutineIndex("p_bit16Store")
+                    .loadSubroutineIndex("p_filterMode")
+                    .loadSubroutineIndex("p_copyMode")
 
                     .initSubroutineUniformSize(2)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("formatPickerStoreState")
-                    .loadSubroutineUniformIndex("workModeState")
+                    .loadSubroutineUniformIndex("f_formatPickerStoreState")
+                    .loadSubroutineUniformIndex("f_workModeState")
                     .computeSubroutineUniformRoute();
 
             _SHADER_PROGRAM[_GAUSSIAN_BLUR_RED].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("sizeStep")
-                    .loadUniformIndex("vertical")
-                    .loadUniformIndex("perStep")
+                    .loadUniformIndex("u_sizeStep")
+                    .loadUniformIndex("u_vertical")
+                    .loadUniformIndex("u_perStep")
 
                     .initSubroutineSize(4)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("bit8Store")
-                    .loadSubroutineIndex("bit16Store")
-                    .loadSubroutineIndex("filterMode")
-                    .loadSubroutineIndex("copyMode")
+                    .loadSubroutineIndex("p_bit8Store")
+                    .loadSubroutineIndex("p_bit16Store")
+                    .loadSubroutineIndex("p_filterMode")
+                    .loadSubroutineIndex("p_copyMode")
 
                     .initSubroutineUniformSize(2)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("formatPickerStoreState")
-                    .loadSubroutineUniformIndex("workModeState")
+                    .loadSubroutineUniformIndex("f_formatPickerStoreState")
+                    .loadSubroutineUniformIndex("f_workModeState")
                     .computeSubroutineUniformRoute();
             glCompGaussianBlurValid = true;
         } else _LOG.warn("'BoxUtil' comp-gaussian blur program init failed.");
@@ -701,34 +713,34 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_BILATERAL_FILTER].isValid() && _SHADER_PROGRAM[_BILATERAL_FILTER_RED].isValid()) {
             _SHADER_PROGRAM[_BILATERAL_FILTER].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("sizeStep")
-                    .loadUniformIndex("vertical")
-                    .loadUniformIndex("gSigmaSRInv")
+                    .loadUniformIndex("u_sizeStep")
+                    .loadUniformIndex("u_vertical")
+                    .loadUniformIndex("u_gSigmaSRInv")
 
                     .initSubroutineSize(2)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("bit8Store")
-                    .loadSubroutineIndex("bit16Store")
+                    .loadSubroutineIndex("p_bit8Store")
+                    .loadSubroutineIndex("p_bit16Store")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("formatPickerStoreState")
+                    .loadSubroutineUniformIndex("f_formatPickerStoreState")
                     .computeSubroutineUniformRoute();
 
             _SHADER_PROGRAM[_BILATERAL_FILTER_RED].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("sizeStep")
-                    .loadUniformIndex("vertical")
-                    .loadUniformIndex("gSigmaSRInv")
+                    .loadUniformIndex("u_sizeStep")
+                    .loadUniformIndex("u_vertical")
+                    .loadUniformIndex("u_gSigmaSRInv")
 
                     .initSubroutineSize(2)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("bit8Store")
-                    .loadSubroutineIndex("bit16Store")
+                    .loadSubroutineIndex("p_bit8Store")
+                    .loadSubroutineIndex("p_bit16Store")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("formatPickerStoreState")
+                    .loadSubroutineUniformIndex("f_formatPickerStoreState")
                     .computeSubroutineUniformRoute();
             glCompBilateralFilterValid = true;
         } else _LOG.warn("'BoxUtil' comp-bilateral filter program init failed.");
@@ -738,36 +750,36 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_DFT].isValid() && _SHADER_PROGRAM[_DFT_RED].isValid()) {
             _SHADER_PROGRAM[_DFT].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("size")
-                    .loadUniformIndex("state")
-                    .loadUniformIndex("sizeDiv")
+                    .loadUniformIndex("u_size")
+                    .loadUniformIndex("u_state")
+                    .loadUniformIndex("u_sizeDiv")
 
                     .initSubroutineSize(3)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("bit8Store")
-                    .loadSubroutineIndex("bit16Store")
-                    .loadSubroutineIndex("bit32Store")
+                    .loadSubroutineIndex("p_bit8Store")
+                    .loadSubroutineIndex("p_bit16Store")
+                    .loadSubroutineIndex("p_bit32Store")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("formatPickerStoreState")
+                    .loadSubroutineUniformIndex("f_formatPickerStoreState")
                     .computeSubroutineUniformRoute();
 
             _SHADER_PROGRAM[_DFT_RED].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("size")
-                    .loadUniformIndex("state")
-                    .loadUniformIndex("sizeDiv")
+                    .loadUniformIndex("u_size")
+                    .loadUniformIndex("u_state")
+                    .loadUniformIndex("u_sizeDiv")
 
                     .initSubroutineSize(3)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("bit8Store")
-                    .loadSubroutineIndex("bit16Store")
-                    .loadSubroutineIndex("bit32Store")
+                    .loadSubroutineIndex("p_bit8Store")
+                    .loadSubroutineIndex("p_bit16Store")
+                    .loadSubroutineIndex("p_bit32Store")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("formatPickerStoreState")
+                    .loadSubroutineUniformIndex("f_formatPickerStoreState")
                     .computeSubroutineUniformRoute();
             glDiscreteFourierValid = true;
         } else _LOG.warn("'BoxUtil' discrete fourier program init failed.");
@@ -777,26 +789,26 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_NORMAL_GEN_INIT].isValid() && _SHADER_PROGRAM[_NORMAL_GEN_RESULT].isValid()) {
             _SHADER_PROGRAM[_NORMAL_GEN_INIT].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("size")
-                    .loadUniformIndex("state")
-                    .loadUniformIndex("rampMix")
+                    .loadUniformIndex("u_size")
+                    .loadUniformIndex("u_state")
+                    .loadUniformIndex("u_rampMix")
 
                     .initSubroutineSize(4)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("texOnly")
-                    .loadSubroutineIndex("withVolume")
-                    .loadSubroutineIndex("withDetails")
-                    .loadSubroutineIndex("withBoth")
+                    .loadSubroutineIndex("p_texOnly")
+                    .loadSubroutineIndex("p_withVolume")
+                    .loadSubroutineIndex("p_withDetails")
+                    .loadSubroutineIndex("p_withBoth")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("texInputState")
+                    .loadSubroutineUniformIndex("f_texInputState")
                     .computeSubroutineUniformRoute();
 
             _SHADER_PROGRAM[_NORMAL_GEN_RESULT].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("sizeState")
-                    .loadUniformIndex("normalStrength");
+                    .loadUniformIndex("u_sizeState")
+                    .loadUniformIndex("u_normalStrength");
             glNormalMapGenValid = true;
         } else _LOG.warn("'BoxUtil' normal map generate program init failed.");
     }
@@ -805,15 +817,15 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_FXAA_C].isValid()) {
             _SHADER_PROGRAM[_FXAA_C].initSubroutineSize(4)
                     .beginSubroutine(0, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineIndex("fromRaw")
-                    .loadSubroutineIndex("fromDepth")
-                    .loadSubroutineIndex("commonDisplay")
-                    .loadSubroutineIndex("edgeDisplay")
+                    .loadSubroutineIndex("p_fromRaw")
+                    .loadSubroutineIndex("p_fromDepth")
+                    .loadSubroutineIndex("p_commonDisplay")
+                    .loadSubroutineIndex("p_edgeDisplay")
 
                     .initSubroutineUniformSize(2)
                     .beginSubroutineUniform(0, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineUniformIndex("sampleMethodState")
-                    .loadSubroutineUniformIndex("displayMethodState")
+                    .loadSubroutineUniformIndex("f_sampleMethodState")
+                    .loadSubroutineUniformIndex("f_displayMethodState")
                     .computeSubroutineUniformRoute();
             glFXAACValid = true;
         }
@@ -821,15 +833,15 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_FXAA_Q].isValid()) {
             _SHADER_PROGRAM[_FXAA_Q].initSubroutineSize(4)
                     .beginSubroutine(0, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineIndex("fromRaw")
-                    .loadSubroutineIndex("fromDepth")
-                    .loadSubroutineIndex("commonDisplay")
-                    .loadSubroutineIndex("edgeDisplay")
+                    .loadSubroutineIndex("p_fromRaw")
+                    .loadSubroutineIndex("p_fromDepth")
+                    .loadSubroutineIndex("p_commonDisplay")
+                    .loadSubroutineIndex("p_edgeDisplay")
 
                     .initSubroutineUniformSize(2)
                     .beginSubroutineUniform(0, GL20.GL_FRAGMENT_SHADER)
-                    .loadSubroutineUniformIndex("sampleMethodState")
-                    .loadSubroutineUniformIndex("displayMethodState")
+                    .loadSubroutineUniformIndex("f_sampleMethodState")
+                    .loadSubroutineUniformIndex("f_displayMethodState")
                     .computeSubroutineUniformRoute();
             glFXAAQValid = true;
         }
@@ -839,20 +851,20 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_BLOOM] != null && _SHADER_PROGRAM[_BLOOM].isValid()) {
             _SHADER_PROGRAM[_BLOOM].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("size")
-                    .loadUniformIndex("targetUVStepDiv")
-                    .loadUniformIndex("initPass")
+                    .loadUniformIndex("u_size")
+                    .loadUniformIndex("u_targetUVStepDiv")
+                    .loadUniformIndex("u_initPass")
 
                     .initSubroutineSize(4)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("sampleInit")
-                    .loadSubroutineIndex("downSampleFirst")
-                    .loadSubroutineIndex("downSample")
-                    .loadSubroutineIndex("upSample")
+                    .loadSubroutineIndex("p_sampleInit")
+                    .loadSubroutineIndex("p_downSampleFirst")
+                    .loadSubroutineIndex("p_downSample")
+                    .loadSubroutineIndex("p_upSample")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("sampleModeState")
+                    .loadSubroutineUniformIndex("f_sampleModeState")
                     .computeSubroutineUniformRoute();
             glBloomValid = true;
         }
@@ -862,18 +874,18 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_AREA_LIGHT_PRE_FILTERING] != null && _SHADER_PROGRAM[_AREA_LIGHT_PRE_FILTERING].isValid()) {
             _SHADER_PROGRAM[_AREA_LIGHT_PRE_FILTERING].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("sizeStep")
-                    .loadUniformIndex("vertical")
-                    .loadUniformIndex("uvStepDiv_Lod_ADiv")
+                    .loadUniformIndex("u_sizeStep")
+                    .loadUniformIndex("u_vertical")
+                    .loadUniformIndex("u_uvStepDiv_Lod_ADiv")
 
                     .initSubroutineSize(2)
                     .beginSubroutine(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineIndex("normalMode")
-                    .loadSubroutineIndex("copyMode")
+                    .loadSubroutineIndex("p_normalMode")
+                    .loadSubroutineIndex("p_copyMode")
 
                     .initSubroutineUniformSize(1)
                     .beginSubroutineUniform(0, GL43.GL_COMPUTE_SHADER)
-                    .loadSubroutineUniformIndex("filteringModeState")
+                    .loadSubroutineUniformIndex("f_filteringModeState")
                     .computeSubroutineUniformRoute();
             glAreaLightTexValid = true;
         }
@@ -885,38 +897,76 @@ public final class ShaderCore {
         if (_SHADER_PROGRAM[_LEGACY_NORMAL_BLUR].isValid() && _SHADER_PROGRAM[_LEGACY_NORMAL_RESULT].isValid()) {
             _SHADER_PROGRAM[_LEGACY_NORMAL_BLUR].initUniformSize(3)
                     .beginUniform()
-                    .loadUniformIndex("state")
-                    .loadUniformIndex("stepUV_srcUVDiv")
-                    .loadUniformIndex("vertical");
+                    .loadUniformIndex("u_state")
+                    .loadUniformIndex("u_stepUV_srcUVDiv")
+                    .loadUniformIndex("u_vertical");
 
             _SHADER_PROGRAM[_LEGACY_NORMAL_RESULT].initUniformSize(2)
                     .beginUniform()
-                    .loadUniformIndex("state")
-                    .loadUniformIndex("stepUV");
+                    .loadUniformIndex("u_state")
+                    .loadUniformIndex("u_stepUV");
             glLegacyNormalMapGenValid = true;
         }
     }
 
     public static void initStaticTrailSystem() {
-        if (true) return;
         final boolean fullFeatures = isValid();
-        final String gl_matrixUBO = Byte.toString(_GLSL_MATRIX_UBO_BINDING);
-        final String vert = (fullFeatures ? _loadLocalFile("trailSystem/BUtil_StaticTrail.vert") : _loadLocalFile("trailSystem/BUtil_StaticTrailLegacy.vert")).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO),
-                geom = (fullFeatures ? _loadLocalFile("trailSystem/BUtil_StaticTrail.geom") : _loadLocalFile("trailSystem/BUtil_StaticTrailLegacy.geom")).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO),
-                frag = (fullFeatures ? _loadLocalFile("trailSystem/BUtil_StaticTrail.frag") : _loadLocalFile("trailSystem/BUtil_StaticTrailLegacy.frag")).replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO);
-        _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM] = new ShaderProgram("BoxUtil-StaticTrailSystemShader", vert, geom, frag);
+        String extensionName = "";
+        if (!fullFeatures) {
+            if (BoxDatabase.getGLState().ARB_SHADER_BIT_ENCODING) {
+                extensionName = "GL_ARB_shader_bit_encoding";
+            } else if (BoxDatabase.getGLState().ARB_GPU_SHADER5) {
+                extensionName = "GL_ARB_gpu_shader5";
+            } else return;
+        }
+        final String gl_arbExtensionTitle = "ARB_EXTENSION_TITLE",
+                gl_trailVersionTitle = "TRAIL_VERSION_TITLE",
+                gl_trailVersion = fullFeatures ? "MODERN_TRAIL_MODE" : "LEGACY_TRAIL_MODE",
+                gl_glslVersion = fullFeatures ? _GLSL_VERSION : "150",
+                gl_matrixUBO = Byte.toString(_GLSL_MATRIX_UBO_BINDING);
+
+        final String vert = _loadLocalFile("trailSystem/BUtil_StaticTrail.vert").replace(_GLSL_VERSION_TITLE, gl_glslVersion)
+                .replace(gl_arbExtensionTitle, extensionName)
+                .replace(gl_trailVersionTitle, gl_trailVersion),
+
+                geom = _loadLocalFile("trailSystem/BUtil_StaticTrail.geom").replace(_GLSL_VERSION_TITLE, gl_glslVersion)
+                        .replace(_GLSL_MATRIX_UBO_TITLE, gl_matrixUBO)
+                        .replace(gl_trailVersionTitle, gl_trailVersion),
+
+                frag = _loadLocalFile("trailSystem/BUtil_StaticTrail.frag").replace(_GLSL_VERSION_TITLE, gl_glslVersion)
+                        .replace(gl_trailVersionTitle, gl_trailVersion);
+
+        if (fullFeatures) {
+            _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM] = new ShaderProgram("BoxUtil-StaticTrailSystemShader", vert, geom, frag);
+        } else {
+            final var makeBinding = ShaderUtil.makeShaderBindingLocation(
+                    new ShaderUtil.BindingLocationStruct(ShaderUtil.BIND_VERTEX_ATTRIB, 0, "a_position"),
+                    new ShaderUtil.BindingLocationStruct(ShaderUtil.BIND_VERTEX_ATTRIB, 1, "a_facingVector"),
+                    new ShaderUtil.BindingLocationStruct(ShaderUtil.BIND_VERTEX_ATTRIB, 2, "a_timeStampRaw"),
+                    new ShaderUtil.BindingLocationStruct(ShaderUtil.BIND_VERTEX_ATTRIB, 3, "a_distance")
+            );
+
+            final var shaderID = ShaderUtil.createShaderVGF("BoxUtil-StaticTrailSystemShader", makeBinding, vert, geom, frag);
+            _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM] = new ShaderProgram(shaderID);
+        }
+
         if (_SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].isValid()) {
-            if (fullFeatures) {
+            _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].initUniformSize(3)
+                    .beginUniform()
+                    .loadUniformIndex("u_statePackage")
+                    .loadUniformIndex("u_time")
+                    .loadUniformIndex("u_additionEmissive_DataBit");
 
-            } else {
-
+            if (!fullFeatures) {
+                final int programID = _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].getId(),
+                        blockIndex = GL31.glGetUniformBlockIndex(programID, "BUtilGlobalData");
+                GL31.glUniformBlockBinding(programID, blockIndex, _GLSL_MATRIX_UBO_BINDING);
             }
             glStaticTrailSystemValid = true;
         }
     }
 
     public static void glBeginDraw() {
-        GL11.glPushClientAttrib(GL11.GL_ALL_CLIENT_ATTRIB_BITS);
         GL11.glPushAttrib(_GL_ATTRIB_BITS);
         GL11.glViewport(0, 0, screenSizeScale[0], screenSizeScale[1]);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
@@ -930,8 +980,6 @@ public final class ShaderCore {
         GL11.glDepthFunc(GL11.GL_LESS);
         if (BoxDatabase.getGLState().GL_GL41) GL41.glDepthRangef(-1.0f, 1.0f);
         GL11.glDepthMask(true);
-        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-        GL14.glBlendEquation(GL14.GL_FUNC_ADD);
         GL11.glColorMask(true, true, true, true);
         GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE); // but changes color attachment 0 and 1
         GL14.glBlendEquation(GL14.GL_FUNC_ADD);
@@ -943,7 +991,6 @@ public final class ShaderCore {
         if (BoxDatabase.getGLState().GL_GL31) GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glPopAttrib();
-        GL11.glPopClientAttrib();
     }
 
     public static boolean glMultiPass() {
@@ -1170,6 +1217,10 @@ public final class ShaderCore {
         return _SHADER_PROGRAM[_LEGACY_NORMAL_RESULT];
     }
 
+    public static BaseShaderData getStaticTrailProgram() {
+        return _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM];
+    }
+
     public static BUtil_RenderingBuffer getRenderingBuffer() {
         return renderingBuffer;
     }
@@ -1180,16 +1231,16 @@ public final class ShaderCore {
 
     public static void refreshGameViewportMatrix(ViewportAPI viewport) {
         if (matrixUBO == 0) return;
-        FloatBuffer matrix = CommonUtil.createFloatBuffer(TransformUtil.createGameOrthoMatrix(viewport, new Matrix4f()));
+        _UPLOAD_MATRIX_LOCK.lock();
+        TransformUtil.createGameOrthoMatrix(viewport, false, _UPLOAD_MATRIX_BUFFER).position(0).limit(16);
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, matrixUBO);
-        GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 0, matrix);
+        GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 0, _UPLOAD_MATRIX_BUFFER);
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
+        _UPLOAD_MATRIX_LOCK.unlock();
     }
 
     public static void refreshGameViewportMatrix(FloatBuffer matrix) {
         if (matrixUBO == 0) return;
-        matrix.position(0);
-        matrix.limit(16);
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, matrixUBO);
         GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 0, matrix);
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
@@ -1206,50 +1257,65 @@ public final class ShaderCore {
 
     public static void refreshGameScreenState(ViewportAPI viewport) {
         if (matrixUBO == 0) return;
-        float llx = viewport.getLLX();
-        float lly = viewport.getLLY();
+        final float llx = viewport.getLLX(), lly = viewport.getLLY();
+
+        _UPLOAD_MATRIX_LOCK.lock();
+        _UPLOAD_MATRIX_BUFFER.put(0, llx);
+        _UPLOAD_MATRIX_BUFFER.put(1, lly);
+        _UPLOAD_MATRIX_BUFFER.put(2, viewport.getVisibleWidth());
+        _UPLOAD_MATRIX_BUFFER.put(3, viewport.getVisibleHeight());
+        _UPLOAD_MATRIX_BUFFER.position(0);
+        _UPLOAD_MATRIX_BUFFER.limit(4);
+
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, matrixUBO);
-        GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 16, CommonUtil.createFloatBuffer(llx, lly, Math.abs(viewport.convertScreenXToWorldX(viewport.getVisibleWidth()) - llx), Math.abs(viewport.convertScreenYToWorldY(viewport.getVisibleHeight()) - lly)));
+        GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 16, _UPLOAD_MATRIX_BUFFER);
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
+        _UPLOAD_MATRIX_LOCK.unlock();
     }
 
     public static void refreshGameVanillaViewportUBOAll(ViewportAPI viewport) {
         if (matrixUBO == 0) return;
-        FloatBuffer buffer = BufferUtils.createFloatBuffer(20);
-        TransformUtil.createGameOrthoMatrix(viewport, new Matrix4f()).store(buffer);
-        float llx = viewport.getLLX();
-        float lly = viewport.getLLY();
-        buffer.put(16, llx);
-        buffer.put(17, lly);
-        buffer.put(18, Math.abs(viewport.convertScreenXToWorldX(viewport.getVisibleWidth()) - llx));
-        buffer.put(19, Math.abs(viewport.convertScreenYToWorldY(viewport.getVisibleHeight()) - lly));
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
+        final float llx = viewport.getLLX(), lly = viewport.getLLY();
+
+        _UPLOAD_MATRIX_LOCK.lock();
+        TransformUtil.createGameOrthoMatrix(viewport, false, _UPLOAD_MATRIX_BUFFER);
+        _UPLOAD_MATRIX_BUFFER.put(16, llx);
+        _UPLOAD_MATRIX_BUFFER.put(17, lly);
+        _UPLOAD_MATRIX_BUFFER.put(18, viewport.getVisibleWidth());
+        _UPLOAD_MATRIX_BUFFER.put(19, viewport.getVisibleHeight());
+        _UPLOAD_MATRIX_BUFFER.position(0);
+        _UPLOAD_MATRIX_BUFFER.limit(20);
+
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, matrixUBO);
-        GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 0, buffer);
+        GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 0, _UPLOAD_MATRIX_BUFFER);
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
+        _UPLOAD_MATRIX_LOCK.unlock();
     }
 
     public static void refreshGameVanillaViewportUBOAll(FloatBuffer matrix, ViewportAPI viewport) {
         if (matrixUBO == 0) return;
-        float llx = viewport.getLLX();
-        float lly = viewport.getLLY();
+        final float llx = viewport.getLLX(), lly = viewport.getLLY();
         final FloatBuffer buffer;
-        if (matrix.capacity() >= 20) {
+
+        _UPLOAD_MATRIX_LOCK.lock();
+        if (matrix.capacity() > 19) {
             buffer = matrix;
         } else {
-            buffer = BufferUtils.createFloatBuffer(20);
+            buffer = _UPLOAD_MATRIX_BUFFER;
+            buffer.position(0);
             buffer.put(0, matrix, 0, 16);
         }
         buffer.put(16, llx);
         buffer.put(17, lly);
-        buffer.put(18, Math.abs(viewport.convertScreenXToWorldX(viewport.getVisibleWidth()) - llx));
-        buffer.put(19, Math.abs(viewport.convertScreenYToWorldY(viewport.getVisibleHeight()) - lly));
+        buffer.put(18, viewport.getVisibleWidth());
+        buffer.put(19, viewport.getVisibleHeight());
         buffer.position(0);
         buffer.limit(20);
+
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, matrixUBO);
         GL15.glBufferSubData(GL31.GL_UNIFORM_BUFFER, 0, buffer);
         GL15.glBindBuffer(GL31.GL_UNIFORM_BUFFER, 0);
+        _UPLOAD_MATRIX_LOCK.unlock();
     }
 
     public static boolean isFramebufferValid() {

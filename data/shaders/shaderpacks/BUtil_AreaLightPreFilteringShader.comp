@@ -5,41 +5,41 @@ precision highp int;
 
 layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
 
-subroutine vec4 filteringMode(in ivec2 coord);
-subroutine uniform filteringMode filteringModeState;
+subroutine vec4 t_filteringMode(in ivec2 coord);
+subroutine uniform t_filteringMode f_filteringModeState;
 
-layout (binding = 0) uniform sampler2D texIn;
-layout (binding = 0, rgba8) writeonly uniform image2D texOut;
+layout (binding = 0) uniform sampler2D u_texIn;
+layout (binding = 0, rgba8) writeonly uniform image2D u_texOut;
 
-uniform ivec3 sizeStep;
-uniform int vertical;
-uniform vec4 uvStepDiv_Lod_ADiv;
+uniform ivec3 u_sizeStep;
+uniform int u_vertical;
+uniform vec4 u_uvStepDiv_Lod_ADiv;
 
 float getGaussian(float x) {
-	float p = x * uvStepDiv_Lod_ADiv.w;
-	return uvStepDiv_Lod_ADiv.w * 0.3989423 * exp(-0.5 * p * p);
+	float p = x * u_uvStepDiv_Lod_ADiv.w;
+	return u_uvStepDiv_Lod_ADiv.w * 0.3989423 * exp(-0.5 * p * p);
 }
 
-subroutine(filteringMode) vec4 normalMode(in ivec2 coord) {
-	vec2 uv = vec2(coord) / sizeStep.xy;
+subroutine(t_filteringMode) vec4 p_normalMode(in ivec2 coord) {
+	vec2 uv = vec2(coord) / u_sizeStep.xy;
 	vec4 result = vec4(0.0);
 	float fi, gaussian, fix = 0.0;
-	bool isVertical = bool(vertical);
-	for (int i = -sizeStep.z; i <= sizeStep.z; ++i) {
+	bool isVertical = bool(u_vertical);
+	for (int i = -u_sizeStep.z; i <= u_sizeStep.z; ++i) {
 		fi = float(i);
 		gaussian = getGaussian(fi);
 		fix += gaussian;
-		result += textureLod(texIn, fma(uvStepDiv_Lod_ADiv.xy, isVertical ? vec2(0, fi) : vec2(fi, 0), uv), uvStepDiv_Lod_ADiv.z) * gaussian;
+		result += textureLod(u_texIn, fma(u_uvStepDiv_Lod_ADiv.xy, isVertical ? vec2(0, fi) : vec2(fi, 0), uv), u_uvStepDiv_Lod_ADiv.z) * gaussian;
 	}
 	return result / fix;
 }
 
-subroutine(filteringMode) vec4 copyMode(in ivec2 coord) {
-	return texelFetch(texIn, coord, 0);
+subroutine(t_filteringMode) vec4 p_copyMode(in ivec2 coord) {
+	return texelFetch(u_texIn, coord, 0);
 }
 
 void main() {
 	ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
-	if (any(greaterThanEqual(coord, sizeStep.xy))) return;
-	imageStore(texOut, coord, filteringModeState(coord));
+	if (any(greaterThanEqual(coord, u_sizeStep.xy))) return;
+	imageStore(u_texOut, coord, f_filteringModeState(coord));
 }

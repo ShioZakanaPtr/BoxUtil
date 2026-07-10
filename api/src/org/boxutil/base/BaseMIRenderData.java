@@ -28,11 +28,10 @@ public abstract class BaseMIRenderData extends BaseInstanceRenderData implements
         this.material = material == null ? new MaterialData() : material;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
+    public void submitEntityData() {
         this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
         this._statePackageBuffer.put(13, this.getGlobalTimerAlpha());
         this._statePackageBuffer.position(0);
         this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
-        return this._statePackageBuffer;
     }
 }

@@ -2,16 +2,15 @@
 
 precision OVERWRITE_PRECISION float;
 
-layout (location = 0) in vec2 vertex;
+layout (location = 0) in vec2 a_vertex;
 
-uniform vec2 uvStart;
-uniform vec2 uvEnd;
+uniform vec2 u_uvStart;
+uniform vec2 u_uvEnd;
 
-smooth out vec2 fragUV;
+smooth out vec2 vf_fragUV;
 
-void main()
-{
-	const vec2 uv[] = vec2[4](uvStart.xy, vec2(uvEnd.x, uvStart.y), vec2(uvStart.x, uvEnd.y), uvEnd.xy);
-	fragUV = uv[gl_VertexID];
-	gl_Position = vec4(vertex, 0.0, 1.0);
+void main() {
+	const vec2 uv[] = vec2[4](u_uvStart.xy, vec2(u_uvEnd.x, u_uvStart.y), vec2(u_uvStart.x, u_uvEnd.y), u_uvEnd.xy);
+	vf_fragUV = uv[gl_VertexID];
+	gl_Position = vec4(a_vertex, 0.0, 1.0);
 }

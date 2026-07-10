@@ -1,3 +1,6 @@
+#ifndef BUtil_InstanceDataSSBO
+#define BUtil_InstanceDataSSBO
+
 // 80 byte
 struct Dynamic2D { // binding 4
     vec4 q22_q23_facing_TurnRate;
@@ -39,22 +42,22 @@ struct Fixed3D { // binding 7
 
 layout(std430, binding = 4) restrict readonly buffer BUtilInstanceData_Dynamic2D
 {
-    Dynamic2D dataDynamic2D[];
+    Dynamic2D b_dataDynamic2D[];
 };
 
 layout(std430, binding = 5) restrict readonly buffer BUtilInstanceData_Fixed2D
 {
-    Fixed2D dataFixed2D[];
+    Fixed2D b_dataFixed2D[];
 };
 
 layout(std430, binding = 6) restrict readonly buffer BUtilInstanceData_Dynamic3D
 {
-    Dynamic3D dataDynamic3D[];
+    Dynamic3D b_dataDynamic3D[];
 };
 
 layout(std430, binding = 7) restrict readonly buffer BUtilInstanceData_Fixed3D
 {
-    Fixed3D dataFixed3D[];
+    Fixed3D b_dataFixed3D[];
 };
 
 float pickInstanceTimer(in float _in_override, in float _in_instance) {
@@ -149,3 +152,5 @@ mat4 fetchFixed3DMatrix(in Fixed3D data) {
         data.rotate_LocationX.w, data.scale_LocationY.w, data.alpha_LocationZ.y, 1.0
     );
 }
+
+#endif // BUtil_InstanceDataSSBO

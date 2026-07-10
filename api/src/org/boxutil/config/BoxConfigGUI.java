@@ -129,6 +129,7 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
         if (globalInit) return;
         ShaderCore.init();
         ShaderCore.initMiscShaderPrograms();
+        ShaderCore.initGlobalDataUBO();
         BUtil_InstanceDataMemoryPool.init();
         GL11.glFinish();
         KernelCore.init();

@@ -2,7 +2,6 @@ package org.boxutil.backends.core;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
-import com.fs.starfarer.api.campaign.CampaignFleetAPI;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import com.fs.starfarer.api.impl.campaign.BaseCustomEntityPlugin;
@@ -15,11 +14,9 @@ import org.boxutil.define.DirectEntityType;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.RenderingUtil;
 import org.boxutil.util.ShaderUtil;
-import org.boxutil.util.concurrent.SpinLock;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL40;
-import org.lwjgl.util.vector.Vector2f;
 
 public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin {
     private transient boolean _lowestLayer = true;
@@ -109,6 +106,7 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
             return;
         }
 
+        BUtil_GLImpl.StandardShaderPacks.activateBloomStage();
         if (shaderEnable) {
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
             if (!this._highestLayer) {
@@ -120,6 +118,7 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
         }
 
         BUtil_GLImpl.Operations.processMeshCurrentLayout(this._layerBits, layer, notMultiPass, viewport, meshArray, pluginSet);
+        BUtil_GLImpl.Operations.resetGLAttrib();
         if (shaderEnable) {
             if (!this._highestLayer) {
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);

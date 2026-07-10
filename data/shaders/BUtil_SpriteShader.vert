@@ -9,12 +9,12 @@ precision OVERWRITE_PRECISION float;
 #define UV_START_END 4
 #define ENTITY_STATE 5
 
-subroutine void uvMappingState(out vec2 uvStartP, out vec2 uvEndP);
-subroutine uniform uvMappingState uvMapping;
-subroutine void instanceStateCompute(out mat4 model, out vec4 mColor, out vec4 mEColor);
-subroutine uniform instanceStateCompute instanceState;
+subroutine void t_uvMappingState(out vec2 uvStartP, out vec2 uvEndP);
+subroutine uniform t_uvMappingState f_uvMapping;
+subroutine void t_instanceStateCompute(out mat4 model, out vec4 mColor, out vec4 mEColor);
+subroutine uniform t_instanceStateCompute f_instanceState;
 
-layout (location = 0) in vec2 vertex;
+layout (location = 0) in vec2 a_vertex;
 
 layout (std140, binding = OVERWRITE_MATRIX_UBO) uniform BUtilGlobalData
 {
@@ -22,12 +22,12 @@ layout (std140, binding = OVERWRITE_MATRIX_UBO) uniform BUtilGlobalData
 	vec4 gameScreenBorder; // vec4(screenLB, screenSize)
 };
 
-uniform mat4 modelMatrix;
+uniform mat4 u_modelMatrix;
 // vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic)
 // [vec2(tile), startIndex, randomEach], [vec2(start), vec2(end)], hashCode, totalTilesMinusOne, vec2(baseSize)
-uniform vec4 statePackage[6];
-uniform float globalTimerAlpha;
-uniform uvec3 additionEmissive_DataBit_InstanceOffset;
+uniform vec4 u_statePackage[6];
+uniform float u_globalTimerAlpha;
+uniform uvec3 u_additionEmissive_DataBit_InstanceOffset;
 
 out VERTEX_BLOCK {
 	mat3 fragTBN;
@@ -35,104 +35,102 @@ out VERTEX_BLOCK {
 	vec3 fragPos;
 	vec4 fragEntityColor;
 	vec4 fragMixEmissive;
-} vb_data;
+} vfb_data;
 
-float hash12(vec2 p)
-{
+float hash12(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
 	p3 += dot(p3, p3.yzx + 33.33);
 	return fract((p3.x + p3.y) * p3.z);
 }
 
-subroutine(uvMappingState) void commonUV(out vec2 uvStartP, out vec2 uvEndP) {
-	uvStartP = statePackage[UV_START_END].xy;
-	uvEndP = statePackage[UV_START_END].zw;
+subroutine(t_uvMappingState) void p_commonUV(out vec2 uvStartP, out vec2 uvEndP) {
+	uvStartP = u_statePackage[UV_START_END].xy;
+	uvEndP = u_statePackage[UV_START_END].zw;
 }
 
-subroutine(uvMappingState) void tileUV(out vec2 uvStartP, out vec2 uvEndP) {
-	float tileX = mod(statePackage[TILE_STATE].z, statePackage[TILE_STATE].x);
-	float tileY = round((statePackage[TILE_STATE].z - tileX) / statePackage[TILE_STATE].x);
-	vec2 tileSizeVec = 1.0 / statePackage[TILE_STATE].xy * (statePackage[UV_START_END].zw - statePackage[UV_START_END].xy);
-	uvStartP = tileSizeVec * vec2(tileX, tileY) + statePackage[UV_START_END].xy;
+subroutine(t_uvMappingState) void p_tileUV(out vec2 uvStartP, out vec2 uvEndP) {
+	float tileX = mod(u_statePackage[TILE_STATE].z, u_statePackage[TILE_STATE].x);
+	float tileY = round((u_statePackage[TILE_STATE].z - tileX) / u_statePackage[TILE_STATE].x);
+	vec2 tileSizeVec = 1.0 / u_statePackage[TILE_STATE].xy * (u_statePackage[UV_START_END].zw - u_statePackage[UV_START_END].xy);
+	uvStartP = tileSizeVec * vec2(tileX, tileY) + u_statePackage[UV_START_END].xy;
 	uvEndP = uvStartP + tileSizeVec;
 }
 
-subroutine(uvMappingState) void tileRUV(out vec2 uvStartP, out vec2 uvEndP) {
-	vec2 seed = vec2(statePackage[ENTITY_STATE].x, 0.0);
-	if (statePackage[TILE_STATE].w > 0.0) seed.y = float(gl_InstanceID << 1 + 7);
-	float finalIndex = round(hash12(seed) * statePackage[ENTITY_STATE].y) + statePackage[TILE_STATE].z;
-	if (finalIndex >= statePackage[ENTITY_STATE].y) finalIndex -= statePackage[ENTITY_STATE].y;
-	float tileX = mod(finalIndex, statePackage[TILE_STATE].x);
-	float tileY = round((finalIndex - tileX) / statePackage[TILE_STATE].x);
-	vec2 tileSizeVec = 1.0 / statePackage[TILE_STATE].xy * (statePackage[UV_START_END].zw - statePackage[UV_START_END].xy);
-	uvStartP = tileSizeVec * vec2(tileX, tileY) + statePackage[UV_START_END].xy;
+subroutine(t_uvMappingState) void p_tileRUV(out vec2 uvStartP, out vec2 uvEndP) {
+	vec2 seed = vec2(u_statePackage[ENTITY_STATE].x, 0.0);
+	if (u_statePackage[TILE_STATE].w > 0.0) seed.y = float(gl_InstanceID << 1 + 7);
+	float finalIndex = round(hash12(seed) * u_statePackage[ENTITY_STATE].y) + u_statePackage[TILE_STATE].z;
+	if (finalIndex >= u_statePackage[ENTITY_STATE].y) finalIndex -= u_statePackage[ENTITY_STATE].y;
+	float tileX = mod(finalIndex, u_statePackage[TILE_STATE].x);
+	float tileY = round((finalIndex - tileX) / u_statePackage[TILE_STATE].x);
+	vec2 tileSizeVec = 1.0 / u_statePackage[TILE_STATE].xy * (u_statePackage[UV_START_END].zw - u_statePackage[UV_START_END].xy);
+	uvStartP = tileSizeVec * vec2(tileX, tileY) + u_statePackage[UV_START_END].xy;
 	uvEndP = uvStartP + tileSizeVec;
 }
 
 #include "BUtil_InstanceDataSSBO.h"
 
-subroutine(instanceStateCompute) void noneData(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-	model = modelMatrix;
-	mColor = statePackage[COLOR] * globalTimerAlpha;
-	mEColor = statePackage[EMISSIVE_COLOR] * globalTimerAlpha;
+subroutine(t_instanceStateCompute) void p_noneData(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+	model = u_modelMatrix;
+	mColor = u_statePackage[COLOR] * u_globalTimerAlpha;
+	mEColor = u_statePackage[EMISSIVE_COLOR] * u_globalTimerAlpha;
 }
 
-subroutine(instanceStateCompute) void haveData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Dynamic2D data = dataDynamic2D[int(additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
-    model = modelMatrix * fetchDynamic2DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Dynamic2D data = b_dataDynamic2D[int(u_additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
+    model = u_modelMatrix * fetchDynamic2DMatrix(data);
 
-    decodeDynamicColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.timer.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeDynamicColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.timer.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-subroutine(instanceStateCompute) void haveFixedData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Fixed2D data = dataFixed2D[int(additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
-    model = modelMatrix * fetchFixed2DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveFixedData2D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Fixed2D data = b_dataFixed2D[int(u_additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
+    model = u_modelMatrix * fetchFixed2DMatrix(data);
 
-    decodeFixedColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.alpha_Facing_Location.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeFixedColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.alpha_Facing_Location.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-subroutine(instanceStateCompute) void haveData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Dynamic3D data = dataDynamic3D[int(additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
-    model = modelMatrix * fetchDynamic3DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Dynamic3D data = b_dataDynamic3D[int(u_additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
+    model = u_modelMatrix * fetchDynamic3DMatrix(data);
 
-    decodeDynamicColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.timer.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeDynamicColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.timer.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-subroutine(instanceStateCompute) void haveFixedData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
-    Fixed3D data = dataFixed3D[int(additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
-    model = modelMatrix * fetchFixed3DMatrix(data);
+subroutine(t_instanceStateCompute) void p_haveFixedData3D(out mat4 model, out vec4 mColor, out vec4 mEColor) {
+    Fixed3D data = b_dataFixed3D[int(u_additionEmissive_DataBit_InstanceOffset.z) + gl_InstanceID];
+    model = u_modelMatrix * fetchFixed3DMatrix(data);
 
-    decodeFixedColor(data.colorBits, pickInstanceTimer(globalTimerAlpha, data.alpha_LocationZ.x), mColor, mEColor);
-    mColor *= statePackage[COLOR];
-    mEColor *= statePackage[EMISSIVE_COLOR];
+    decodeFixedColor(data.colorBits, pickInstanceTimer(u_globalTimerAlpha, data.alpha_LocationZ.x), mColor, mEColor);
+    mColor *= u_statePackage[COLOR];
+    mEColor *= u_statePackage[EMISSIVE_COLOR];
 }
 
-void main()
-{
+void main() {
 	mat4 currentMatrix;
 	vec4 entityColor;
 	vec4 entityEmissiveColor;
-	instanceState(currentMatrix, entityColor, entityEmissiveColor);
-	entityEmissiveColor = mix(entityEmissiveColor, entityEmissiveColor * entityColor, vec4(vec3(statePackage[EMISSIVE_SA].y), statePackage[EMISSIVE_SA].x));
+	f_instanceState(currentMatrix, entityColor, entityEmissiveColor);
+	entityEmissiveColor = mix(entityEmissiveColor, entityEmissiveColor * entityColor, vec4(vec3(u_statePackage[EMISSIVE_SA].y), u_statePackage[EMISSIVE_SA].x));
 	vec2 startUV;
 	vec2 endUV;
-	uvMapping(startUV, endUV);
+	f_uvMapping(startUV, endUV);
 	vec2 uvs[] = vec2[4](startUV, vec2(endUV.x, startUV.y), vec2(startUV.x, endUV.y), endUV);
 	vec3 T = normalize(currentMatrix[0].xyz);
 	vec3 N = normalize(currentMatrix[2].xyz);
 
-	vb_data.fragUV = uvs[gl_VertexID];
-	vb_data.fragTBN = mat3(T, cross(T, N), N);
-	vb_data.fragEntityColor = entityColor;
-	vb_data.fragMixEmissive = entityEmissiveColor;
-	vec4 vertexPos = currentMatrix * vec4(vertex * statePackage[ENTITY_STATE].zw, 0.0, 1.0);
-	vb_data.fragPos = vertexPos.xyz;
+	vfb_data.fragUV = uvs[gl_VertexID];
+	vfb_data.fragTBN = mat3(T, cross(T, N), N);
+	vfb_data.fragEntityColor = entityColor;
+	vfb_data.fragMixEmissive = entityEmissiveColor;
+	vec4 vertexPos = currentMatrix * vec4(a_vertex * u_statePackage[ENTITY_STATE].zw, 0.0, 1.0);
+	vfb_data.fragPos = vertexPos.xyz;
 	vertexPos = gameViewport * vertexPos;
 	if (max(entityColor.w, entityEmissiveColor.w) <= 0.0) vertexPos.xyz = vec3(-65536.0);
 	gl_Position = vertexPos;

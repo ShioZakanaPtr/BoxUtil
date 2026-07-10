@@ -134,13 +134,15 @@
 
         "BUtil_ConfigPanel_Global_03_zh_cn":"启用兼容性同步",
         "BUtil_ConfigPanel_Global_03_en_us":"Enable Compatible synchronization",
-        "BUtil_ConfigPanel_Global_03P_zh_cn":"部分硬件设备与系统环境组合可能出现相关函数寻址异常导致游戏关闭，需启用该功能来确保游戏运行。",
-        "BUtil_ConfigPanel_Global_03P_en_us":"Some hardware and system environment combinations may cause function addressing exceptions then game will going crash, enable this feature to ensure the game runs properly.",
+        "BUtil_ConfigPanel_Global_03P_zh_cn":"部分硬件设备与系统环境组合可能出现相关函数寻址异常导致游戏关闭，需启用该功能来确保游戏运行。\n\n注意：为避免出现GPU数据并发修改问题，开启后会转为使用相对更慢的一种同步方式。",
+        "BUtil_ConfigPanel_Global_03P_en_us":"Some hardware and system environment combinations may cause function addressing exceptions then game will going crash, enable this feature to ensure the game runs properly.\n\nNOTE: For avoid concurrent GPU data modification issues, will switch to a relatively slower synchronization method when enabled.",
 
         "BUtil_ConfigPanel_Global_04_zh_cn":"启用尾迹系统",
         "BUtil_ConfigPanel_Global_04_en_us":"Enable trail system",
-        "BUtil_ConfigPanel_Global_04P_zh_cn":"控制是否启用BoxUtil内置的尾迹系统。\n\n采用合批绘制与异步管理，性能影响较轻。\n\n仅需设备至少支持OpenGL 3.2即可使用，该选项独立控制是否启用。",
-        "BUtil_ConfigPanel_Global_04P_en_us":"To controls whether he BoxUtil build-in trail system are enable。\n\nUses batched rendering and asynchronous management, with little performance impact.\n\nOnly requires OpenGL 3.2 or higher. This option independently controls whether the feature is enabled.",
+        "BUtil_ConfigPanel_Global_04P_zh_cn":"控制是否启用BoxUtil内置的尾迹系统。\n\n采用合批绘制与异步管理，性能影响较轻。\n\n大部分情况下，即便设备不支持OpenGL4.3也可启用。\n该选项独立控制是否启用。",
+        "BUtil_ConfigPanel_Global_04P_en_us":"To controls whether he BoxUtil build-in trail system are enable。\n\nUses batched rendering and asynchronous management, with little performance impact.\n\nIn most cases, this feature can be enabled even on devices that do not support OpenGL 4.3.\nThis option independently controls whether the feature is enabled.",
+
+
 
 		"BUtil_ConfigPanel_Common_00_zh_cn":"实例渲染上限",
 		"BUtil_ConfigPanel_Common_00_en_us":"Instanced rendering limit",

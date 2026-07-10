@@ -6,10 +6,8 @@ import org.boxutil.base.api.resource.TextSubmitFeedbackAPI;
 import org.boxutil.define.LayeredEntityType;
 import org.boxutil.manager.*;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import org.boxutil.util.concurrent.SpinLock;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.base.BaseRenderData;
-import org.boxutil.base.BaseShaderData;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
@@ -34,7 +32,17 @@ import java.util.List;
  * Loading font info or submit string will both cost some time, usual should to preload it.<p>
  * Anchor at top-left of text field.<p>
  * <strong>Remember to register your font texture at <code>settings.json</code>, or load texture by {@link TextureManager} and set it later.</strong><p>
- * Use {@link TextFieldEntity#RESERVED_SYMBOL} for create empty character (will not display anything), if you will display a dynamic value or text such as flux value.
+ * Use {@link TextFieldEntity#RESERVED_SYMBOL} for create empty character (will not display anything), if you will display a dynamic value or text such as flux value.<p>
+ * One of the ways for how to change the text content in existed TextData:
+ * <pre>
+ * {@code
+ * TextFieldEntity text;
+ * final var data = text.getTextDataList().get(0); // if the text content was in the index 0
+ * data.setText("another text");
+ * data.setColor(Color.RED);
+ * // and then call submit
+ * }
+ * </pre>
  */
 public class TextFieldEntity extends BaseRenderData {
     public final static char RESERVED_SYMBOL = '\u0007';
@@ -219,8 +227,8 @@ public class TextFieldEntity extends BaseRenderData {
         program.active();
         GL20.glUniformMatrix4(program.location[0], false, this.pickModelMatrixPackage_mat4());
         GL20.glUniform1f(program.location[5], this.getCurrentItalicFactor());
-        GL20.glUniform4(program.location[6], this.pickColorPackage_vec4());
-        GL20.glUniform1i(program.location[8], this.isBlendBloomColor() ? 1 : 0);
+        GL20.glUniform4(program.location[6], this.pickDataPackage_vec4());
+        GL20.glUniform2f(program.location[8], this.isBlendBloomColor() ? 1.0f : 0.0f, this.getGlobalTimerAlpha());
         for (int i = 0; i < this.fontMapList.length; i++) {
             if (this.fontMapList[i] != null && this.fontMapList[i].isValid()) program.bindTexture2D(i, this.fontMapList[i].getMapID());
         }
@@ -263,8 +271,8 @@ public class TextFieldEntity extends BaseRenderData {
         if (program != null && program.isValid() && this.isValidRenderingTextField()) {
             GL20.glUniformMatrix4(program.location[0], false, this.pickModelMatrixPackage_mat4());
             GL20.glUniform1f(program.location[5], this.getCurrentItalicFactor());
-            GL20.glUniform4(program.location[6], this.pickColorPackage_vec4());
-            GL20.glUniform1i(program.location[8], this.isBlendBloomColor() ? 1 : 0);
+            GL20.glUniform4(program.location[6], this.pickDataPackage_vec4());
+            GL20.glUniform2f(program.location[8], this.isBlendBloomColor() ? 1.0f : 0.0f, this.getGlobalTimerAlpha());
             for (int i = 0; i < this.fontMapList.length; i++) {
                 if (this.fontMapList[i] != null && this.fontMapList[i].isValid()) program.bindTexture2D(i, this.fontMapList[i].getMapID());
             }
@@ -334,18 +342,14 @@ public class TextFieldEntity extends BaseRenderData {
 
     protected TextData createTextData(String text, float padding, Color color, boolean invert, boolean italic, boolean underline, boolean strikeout, int fontMapIndex) {
         TextData para = new TextData();
-        para.text = text == null ? "null" : text;
-        para.byteState[0] = (byte) Math.max(0, Math.min(fontMapIndex, 3));
-        para.pad = padding;
-        byte[] colorArray = CommonUtil.colorToByteArray(color);
-        if (invert) para.byteState[1] = 0b1000;
-        if (italic) para.byteState[1] |= 0b0100;
-        if (underline) para.byteState[1] |= 0b0010;
-        if (strikeout) para.byteState[1] |= 0b0001;
-        para.byteState[2] = colorArray[0];
-        para.byteState[3] = colorArray[1];
-        para.byteState[4] = colorArray[2];
-        para.byteState[5] = colorArray[3];
+        para.setText(text);
+        para.setMapIndex(fontMapIndex);
+        para.setPadding(padding);
+        para.setStyleInvert(invert);
+        para.setStyleItalic(italic);
+        para.setStyleUnderline(underline);
+        para.setStyleStrikeout(strikeout);
+        para.setColor(color);
         return para;
     }
 
@@ -419,6 +423,62 @@ public class TextFieldEntity extends BaseRenderData {
 
         public float getPadding() {
             return this.pad;
+        }
+
+        public void setText(final String text) {
+            this.text = text == null ? "null" : text;
+        }
+
+        public void setColor(byte red, byte green, byte blue, byte alpha) {
+            this.byteState[2] = red;
+            this.byteState[3] = green;
+            this.byteState[4] = blue;
+            this.byteState[5] = alpha;
+        }
+
+        public void setColor(int red, int green, int blue, int alpha) {
+            this.setColor((byte) red, (byte) green, (byte) blue, (byte) alpha);
+        }
+
+        public void setColor(Color color) {
+            final int colorRGB = color.getRGB();
+            this.setColor(colorRGB >> 16 & 0xff, colorRGB >> 8 & 0xff, colorRGB & 0xff, colorRGB >> 24 & 0xff);
+            this.byteState[2] = (byte) (colorRGB >> 16 & 0xff);
+            this.byteState[3] = (byte) (colorRGB >> 8 & 0xff);
+            this.byteState[4] = (byte) (colorRGB & 0xff);
+            this.byteState[5] = (byte) (colorRGB >> 24 & 0xff);
+        }
+
+        public void setColor(float red, float green, float blue, float alpha) {
+            this.setColor((int) (red * 255.0f), (int) (green * 255.0f), (int) (blue * 255.0f), (int) (alpha * 255.0f));
+        }
+
+        public void setPadding(float pad) {
+            this.pad = pad;
+        }
+
+        public void setStyleInvert(boolean toggleOn) {
+            this.byteState[1] &= 0b0111;
+            if (toggleOn) this.byteState[1] |= 0b1000;
+        }
+
+        public void setStyleItalic(boolean toggleOn) {
+            this.byteState[1] &= 0b1011;
+            if (toggleOn) this.byteState[1] |= 0b0100;
+        }
+
+        public void setStyleUnderline(boolean toggleOn) {
+            this.byteState[1] &= 0b1101;
+            if (toggleOn) this.byteState[1] |= 0b0010;
+        }
+
+        public void setStyleStrikeout(boolean toggleOn) {
+            this.byteState[1] &= 0b1110;
+            if (toggleOn) this.byteState[1] |= 0b0001;
+        }
+
+        public void setMapIndex(int fontMapIndex) {
+            this.byteState[0] = (byte) Math.max(0, Math.min(fontMapIndex, 3));
         }
 
         public int pickFontStylePart() {
@@ -1018,11 +1078,10 @@ public class TextFieldEntity extends BaseRenderData {
         this.stateB[0] = blend;
     }
 
-    public FloatBuffer pickColorPackage_vec4() {
+    public void submitEntityData() {
         this._statePackageBuffer.put(0, this.state, 4, 8);
         this._statePackageBuffer.position(0);
         this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
-        return this._statePackageBuffer;
     }
 
     public Object entityType() {

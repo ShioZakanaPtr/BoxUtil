@@ -242,13 +242,12 @@ public class CommonEntity extends BaseMIRenderData {
         this.commonDraw = common;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
+    public void submitEntityData() {
         this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
         this._statePackageBuffer.put(12, this.lightState, 0, 11);
         this._statePackageBuffer.put(23, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
         this._statePackageBuffer.position(0);
         this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
-        return this._statePackageBuffer;
     }
 
     public Object entityType() {

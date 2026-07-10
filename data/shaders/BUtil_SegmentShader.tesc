@@ -7,7 +7,7 @@ precision OVERWRITE_PRECISION float;
 layout(vertices = 2) out;
 
 // vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic), vec4(interpolationFloat + 1, texturePixels, reversed, time), vec4(fillStart, fillEnd, startFactor, endFactor)
-uniform vec4 statePackage[5];
+uniform vec4 u_statePackage[5];
 
 in VERT_TESC_BLOCK {
     flat mat4 tescMatrix;
@@ -29,8 +29,7 @@ out TESC_TESE_BLOCK {
     flat float teseDistance;
 } ttb_datas[];
 
-void main()
-{
+void main() {
     ttb_datas[gl_InvocationID].teseMatrix = vtb_datas[gl_InvocationID].tescMatrix;
     ttb_datas[gl_InvocationID].tesePoint = vtb_datas[gl_InvocationID].tescPoint;
     ttb_datas[gl_InvocationID].teseColor = vtb_datas[gl_InvocationID].tescColor;
@@ -41,6 +40,6 @@ void main()
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
     if (gl_InvocationID == 0) {
         gl_TessLevelOuter[0] = 1.0;
-        gl_TessLevelOuter[1] = statePackage[CURVE_STATE].x;
+        gl_TessLevelOuter[1] = u_statePackage[CURVE_STATE].x;
     }
 }

@@ -446,8 +446,8 @@ public final class BUtil_GLImpl {
 
                 GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                 GL20.glUniform1f(program.location[5], textFieldEntity.getCurrentItalicFactor());
-                GL20.glUniform4(program.location[6], textFieldEntity.pickColorPackage_vec4());
-                GL20.glUniform1i(program.location[8], textFieldEntity.isBlendBloomColor() ? 1 : 0);
+                GL20.glUniform4(program.location[6], textFieldEntity.pickDataPackage_vec4());
+                GL20.glUniform2f(program.location[8], textFieldEntity.isBlendBloomColor() ? 1.0f : 0.0f, textFieldEntity.getGlobalTimerAlpha());
                 for (int i = 0; i < textFieldEntity.getFontMapArray().length; i++) {
                     if (textFieldEntity.getFontMapArray()[i] != null && textFieldEntity.getFontMapArray()[i].isValid()) program.bindTexture2D(i, textFieldEntity.getFontMapArray()[i].getMapID());
                 }
@@ -474,7 +474,7 @@ public final class BUtil_GLImpl {
 
                 program.bindTexture2D(0, ShaderCore.getRenderingBuffer().getColorResult());
                 program.putUniformSubroutine(GL20.GL_VERTEX_SHADER, 0, 1);
-                GL20.glUniform1f(program.location[2], viewport.getViewMult());
+                GL20.glUniform1f(program.location[2], viewport.getViewMult() * 0.5f);
                 int instanceBit = 1;
                 for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                     entity = entitiesI.next();
@@ -507,9 +507,8 @@ public final class BUtil_GLImpl {
                     GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                     GL20.glUniform4(program.location[1], entity.pickDataPackage_vec4());
 
-                    Operations.matrixCheckA(entity);
+                    Operations.matrixCheck(entity);
                     entity.glDraw();
-                    Operations.matrixCheckB(entity);
 
                     if (notDefaultInstanceDataType) {
                         instanceBit = 1;
@@ -786,8 +785,10 @@ public final class BUtil_GLImpl {
             _VANILLA_MATRIX.limit(_VANILLA_MATRIX.capacity());
             _PERSPECTIVE_MATRIX.position(0);
             _PERSPECTIVE_MATRIX.limit(_PERSPECTIVE_MATRIX.capacity());
-            if (BoxConfigs.isShaderEnable()) {
+            if (BoxConfigs.isShaderEnable() || BoxConfigs.isTrailSystemEnable()) {
                 ShaderCore.refreshGameVanillaViewportUBOAll(_VANILLA_MATRIX, viewport);
+            }
+            if (BoxConfigs.isShaderEnable()) {
                 GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
                 GL41.glClearDepthf(1.0f);
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, ShaderCore.getRenderingBuffer().getFBO(1));
@@ -798,6 +799,7 @@ public final class BUtil_GLImpl {
                 GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
                 for (InstanceType instanceType : InstanceType.values()) BUtil_InstanceDataMemoryPool.rebindSSBO(instanceType);
             }
+            StandardShaderPacks.resetBloomStage();
             context.applyBeforeLowestLayerRender(viewport, isCampaign == BoxEnum.TRUE,
                     _FBO_RESOURCE[0],
                     _FBO_RESOURCE[1],
@@ -852,29 +854,31 @@ public final class BUtil_GLImpl {
         }
 
         public static void glMaterialEntityDraw(RenderDataAPI entity, MaterialData material) {
-            cullCheckA(material);
+            cullCheck(material);
             glEntityDraw(entity);
-            cullCheckB(material);
         }
 
         public static void glMaterialEntityFlatDraw(RenderDataAPI entity, MaterialData material) {
-            cullCheckA_B(material);
+            cullCheck(material);
             glEntityDraw(entity);
-            cullCheckB_B(material);
         }
 
         public static void glEntityDraw(RenderDataAPI entity) {
-            matrixCheckA(entity);
-            blendCheckA(entity);
+            matrixCheck(entity);
+            blendCheck(entity);
             entity.glDraw();
-            matrixCheckB(entity);
-            blendCheckB(entity);
         }
 
-        public static void matrixCheckA(RenderDataAPI entity) {
-            switch (entity.getPrimeMatrixState()) {
-                case BoxEnum.ENTITY_VANILLA_PRIME_MATRIX:
+        private static byte _LAST_MATRIX_STATE = 0;
+
+        public static void matrixCheck(RenderDataAPI entity) {
+            final var currState = entity.getPrimeMatrixState();
+            if (currState == _LAST_MATRIX_STATE && currState != BoxEnum.ENTITY_CUSTOM_PRIME_MATRIX) return;
+            switch (currState) {
+                case BoxEnum.ENTITY_VANILLA_PRIME_MATRIX: {
+                    ShaderCore.refreshGameViewportMatrix(_VANILLA_MATRIX);
                     break;
+                }
                 case BoxEnum.ENTITY_PERSPECTIVE_PRIME_MATRIX: {
                     ShaderCore.refreshGameViewportMatrix(_PERSPECTIVE_MATRIX);
                     break;
@@ -887,17 +891,21 @@ public final class BUtil_GLImpl {
                     ShaderCore.refreshGameViewportMatrixNone();
                 }
             }
+            _LAST_MATRIX_STATE = currState;
         }
 
-        public static void matrixCheckB(RenderDataAPI entity) {
-            if (entity.getPrimeMatrixState() != BoxEnum.ENTITY_VANILLA_PRIME_MATRIX) ShaderCore.refreshGameViewportMatrix(_VANILLA_MATRIX);
-        }
+        private static byte _LAST_BLEND_STATE = BoxEnum.ENTITY_NORMAL_BLEND;
 
-        public static void blendCheckA(RenderDataAPI entity) {
-            switch (entity.getBlendState()) {
-                case BoxEnum.ENTITY_NORMAL_BLEND:
-                    break;
-                case BoxEnum.ENTITY_ADDITIVE_BLEND: {
+        public static void blendCheck(RenderDataAPI entity) {
+            final var currState = entity.getBlendState();
+            if (currState == _LAST_BLEND_STATE && currState != BoxEnum.ENTITY_OTHER_BLEND) return;
+            if (_LAST_BLEND_STATE == BoxEnum.ENTITY_DISABLED_BLEND) GL11.glEnable(GL11.GL_BLEND);
+            if (_LAST_BLEND_STATE == BoxEnum.ENTITY_OTHER_BLEND) {
+                GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
+                GL40.glBlendEquationi(1, GL14.GL_FUNC_ADD);
+            }
+            switch (currState) {
+                case BoxEnum.ENTITY_NORMAL_BLEND, BoxEnum.ENTITY_ADDITIVE_BLEND: {
                     GL40.glBlendFunci(0, entity.getBlendColorSRC(), entity.getBlendColorDST());
                     GL40.glBlendFunci(1, entity.getBlendColorSRC(), entity.getBlendColorDST());
                     break;
@@ -913,33 +921,20 @@ public final class BUtil_GLImpl {
                     GL11.glDisable(GL11.GL_BLEND);
                 }
             }
+            _LAST_BLEND_STATE = currState;
         }
 
-        public static void blendCheckB(RenderDataAPI entity) {
-            switch (entity.getBlendState()) {
-                case BoxEnum.ENTITY_NORMAL_BLEND:
-                    break;
-                case BoxEnum.ENTITY_ADDITIVE_BLEND: {
-                    GL40.glBlendFunci(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-                    GL40.glBlendFunci(1, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-                    break;
-                }
-                case BoxEnum.ENTITY_OTHER_BLEND: {
-                    GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-                    GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
-                    GL40.glBlendFuncSeparatei(1, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-                    GL40.glBlendEquationi(1, GL14.GL_FUNC_ADD);
-                    break;
-                }
-                default: { // BoxEnum.ENTITY_DISABLED_BLEND
-                    GL11.glEnable(GL11.GL_BLEND);
-                }
-            }
-        }
+        private static byte _LAST_CULL_STATE = BoxEnum.MATERIAL_CULL_BACK;
 
-        public static void cullCheckA(MaterialData material) {
+        public static void cullCheck(MaterialData material) {
+            final var currState = material.getCullFace();
+            if (currState == _LAST_CULL_STATE) return;
+            if (_LAST_CULL_STATE == BoxEnum.MATERIAL_CULL_DISABLED) GL11.glEnable(GL11.GL_CULL_FACE);
             switch (material.getCullFace()) {
-                case BoxEnum.MATERIAL_CULL_BACK: break;
+                case BoxEnum.MATERIAL_CULL_BACK: {
+                    GL11.glCullFace(GL11.GL_BACK);
+                    break;
+                }
                 case BoxEnum.MATERIAL_CULL_FRONT: {
                     GL11.glCullFace(GL11.GL_FRONT);
                     break;
@@ -952,44 +947,28 @@ public final class BUtil_GLImpl {
                     GL11.glDisable(GL11.GL_CULL_FACE);
                 }
             }
+            _LAST_CULL_STATE = currState;
         }
 
-        public static void cullCheckB(MaterialData material) {
-            switch (material.getCullFace()) {
-                case BoxEnum.MATERIAL_CULL_BACK: break;
-                case BoxEnum.MATERIAL_CULL_FRONT:
-                case BoxEnum.MATERIAL_CULL_FRONT_BACK: {
-                    GL11.glCullFace(GL11.GL_BACK);
-                    break;
-                }
-                default: { // BoxEnum.MATERIAL_CULL_DISABLED
-                    GL11.glEnable(GL11.GL_CULL_FACE);
-                }
+        public static void resetGLAttrib() {
+            if (_LAST_MATRIX_STATE != BoxEnum.ENTITY_VANILLA_PRIME_MATRIX) {
+                ShaderCore.refreshGameViewportMatrix(_VANILLA_MATRIX);
+                _LAST_MATRIX_STATE = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
             }
-        }
-
-        public static void cullCheckA_B(MaterialData material) {
-            if (material.getCullFace() != BoxEnum.MATERIAL_CULL_DISABLED)  {
-                GL11.glEnable(GL11.GL_CULL_FACE);
-            }
-            switch (material.getCullFace()) {
-                case BoxEnum.MATERIAL_CULL_BACK:
-                    GL11.glCullFace(GL11.GL_BACK);
-                    break;
-                case BoxEnum.MATERIAL_CULL_FRONT: {
-                    GL11.glCullFace(GL11.GL_FRONT);
-                    break;
+            if (_LAST_BLEND_STATE != BoxEnum.ENTITY_NORMAL_BLEND) {
+                if (_LAST_BLEND_STATE == BoxEnum.ENTITY_DISABLED_BLEND) GL11.glEnable(GL11.GL_BLEND);
+                if (_LAST_BLEND_STATE == BoxEnum.ENTITY_OTHER_BLEND) {
+                    GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
+                    GL40.glBlendEquationi(1, GL14.GL_FUNC_ADD);
                 }
-                case BoxEnum.MATERIAL_CULL_FRONT_BACK: {
-                    GL11.glCullFace(GL11.GL_FRONT_AND_BACK);
-                    break;
-                }
+                GL40.glBlendFunci(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                GL40.glBlendFunci(1, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                _LAST_BLEND_STATE = BoxEnum.ENTITY_NORMAL_BLEND;
             }
-        }
-
-        public static void cullCheckB_B(MaterialData material) {
-            if (material.getCullFace() != BoxEnum.MATERIAL_CULL_DISABLED)  {
-                GL11.glDisable(GL11.GL_CULL_FACE);
+            if (_LAST_CULL_STATE != BoxEnum.MATERIAL_CULL_BACK) {
+                if (_LAST_CULL_STATE == BoxEnum.MATERIAL_CULL_DISABLED) GL11.glEnable(GL11.GL_CULL_FACE);
+                GL11.glCullFace(GL11.GL_BACK);
+                _LAST_CULL_STATE = BoxEnum.MATERIAL_CULL_BACK;
             }
         }
 
@@ -1056,6 +1035,8 @@ public final class BUtil_GLImpl {
     }
 
     public final static class StandardShaderPacks {
+        private static boolean _DO_BLOOM = false;
+
         public static byte[] applyTexturedAreaLightPreFiltering(int src, int preFiltering, boolean shouldAllocate) {
             byte[] result = new byte[]{BoxEnum.STATE_SUCCESS, 0};
             final byte[] resultFailed = new byte[]{BoxEnum.STATE_SUCCESS, 0};
@@ -1144,9 +1125,10 @@ public final class BUtil_GLImpl {
         }
 
         public static void applyBloom(boolean isMultiPassBloom, int emissiveMap, boolean withHighlightAdd, int highlightMap) {
-            BaseShaderData program = ShaderCore.getBloomProgram();
+            if (!_DO_BLOOM) return;
+            final var program = ShaderCore.getBloomProgram();
             if (program == null || !program.isValid() || !BoxConfigs.isBaseGL43Supported() || !BoxConfigs.isShaderEnable()) return;
-            BUtil_RenderingBuffer renderingBuffer = ShaderCore.getRenderingBuffer();
+            final var renderingBuffer = ShaderCore.getRenderingBuffer();
             if (renderingBuffer.getLayerCount() < 2) return;
             final float divA = 1.0f / (BoxDatabase.isGLDeviceAMD() ? 8.0f : 4.0f), divB = 1.0f / 8.0f;
             int itemDimX, itemDimY,
@@ -1216,10 +1198,10 @@ public final class BUtil_GLImpl {
                 GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
             }
 
-            program = ShaderCore.getDirectDrawProgram();
+            final var resultProgram = ShaderCore.getDirectDrawProgram();
             ShaderCore.getDefaultQuadObject().glBind();
-            program.active();
-            program.bindTexture2D(0, resultTex);
+            resultProgram.active();
+            resultProgram.bindTexture2D(0, resultTex);
             GL20.glUniform1f(ShaderCore.getDirectDrawProgram().location[0], 1.0f);
             GL20.glUniform1f(ShaderCore.getDirectDrawProgram().location[1], 0.0f);
             if (!isMultiPassBloom) {
@@ -1228,9 +1210,17 @@ public final class BUtil_GLImpl {
                 GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
             }
             ShaderCore.getDefaultQuadObject().glDraw();
-            program.bindTexture2D(0, 0);
-            program.close();
+            resultProgram.bindTexture2D(0, 0);
+            resultProgram.close();
             ShaderCore.getDefaultQuadObject().glReleaseBind();
+        }
+
+        public static void resetBloomStage() {
+            _DO_BLOOM = false;
+        }
+
+        public static void activateBloomStage() {
+            _DO_BLOOM = true;
         }
 
         private StandardShaderPacks() {}

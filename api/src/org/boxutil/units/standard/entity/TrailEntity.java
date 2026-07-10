@@ -745,7 +745,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         this.material = material == null ? new MaterialData() : material;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
+    public void submitEntityData() {
         this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
         this._statePackageBuffer.put(13, this.glPrimCount());
         this._statePackageBuffer.put(14, this.state, 0, 9);
@@ -753,7 +753,6 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         this._statePackageBuffer.put(24, this.colorState); // 24
         this._statePackageBuffer.position(0);
         this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
-        return this._statePackageBuffer;
     }
 
     public Object entityType() {

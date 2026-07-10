@@ -14,7 +14,7 @@ layout (std140, binding = OVERWRITE_MATRIX_UBO) uniform BUtilGlobalData
 };
 
 // vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic), vec4(interpolationFloat + 1, texturePixels, globalUV, time), vec4(fillStart, fillEnd, startFactor, endFactor)
-uniform vec4 statePackage[5];
+uniform vec4 u_statePackage[5];
 
 in TESE_GEOM_BLOCK {
 	flat mat4 geomMatrix;
@@ -33,9 +33,8 @@ out GEOM_FRAG_BLOCK {
 	vec4 fragMixEmissive;
 } gfb_data;
 
-void main()
-{
-	float time = statePackage[CURVE_STATE].w;
+void main() {
+	float time = u_statePackage[CURVE_STATE].w;
 	mat4 matrix = tgb_datas[0].geomMatrix;
 	vec4 startOffset = vec4(tgb_datas[0].geomNormal * tgb_datas[0].geomWidth, 0.0, 0.0);
 	vec4 endOffset = vec4(tgb_datas[1].geomNormal * tgb_datas[1].geomWidth, 0.0, 0.0);
@@ -43,9 +42,7 @@ void main()
 	vec4 pos;
 
 	if (max(tgb_datas[0].geomColor.w, tgb_datas[0].geomEmissiveColor.w) <= 0.0 && max(tgb_datas[1].geomColor.w, tgb_datas[1].geomEmissiveColor.w) <= 0.0) {
-		matrix = mat4(0.0, 0.0, 0.0, -65536.0, 0.0, 0.0, 0.0, -65536.0, 0.0, 0.0, 0.0, -65536.0, 0.0, 0.0, 0.0, 1.0);
-		startOffset = endOffset = vec4(0.0);
-		TBN = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+		return;
 	} else {
 		TBN = mat3(normalize(matrix[0].xyz), 0.0, 0.0, 0.0, normalize(matrix[2].xyz));
 		TBN[1] = cross(TBN[0], TBN[2]);

@@ -228,14 +228,13 @@ public class AreaLight extends BaseIlluminantData {
         this.setHeightDirect(heightHalf);
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
-        FloatBuffer buffer = super.pickDataPackage_vec4();
-        buffer.put(6, this.size[0]);
-        buffer.put(7, this.size[1]);
-        buffer.put(8, this.texturedLightingMapping, 0, 4);
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+    public void submitEntityData() {
+        super.submitEntityData();
+        this._statePackageBuffer.put(6, this.size[0]);
+        this._statePackageBuffer.put(7, this.size[1]);
+        this._statePackageBuffer.put(8, this.texturedLightingMapping, 0, 4);
+        this._statePackageBuffer.position(0);
+        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
     }
 
     public Object entityType() {

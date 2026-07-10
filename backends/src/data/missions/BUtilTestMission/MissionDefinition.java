@@ -129,7 +129,15 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     c = (float) Math.cos(a);
                     s = TrigUtil.sinFormCosRadiansF(c, a);
                     end.setTangentLeft(c * length, s * length);
-                    CurveUtil.spawnCurveBeam(this.engine, new Vector3f(ship.getLocation().x, ship.getLocation().y, ship.getFacing()), start, end, ship, 200.0f, DamageType.ENERGY, 20.0f, true, Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"), Color.WHITE, Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"), Color.ORANGE, 16.0f, 512.0f, 0.1f, 1.5f, 0.9f, CombatEngineLayers.ABOVE_SHIPS_LAYER);
+                    var beam = CurveUtil.spawnCurveBeam(this.engine, new Vector3f(ship.getLocation().x, ship.getLocation().y, ship.getFacing()),
+                            start, end, ship, 200.0f, DamageType.ENERGY, 20.0f, true,
+                            Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"), Color.WHITE,
+                            Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"), Color.ORANGE,
+                            16.0f, 512.0f, 0.1f, 1.5f, 0.9f, CombatEngineLayers.ABOVE_SHIPS_LAYER).one;
+                    beam.setAutoSubmitModelMatrix(false);
+                    beam.setAutoSubmitEntityData(false);
+                    beam.submitEntityData();
+                    beam.submitModelMatrix();
                 }
                 if (this.time3 < 1.0f) this.time3 += amount;
                 if (this.time3 >= 1.0f && Keyboard.isKeyDown(Keyboard.KEY_N)) {
@@ -161,6 +169,11 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     segmentEntity.setLayer(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
                     segmentEntity.setAdditiveBlend();
                     segmentEntity.setGlobalTimer(0.0f, 1.5f, 0.5f);
+
+                    segmentEntity.setAutoSubmitModelMatrix(false);
+                    segmentEntity.setAutoSubmitEntityData(false);
+                    segmentEntity.submitEntityData();
+                    segmentEntity.submitModelMatrix();
                     CombatRenderingManager.addEntity(segmentEntity);
 
                     float a, c, s;
@@ -169,7 +182,15 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     s = TrigUtil.sinFormCosRadiansF(c, a);
                     Vector2f beamTo = new Vector2f(c * 1500, s * 1500);
                     Vector2f.add(ship.getLocation(), beamTo, beamTo);
-                    CurveUtil.spawnDirectBeam(this.engine, ship.getLocation(), beamTo, ship, 200.0f, DamageType.ENERGY, 20.0f, true, Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"), Color.WHITE, Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"), Color.ORANGE, 16.0f, 512.0f, 0.1f, 1.5f, 0.9f, CombatEngineLayers.ABOVE_SHIPS_LAYER);
+                    var beam = CurveUtil.spawnDirectBeam(this.engine, ship.getLocation(), beamTo, ship,
+                            200.0f, DamageType.ENERGY, 20.0f, true,
+                            Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"), Color.WHITE,
+                            Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"), Color.ORANGE,
+                            16.0f, 512.0f, 0.1f, 1.5f, 0.9f, CombatEngineLayers.ABOVE_SHIPS_LAYER).one;
+                    beam.setAutoSubmitModelMatrix(false);
+                    beam.setAutoSubmitEntityData(false);
+                    beam.submitEntityData();
+                    beam.submitModelMatrix();
                 }
 
                 if (this.togHanabi) {
@@ -210,6 +231,11 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                         particleEntity.setAlwaysRefreshInstanceData(true);
 
                         particleEntity.setLayer(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
+
+                        particleEntity.setAutoSubmitModelMatrix(false);
+                        particleEntity.setAutoSubmitEntityData(false);
+                        particleEntity.submitEntityData();
+                        particleEntity.submitModelMatrix();
                         CombatRenderingManager.addEntity(particleEntity);
 
                     } else this.time4 += amount;
@@ -301,6 +327,11 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.flareEntity.setNormalBlend();
                 this.flareEntity.setNoisePower(0.33f);
                 this.flareEntity.autoAspect();
+
+                this.flareEntity.setAutoSubmitModelMatrix(false);
+                this.flareEntity.setAutoSubmitEntityData(false);
+                this.flareEntity.submitEntityData();
+                this.flareEntity.submitModelMatrix();
                 Instance2Data fixedA = new Instance2Data();
                 fixedA.setScaleAll(1.0f);
 //                fixedA.setFixedInstanceAlpha(1.0f, BoxEnum.TIMER_FULL);

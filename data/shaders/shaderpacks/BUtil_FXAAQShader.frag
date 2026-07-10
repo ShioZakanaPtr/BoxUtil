@@ -19,53 +19,52 @@ precision highp float;
 #define S 7
 #define SE 8
 
-subroutine float sampleMethod(in vec2 sampleUV);
-subroutine uniform sampleMethod sampleMethodState;
-subroutine vec4 displayMethod(in vec2 finalUV);
-subroutine uniform displayMethod displayMethodState;
+subroutine float t_sampleMethod(in vec2 sampleUV);
+subroutine uniform t_sampleMethod f_sampleMethodState;
+subroutine vec4 t_displayMethod(in vec2 finalUV);
+subroutine uniform t_displayMethod f_displayMethodState;
 
-smooth in vec2 fragUV;
+smooth in vec2 vf_fragUV;
 
-layout(binding = 0) uniform sampler2D screen;
-layout(binding = 1) uniform sampler2D fragData;
+layout(binding = 0) uniform sampler2D u_screen;
+layout(binding = 1) uniform sampler2D u_fragData;
 
-out vec4 fragColor;
+out vec4 o_fragColor;
 
-subroutine(sampleMethod) float fromRaw(in vec2 sampleUV) {
-    return dot(texture(screen, sampleUV).xyz, vec3(0.2126729, 0.7151522, 0.0721750));
+subroutine(t_sampleMethod) float p_fromRaw(in vec2 sampleUV) {
+    return dot(texture(u_screen, sampleUV).xyz, vec3(0.2126729, 0.7151522, 0.0721750));
 }
 
-subroutine(sampleMethod) float fromDepth(in vec2 sampleUV) {
-    return texture(fragData, sampleUV).y;
+subroutine(t_sampleMethod) float p_fromDepth(in vec2 sampleUV) {
+    return texture(u_fragData, sampleUV).y;
 }
 
-subroutine(displayMethod) vec4 commonDisplay(in vec2 finalUV) {
-    return texture(screen, finalUV);
+subroutine(t_displayMethod) vec4 p_commonDisplay(in vec2 finalUV) {
+    return texture(u_screen, finalUV);
 }
 
-subroutine(displayMethod) vec4 edgeDisplay(in vec2 finalUV) {
+subroutine(t_displayMethod) vec4 p_edgeDisplay(in vec2 finalUV) {
     return vec4(0.0, 1.0, 0.0, 1.0);
 }
 
 const vec2 SCREEN_OFFSET[] = vec2[](vec2(-1.0, 1.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(-1.0, 0.0), vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(-1.0,-1.0), vec2(0.0,-1.0), vec2(1.0,-1.0));
 const float EDGE_STEP[] = float[](1.0, 1.5, 2.0, 2.0, 8.0);
 
-void main()
-{
+void main() {
     vec2 screenStepVec = vec2(SCREENSTEPX, SCREENSTEPY);
-    vec4 fragRaw = texture(screen, fragUV);
+    vec4 fragRaw = texture(u_screen, vf_fragUV);
 
     float luma[OFFSETSIZE];
     for (int i = 0; i < OFFSETSIZE; i++) {
-        vec2 eachUV = vec2(fragUV + screenStepVec * SCREEN_OFFSET[i]);
-        luma[i] = sampleMethodState(eachUV);
+        vec2 eachUV = vec2(vf_fragUV + screenStepVec * SCREEN_OFFSET[i]);
+        luma[i] = f_sampleMethodState(eachUV);
     }
 
     float lumaMax = max(luma[N], max(max(luma[W], luma[C]), max(luma[E], luma[S])));
     float lumaMin = min(luma[N], min(min(luma[W], luma[C]), min(luma[E], luma[S])));
     float lumaContrast = lumaMax - lumaMin;
     if (lumaContrast < max(FXAA_ABSOLUTE_LUMA_THRESHOLD, lumaMax * FXAA_RELATIVE_LUMA_THRESHOLD)) {
-        fragColor = fragRaw;
+        o_fragColor = fragRaw;
         return;
     }
 
@@ -92,13 +91,13 @@ void main()
         screenStep = -screenStep;
     }
 
-    vec2 startN = isHorz ? vec2(fragUV.x, fragUV.y + screenStep * 0.5) : vec2(fragUV.x + screenStep * 0.5, fragUV.y);
+    vec2 startN = isHorz ? vec2(vf_fragUV.x, vf_fragUV.y + screenStep * 0.5) : vec2(vf_fragUV.x + screenStep * 0.5, vf_fragUV.y);
     vec2 uvOffsetT = isHorz ? vec2(screenStepVec.x, 0.0) : vec2(0.0, screenStepVec.y);
 
     vec2 uvL = startN - uvOffsetT;
     vec2 uvR = startN + uvOffsetT;
-    float lumaEndL = sampleMethodState(uvL) - lumaLocalAverage;
-    float lumaEndR = sampleMethodState(uvR) - lumaLocalAverage;
+    float lumaEndL = f_sampleMethodState(uvL) - lumaLocalAverage;
+    float lumaEndR = f_sampleMethodState(uvR) - lumaLocalAverage;
 
     bool reachedL = abs(lumaEndL) >= gradientScaled;
     bool reachedR = abs(lumaEndR) >= gradientScaled;
@@ -113,8 +112,8 @@ void main()
 
     if (!reachedLR) {
         for (int i = 1; i < EDGESIZE; i++) {
-            if(!reachedL) lumaEndL = sampleMethodState(uvL) - lumaLocalAverage;
-            if(!reachedR) lumaEndR = sampleMethodState(uvR) - lumaLocalAverage;
+            if(!reachedL) lumaEndL = f_sampleMethodState(uvL) - lumaLocalAverage;
+            if(!reachedR) lumaEndR = f_sampleMethodState(uvR) - lumaLocalAverage;
             reachedL = abs(lumaEndL) >= gradientScaled;
             reachedR = abs(lumaEndR) >= gradientScaled;
             reachedLR = reachedL && reachedR;
@@ -125,8 +124,8 @@ void main()
         }
     }
 
-    float nearestUVL = isHorz ? (fragUV.x - uvL.x) : (fragUV.y - uvL.y);
-    float nearestUVR = isHorz ? (uvR.x - fragUV.x) : (uvR.y - fragUV.y);
+    float nearestUVL = isHorz ? (vf_fragUV.x - uvL.x) : (vf_fragUV.y - uvL.y);
+    float nearestUVR = isHorz ? (uvR.x - vf_fragUV.x) : (uvR.y - vf_fragUV.y);
 
     bool isNearestL = nearestUVL <= nearestUVR;
     float nearestUV = min(nearestUVL, nearestUVR);
@@ -138,6 +137,6 @@ void main()
     bool correctVariation = isNearestL ? correctVariationL : correctVariationR;
     float finalOffset = correctVariation ? (-nearestUV / edgeLength + 0.5) : 0.0;
 
-    vec2 finalUV = isHorz ? vec2(fragUV.x, finalOffset * screenStep + fragUV.y) : vec2(finalOffset * screenStep + fragUV.x, fragUV.y);
-    fragColor = displayMethodState(finalUV);
+    vec2 finalUV = isHorz ? vec2(vf_fragUV.x, finalOffset * screenStep + vf_fragUV.y) : vec2(finalOffset * screenStep + vf_fragUV.x, vf_fragUV.y);
+    o_fragColor = f_displayMethodState(finalUV);
 }

@@ -13,10 +13,10 @@ layout (std140, binding = OVERWRITE_MATRIX_UBO) uniform BUtilGlobalData
 	vec4 gameScreenBorder; // vec4(screenLB, screenSize)
 };
 
-uniform mat4 modelMatrix;
+uniform mat4 u_modelMatrix;
 // vec4(color), vec4(emissiveColor), vec4(emissiveState, anisotropic), vec4(time, nodeCount, texturePixels, mixFactor), vec4(fillStart, fillEnd, startFactor, endFactor), vec4(startWidth, endWidth, jitterPower, flickerMix)
 // 6: vec4(start), 7: vec4(end), 8: vec4(startEmissive), 9: vec4(endEmissive)
-uniform vec4 statePackage[10];
+uniform vec4 u_statePackage[10];
 
 in VERT_GEOM_BLOCK {
 	flat mat4 geomMatrix;
@@ -34,20 +34,17 @@ out GEOM_FRAG_BLOCK {
 	vec4 fragMixEmissive;
 } gfb_data;
 
-void main()
-{
+void main() {
 	mat4 matrix = vgb_datas[0].geomMatrix;
 	vec4 startOffset = vec4(vgb_datas[0].geomNormalWidthDistance.xy * vgb_datas[0].geomNormalWidthDistance.z, 0.0, 0.0);
 	vec4 endOffset = vec4(vgb_datas[1].geomNormalWidthDistance.xy * vgb_datas[1].geomNormalWidthDistance.z, 0.0, 0.0);
-	vec2 uv = (vec2(vgb_datas[0].geomNormalWidthDistance.w, vgb_datas[1].geomNormalWidthDistance.w) / statePackage[COM_STATE].z) - statePackage[COM_STATE].x;
+	vec2 uv = (vec2(vgb_datas[0].geomNormalWidthDistance.w, vgb_datas[1].geomNormalWidthDistance.w) / u_statePackage[COM_STATE].z) - u_statePackage[COM_STATE].x;
 	float seed;
 	mat3 TBN;
 	vec4 pos;
 
 	if (max(vgb_datas[0].geomColor.w, vgb_datas[0].geomEmissiveColor.w) <= 0.0 && max(vgb_datas[1].geomColor.w, vgb_datas[1].geomEmissiveColor.w) <= 0.0) {
-		matrix = mat4(0.0, 0.0, 0.0, -65536.0, 0.0, 0.0, 0.0, -65536.0, 0.0, 0.0, 0.0, -65536.0, 0.0, 0.0, 0.0, 1.0);
-		startOffset = endOffset = vec4(0.0);
-		TBN = mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+		return;
 	} else {
 		TBN = mat3(normalize(matrix[0].xyz), 0.0, 0.0, 0.0, normalize(matrix[2].xyz));
 		TBN[1] = cross(TBN[0], TBN[2]);

@@ -3,16 +3,53 @@
 
 若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
 
-v1.5.6 / 2026.06.32
+v1.5.6 / 2026.12.32
     增加托管于内置系统进行自动生成与管理的多线程尾迹系统
+    于 org.boxutil.base.api.resource 增加 StaticTrailTracker 接口类，用于控制自定义尾迹的生成行为
     于 org.boxutil.manager 增加 StaticTrailManager 管理类，用于加载可被内置系统自动生成并管理的尾迹
     于 org.boxutil.units.standard.attribute 增加 StaticTrailData 用于设定专用自定义尾迹的状态
 
     着色器文件转为本地文件加载
+    主线程绘制调度改进
     实例化数据 submitInstance 阶段逻辑调整
+    TransformUtil 中部分投影矩阵计算方式改为根据当前传入Viewport进行，而非使用预计算屏幕尺寸，同时部分方法的实现优化
+
+    RenderDataAPI 新增方法：
+        boolean isAutoSubmitEntityData();
+        void setAutoSubmitEntityData(boolean);
+        void submitEntityData();
+        FloatBuffer getPrimeMatrixBuffer();
+        boolean isAutoSubmitPrimeMatrix();
+        void setAutoSubmitPrimeMatrix(boolean);
+        void submitPrimeMatrix();
+        FloatBuffer getModelMatrixBuffer();
+        boolean isAutoSubmitModelMatrix();
+        void setAutoSubmitModelMatrix(boolean);
+        void submitModelMatrix();
+
+    TextFieldEntity.TextData 新增方法：
+        void setText(String);
+        void setColor(byte, byte, byte, byte);
+        void setColor(int, int, int, int);
+        void setColor(Color);
+        void setColor(float, float, float, float);
+        void setPadding(float);
+        void setStyleInvert(boolean);
+        void setStyleItalic(boolean);
+        void setStyleUnderline(boolean);
+        void setStyleStrikeout(boolean);
+        void setMapIndex(int);
 
     BoxConfigs 新增方法：
         boolean isBackgroundThreadGLValid();
+
+    CommonUtil 新增方法：
+        FloatBuffer createIdentityMatrix2x2f();
+        FloatBuffer fillIdentityMatrix2x2f(int, FloatBuffer);
+        FloatBuffer createIdentityMatrix3x3f();
+        FloatBuffer fillIdentityMatrix3x3f(int, FloatBuffer);
+        FloatBuffer createIdentityMatrix4x4f();
+        FloatBuffer fillIdentityMatrix4x4f(int, FloatBuffer);
 
     ShaderUtil 新增方法：
         Function<Integer, Boolean> makeShaderBindingLocation(BindingLocationStruct...);
@@ -32,16 +69,80 @@ v1.5.6 / 2026.06.32
         int createShaderProgramFromPath(String, Function<Integer, Boolean>, String...);
         int createShaderProgram(String, Function<Integer, Boolean>, int[], String...);
 
+    TransformUtil 新增方法：
+        FloatBuffer invertModelMatrix2D(Matrix4f, int, boolean, FloatBuffer);
+        FloatBuffer invertModelMatrix3D(Matrix4f, int, boolean, FloatBuffer);
+
+        Quaternion rotationFacingOnly(float, Quaternion);
+        Quaternion rotationXOnly(float, Quaternion);
+        Quaternion rotationYOnly(float, Quaternion);
+        Quaternion rotationZXY(float, float, float, Quaternion);
+        Quaternion rotationZXY(Vector3f, Quaternion);
+        Vector2f getRadiansRotateBase(float, Vector2f);
+        Vector2f getRotateBase(float, Vector2f);
+
+        FloatBuffer createModelMatrixLocationOnly(Vector3f, int, FloatBuffer);
+        FloatBuffer createModelMatrixLocationOnly(Vector2f, int, FloatBuffer);
+        FloatBuffer createModelMatrixRotateOnly(Quaternion, int, FloatBuffer);
+        FloatBuffer createModelMatrixScaleOnly(Vector3f, int, FloatBuffer);
+        FloatBuffer createModelMatrixLocationScale(Vector3f, Vector3f, int, FloatBuffer);
+        FloatBuffer createModelMatrixVanilla(Vector3f, float, Vector3f, int, FloatBuffer);
+        FloatBuffer createModelMatrixVanilla(Vector2f, Quaternion, Vector2f, int, FloatBuffer);
+        FloatBuffer createModelMatrixVanilla(Vector2f, Quaternion, int, FloatBuffer);
+
+        FloatBuffer createModelMatrixVanilla(Vector2f, float, Vector2f, int, FloatBuffer);
+        FloatBuffer createModelMatrixVanilla(Vector2f, float, int, FloatBuffer);
+        Matrix4f createModelMatrixVanilla(float, Vector2f, Matrix4f);
+        FloatBuffer createModelMatrixVanilla(float, Vector2f, int, FloatBuffer);
+        Matrix4f createModelMatrixVanilla(Vector2f, Vector2f, Matrix4f);
+        FloatBuffer createModelMatrixVanilla(Vector2f, Vector2f, int, FloatBuffer);
+
+        Matrix3f createModelMatrix3f(Vector2f, float, Vector2f, Matrix3f);
+        FloatBuffer createModelMatrix3f(Vector2f, float, Vector2f, int, FloatBuffer);
+        FloatBuffer createModelMatrix(Vector3f, Quaternion, Vector3f, int, FloatBuffer);
+
+        FloatBuffer createGameOrthoMatrix(ViewportAPI, int, boolean, FloatBuffer);
+        FloatBuffer createGameOrthoMatrix(ViewportAPI, boolean, FloatBuffer);
+        FloatBuffer createGameOrthoMatrix(ViewportAPI);
+        FloatBuffer createGamePerspectiveMatrix(float, ViewportAPI, int, boolean, FloatBuffer);
+        FloatBuffer createGamePerspectiveMatrix(float, ViewportAPI, boolean, FloatBuffer);
+        FloatBuffer createGamePerspectiveMatrix(float, ViewportAPI);
+        FloatBuffer createWindowCenterOrthoMatrix(int, boolean, FloatBuffer);
+        FloatBuffer createWindowCenterOrthoMatrix(boolean, FloatBuffer);
+        FloatBuffer createWindowCenterOrthoMatrix();
+        FloatBuffer createWindowOrthoMatrix(int, boolean, FloatBuffer);
+        FloatBuffer createWindowOrthoMatrix(boolean, FloatBuffer);
+        FloatBuffer createWindowOrthoMatrix();
+
+        FloatBuffer createOrthoMatrix(float, float, float, float, float, float, int, boolean, FloatBuffer);
+        FloatBuffer createOrthoMatrix(float, float, float, float, float, float, boolean, FloatBuffer);
+        FloatBuffer createOrthoMatrix(float, float, float, float, float, float);
+        FloatBuffer createLookAtMatrix3D(Vector3f, Vector3f, Vector3f, boolean, int, boolean, FloatBuffer);
+        FloatBuffer createLookAtMatrix3D(Vector3f, Vector3f, Vector3f, boolean, boolean, FloatBuffer);
+        FloatBuffer createLookAtMatrix3D(Vector3f, Vector3f, Vector3f, boolean);
+        FloatBuffer createLookAtMatrixFlat(Vector2f, Vector2f, Vector2f, boolean, int, boolean, FloatBuffer);
+        FloatBuffer createLookAtMatrixFlat(Vector2f, Vector2f, Vector2f, boolean, boolean, FloatBuffer);
+        FloatBuffer createLookAtMatrixFlat(Vector2f, Vector2f, Vector2f, boolean);
+        FloatBuffer createPerspectiveMatrix3D(float, float, float, float, int, boolean, FloatBuffer);
+        FloatBuffer createPerspectiveMatrix3D(float, float, float, float, boolean, FloatBuffer);
+        FloatBuffer createPerspectiveMatrix3D(float, float, float, float);
+
     MaterialData 新增构造方法：
         MaterialData(MaterialData);
 
     CombatRenderingManager 新增方法：
-        boolean addStaticTrailGenerator(StaticTrailData, CombatEngineLayers, Supplier<Vector4f>);
+        boolean addStaticTrailGenerator(StaticTrailData, CombatEngineLayers, StaticTrailData);
+        void submitTrailDataChanges(StaticTrailData);
         boolean removeStaticTrialGenerator(StaticTrailData);
 
     CampaignRenderingManager 新增方法：
-        boolean addStaticTrailGenerator(StaticTrailData, CampaignEngineLayers, Supplier<Vector4f>);
+        boolean addStaticTrailGenerator(StaticTrailData, CampaignEngineLayers, StaticTrailData);
+        void submitTrailDataChanges(StaticTrailData);
         boolean removeStaticTrialGenerator(StaticTrailData);
+
+    TransformUtil 标记弃用方法：
+        Matrix3f createModelMatrixVanilla3f(Vector2f, float, Vector2f, Matrix3f);
+        Matrix3f createModelMatrixVanilla3f(Vector2f, float, Matrix3f);
 
 v1.5.5 / 2026.05.03
     修复部分设备某些情况下，多通道输出阶段潜在的资源绑定问题

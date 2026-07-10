@@ -5,6 +5,7 @@ import org.boxutil.backends.core.BUtil_ThreadResource;
 import org.boxutil.base.api.*;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
 import org.boxutil.base.api.everyframe.LayeredRenderingPlugin;
+import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.base.api.resource.TemporaryCleanupPlugin;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.define.BoxEnum;
@@ -63,17 +64,24 @@ public final class CampaignRenderingManager {
     }
 
     /**
-     * @param locationTacker the input is current frame time <code>amount</code> in second;<p>the returns were current frame state that <code>{location.x, location.y, facingVector.x, facingVector.y}</code>;<p>will remove this trail tracker when returns <code>null</code>.
+     * @param trailData will submit once automatically if this trail data is not exist in system before add.
      *
-     * @return returns <code>true</code> when trail data was existed, else <code>false</code> if not exist.
+     * @return returns <code>true</code> when trail data was existed, else <code>false</code> if it not.
      */
-    public static boolean addStaticTrailGenerator(@NotNull final StaticTrailData trailData, @NotNull final CampaignEngineLayers layer, @NotNull final Function<Float, Vector4f> locationTacker) {
+    public static boolean addStaticTrailGenerator(@NotNull final StaticTrailData trailData, @NotNull final CampaignEngineLayers layer, @NotNull final StaticTrailTracker tacker) {
         // todo
         return false;
     }
 
     /**
-     * @return returns <code>true</code> when trail data was existed before call this method, else <code>false</code> if not exist.
+     * Call if something changes for trail data in this frame, only once executed in each frame.
+     */
+    public void submitTrailDataChanges(@NotNull final StaticTrailData trailData) {
+
+    }
+
+    /**
+     * @return returns <code>true</code> when trail data was existed before call this method, else <code>false</code> if it not.
      */
     public static boolean removeStaticTrailGenerator(@NotNull final StaticTrailData trailData) {
         return false;

@@ -15,52 +15,51 @@ precision highp float;
 #define SE 4
 #define GLOW_TEX 2
 
-subroutine float sampleMethod(in vec2 sampleUV);
-subroutine uniform sampleMethod sampleMethodState;
-subroutine vec4 displayMethod(in vec4 finalColor);
-subroutine uniform displayMethod displayMethodState;
+subroutine float t_sampleMethod(in vec2 sampleUV);
+subroutine uniform t_sampleMethod f_sampleMethodState;
+subroutine vec4 t_displayMethod(in vec4 finalColor);
+subroutine uniform t_displayMethod f_displayMethodState;
 
-smooth in vec2 fragUV;
+smooth in vec2 vf_fragUV;
 
-layout(binding = 0) uniform sampler2D screen;
-layout(binding = 1) uniform sampler2D fragData;
+layout(binding = 0) uniform sampler2D u_screen;
+layout(binding = 1) uniform sampler2D u_fragData;
 
-out vec4 fragColor;
+out vec4 o_fragColor;
 
-subroutine(sampleMethod) float fromRaw(in vec2 sampleUV) {
-    return dot(texture(screen, sampleUV).xyz, vec3(0.2126729, 0.7151522, 0.0721750));
+subroutine(t_sampleMethod) float p_fromRaw(in vec2 sampleUV) {
+    return dot(texture(u_screen, sampleUV).xyz, vec3(0.2126729, 0.7151522, 0.0721750));
 }
 
-subroutine(sampleMethod) float fromDepth(in vec2 sampleUV) {
-    return texture(fragData, sampleUV).y;
+subroutine(t_sampleMethod) float p_fromDepth(in vec2 sampleUV) {
+    return texture(u_fragData, sampleUV).y;
 }
 
-subroutine(displayMethod) vec4 commonDisplay(in vec4 finalColor) {
+subroutine(t_displayMethod) vec4 p_commonDisplay(in vec4 finalColor) {
     return finalColor;
 }
 
-subroutine(displayMethod) vec4 edgeDisplay(in vec4 finalColor) {
+subroutine(t_displayMethod) vec4 p_edgeDisplay(in vec4 finalColor) {
     return vec4(0.0, 1.0, 0.0, 1.0);
 }
 
 const vec2 SCREEN_OFFSET[] = vec2[](vec2(-0.5, 0.5), vec2(0.5, 0.5), vec2( 0.0, 0.0), vec2(-0.5,-0.5), vec2(0.5,-0.5));
 
-void main()
-{
+void main() {
     vec2 screenStep = vec2(SCREENSTEPX, SCREENSTEPY);
-    vec4 fragRaw = texture(screen, fragUV);
+    vec4 fragRaw = texture(u_screen, vf_fragUV);
 
     float luma[OFFSETSIZE];
     for (int i = 0; i < OFFSETSIZE; i++) {
-        vec2 eachUV = vec2(fragUV + screenStep * SCREEN_OFFSET[i]);
-        luma[i] = sampleMethodState(eachUV);
+        vec2 eachUV = vec2(vf_fragUV + screenStep * SCREEN_OFFSET[i]);
+        luma[i] = f_sampleMethodState(eachUV);
     }
 
     float lumaMax = max(luma[NW], max(max(luma[NE], luma[C]), max(luma[SW], luma[SE])));
     float lumaMin = min(luma[NW], min(min(luma[NE], luma[C]), min(luma[SW], luma[SE])));
     float lumaContrast = lumaMax - lumaMin;
     if(lumaContrast < max(FXAA_ABSOLUTE_LUMA_THRESHOLD, lumaMax * FXAA_RELATIVE_LUMA_THRESHOLD)) {
-        fragColor = fragRaw;
+        o_fragColor = fragRaw;
         return;
     }
 
@@ -68,13 +67,13 @@ void main()
     dir.x = (luma[SW] + luma[SE]) - (luma[NW] + luma[NE]);
     dir.y = (luma[NE] + luma[SW]) - (luma[NE] + luma[SE]);
     dir = normalize(dir);
-    vec4 P1 = texture(screen, fragUV + (dir * screenStep * 0.5));
-    vec4 N1 = texture(screen, fragUV - (dir * screenStep * 0.5));
+    vec4 P1 = texture(u_screen, vf_fragUV + (dir * screenStep * 0.5));
+    vec4 N1 = texture(u_screen, vf_fragUV - (dir * screenStep * 0.5));
 
     float dirAbsMinTimesC = min(abs(dir.x), abs(dir.y)) * FXAA_SHARPNESS;
     vec2 minDir = clamp(dir / dirAbsMinTimesC, -1.0, 1.0) * 0.5;
-    vec4 P2 = texture(screen, fragUV + (minDir * screenStep));
-    vec4 N2 = texture(screen, fragUV - (minDir * screenStep));
+    vec4 P2 = texture(u_screen, vf_fragUV + (minDir * screenStep));
+    vec4 N2 = texture(u_screen, vf_fragUV - (minDir * screenStep));
 
     vec4 S1 = P1 + N1;
     vec4 S2 = (P2 + N2 + S1) / 4.0;
@@ -82,5 +81,5 @@ void main()
     if (brightness < lumaMin || brightness > lumaMax) {
         S2.xyz = S1.xyz * 0.5;
     }
-    fragColor = displayMethodState(S2);
+    o_fragColor = f_displayMethodState(S2);
 }

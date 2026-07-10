@@ -50,7 +50,7 @@ import java.util.EnumSet;
  * if (anisotropic < 0.0f) flag |= 0b100;
  * }
  * <p>
- * If the alpha value of fragment is less than or equal to <code>0</code> (or other appropriate threshold), recommend to discard it.
+ * If the alpha value of fragment is less than or equal to <code>0</code> (or other appropriate threshold), recommend to discard it.<p>
  * ----------<p>
  * For world position encode and decode:
  * <pre>

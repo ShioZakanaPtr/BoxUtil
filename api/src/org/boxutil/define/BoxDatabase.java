@@ -130,6 +130,8 @@ public final class BoxDatabase {
         public final boolean GL_NPOT_TEXTURE;
         public final boolean GL_TEXTURE_STORAGE;
         public final boolean GL_CL_EVENT;
+        public final boolean ARB_SHADER_BIT_ENCODING;
+        public final boolean ARB_GPU_SHADER5;
         public final boolean GL_SYNC;
         public final boolean GL_CORE_SYNC;
         public final boolean ARB_shading_language_include;
@@ -207,6 +209,8 @@ public final class BoxDatabase {
 //            this.GL_NPOT_TEXTURE = cap.GL_ARB_texture_non_power_of_two && cap.OpenGL20;
 //            this.GL_TEXTURE_STORAGE = cap.GL_ARB_texture_storage && cap.OpenGL42;
             this.GL_CL_EVENT = cap.GL_ARB_cl_event;
+            this.ARB_SHADER_BIT_ENCODING = cap.GL_ARB_shader_bit_encoding;
+            this.ARB_GPU_SHADER5 = cap.GL_ARB_gpu_shader5;
             this.GL_SYNC = cap.GL_ARB_sync && cap.OpenGL32;
             this.GL_CORE_SYNC = cap.OpenGL32; // wtf some gpu got ture but with nullptr func
             this.ARB_shading_language_include = cap.GL_ARB_shading_language_include;
@@ -274,6 +278,8 @@ public final class BoxDatabase {
                     + "\nGL_CORE_NPOT_TEXTURE: " + this.GL_NPOT_TEXTURE
                     + "\nGL_CORE_TEXTURE_STORAGE: " + this.GL_TEXTURE_STORAGE
                     + "\nGL_ARB_CL_EVENT: " + this.GL_CL_EVENT
+                    + "\nGL_ARB_SHADER_BIT_ENCODING: " + this.ARB_SHADER_BIT_ENCODING
+                    + "\nGL_ARB_GPU_SHADER5: " + this.ARB_GPU_SHADER5
                     + "\nGL_SYNC: " + this.GL_SYNC
                     + "\nGL_CORE_SYNC: " + this.GL_CORE_SYNC
                     + "\nGL_ARB_shading_language_include: " + this.ARB_shading_language_include + '\n'

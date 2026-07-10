@@ -1,8 +1,8 @@
 #version 110
 
-varying vec2 fragUV;
+varying vec2 vf_fragUV;
 
 void main() {
-    fragUV = max(gl_Vertex.xy, vec2(0.0));
+    vf_fragUV = max(gl_Vertex.xy, vec2(0.0));
 	gl_Position = gl_Vertex;
 }

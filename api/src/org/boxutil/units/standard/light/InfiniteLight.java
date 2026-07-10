@@ -28,11 +28,10 @@ public class InfiniteLight extends BaseIlluminantData {
         this.stateBase[4] = 2048.0f;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
-        FloatBuffer buffer = super.pickDataPackage_vec4();
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+    public void submitEntityData() {
+        super.submitEntityData();
+        this._statePackageBuffer.position(0);
+        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
     }
 
     public Object entityType() {

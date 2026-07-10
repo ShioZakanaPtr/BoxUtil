@@ -44,8 +44,7 @@ public final class StaticTrailManager {
      * @return <code>true</code> if not contain this trail data.
      */
     public static boolean putTrailData(final String id, final StaticTrailData trailData) {
-        HashSet<StaticTrailData> result = _PROJ_TRAIL.computeIfAbsent(id, k -> new HashSet<>(2));
-        return result.add(trailData);
+        return _PROJ_TRAIL.computeIfAbsent(id, k -> new HashSet<>(2)).add(trailData);
     }
 
     /**
@@ -66,14 +65,14 @@ public final class StaticTrailManager {
                 objData = objDataArray.getJSONObject(i);
                 final String projID = objData.optString("proj_id"), trailID = objData.optString("trail_id");
                 if (projID.isBlank() || trailID.isBlank()) {
-                    _LOG.warn("'BoxUtil' fixed trail csv data have empty id or trail-id at lines '" + i + "' in: '" + path + "'.");
+                    _LOG.warn("'BoxUtil' static trail csv data have empty id or trail-id at lines '" + i + "' in: '" + path + "'.");
                     continue;
                 }
 
                 diffusePath = objData.optString("diffuse_path");
                 emissivePath = objData.optString("emissive_path");
                 if (diffusePath.isBlank() && emissivePath.isBlank()) {
-                    _LOG.warn("'BoxUtil' fixed trail csv data have empty diffuse map and empty emissive map at lines '" + i + "' in: '" + path + "'.");
+                    _LOG.warn("'BoxUtil' static trail csv data have empty diffuse map and empty emissive map at lines '" + i + "' in: '" + path + "'.");
                     continue;
                 }
 
@@ -99,7 +98,7 @@ public final class StaticTrailManager {
                 BUtil_MiscUtil.getVec4Color(objData.getString("color_out"), colorOut);
                 BUtil_MiscUtil.getVec4(objData.getString("velocity_in_range"), velIn);
                 BUtil_MiscUtil.getVec4(objData.getString("velocity_out_range"), velOut);
-                BUtil_MiscUtil.getVec4(objData.getString("spawn_offset"), spawnOffset);
+                BUtil_MiscUtil.getVec4(objData.getString("spawn_offset_range"), spawnOffset);
                 BUtil_MiscUtil.getVec2(objData.getString("angular_in_range"), angularIn);
                 BUtil_MiscUtil.getVec2(objData.getString("angular_out_range"), angularOut);
 
@@ -194,7 +193,7 @@ public final class StaticTrailManager {
                 _PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(data);
             }
         } catch (JSONException | IOException e) {
-            CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' texture csv data loading failed at: '" + path + "': ", e);
+            CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' static trail csv data loading failed at: '" + path + "': ", e);
         }
     }
 
@@ -209,13 +208,13 @@ public final class StaticTrailManager {
                 objData = objDataArray.getJSONObject(i);
                 final String projID = objData.optString("projectile"), trailID = objData.optString("trail");
                 if (projID.isBlank() || trailID.isBlank()) {
-                    _LOG.warn("'BoxUtil' fixed trail csv data have empty id or trail-id at lines '" + i + "' in: '" + path + "'.");
+                    _LOG.warn("'BoxUtil' static trail csv data have empty id or trail-id at lines '" + i + "' in: '" + path + "'.");
                     continue;
                 }
 
                 diffuseKey = objData.optString("sprite");
                 if (diffuseKey.isBlank()) {
-                    _LOG.warn("'BoxUtil' fixed trail csv data have empty sprite at lines '" + i + "' in: '" + path + "'.");
+                    _LOG.warn("'BoxUtil' static trail csv data have empty sprite at lines '" + i + "' in: '" + path + "'.");
                     continue;
                 }
 
@@ -349,7 +348,7 @@ public final class StaticTrailManager {
                 _PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(data);
             }
         } catch (JSONException | IOException e) {
-            CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' texture csv data loading failed at: '" + path + "': ", e);
+            CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' static trail csv data loading failed at: '" + path + "': ", e);
         }
     }
 

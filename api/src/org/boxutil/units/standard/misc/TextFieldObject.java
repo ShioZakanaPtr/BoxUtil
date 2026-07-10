@@ -26,7 +26,16 @@ import java.util.List;
 /**
  * Easy way for rendering text anywhere.<p>
  * The compatibility simple rendering object in lower version, a substitute for {@link org.boxutil.units.standard.entity.TextFieldEntity}.<p>
- * Vanilla supported.
+ * Vanilla supported.<p>
+ * One of the ways for how to change the text content in existed TextData:
+ * <pre>
+ * {@code
+ * TextFieldObject text;
+ * final var data = text.getTextDataList().get(0); // if the text content was in the index 0
+ * data.setText("another text");
+ * // and then call submit
+ * }
+ * </pre>
  */
 public class TextFieldObject {
     protected final static byte _DEFAULT_PAD = 0;
@@ -136,14 +145,10 @@ public class TextFieldObject {
 
     protected TextFieldEntity.TextData createTextData(String text, float padding, Color color, boolean italic) {
         TextFieldEntity.TextData para = new TextFieldEntity.TextData();
-        para.text = text == null ? "null" : text;
-        para.pad = padding;
-        byte[] colorArray = CommonUtil.colorToByteArray(color);
-        if (italic) para.byteState[1] |= 0b0100;
-        para.byteState[2] = colorArray[0];
-        para.byteState[3] = colorArray[1];
-        para.byteState[4] = colorArray[2];
-        para.byteState[5] = colorArray[3];
+        para.setText(text);
+        para.setPadding(padding);
+        para.setStyleItalic(italic);
+        para.setColor(color);
         return para;
     }
 
@@ -657,7 +662,7 @@ public class TextFieldObject {
     }
 
     /**
-     * After called {@link TextFieldEntity#submitText()}.<p>
+     * After called {@link TextFieldObject#submitText()}.<p>
      * But only counts for last submit call, not for the entity.
      */
     public float getCurrentVisualWidth() {
@@ -665,7 +670,7 @@ public class TextFieldObject {
     }
 
     /**
-     * After called {@link TextFieldEntity#submitText()}.
+     * After called {@link TextFieldObject#submitText()}.
      */
     public float getCurrentVisualHeight() {
         return this.textStateAfterSubmit[1];

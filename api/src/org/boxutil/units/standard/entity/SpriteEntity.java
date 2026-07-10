@@ -257,7 +257,7 @@ public class SpriteEntity extends BaseMIRenderData {
         this.spriteState[8] = code;
     }
 
-    public FloatBuffer pickDataPackage_vec4() {
+    public void submitEntityData() {
         this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
         this._statePackageBuffer.put(12, this.spriteState, 0, 9);
         this._statePackageBuffer.put(21, this.getCurrentTileCount() - 1);
@@ -265,7 +265,6 @@ public class SpriteEntity extends BaseMIRenderData {
         this._statePackageBuffer.put(23, this.baseSize[1]);
         this._statePackageBuffer.position(0);
         this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
-        return this._statePackageBuffer;
     }
 
     public Object entityType() {

@@ -5,56 +5,55 @@ precision highp int;
 
 layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
 
-subroutine void formatPickerStore(in ivec2 coord, in float result);
-subroutine uniform formatPickerStore formatPickerStoreState;
-subroutine float workMode(in ivec2 coord);
-subroutine uniform workMode workModeState;
+subroutine void t_formatPickerStore(in ivec2 coord, in float result);
+subroutine uniform t_formatPickerStore f_formatPickerStoreState;
+subroutine float t_workMode(in ivec2 coord);
+subroutine uniform t_workMode f_workModeState;
 
-layout(binding = 0) uniform sampler2D texIn;
-layout(binding = 0, r8) uniform writeonly image2D texOut;
-layout(binding = 1, r16) uniform writeonly image2D texOut16;
+layout(binding = 0) uniform sampler2D u_texIn;
+layout(binding = 0, r8) uniform writeonly image2D u_texOut;
+layout(binding = 1, r16) uniform writeonly image2D u_texOut16;
 
-uniform ivec3 sizeStep;
-uniform int vertical;
-uniform float perStep;
+uniform ivec3 u_sizeStep;
+uniform int u_vertical;
+uniform float u_perStep;
 
 float getGaussian(float x) {
-    float p = x * perStep;
-    return perStep * 0.3989423 * exp(-0.5 * p * p);
+    float p = x * u_perStep;
+    return u_perStep * 0.3989423 * exp(-0.5 * p * p);
 }
 
-subroutine(formatPickerStore) void bit8Store(in ivec2 coord, in float result) {
-    imageStore(texOut, coord, vec4(result, vec3(0.0)));
+subroutine(t_formatPickerStore) void p_bit8Store(in ivec2 coord, in float result) {
+    imageStore(u_texOut, coord, vec4(result, vec3(0.0)));
 }
 
-subroutine(formatPickerStore) void bit16Store(in ivec2 coord, in float result) {
-    imageStore(texOut16, coord, vec4(result, vec3(0.0)));
+subroutine(t_formatPickerStore) void p_bit16Store(in ivec2 coord, in float result) {
+    imageStore(u_texOut16, coord, vec4(result, vec3(0.0)));
 }
 
-subroutine(workMode) float filterMode(in ivec2 coord) {
+subroutine(t_workMode) float filterMode(in ivec2 coord) {
     float result = 0.0;
-    ivec2 maxIndex = sizeStep.xy - 1;
+    ivec2 maxIndex = u_sizeStep.xy - 1;
     ivec2 offset;
     float gaussian, fix = 0.0;
-    bool isVertical = bool(vertical);
-    for (int i = -sizeStep.z; i <= sizeStep.z; ++i) {
+    bool isVertical = bool(u_vertical);
+    for (int i = -u_sizeStep.z; i <= u_sizeStep.z; ++i) {
         gaussian = getGaussian(float(i));
         fix += gaussian;
         offset = isVertical ? ivec2(0, i) : ivec2(i, 0);
-        result += texelFetch(texIn, clamp(offset + coord, ivec2(0), maxIndex), 0).x * gaussian;
+        result += texelFetch(u_texIn, clamp(offset + coord, ivec2(0), maxIndex), 0).x * gaussian;
     }
     result /= fix;
     return result;
 }
 
-subroutine(workMode) float copyMode(in ivec2 coord) {
-    return texelFetch(texIn, coord, 0).x;
+subroutine(t_workMode) float copyMode(in ivec2 coord) {
+    return texelFetch(u_texIn, coord, 0).x;
 }
 
-void main()
-{
+void main() {
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
-    if (any(greaterThanEqual(coord, sizeStep.xy))) return;
-    float result = workModeState(coord);
-    formatPickerStoreState(coord, result);
+    if (any(greaterThanEqual(coord, u_sizeStep.xy))) return;
+    float result = f_workModeState(coord);
+    f_formatPickerStoreState(coord, result);
 }

@@ -6,8 +6,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.backends.reflect.BUtil_RefMethod;
-import de.unkrig.commons.nullanalysis.NotNull;
-import de.unkrig.commons.nullanalysis.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.opengl.*;
@@ -526,6 +526,68 @@ public final class CommonUtil {
         buffer.position(0);
         buffer.limit(length);
         return buffer;
+    }
+
+    /**
+     * @return 2x2 identity matrix in buffer with 4 capacity.
+     */
+    public static FloatBuffer createIdentityMatrix2x2f() {
+        return CommonUtil.createFloatBuffer(1.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    public static FloatBuffer fillIdentityMatrix2x2f(final int writePosition, @NotNull final FloatBuffer target) {
+        target.put(writePosition, 1.0f);
+        target.put(writePosition + 1, 0.0f);
+        target.put(writePosition + 2, 0.0f);
+        target.put(writePosition + 3, 1.0f);
+        return target;
+    }
+
+    /**
+     * @return 3x3 identity matrix in buffer with 9 capacity.
+     */
+    public static FloatBuffer createIdentityMatrix3x3f() {
+        return CommonUtil.createFloatBuffer(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    public static FloatBuffer fillIdentityMatrix3x3f(final int writePosition, @NotNull final FloatBuffer target) {
+        target.put(writePosition, 1.0f);
+        target.put(writePosition + 1, 0.0f);
+        target.put(writePosition + 2, 0.0f);
+        target.put(writePosition + 3, 0.0f);
+        target.put(writePosition + 4, 1.0f);
+        target.put(writePosition + 5, 0.0f);
+        target.put(writePosition + 6, 0.0f);
+        target.put(writePosition + 7, 0.0f);
+        target.put(writePosition + 8, 1.0f);
+        return target;
+    }
+
+    /**
+     * @return 4x4 identity matrix in buffer with 16 capacity.
+     */
+    public static FloatBuffer createIdentityMatrix4x4f() {
+        return CommonUtil.createFloatBuffer(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    public static FloatBuffer fillIdentityMatrix4x4f(final int writePosition, @NotNull final FloatBuffer target) {
+        target.put(writePosition, 1.0f);
+        target.put(writePosition + 1, 0.0f);
+        target.put(writePosition + 2, 0.0f);
+        target.put(writePosition + 3, 0.0f);
+        target.put(writePosition + 4, 0.0f);
+        target.put(writePosition + 5, 1.0f);
+        target.put(writePosition + 6, 0.0f);
+        target.put(writePosition + 7, 0.0f);
+        target.put(writePosition + 8, 0.0f);
+        target.put(writePosition + 9, 0.0f);
+        target.put(writePosition + 10, 1.0f);
+        target.put(writePosition + 11, 0.0f);
+        target.put(writePosition + 12, 0.0f);
+        target.put(writePosition + 13, 0.0f);
+        target.put(writePosition + 14, 0.0f);
+        target.put(writePosition + 15, 1.0f);
+        return target;
     }
 
     /**

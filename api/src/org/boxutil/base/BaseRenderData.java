@@ -3,9 +3,7 @@ package org.boxutil.base;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.combat.CombatEntityAPI;
-import org.boxutil.define.LayeredEntityType;
 import org.boxutil.util.CommonUtil;
-import org.boxutil.util.concurrent.ReentrantSpinLock;
 import org.boxutil.util.concurrent.SpinLock;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
@@ -29,11 +27,14 @@ public abstract class BaseRenderData implements RenderDataAPI {
     protected byte _blendState = BoxEnum.ENTITY_NORMAL_BLEND;
     protected boolean timingWhenPaused = false;
     protected boolean isTimerPaused = false;
+    protected boolean autoSubmitPrimeMat = true;
+    protected boolean autoSubmitModelMat = true;
+    protected boolean autoSubmitDataBuffer = true;
     protected volatile boolean _hasDelete;
 
     protected final SpinLock _sync_lock = new SpinLock();
-    protected final FloatBuffer _primeMatBuffer;
-    protected final FloatBuffer _matrixBuffer;
+    protected final FloatBuffer primeMatBuffer;
+    protected final FloatBuffer modelMatBuffer;
     protected final FloatBuffer _statePackageBuffer;
     protected Matrix4f primeMatrix = new Matrix4f();
     protected Matrix4f modelMatrix = new Matrix4f();
@@ -50,15 +51,17 @@ public abstract class BaseRenderData implements RenderDataAPI {
     }
 
     public BaseRenderData() {
-        this._primeMatBuffer = BufferUtils.createFloatBuffer(16);
-        this._matrixBuffer = BufferUtils.createFloatBuffer(16);
+        this.primeMatBuffer = CommonUtil.createIdentityMatrix4x4f();
+        this.modelMatBuffer = CommonUtil.createIdentityMatrix4x4f();
         this._statePackageBuffer = BufferUtils.createFloatBuffer(this._StatePackageStack() << 2);
+        this._statePackageBuffer.position(0);
+        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
     }
 
     protected void _deleteExc() {
         this._hasDelete = true;
-        this._primeMatBuffer.clear();
-        this._matrixBuffer.clear();
+        this.primeMatBuffer.clear();
+        this.modelMatBuffer.clear();
         this._statePackageBuffer.clear();
         if (this.getControlData() != null) this.getControlData().controlRemove(this);
     }
@@ -114,6 +117,27 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this._sync_lock.lock();
         this._resetExc();
         this._sync_lock.unlock();
+    }
+
+    public boolean isAutoSubmitEntityData() {
+        return this.autoSubmitDataBuffer;
+    }
+
+    /**
+     * Enabling auto-submit incurs a slight memory copy overhead (default behavior, also with potential heap memory allocation).<p>
+     * If data changes are infrequent, you may disable this feature and use {@link RenderDataAPI#submitEntityData()} for manual submits instead, which can reduce unnecessary memory copies to a certain extent.
+     */
+    public void setAutoSubmitEntityData(boolean toggleAuto) {
+        this.autoSubmitDataBuffer = toggleAuto;
+    }
+
+    /**
+     * Without matrix data or timer settings.
+     */
+    public void submitEntityData() {
+        this._statePackageBuffer.put(0, this.getGlobalTimerAlpha());
+        this._statePackageBuffer.position(0);
+        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
     }
 
     public ControlDataAPI getControlData() {
@@ -233,12 +257,44 @@ public abstract class BaseRenderData implements RenderDataAPI {
         return this.primeMatrix;
     }
 
+    /**
+     * When upload a custom prime matrix, call {@link RenderDataAPI#setCustomPrimeMatrix()} with this method.
+     *
+     * @return 4x4 matrix in buffer with 16 capacity.
+     */
+    public FloatBuffer getPrimeMatrixBuffer() {
+        return this.primeMatBuffer;
+    }
+
+    public boolean isAutoSubmitPrimeMatrix() {
+        return this.autoSubmitPrimeMat;
+    }
+
+    /**
+     * Enabling auto-submit incurs a slight memory copy overhead (default behavior, also with potential heap memory allocation).<p>
+     * If data changes are infrequent, you may disable this feature and use {@link RenderDataAPI#submitPrimeMatrix()} for manual submits instead, which can reduce unnecessary memory copies to a certain extent.<p>
+     * Alternatively, use {@link RenderDataAPI#getPrimeMatrixBuffer()} to directly operate on the corresponding buffer after this feature was disabled;
+     */
+    public void setAutoSubmitPrimeMatrix(boolean toggleAuto) {
+        this.autoSubmitPrimeMat = toggleAuto;
+    }
+
+    /**
+     * Only required when use a custom prime matrix.
+     */
+    public void submitPrimeMatrix() {
+        this.primeMatBuffer.position(0);
+        this.primeMatrix.store(this.primeMatBuffer);
+        this.primeMatBuffer.position(0);
+        this.primeMatBuffer.limit(16);
+    }
+
     public void initIdentityPrimeMatrix() {
         Matrix4f.setIdentity(this.primeMatrix);
     }
 
     /**
-     * Generally, it is viewport and camera matrix.<p>
+     * Generally, in there it is viewport and camera matrix, means 'main' not 'prime matrix'.<p>
      * In shader program: <strong>[this matrix * model matrix * vertex]</strong><p>
      * Must call {@link RenderDataAPI#setCustomPrimeMatrix()} if use it.
      *
@@ -271,6 +327,33 @@ public abstract class BaseRenderData implements RenderDataAPI {
 
     public Matrix4f getModelMatrix() {
         return this.modelMatrix;
+    }
+
+    /**
+     * @return 4x4 matrix in buffer with 16 capacity.
+     */
+    public FloatBuffer getModelMatrixBuffer() {
+        return this.modelMatBuffer;
+    }
+
+    public boolean isAutoSubmitModelMatrix() {
+        return this.autoSubmitModelMat;
+    }
+
+    /**
+     * Enabling auto-submit incurs a slight memory copy overhead (default behavior, also with potential heap memory allocation).<p>
+     * If data changes are infrequent, you may disable this feature and use {@link RenderDataAPI#submitModelMatrix()} for manual submits instead, which can reduce unnecessary memory copies to a certain extent.<p>
+     * Alternatively, use {@link RenderDataAPI#getModelMatrixBuffer()} to directly operate on the corresponding buffer after this feature was disabled;
+     */
+    public void setAutoSubmitModelMatrix(boolean toggleAuto) {
+        this.autoSubmitModelMat = toggleAuto;
+    }
+
+    public void submitModelMatrix() {
+        this.modelMatBuffer.position(0);
+        this.modelMatrix.store(this.modelMatBuffer);
+        this.modelMatBuffer.position(0);
+        this.modelMatBuffer.limit(16);
     }
 
     public void initIdentityModelMatrix() {
@@ -348,24 +431,27 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.setLocation(target.getLocation());
     }
 
+    /**
+     * Only for system rendering calls, not applicable to developer.
+     */
     public FloatBuffer pickPrimeMatrixPackage_mat4() {
-        this._primeMatBuffer.put(0, CommonUtil.getMatrix4fArray(this.primeMatrix), 0, 16);
-        this._primeMatBuffer.position(0);
-        this._primeMatBuffer.limit(16);
-        return this._primeMatBuffer;
+        if (this.autoSubmitPrimeMat) this.submitPrimeMatrix();
+        return this.primeMatBuffer;
     }
 
+    /**
+     * Only for system rendering calls, not applicable to developer.
+     */
     public FloatBuffer pickModelMatrixPackage_mat4() {
-        this._matrixBuffer.put(0, CommonUtil.getMatrix4fArray(this.modelMatrix), 0, 16);
-        this._matrixBuffer.position(0);
-        this._matrixBuffer.limit(16);
-        return this._matrixBuffer;
+        if (this.autoSubmitModelMat) this.submitModelMatrix();
+        return this.modelMatBuffer;
     }
 
+    /**
+     * Only for system rendering calls, not applicable to developer.
+     */
     public FloatBuffer pickDataPackage_vec4() {
-        this._statePackageBuffer.put(0, this.getGlobalTimerAlpha());
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        if (this.autoSubmitDataBuffer) this.submitEntityData();
         return this._statePackageBuffer;
     }
 

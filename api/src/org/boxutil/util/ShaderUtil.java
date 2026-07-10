@@ -21,7 +21,15 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * For all result texture, recommend to use storage texture for performance.
+ * For all result texture, recommend to use storage texture for performance.<p>
+ * In some shader program making method:<table border = "1">
+ * <tr><th>Letter</th><th>Means</th></tr>
+ * <tr><th>V</th><th>Vertex shader</th></tr>
+ * <tr><th>T</th><th>Tessellation (Control and Evaluation) shader</th></tr>
+ * <tr><th>G</th><th>Geometry shader</th></tr>
+ * <tr><th>F</th><th>Fragment shader</th></tr>
+ * <tr><th>C</th><th>Compute shader</th></tr>
+ * </table>
  */
 public final class ShaderUtil {
     private final static int[] _GEN_SDF_FORMAT = new int[]{GL30.GL_RGBA16UI, GL30.GL_R8, GL30.GL_R16};
