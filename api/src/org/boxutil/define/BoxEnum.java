@@ -94,5 +94,9 @@ public final class BoxEnum {
     public final static byte GL_DEVICE_INTEL = 2;
     public final static byte GL_DEVICE_OTHER = 3;
 
+    public final static byte QUALITY_NORMAL = 0;
+    public final static byte QUALITY_HIGH = 1;
+    public final static byte QUALITY_ULTRA = 2;
+
     private BoxEnum() {}
 }

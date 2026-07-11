@@ -4,24 +4,10 @@ import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
-import com.fs.starfarer.api.combat.ViewportAPI;
-import com.fs.starfarer.api.impl.campaign.ids.Factions;
+import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUsage;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.config.BoxThreadSync;
-import org.boxutil.define.BoxDatabase;
-import org.boxutil.define.BoxEnum;
-import org.boxutil.define.DirectEntityType;
-import org.boxutil.manager.ShaderCore;
-import org.boxutil.util.RenderingUtil;
-import org.boxutil.util.ShaderUtil;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL40;
-import org.lwjgl.util.vector.Vector2f;
-
-import java.awt.*;
-import java.util.EnumMap;
 
 public final class BUtil_CampaignEFS implements EveryFrameScript {
     private transient LocationAPI lastLocation = null;

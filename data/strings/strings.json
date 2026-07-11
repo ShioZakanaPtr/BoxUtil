@@ -100,14 +100,23 @@
 
 
 
-		"BUtil_ConfigPanel_ValueValid_zh_cn":"开启",
-		"BUtil_ConfigPanel_ValueValid_en_us":"Enabled",
+		"BUtil_ConfigPanel_ValueEnabled_zh_cn":"开启",
+		"BUtil_ConfigPanel_ValueEnabled_en_us":"Enabled",
 
-		"BUtil_ConfigPanel_ValueInvalid_zh_cn":"关闭",
-		"BUtil_ConfigPanel_ValueInvalid_en_us":"Disabled",
+		"BUtil_ConfigPanel_ValueDisabled_zh_cn":"关闭",
+		"BUtil_ConfigPanel_ValueDisabled_en_us":"Disabled",
 
-		"BUtil_ConfigPanel_ValueLimit_zh_cn":"最大",
-		"BUtil_ConfigPanel_ValueLimit_en_us":"Max",
+		"BUtil_ConfigPanel_ValueMaximum_zh_cn":"最大",
+		"BUtil_ConfigPanel_ValueMaximum_en_us":"Max",
+
+        "BUtil_ConfigPanel_QualityNormal_zh_cn":"正常",
+        "BUtil_ConfigPanel_QualityNormal_en_us":"Normal",
+
+        "BUtil_ConfigPanel_QualityHigh_zh_cn":"高",
+        "BUtil_ConfigPanel_QualityHigh_en_us":"High",
+
+        "BUtil_ConfigPanel_QualityUltra_zh_cn":"超高",
+        "BUtil_ConfigPanel_QualityUltra_en_us":"Ultra",
 
 		"BUtil_ConfigPanel_RebootTips_Value_zh_cn":"\n\n当前生效值为：%s \n\n%s",
 		"BUtil_ConfigPanel_RebootTips_Value_en_us":"\n\nCurrent valid value：%s \n\n%s",
@@ -140,8 +149,12 @@
         "BUtil_ConfigPanel_Global_04_zh_cn":"启用尾迹系统",
         "BUtil_ConfigPanel_Global_04_en_us":"Enable trail system",
         "BUtil_ConfigPanel_Global_04P_zh_cn":"控制是否启用BoxUtil内置的尾迹系统。\n\n采用合批绘制与异步管理，性能影响较轻。\n\n大部分情况下，即便设备不支持OpenGL4.3也可启用。\n该选项独立控制是否启用。",
-        "BUtil_ConfigPanel_Global_04P_en_us":"To controls whether he BoxUtil build-in trail system are enable。\n\nUses batched rendering and asynchronous management, with little performance impact.\n\nIn most cases, this feature can be enabled even on devices that do not support OpenGL 4.3.\nThis option independently controls whether the feature is enabled.",
+        "BUtil_ConfigPanel_Global_04P_en_us":"To controls whether he BoxUtil build-in trail system are enable.\n\nUses batched rendering and asynchronous management, with little performance impact.\n\nIn most cases, this feature can be enabled even on devices that do not support OpenGL 4.3.\nThis option independently controls whether the feature is enabled.",
 
+        "BUtil_ConfigPanel_Global_05_zh_cn":"尾迹系统质量",
+        "BUtil_ConfigPanel_Global_05_en_us":"Trail system quality",
+        "BUtil_ConfigPanel_Global_05P_zh_cn":"控制尾迹系统每秒内能够记录的最大尾迹节点数量。\n\n随着每秒能够记录的节点数量增大，更多的尾迹节点可以减轻尾迹出现明显直线段的情况，即该配置数值越大质量更高。\n\n对性能的影响主要表现在显存上，更大的可记录数量将会占用更多显存。",
+        "BUtil_ConfigPanel_Global_05P_en_us":"To controls the maximum number of trail nodes that can be recorded per second.\n\nAs the node count per second increases, more trail nodes help reduce visible straight‑line segments in the trail – in other words, a higher value improves quality.\n\nThe performance impact is primarily on video memory (VRAM), since a larger recordable count will consume more VRAM.",
 
 
 		"BUtil_ConfigPanel_Common_00_zh_cn":"实例渲染上限",

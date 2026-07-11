@@ -1,6 +1,6 @@
 package org.boxutil.base;
 
-import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.backends.core.BUtil_ThreadResource;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.instance.MemoryBlock;

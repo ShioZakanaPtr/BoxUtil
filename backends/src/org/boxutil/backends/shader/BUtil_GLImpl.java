@@ -3,7 +3,7 @@ package org.boxutil.backends.shader;
 import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.ViewportAPI;
-import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.BaseShaderPacksContext;
 import org.boxutil.base.api.*;

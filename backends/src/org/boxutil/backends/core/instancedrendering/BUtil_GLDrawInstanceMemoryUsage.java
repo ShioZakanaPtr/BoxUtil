@@ -1,4 +1,4 @@
-package org.boxutil.backends.core;
+package org.boxutil.backends.core.instancedrendering;
 
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
@@ -15,7 +15,6 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector3f;
 
 import java.awt.*;
 import java.nio.FloatBuffer;

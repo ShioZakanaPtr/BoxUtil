@@ -1,5 +1,6 @@
 package org.boxutil.backends.core;
 
+import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.base.BaseIlluminantData;
 import org.boxutil.base.api.ControlDataAPI;
 import org.boxutil.base.api.InstanceRenderAPI;

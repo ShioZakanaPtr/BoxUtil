@@ -17,7 +17,7 @@ import com.fs.state.AppDriver;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.manager.KernelCore;
 import org.boxutil.manager.ShaderCore;
-import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.backends.gui.BUtil_BaseConfigPanel;
 import org.boxutil.backends.reflect.BUtil_RefMethod;
 import org.boxutil.units.standard.misc.UIBorderObject;

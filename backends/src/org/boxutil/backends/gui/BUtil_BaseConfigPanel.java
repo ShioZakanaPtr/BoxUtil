@@ -53,6 +53,7 @@ public final class BUtil_BaseConfigPanel implements CustomUIPanelPlugin {
     private final static float _ITEM_BUTTON_WIDTH = 64.0f;
     private final static float _ITEM_BUTTON_HEIGHT = 32.0f;
 
+    private final static String _ITEM_STR_MAXIMUM = "BUtil_ConfigPanel_ValueMaximum";
     private final static Color _BUTTON_COLOR_BG = Global.getSettings().getColor("buttonBgDark");
     private final static float _EVENT_CD = 0.05f;
     private final float[] _ITEM_COLOR_BG = new float[4];
@@ -356,8 +357,8 @@ public final class BUtil_BaseConfigPanel implements CustomUIPanelPlugin {
         LabelAPI titleGlobal = maker.addPara(BoxConfigs.getString("BUtil_ConfigPanel_Global"), Misc.getButtonTextColor(), _ITEM_SPACE);
         titleGlobal.setAlignment(Alignment.MID);
         maker.addSpacer(_ITEM_SPACE * 2.0f);
-        for (byte i = 0; i < 5; i++) {
-            Item item = new Item(this, this.state[0], i == 4, (byte) 0, i);
+        for (byte i = 0; i < 6; i++) {
+            Item item = new Item(this, this.state[0], i == 5, (byte) 0, i);
             item.add("BUtil_ConfigPanel_Global_" + indexFill(i), maker, true, false);
             this._items.add(item);
         }
@@ -510,7 +511,7 @@ public final class BUtil_BaseConfigPanel implements CustomUIPanelPlugin {
             if (isTrackbar) {
                 int valueI = Integer.parseInt(value.one);
                 if (valueI == -1) {
-                    value.one = BoxConfigs.getString("BUtil_ConfigPanel_ValueLimit");
+                    value.one = BoxConfigs.getString(_ITEM_STR_MAXIMUM);
                 }
                 float trackbarWidth = this.state[5] * 0.42f - _ITEM_SPACE * 3.0f - _TRACKBAR_NUM_SPACES + _ITEM_BUTTON_WIDTH;
                 byte masStep = 10; // index 0 and default
@@ -684,7 +685,7 @@ public final class BUtil_BaseConfigPanel implements CustomUIPanelPlugin {
             Pair<String, Boolean> value = BoxConfigs.getValueString(this._ID[0], this._ID[1]);
             if (this._trackbar != null) {
                 int valueI = Integer.parseInt(value.one);
-                if (valueI == -1) value.one = BoxConfigs.getString("BUtil_ConfigPanel_ValueLimit");
+                if (valueI == -1) value.one = BoxConfigs.getString(_ITEM_STR_MAXIMUM);
                 if (setTrackbar) {
                     if (valueI > 0) {
                         byte exponent = CalculateUtil.getExponentPOTMin(valueI);

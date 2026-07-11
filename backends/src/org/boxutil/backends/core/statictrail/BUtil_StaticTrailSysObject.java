@@ -1,4 +1,4 @@
-package org.boxutil.backends.units;
+package org.boxutil.backends.core.statictrail;
 
 import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.units.standard.attribute.StaticTrailData;
@@ -12,7 +12,6 @@ import org.lwjgl.util.vector.Vector4f;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Deque;
-import java.util.function.Function;
 
 public record BUtil_StaticTrailSysObject(StaticTrailData trailData, float maxDur, Deque<TrackerMemory> trackerQueue) {
     public int hashCode() {

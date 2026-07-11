@@ -951,11 +951,12 @@ public final class ShaderCore {
         }
 
         if (_SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].isValid()) {
-            _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].initUniformSize(3)
+            _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].initUniformSize(4)
                     .beginUniform()
                     .loadUniformIndex("u_statePackage")
                     .loadUniformIndex("u_time")
-                    .loadUniformIndex("u_additionEmissive_DataBit");
+                    .loadUniformIndex("u_additionEmissive")
+                    .loadUniformIndex("u_dataBit");
 
             if (!fullFeatures) {
                 final int programID = _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].getId(),

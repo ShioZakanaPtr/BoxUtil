@@ -32,7 +32,7 @@ public final class BUtil_BoxUtilBackgroundThread {
         _ThreadTemplate apply(Thread thread, SharedDrawable drawable, Object args);
     }
 
-    private static void setupThread(final byte target, final _ThreadInit thread, final Object args, final String name) {
+    private static void setupThread(byte target, final _ThreadInit thread, final Object args, final String name) {
         try {
             _THREAD_RUNNABLE[target] = thread.apply(Thread.currentThread(), new SharedDrawable(Display.getDrawable()), args);
             __POOL.execute(_THREAD_RUNNABLE[target]);
@@ -57,8 +57,8 @@ public final class BUtil_BoxUtilBackgroundThread {
     }
 
     static abstract class _ThreadTemplate implements Runnable {
-        protected CountDownLatch _INIT_SYNC = new CountDownLatch(1);
         protected boolean _FAILED = true;
+        protected CountDownLatch _INIT_SYNC = new CountDownLatch(1);
 
         protected final Thread _HOST_THREAD;
         protected final Drawable _DRAWABLE;

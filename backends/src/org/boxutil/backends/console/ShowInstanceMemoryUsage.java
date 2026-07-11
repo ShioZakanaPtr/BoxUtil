@@ -1,7 +1,7 @@
 package org.boxutil.backends.console;
 
 import org.apache.log4j.Level;
-import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.config.BoxConfigs;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.lazywizard.console.BaseCommand;

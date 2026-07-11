@@ -31,6 +31,7 @@ public final class ShadingLUT {
      */
     public final static class AnisotropicLTCs {
         /**
+         * OpenGL 3.0+<p>
          * The anisotropic LTC matrix 3D texture, 8*8*64 vec3 layout, total three texture(M0, M1, M2).<p>
          * Build for the <code>alphaX, alphaY, theta, phi</code> parameterization.
          *
@@ -68,6 +69,7 @@ public final class ShadingLUT {
 
     public final static class IsotropicLTCs {
         /**
+         * OpenGL 3.0+<p>
          * The isotropic LTC matrix 2D texture, 64*64 vec4 layout.<p>
          * Build for the <code>roughness, sqrt(1.0f - NdotV)</code> parameterization.
          *
@@ -97,6 +99,7 @@ public final class ShadingLUT {
         }
 
         /**
+         * OpenGL 3.0+<p>
          * The isotropic LTC magnitude 2D texture, 64*64 vec2&float layout.
          *
          * @return int[] = {Integral(GGX norm, fresnel), Clipping(sphere for horizon-clipping)};
@@ -130,6 +133,7 @@ public final class ShadingLUT {
         }
 
         /**
+         * OpenGL 3.0+<p>
          * The isotropic LTC magnitude 2D texture, 64*64 vec3 layout.
          *
          * @return Magnitude(GGX norm, fresnel, sphere for horizon-clipping);
@@ -174,6 +178,7 @@ public final class ShadingLUT {
         }
 
         /**
+         * OpenGL 3.0+<p>
          * Real-time calculation.<p>
          * For how to sample the value in shader:<p>
          * <pre>
@@ -261,6 +266,7 @@ public final class ShadingLUT {
         }
 
         /**
+         * OpenGL 3.0+<p>
          * The Kulla-Conty Approximation 2D&1D texture, 64*64 / 64 half-float layout.<p>
          * For how to sample the value in shader:
          * <pre>

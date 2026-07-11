@@ -20,7 +20,8 @@
 // 9: vec4(angluarInRange, angluarOutRange)
 uniform vec4 u_statePackage[10];
 uniform float u_time;
-uniform uvec2 u_additionEmissive_DataBit;
+uniform uint u_additionEmissive;
+uniform uint u_dataBit;
 
 #ifdef LEGACY_TRAIL_MODE
 uniform sampler2D u_diffuseMap;
@@ -77,12 +78,12 @@ void main() {
     emissive.xyz += diffuse.xyz * complexRaw.x;
 
     diffuse.w = min(diffuse.w, 1.0);
-    o_fragColor = u_additionEmissive_DataBit.x > 0u ? (diffuse + emissive * emissive.w) : mix(diffuse, emissive, emissive.w);
+    o_fragColor = u_additionEmissive > 0u ? (diffuse + emissive * emissive.w) : mix(diffuse, emissive, emissive.w);
 
 #ifndef LEGACY_TRAIL_MODE
     mat2 TBN = mat2(gfb_data.fragUV_TBN.zw, -gfb_data.fragUV_TBN.w, gfb_data.fragUV_TBN.z);
 
-    bool ignoreIllum = (u_additionEmissive_DataBit.y & 2u) == 2u;
+    bool ignoreIllum = (u_dataBit & 2u) == 2u;
     vec4 normalRaw = texture(u_normalMap, gfb_data.fragUV_TBN.xy);
     normalRaw.xyz = fma(normalRaw.xyz, vec3(2.0), vec3(-1.0));
     if (normalRaw.w <= 0.0) normalRaw.xyz = vec3(0.0, 0.0, 1.0); else {
@@ -107,6 +108,6 @@ void main() {
     o_fragWorldNormal = ignoreIllum ? vec4(0.0, 0.0, 1.0, 0.0) : normalRaw;
     o_fragWorldTangent = resultTangent;
     o_fragMaterial = ignoreIllum ? vec4(0.0, 0.0, 0.0, 0.0) : vec4(complexRaw.yz, u_statePackage[EMISSIVE_SA].w, diffuse.w);
-    o_fragData = (cullAlpha > 0.0) ? uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), u_additionEmissive_DataBit.y, 1u) : uvec4(0u);
+    o_fragData = (cullAlpha > 0.0) ? uvec4(uvec2(vec2(1.0 - clamp(gl_FragCoord.z, 0.0, 1.0), cullAlpha) * 1023.0), u_dataBit, 1u) : uvec4(0u);
 #endif
 }

@@ -10,7 +10,7 @@ import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.manager.KernelCore;
 import org.boxutil.manager.ShaderCore;
-import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.backends.gui.BUtil_BaseConfigPanel;
 import org.boxutil.backends.gui.BUtil_BaseTrackbar;
 import org.boxutil.backends.shader.BUtil_GLImpl;
@@ -45,6 +45,9 @@ public final class BoxConfigs {
     private static boolean BUtil_EnableTrailSystem = true;
     private static boolean BUtil_EnableTrailSystemLocal = true;
     private static boolean BUtil_EnableTrailSystemDisplay = true;
+    private static byte BUtil_TrailSystemQuality = BoxEnum.QUALITY_NORMAL;
+    private static byte BUtil_TrailSystemQualityLocal = BoxEnum.QUALITY_NORMAL;
+    private static byte BUtil_TrailSystemQualityDisplay = BoxEnum.QUALITY_NORMAL;
 
     // Dynamic config values.
     private static int BUtil_InstanceClamp = 8192;
@@ -79,23 +82,31 @@ public final class BoxConfigs {
     private static boolean configInit = false;
     private static JSONObject data = null;
 
+    private final static String _BUTTON_ENABLED = "BUtil_ConfigPanel_ValueEnabled";
+    private final static String _BUTTON_DISABLED = "BUtil_ConfigPanel_ValueDisabled";
+    private final static byte _MAX_TRAIL_QUALITY = 2;
+
     static {
         _SHADER_PACKS_CONTEXTS.add(_BUtil_NotSelectedShadePacks);
     }
 
+    private static int clampI(int value, int min, int max) {
+        return Math.max(Math.min(value, max), min);
+    }
+
     public static String getRebootValueRealString(byte master, byte item) {
-        String result = "BUtil_ConfigPanel_";
+        String result = "BUtil_ConfigPanel_", append = "";
         boolean direct = false;
         switch (master) {
             case 0: {
                 result += "Global_";
                 switch (item) {
                     case 0: {
-                        result = BUtil_EnableShader ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableShader ? _BUTTON_ENABLED : _BUTTON_DISABLED;
                         break;
                     }
                     case 1: {
-                        result = BUtil_EnableCL ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableCL ? _BUTTON_ENABLED : _BUTTON_DISABLED;
                         break;
                     }
                     case 2: {
@@ -105,11 +116,29 @@ public final class BoxConfigs {
                         break;
                     }
                     case 3: {
-                        result = BUtil_CompatibleSync ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_CompatibleSync ? _BUTTON_ENABLED : _BUTTON_DISABLED;
                         break;
                     }
                     case 4: {
-                        result = BUtil_EnableTrailSystem ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableTrailSystem ? _BUTTON_ENABLED : _BUTTON_DISABLED;
+                        break;
+                    }
+                    case 5: {
+                        switch (BUtil_TrailSystemQuality) {
+                            case BoxEnum.QUALITY_NORMAL -> {
+                                result = "BUtil_ConfigPanel_QualityNormal";
+                                append = " - 30";
+                            }
+                            case BoxEnum.QUALITY_HIGH -> {
+                                result = "BUtil_ConfigPanel_QualityHigh";
+                                append = " - 60";
+                            }
+                            case BoxEnum.QUALITY_ULTRA -> {
+                                result = "BUtil_ConfigPanel_QualityUltra";
+                                append = " - 144";
+                            }
+                            default -> throw new IllegalStateException("Not a valid trail system quality value.");
+                        }
                     }
                 }
                 break;
@@ -118,16 +147,16 @@ public final class BoxConfigs {
                 result += "Misc_";
                 switch (item) {
                     case 1: {
-                        result = BUtil_EnableDebug ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableDebug ? _BUTTON_ENABLED : _BUTTON_DISABLED;
                     }
                 }
             }
         }
-        return direct ? result : getString(result);
+        return (direct ? result : getString(result)) + append;
     }
 
     public static Pair<String, Boolean> getValueString(byte master, byte item) {
-        String result = "BUtil_ConfigPanel_";
+        String result = "BUtil_ConfigPanel_", append = "";
         boolean valid = true;
         boolean direct = false;
         switch (master) {
@@ -135,13 +164,13 @@ public final class BoxConfigs {
                 result += "Global_";
                 switch (item) {
                     case 0: {
-                        result = BUtil_EnableShaderDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableShaderDisplay ? _BUTTON_ENABLED : _BUTTON_DISABLED;
 
                         valid = isBaseGL43Supported();
                         break;
                     }
                     case 1: {
-                        result = BUtil_EnableCLDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableCLDisplay ? _BUTTON_ENABLED : _BUTTON_DISABLED;
                         break;
                     }
                     case 2: {
@@ -152,13 +181,31 @@ public final class BoxConfigs {
                         break;
                     }
                     case 3: {
-                        result = BUtil_CompatibleSyncDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_CompatibleSyncDisplay ? _BUTTON_ENABLED : _BUTTON_DISABLED;
                         break;
                     }
                     case 4: {
-                        result = BUtil_EnableTrailSystemDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableTrailSystemDisplay ? _BUTTON_ENABLED : _BUTTON_DISABLED;
 
                         valid = BoxDatabase.getGLState().GL_GL32;
+                        break;
+                    }
+                    case 5: {
+                        switch (BUtil_TrailSystemQualityDisplay) {
+                            case BoxEnum.QUALITY_NORMAL -> {
+                                result = "BUtil_ConfigPanel_QualityNormal";
+                                append = " - 30";
+                            }
+                            case BoxEnum.QUALITY_HIGH -> {
+                                result = "BUtil_ConfigPanel_QualityHigh";
+                                append = " - 60";
+                            }
+                            case BoxEnum.QUALITY_ULTRA -> {
+                                result = "BUtil_ConfigPanel_QualityUltra";
+                                append = " - 144";
+                            }
+                            default -> throw new IllegalStateException("Not a valid trail system quality value.");
+                        }
                     }
                 }
                 break;
@@ -182,7 +229,7 @@ public final class BoxConfigs {
                         break;
                     }
                     case 3: {
-                        result = BUtil_EnableDistortionDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableDistortionDisplay ? _BUTTON_ENABLED : _BUTTON_DISABLED;
 
                         valid = ShaderCore.isDistortionValid();
                     }
@@ -197,14 +244,14 @@ public final class BoxConfigs {
                         break;
                     }
                     case 1: {
-                        result = BUtil_EnableDebugDisplay ? "BUtil_ConfigPanel_ValueValid" : "BUtil_ConfigPanel_ValueInvalid";
+                        result = BUtil_EnableDebugDisplay ? _BUTTON_ENABLED : _BUTTON_DISABLED;
 
                         valid = isGLDebugOutputSupported();
                     }
                 }
             }
         }
-        return new Pair<>(direct ? result : getString(result), valid);
+        return new Pair<>((direct ? result : getString(result)) + append, valid);
     }
 
     public static void setValue(byte master, byte item, boolean right, BUtil_BaseTrackbar trackbar) {
@@ -221,12 +268,12 @@ public final class BoxConfigs {
                     }
                     case 2: {
                         final short range = KernelCore.isValid() ? (short) KernelCore.getAllCLDevice().size() : 0;
-                        if (range <= 1) {
+                        if (range < 2) {
                             BUtil_CLDeviceDisplay = 0;
                         } else {
                             if (right) ++BUtil_CLDeviceDisplay; else --BUtil_CLDeviceDisplay;
-                            if (BUtil_CLDeviceDisplay < 0) BUtil_CLDeviceDisplay = (short) (range - 1);
                             if (BUtil_CLDeviceDisplay >= range) BUtil_CLDeviceDisplay = 0;
+                            if (BUtil_CLDeviceDisplay < 0) BUtil_CLDeviceDisplay = (short) (range - 1);
                         }
                         break;
                     }
@@ -236,6 +283,12 @@ public final class BoxConfigs {
                     }
                     case 4: {
                         BUtil_EnableTrailSystemDisplay = !BUtil_EnableTrailSystemDisplay;
+                        break;
+                    }
+                    case 5: {
+                        if (right) ++BUtil_TrailSystemQualityDisplay; else --BUtil_TrailSystemQualityDisplay;
+                        if (BUtil_TrailSystemQualityDisplay > _MAX_TRAIL_QUALITY) BUtil_TrailSystemQualityDisplay = 0;
+                        if (BUtil_TrailSystemQualityDisplay < 0) BUtil_TrailSystemQualityDisplay = _MAX_TRAIL_QUALITY;
                     }
                 }
                 break;
@@ -323,6 +376,9 @@ public final class BoxConfigs {
             BUtil_CompatibleSyncLocal = BUtil_CompatibleSync;
             BUtil_EnableTrailSystem = data.optBoolean("BUtil_EnableTrailSystem", true);
             BUtil_EnableTrailSystemLocal = BUtil_EnableTrailSystem;
+            BUtil_TrailSystemQuality = (byte) data.optInt("BUtil_TrailSystemQuality", BoxEnum.QUALITY_NORMAL);
+            BUtil_TrailSystemQuality = (byte) (byte) clampI(BUtil_TrailSystemQuality, 0, _MAX_TRAIL_QUALITY);;
+            BUtil_TrailSystemQualityLocal = BUtil_TrailSystemQuality;
 
             BUtil_EnableDebug = data.optBoolean("BUtil_EnableDebug", false);
             BUtil_EnableDebugLocal = BUtil_EnableDebug;
@@ -405,6 +461,7 @@ public final class BoxConfigs {
         BUtil_CLDeviceDisplay = 0;
         BUtil_CompatibleSyncDisplay = false;
         BUtil_EnableTrailSystemDisplay = true;
+        BUtil_TrailSystemQualityDisplay = BoxEnum.QUALITY_NORMAL;
 
         BUtil_InstanceClamp = 8192;
         BUtil_CurveNode = 32;
@@ -422,6 +479,7 @@ public final class BoxConfigs {
             BUtil_CLDeviceDisplay = BUtil_CLDeviceLocal;
             BUtil_CompatibleSyncDisplay = BUtil_CompatibleSyncLocal;
             BUtil_EnableTrailSystemDisplay = BUtil_EnableTrailSystemLocal;
+            BUtil_TrailSystemQualityDisplay = BUtil_TrailSystemQualityLocal;
 
             {
                 int value = data.optInt("BUtil_InstanceClamp", 8192);
@@ -459,6 +517,7 @@ public final class BoxConfigs {
             data.put("BUtil_CLDevice", BUtil_CLDeviceDisplay);
             data.put("BUtil_CompatibleSync", BUtil_CompatibleSyncDisplay);
             data.put("BUtil_EnableTrailSystem", BUtil_EnableTrailSystemDisplay);
+            data.put("BUtil_TrailSystemQuality", BUtil_TrailSystemQualityDisplay);
 
             data.put("BUtil_InstanceClamp", BUtil_InstanceClamp);
             data.put("BUtil_CurveNode", BUtil_CurveNode);
@@ -534,6 +593,10 @@ public final class BoxConfigs {
 
     public static boolean isTrailSystemEnable() {
         return BUtil_EnableTrailSystem;
+    }
+
+    public static byte getTrailSystemQuality() {
+        return BUtil_TrailSystemQuality;
     }
 
     public static short getMaxCurveNodeSize() {

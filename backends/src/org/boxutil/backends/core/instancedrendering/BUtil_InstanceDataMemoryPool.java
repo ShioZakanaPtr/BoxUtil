@@ -1,4 +1,4 @@
-package org.boxutil.backends.core;
+package org.boxutil.backends.core.instancedrendering;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.Pair;
@@ -214,6 +214,8 @@ public final class BUtil_InstanceDataMemoryPool {
             GL15.glDeleteBuffers(_SSBO[t]);
             _LOCK[t].unlock();
         }
+        _INVALID = true;
+        _INIT = false;
     }
 
     private static void runtimeBufferIDCheck(int target, int buffer) {
@@ -754,7 +756,7 @@ public final class BUtil_InstanceDataMemoryPool {
         return memory;
     }
 
-    static void _compact(InstanceType target) {
+    public static void _compact(InstanceType target) {
         if (_INVALID) return;
         final int t = target.ordinal();
         final Logger logger = Global.getLogger(InstanceDataMemoryPool.class);

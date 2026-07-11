@@ -75,7 +75,7 @@ public abstract class StaticTrailData {
     /**
      * Based on forward direction.
      *
-     * @return <code>{minVelocity.xy, maxVelocity.xy}</code>, returns <code>null</code> for none of velocity applied
+     * @return <code>{minVelocity.xy, maxVelocity.xy}</code>, returns <code>null</code> if without velocity applied
      */
     public @Nullable Vector4f getVelocityInRange() {
         return null;
@@ -84,7 +84,7 @@ public abstract class StaticTrailData {
     /**
      * Based on forward direction.
      *
-     * @return <code>{minVelocity.xy, maxVelocity.xy}</code>, returns <code>null</code> for none of velocity applied
+     * @return <code>{minVelocity.xy, maxVelocity.xy}</code>, returns <code>null</code> if without velocity applied
      */
     public @Nullable Vector4f getVelocityOutRange() {
         return null;
@@ -93,7 +93,7 @@ public abstract class StaticTrailData {
     /**
      * Based on forward direction.
      *
-     * @return <code>{minAngular, maxAngular}</code>, returns <code>null</code> for none of angular applied
+     * @return <code>{minAngular, maxAngular}</code>, returns <code>null</code> if without angular applied
      */
     public @Nullable Vector2f getAngularInRange() {
         return null;
@@ -102,7 +102,7 @@ public abstract class StaticTrailData {
     /**
      * Based on forward direction.
      *
-     * @return <code>{minAngular, maxAngular}</code>, returns <code>null</code> for none of angular applied
+     * @return <code>{minAngular, maxAngular}</code>, returns <code>null</code> if without angular applied
      */
     public @Nullable Vector2f getAngularOutRange() {
         return null;
@@ -119,7 +119,7 @@ public abstract class StaticTrailData {
      * <b>Only for system-gen trail, invalid for custom trail.</b><p>
      * Based on forward direction.
      *
-     * @return <code>{minOffset.xy, maxOffset.xy}</code>, returns <code>null</code> for none of offset
+     * @return <code>{minOffset.xy, maxOffset.xy}</code>, returns <code>null</code> if without offset
      */
     public @Nullable Vector4f getFixedSpawnOffsetRange() {
         return null;

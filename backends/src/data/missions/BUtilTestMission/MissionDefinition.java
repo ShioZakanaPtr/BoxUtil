@@ -499,8 +499,10 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 textEntityDirect.directDraw();
                 if (this.engine.getTotalElapsedTime(false) > 5.0f && !this.tog) {
                     this.tog = true;
-                    TextFieldEntity.TextData a = this.textEntityDirect.getTextDataList().get(1);
-                    a.text = "change." + TextFieldEntity.LINE_FEED_SYMBOL;
+                    final var textData = this.textEntityDirect.getTextDataList().get(1);
+                    textData.setText("change." + TextFieldEntity.LINE_FEED_SYMBOL);
+                    textData.setColor(Misc.getHighlightColor());
+                    textData.setStyleStrikeout(true);
                     this.textEntityDirect.setTextDataRefreshIndex(1);
                     this.textEntityDirect.setTextDataRefreshAllFromCurrentIndex();
                     this.textEntityDirect.submitText();

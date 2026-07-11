@@ -4,6 +4,7 @@ import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
+import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUsage;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.config.BoxConfigGUI;
 import org.boxutil.config.BoxConfigs;

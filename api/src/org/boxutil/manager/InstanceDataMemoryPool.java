@@ -3,7 +3,7 @@ package org.boxutil.manager;
 import org.boxutil.base.api.InstanceRenderAPI;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.instance.MemoryBlock;
-import org.boxutil.backends.core.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import de.unkrig.commons.nullanalysis.NotNull;
 
 /**
