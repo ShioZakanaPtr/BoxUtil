@@ -44,9 +44,9 @@ import java.nio.FloatBuffer;
  * </pre>
  */
 public class LegacyNormalMapHelper {
+    protected static volatile boolean _PTR_INIT = false;
     protected static _FuncPtr _FUNC_PTR = null;
     protected static _Func42Ptr _FUNC42_PTR = null;
-    private static boolean _PTR_INIT = false;
 
     protected final int _FBO;
     protected final int _VBO;
@@ -100,94 +100,98 @@ public class LegacyNormalMapHelper {
         }
 
         if (!_PTR_INIT) {
-            _PTR_INIT = true;
-            ContextCapabilities cap = GLContext.getCapabilities();
+            synchronized (LegacyNormalMapHelper.class) {
+                if (!_PTR_INIT) {
+                    _PTR_INIT = true;
+                    final var cap = GLContext.getCapabilities();
 
-            if (cap.OpenGL30) {
-                _FUNC_PTR = new _FuncPtr() {
-                    public int glGenFramebuffers() {
-                        return GL30.glGenFramebuffers();
-                    }
+                    if (cap.OpenGL30) {
+                        _FUNC_PTR = new _FuncPtr() {
+                            public int glGenFramebuffers() {
+                                return GL30.glGenFramebuffers();
+                            }
 
-                    public void glBindFramebuffer(int framebuffer) {
-                        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer);
-                    }
+                            public void glBindFramebuffer(int framebuffer) {
+                                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer);
+                            }
 
-                    public void glFramebufferTexture2D(int texture) {
-                        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, texture, 0);
-                    }
+                            public void glFramebufferTexture2D(int texture) {
+                                GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, texture, 0);
+                            }
 
-                    public void glDeleteFramebuffers(int framebuffer) {
-                        GL30.glDeleteFramebuffers(framebuffer);
-                    }
+                            public void glDeleteFramebuffers(int framebuffer) {
+                                GL30.glDeleteFramebuffers(framebuffer);
+                            }
 
-                    public void glGenerateMipmap() {
-                        GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-                    }
+                            public void glGenerateMipmap() {
+                                GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+                            }
 
-                    public void glDrawBuffers() {
-                        GL20.glDrawBuffers(GL30.GL_COLOR_ATTACHMENT0);
-                    }
-                };
-            } else if (cap.GL_ARB_framebuffer_object) {
-                _FUNC_PTR = new _FuncPtr() {
-                    public int glGenFramebuffers() {
-                        return ARBFramebufferObject.glGenFramebuffers();
-                    }
+                            public void glDrawBuffers() {
+                                GL20.glDrawBuffers(GL30.GL_COLOR_ATTACHMENT0);
+                            }
+                        };
+                    } else if (cap.GL_ARB_framebuffer_object) {
+                        _FUNC_PTR = new _FuncPtr() {
+                            public int glGenFramebuffers() {
+                                return ARBFramebufferObject.glGenFramebuffers();
+                            }
 
-                    public void glBindFramebuffer(int framebuffer) {
-                        ARBFramebufferObject.glBindFramebuffer(ARBFramebufferObject.GL_FRAMEBUFFER, framebuffer);
-                    }
+                            public void glBindFramebuffer(int framebuffer) {
+                                ARBFramebufferObject.glBindFramebuffer(ARBFramebufferObject.GL_FRAMEBUFFER, framebuffer);
+                            }
 
-                    public void glFramebufferTexture2D(int texture) {
-                        ARBFramebufferObject.glFramebufferTexture2D(ARBFramebufferObject.GL_FRAMEBUFFER, ARBFramebufferObject.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, texture, 0);
-                    }
+                            public void glFramebufferTexture2D(int texture) {
+                                ARBFramebufferObject.glFramebufferTexture2D(ARBFramebufferObject.GL_FRAMEBUFFER, ARBFramebufferObject.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, texture, 0);
+                            }
 
-                    public void glDeleteFramebuffers(int framebuffer) {
-                        ARBFramebufferObject.glDeleteFramebuffers(framebuffer);
-                    }
+                            public void glDeleteFramebuffers(int framebuffer) {
+                                ARBFramebufferObject.glDeleteFramebuffers(framebuffer);
+                            }
 
-                    public void glGenerateMipmap() {
-                        ARBFramebufferObject.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-                    }
+                            public void glGenerateMipmap() {
+                                ARBFramebufferObject.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+                            }
 
-                    public void glDrawBuffers() {
-                        GL20.glDrawBuffers(ARBFramebufferObject.GL_COLOR_ATTACHMENT0);
-                    }
-                };
-            } else if (cap.GL_EXT_framebuffer_object) {
-                _FUNC_PTR = new _FuncPtr() {
-                    public int glGenFramebuffers() {
-                        return EXTFramebufferObject.glGenFramebuffersEXT();
-                    }
+                            public void glDrawBuffers() {
+                                GL20.glDrawBuffers(ARBFramebufferObject.GL_COLOR_ATTACHMENT0);
+                            }
+                        };
+                    } else if (cap.GL_EXT_framebuffer_object) {
+                        _FUNC_PTR = new _FuncPtr() {
+                            public int glGenFramebuffers() {
+                                return EXTFramebufferObject.glGenFramebuffersEXT();
+                            }
 
-                    public void glBindFramebuffer(int framebuffer) {
-                        EXTFramebufferObject.glBindFramebufferEXT(EXTFramebufferObject.GL_FRAMEBUFFER_EXT, framebuffer);
-                    }
+                            public void glBindFramebuffer(int framebuffer) {
+                                EXTFramebufferObject.glBindFramebufferEXT(EXTFramebufferObject.GL_FRAMEBUFFER_EXT, framebuffer);
+                            }
 
-                    public void glFramebufferTexture2D(int texture) {
-                        EXTFramebufferObject.glFramebufferTexture2DEXT(EXTFramebufferObject.GL_FRAMEBUFFER_EXT, EXTFramebufferObject.GL_COLOR_ATTACHMENT0_EXT, GL11.GL_TEXTURE_2D, texture, 0);
-                    }
+                            public void glFramebufferTexture2D(int texture) {
+                                EXTFramebufferObject.glFramebufferTexture2DEXT(EXTFramebufferObject.GL_FRAMEBUFFER_EXT, EXTFramebufferObject.GL_COLOR_ATTACHMENT0_EXT, GL11.GL_TEXTURE_2D, texture, 0);
+                            }
 
-                    public void glDeleteFramebuffers(int framebuffer) {
-                        EXTFramebufferObject.glDeleteFramebuffersEXT(framebuffer);
-                    }
+                            public void glDeleteFramebuffers(int framebuffer) {
+                                EXTFramebufferObject.glDeleteFramebuffersEXT(framebuffer);
+                            }
 
-                    public void glGenerateMipmap() {
-                        EXTFramebufferObject.glGenerateMipmapEXT(GL11.GL_TEXTURE_2D);
-                    }
+                            public void glGenerateMipmap() {
+                                EXTFramebufferObject.glGenerateMipmapEXT(GL11.GL_TEXTURE_2D);
+                            }
 
-                    public void glDrawBuffers() {
-                        GL20.glDrawBuffers(EXTFramebufferObject.GL_COLOR_ATTACHMENT0_EXT);
-                    }
-                };
-            } else _FUNC_PTR = null;
+                            public void glDrawBuffers() {
+                                GL20.glDrawBuffers(EXTFramebufferObject.GL_COLOR_ATTACHMENT0_EXT);
+                            }
+                        };
+                    } else _FUNC_PTR = null;
 
-            if (cap.OpenGL42) {
-                _FUNC42_PTR = (levels, width, height) -> GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, levels, GL11.GL_RGBA8, width, height);
-            } else if (cap.GL_ARB_texture_storage) {
-                _FUNC42_PTR = (levels, width, height) -> ARBTextureStorage.glTexStorage2D(GL11.GL_TEXTURE_2D, levels, GL11.GL_RGBA8, width, height);
-            } else _FUNC42_PTR = null;
+                    if (cap.OpenGL42) {
+                        _FUNC42_PTR = (levels, width, height) -> GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, levels, GL11.GL_RGBA8, width, height);
+                    } else if (cap.GL_ARB_texture_storage) {
+                        _FUNC42_PTR = (levels, width, height) -> ARBTextureStorage.glTexStorage2D(GL11.GL_TEXTURE_2D, levels, GL11.GL_RGBA8, width, height);
+                    } else _FUNC42_PTR = null;
+                }
+            }
         }
 
         if (_FUNC_PTR != null) {

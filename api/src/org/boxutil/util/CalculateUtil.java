@@ -2,15 +2,16 @@ package org.boxutil.util;
 
 import com.fs.starfarer.api.combat.BoundsAPI;
 import com.fs.starfarer.api.combat.CombatEntityAPI;
-import de.unkrig.commons.nullanalysis.NotNull;
-import de.unkrig.commons.nullanalysis.Nullable;
 import org.boxutil.define.BoxEnum;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.util.vector.*;
 
 import java.awt.*;
 import java.io.PrintStream;
 import java.util.*;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class CalculateUtil {
     private static float clampF(float value, float min, float max) {
         return Math.max(Math.min(value, max), min);

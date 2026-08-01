@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class CampaignRenderingManager {
     /**
      * <strong>NOTE: If entity at highest layer, without any post effect likes bloom or AA.</strong>

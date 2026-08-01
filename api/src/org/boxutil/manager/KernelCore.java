@@ -17,6 +17,7 @@ import java.nio.IntBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class KernelCore {
     private static CLPlatform clPlatform = null;
     private static CLPlatformCapabilities clPlatformCap = null;

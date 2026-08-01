@@ -316,12 +316,18 @@ public class DistortionEntity extends BaseInstanceRenderData implements DirectDr
     }
 
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.sizeState_A, 0, 12);
-        this._statePackageBuffer.put(12, this.sizeState_B, 0, 7);
-        this._statePackageBuffer.put(19, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.globalTimer[0]);
-        this._statePackageBuffer.put(20, this.state_C, 0, 4);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.sizeState_A, 0, 12);
+        this.statePackageBuffer.put(12, this.sizeState_B, 0, 7);
+        this.statePackageBuffer.put(19, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.globalTimer[0]);
+        this.statePackageBuffer.put(20, this.state_C, 0, 4);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
+    }
+
+    public FloatBuffer pickDataPackage_vec4() {
+        if (this.autoSubmitDataBuffer) this.submitEntityData();
+        else this.statePackageBuffer.put(19, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.globalTimer[0]);
+        return this.statePackageBuffer;
     }
 
     public Object entityType() {

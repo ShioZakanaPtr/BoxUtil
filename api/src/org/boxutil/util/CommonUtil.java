@@ -23,6 +23,7 @@ import java.nio.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class CommonUtil {
     private final static double[] _LINEAR = new double[]{0.2126729d, 0.7151522d, 0.0721750d};
     private final static int[] _IMAGE_SAVE_MASK = new int[]{0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000};

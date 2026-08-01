@@ -4,7 +4,9 @@ import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
+import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
 import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUsage;
+import org.boxutil.backends.core.statictrail.BUtil_GLDrawStaticTrailMemoryUsage;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.config.BoxConfigGUI;
 import org.boxutil.config.BoxConfigs;
@@ -58,7 +60,7 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
 
         final var context = BoxConfigs.getCurrShaderPacksContext();
         context.advanceInCombat(this.engine, amount);
-        BUtil_GLDrawInstanceMemoryUsage.showGUI();
+        BUtil_GLDrawInfo.showInfo();
     }
 
     public void renderInUICoords(ViewportAPI viewport) {

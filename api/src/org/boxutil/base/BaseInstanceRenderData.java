@@ -27,7 +27,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     protected int instanceRenderingCount = 0;
     protected int instanceRenderingOffset = 0;
     protected float instanceTimerOverride = -1.0f;
-    protected volatile MemoryBlock _memory = null;
+    protected volatile MemoryBlock memory = null;
     protected final boolean[] needRefreshInstanceData = new boolean[]{false, false}; // once, always
     protected boolean mappingSubmit = false;
     protected List<InstanceDataAPI> instanceData = null;
@@ -44,8 +44,8 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     }
 
     protected void resetInstanceDataResource() {
-        if (this._memory != null) InstanceDataMemoryPool.free(this._memory);
-        this._memory = null;
+        if (this.memory != null) InstanceDataMemoryPool.free(this.memory);
+        this.memory = null;
     }
 
     protected void resetInstanceDataClient() {
@@ -66,10 +66,10 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * A.K.A. <code>free()</code> for instance data resources.
      */
     public void resetInstanceData() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.resetInstanceDataResource();
         this.resetInstanceDataClient();
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public List<InstanceDataAPI> getInstanceData() {
@@ -88,10 +88,10 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * @return returns {@link BoxEnum#STATE_SUCCESS} when success, return {@link BoxEnum#STATE_SUCCESS} when null list that set to empty list.
      */
     public byte setInstanceData(@Nullable List<InstanceDataAPI> instanceData) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (instanceData == null) {
             this.instanceData = new ArrayList<>(8);
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         List<InstanceDataAPI> check = instanceData;
@@ -109,7 +109,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         this.globalTimer[2] = checkTimer[1];
         this.globalTimer[3] = checkTimer[2];
         this.instanceData = check;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -120,10 +120,10 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * @return returns {@link BoxEnum#STATE_SUCCESS} when success, return {@link BoxEnum#STATE_FAILED} when null list that set to empty list.
      */
     public byte setInstanceData(@Nullable List<InstanceDataAPI> instanceData, float fadeIn, float full, float fadeOut) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (instanceData == null) {
             this.instanceData = new ArrayList<>(8);
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         List<InstanceDataAPI> check = instanceData;
@@ -131,7 +131,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         if (instanceData.size() > limit) check = check.subList(limit - 1, instanceData.size());
         this.setGlobalTimer(fadeIn, full, fadeOut);
         this.instanceData = check;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -141,10 +141,10 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * @return returns {@link BoxEnum#STATE_SUCCESS} when success, return {@link BoxEnum#STATE_FAILED} when over limit.
      */
     public byte addInstanceData(@NotNull InstanceDataAPI instanceData) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.instanceData == null) this.instanceData = new ArrayList<>();
         if (this.instanceData.size() > BoxConfigs.getMaxInstanceDataSize()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         float[] tmp = instanceData.getTimer();
@@ -155,7 +155,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         if (tmp[3] < this.globalTimer[3] && tmp[3] > -500.0f)
             this.globalTimer[3] = tmp[3];
         this.instanceData.add(instanceData);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -166,9 +166,9 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      */
     public byte submitInstanceData() {
         if (this.instanceData == null || this.instanceData.isEmpty()) return BoxEnum.STATE_FAILED;
-        final boolean newBuf = this._memory == null;
+        final boolean newBuf = this.memory == null;
         if (newBuf) this.mallocInstanceData(this.instanceData.size());
-        if (this._memory == null || this._memory.is_type_fixed()) return BoxEnum.STATE_FAILED_OTHER;
+        if (this.memory == null || this.memory.is_type_fixed()) return BoxEnum.STATE_FAILED_OTHER;
         if (newBuf) {
             this.setInstanceDataRefreshIndex(0);
             this.setInstanceDataRefreshOffset(0);
@@ -191,11 +191,11 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         return BoxEnum.STATE_SUCCESS;
     }
 
-    private void _packingInstanceData(ByteBuffer rawBuffer, final InstanceType type, final int index, final int limit, final boolean isFixed) {
-        FloatBuffer buffer = rawBuffer.asFloatBuffer();
+    private void _packingInstanceData(final ByteBuffer rawBuffer, int offset, final InstanceType type, int index, int limit, boolean isFixed) {
+        final FloatBuffer buffer = rawBuffer.asFloatBuffer();
         InstanceDataAPI data;
         float[] ptr;
-        int pos = 0;
+        int pos = offset;
         for (int i = index; i < limit; ++i) {
             data = this.instanceData.get(i);
             if (data == null) ptr = new float[type.getCompactComponent()];
@@ -207,39 +207,47 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     }
 
     public void submitInstance() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         final int refreshSize = this.instanceRefreshSize;
         if (!this.haveValidInstanceData() || refreshSize < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
-        if (refreshSize > this._memory.instance_count()) InstanceDataMemoryPool.realloc(this._memory, refreshSize);
+        if (refreshSize > this.memory.instance_count()) InstanceDataMemoryPool.realloc(this.memory, refreshSize);
 
         final int refreshIndex = this.instanceRefreshIndex, refreshOffset = this.instanceRefreshOffset;
         final boolean mappingBuffer = this.mappingSubmit;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
 
         BUtil_ThreadResource.Logical.offerSubmitInstance(unused -> {
-            if (this._memory == null) return;
-            final boolean isFixed = this._memory.is_type_fixed();
-            final var type = this._memory.type();
-            final var _lock = BUtil_InstanceDataMemoryPool.getGPULock(type);
+            if (this.memory == null) return;
+            final boolean isFixed = this.memory.is_type_fixed();
+            final var type = this.memory.meta();
+            final var pool = BUtil_InstanceDataMemoryPool.getPool(type);
+            final var lock = pool.getGPULock();
 
-            final int ssbo = InstanceDataMemoryPool.getBufferID(type), refreshLimit = refreshIndex + refreshSize;
+            final boolean persistentMapping = pool.isPersistentMapping() && pool.getMappingBuffer() != null;
+            final int refreshLimit = refreshIndex + refreshSize, uploadOffset = pool.getPoolBehavior().reservedSize;
             final long refreshByteSize = (long) type.getSize() * refreshSize;
 
             ByteBuffer rawBuffer = null;
-            if (!mappingBuffer) {
+            if (!mappingBuffer && !persistentMapping) {
                 rawBuffer = BufferUtils.createByteBuffer((int) refreshByteSize);
-                this._packingInstanceData(rawBuffer, type, refreshIndex, refreshLimit, isFixed);
+                this._packingInstanceData(rawBuffer, 0, type, refreshIndex, refreshLimit, isFixed);
             }
 
-            _lock.lock();
-            if (this._memory.is_free() || ssbo < 1) {
-                _lock.unlock();
+            lock.lock();
+            final int ssbo = InstanceDataMemoryPool.getBufferID(type);
+            if (this.memory.is_free() || ssbo < 1) {
+                lock.unlock();
                 return;
             }
-            final long refreshByteOffset = this._memory.address() + (long) type.getSize() * refreshOffset;
+            final long refreshByteOffset = this.memory.address() + (long) type.getSize() * refreshOffset + uploadOffset;
+
+            if (persistentMapping) {
+                this._packingInstanceData(pool.getMappingBuffer(), (int) (refreshByteOffset >> 2), type, refreshIndex, refreshLimit, isFixed);
+                return;
+            }
 
             GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
             if (mappingBuffer) {
@@ -247,17 +255,17 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
                 rawBuffer = GL30.glMapBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, refreshByteOffset, refreshByteSize, _access, null);
                 if (rawBuffer == null || rawBuffer.capacity() < refreshByteSize) {
                     GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
-                    _lock.unlock();
+                    lock.unlock();
                     return;
                 }
 
-                this._packingInstanceData(rawBuffer, type, refreshIndex, refreshLimit, isFixed);
+                this._packingInstanceData(rawBuffer, 0, type, refreshIndex, refreshLimit, isFixed);
             }
 
             rawBuffer.position(0).limit(rawBuffer.capacity()); // assert not null
             if (mappingBuffer) GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
             else GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, refreshByteOffset, rawBuffer);
-            _lock.unlock();
+            lock.unlock();
         });
     }
 
@@ -273,9 +281,9 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      */
     public byte submitFixedInstanceData() {
         if (this.instanceData == null || this.instanceData.isEmpty()) return BoxEnum.STATE_FAILED;
-        final boolean newBuf = this._memory == null;
+        final boolean newBuf = this.memory == null;
         if (newBuf) this.mallocFixedInstanceData(this.instanceData.size());
-        if (this._memory == null || !this._memory.is_type_fixed()) return BoxEnum.STATE_FAILED_OTHER;
+        if (this.memory == null || !this.memory.is_type_fixed()) return BoxEnum.STATE_FAILED_OTHER;
         if (newBuf) {
             this.setInstanceDataRefreshIndex(0);
             this.setInstanceDataRefreshOffset(0);
@@ -312,9 +320,9 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * @param mappingMode to controls whether submit use <code>glMapBufferRange()</code>, else use <code>glBufferSubData()</code>.
      */
     public void setMappingInstanceSubmit(boolean mappingMode) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.mappingSubmit = mappingMode;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     @Deprecated
@@ -353,11 +361,11 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     }
 
     public boolean haveValidInstanceData() {
-        return this._memory != null && this._memory.reference() > 0;
+        return this.memory != null && this.memory.reference() > 0;
     }
 
     public int getValidInstanceDataCount() {
-        return this.haveValidInstanceData() ? this._memory.instance_count() : 0;
+        return this.haveValidInstanceData() ? this.memory.instance_count() : 0;
     }
 
     @Deprecated
@@ -394,50 +402,50 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * @param index will refresh instance data start from this index.
      */
     public void setInstanceDataRefreshIndex(int index) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.instanceData == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.instanceRefreshIndex = Math.min(Math.max(index, 0), Math.max(this.instanceData.size() - 1, 0));
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
      * @param targetIndex will refresh instance data to instance data index of memory.
      */
     public void setInstanceDataRefreshOffset(int targetIndex) {
-        this._sync_lock.lock();
-        if (this._memory == null) {
-            this._sync_lock.unlock();
+        this.sync_lock.lock();
+        if (this.memory == null) {
+            this.sync_lock.unlock();
             return;
         }
-        this.instanceRefreshOffset = Math.min(Math.max(targetIndex, 0), this._memory.instance_count() - 1);
-        this._sync_lock.unlock();
+        this.instanceRefreshOffset = Math.min(Math.max(targetIndex, 0), this.memory.instance_count() - 1);
+        this.sync_lock.unlock();
     }
 
     /**
      * @param size Will refresh instance data count.
      */
     public void setInstanceDataRefreshSize(int size) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.instanceData == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         final int listSize = this.instanceData.size();
         this.instanceRefreshSize = this.instanceRefreshIndex + size > listSize ? listSize - this.instanceRefreshIndex : Math.max(size, 0);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public void setInstanceDataRefreshAllFromCurrentIndex() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.instanceData == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.instanceRefreshSize = this.instanceData.size() - this.instanceRefreshIndex;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getRenderingCount() {
@@ -445,14 +453,14 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     }
 
     public void setRenderingCount(int num) {
-        this._sync_lock.lock();
-        if (this._memory == null) {
-            this._sync_lock.unlock();
+        this.sync_lock.lock();
+        if (this.memory == null) {
+            this.sync_lock.unlock();
             return;
         }
-        final int instanceCount = this._memory.instance_count();
+        final int instanceCount = this.memory.instance_count();
         this.instanceRenderingCount = this.instanceRenderingOffset + num > instanceCount ? instanceCount - this.instanceRenderingOffset : Math.max(num, 0);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getRenderingOffset() {
@@ -463,23 +471,23 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * Should reset the rendering count after that.
      */
     public void setRenderingOffset(int index) {
-        this._sync_lock.lock();
-        if (this._memory == null) {
-            this._sync_lock.unlock();
+        this.sync_lock.lock();
+        if (this.memory == null) {
+            this.sync_lock.unlock();
             return;
         }
-        this.instanceRenderingOffset = Math.min(Math.max(index, 0), this._memory.instance_count());
-        this._sync_lock.unlock();
+        this.instanceRenderingOffset = Math.min(Math.max(index, 0), this.memory.instance_count());
+        this.sync_lock.unlock();
     }
 
     public void setRenderingAllInstanceFromCurrentOffset() {
-        this._sync_lock.lock();
-        if (this._memory == null) {
-            this._sync_lock.unlock();
+        this.sync_lock.lock();
+        if (this.memory == null) {
+            this.sync_lock.unlock();
             return;
         }
-        this.instanceRenderingCount = this._memory.instance_count() - this.instanceRenderingOffset;
-        this._sync_lock.unlock();
+        this.instanceRenderingCount = this.memory.instance_count() - this.instanceRenderingOffset;
+        this.sync_lock.unlock();
     }
 
     @Deprecated
@@ -489,7 +497,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
 
     @Deprecated
     public boolean isInstanceData2D() {
-        return this._memory == null || this._memory.is_type_2D();
+        return this.memory == null || this.memory.is_type_2D();
     }
 
     /**
@@ -500,7 +508,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
 
     @Deprecated
     public boolean isInstanceData3D() {
-        return this._memory != null && !this._memory.is_type_2D();
+        return this.memory != null && !this.memory.is_type_2D();
     }
 
     /**
@@ -510,7 +518,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     public void setUseInstanceData3D() {}
 
     public MemoryBlock getInstanceDataMemory() {
-        return this._memory;
+        return this.memory;
     }
 
     /**
@@ -518,15 +526,15 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * And if any rendering entity with not-full-range refresh, will only refresh the minimum range for them.
      */
     public void setSharedInstanceData(InstanceRenderAPI renderData) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         final MemoryBlock renderDataMemory = renderData.getInstanceDataMemory();
-        if (!BoxConfigs.isShaderEnable() || this._memory == renderDataMemory || !renderData.haveValidInstanceData()) {
-            this._sync_lock.unlock();
+        if (!BoxConfigs.isShaderEnable() || this.memory == renderDataMemory || !renderData.haveValidInstanceData()) {
+            this.sync_lock.unlock();
             return;
         }
-        if (this._memory != null) InstanceDataMemoryPool.free(this._memory);
-        this._memory = InstanceDataMemoryPool.share(renderDataMemory);
-        this._sync_lock.unlock();
+        if (this.memory != null) InstanceDataMemoryPool.free(this.memory);
+        this.memory = InstanceDataMemoryPool.share(renderDataMemory);
+        this.sync_lock.unlock();
     }
 
     /**
@@ -541,10 +549,10 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      * </pre>
      */
     public void resetMemory(MemoryBlock memory) {
-        this._sync_lock.lock();
-        if (this._memory != null) InstanceDataMemoryPool.free(this._memory);
-        this._memory = memory;
-        this._sync_lock.unlock();
+        this.sync_lock.lock();
+        if (this.memory != null) InstanceDataMemoryPool.free(this.memory);
+        this.memory = memory;
+        this.sync_lock.unlock();
     }
 
     public void resetMemory() {

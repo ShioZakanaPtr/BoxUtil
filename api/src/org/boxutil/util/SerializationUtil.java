@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class SerializationUtil {
     private final static Logger _LOG = Global.getLogger(SerializationUtil.class);
     

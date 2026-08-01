@@ -167,13 +167,13 @@ public class BUtil_NotSelectedShaderPacks extends BaseShaderPacksContext {
         tooltip.addSectionHeading(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_Setting_BloomTitle"), Alignment.MID, 12.0f);
         if (!ShaderCore.isBloomValid()) tooltip.addSectionHeading(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_FeatureWarn"), Misc.getNegativeHighlightColor(), new Color(0, true), Alignment.MID, 5.0f);
         tooltip.addPara(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_Setting_BloomDesc"), 5.0f);
-        this._button[0] = tooltip.addCheckbox(cbWidth, _CHECKBOX_HEIGHT, BoxConfigs.getString("BUtil_ConfigPanel_ValueValid"), _BUTTON_BLOOM, ButtonAPI.UICheckboxSize.LARGE, 5.0f);
+        this._button[0] = tooltip.addCheckbox(cbWidth, _CHECKBOX_HEIGHT, BoxConfigs.getString("BUtil_ConfigPanel_ValueEnabled"), _BUTTON_BLOOM, ButtonAPI.UICheckboxSize.LARGE, 5.0f);
         this._button[0].setEnabled(ShaderCore.isBloomValid());
 
         tooltip.addSectionHeading(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_Setting_AATitle"), Alignment.MID, 12.0f);
         if (!ShaderCore.isFXAAValid()) tooltip.addSectionHeading(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_FeatureWarn"), Misc.getNegativeHighlightColor(), new Color(0, true), Alignment.MID, 5.0f);
         tooltip.addPara(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_Setting_AADesc"), 5.0f);
-        this._button[1] = tooltip.addCheckbox(cbWidth, _CHECKBOX_HEIGHT, BoxConfigs.getString("BUtil_ConfigPanel_ValueValid"), _BUTTON_AA, ButtonAPI.UICheckboxSize.LARGE, 5.0f);
+        this._button[1] = tooltip.addCheckbox(cbWidth, _CHECKBOX_HEIGHT, BoxConfigs.getString("BUtil_ConfigPanel_ValueEnabled"), _BUTTON_AA, ButtonAPI.UICheckboxSize.LARGE, 5.0f);
         this._button[1].setEnabled(ShaderCore.isFXAAValid());
         tooltip.addTitle(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_Setting_AAType")).getPosition().belowLeft(this._button[1], 12.0f);
         this._button[2] = tooltip.addAreaCheckbox(Global.getSettings().getString("ui", "BUtil_NotSelectedShaderPacks_Setting_AAC"), _BUTTON_AAC, buttonBg, buttonBgDark, buttonText, cbWidthHalf, _CHECKBOX_HEIGHT, 5.0f);
@@ -184,7 +184,7 @@ public class BUtil_NotSelectedShaderPacks extends BaseShaderPacksContext {
 
         tooltip.addTitle(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_Setting_DepthAA")).getPosition().belowLeft(this._button[2], 12.0f);
         tooltip.addPara(BoxConfigs.getString("BUtil_NotSelectedShaderPacks_Setting_DepthAADesc"), 5.0f);
-        this._button[4] = tooltip.addCheckbox(cbWidth, _CHECKBOX_HEIGHT, BoxConfigs.getString("BUtil_ConfigPanel_ValueValid"), _BUTTON_DEPTHAA, ButtonAPI.UICheckboxSize.LARGE, 5.0f);
+        this._button[4] = tooltip.addCheckbox(cbWidth, _CHECKBOX_HEIGHT, BoxConfigs.getString("BUtil_ConfigPanel_ValueEnabled"), _BUTTON_DEPTHAA, ButtonAPI.UICheckboxSize.LARGE, 5.0f);
         this._button[4].setEnabled(ShaderCore.isFXAAValid());
 
         this._button[0].setChecked(this._BLOOM_ENABLED);

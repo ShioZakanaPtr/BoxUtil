@@ -474,7 +474,6 @@ public final class BUtil_GLImpl {
 
                 program.bindTexture2D(0, ShaderCore.getRenderingBuffer().getColorResult());
                 program.putUniformSubroutine(GL20.GL_VERTEX_SHADER, 0, 1);
-                GL20.glUniform1f(program.location[2], viewport.getViewMult() * 0.5f);
                 int instanceBit = 1;
                 for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                     entity = entitiesI.next();
@@ -503,7 +502,7 @@ public final class BUtil_GLImpl {
                         if (validInstanceData && memory.is_type_fixed()) ++instanceBit;
                         program.putUniformSubroutine(GL20.GL_VERTEX_SHADER, 0, instanceBit);
                     }
-                    if (validInstanceData) GL20.glUniform1i(program.location[3], memory.address_instance() + instance.getRenderingOffset());
+                    if (validInstanceData) GL20.glUniform1i(program.location[2], memory.address_instance() + instance.getRenderingOffset());
                     GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                     GL20.glUniform4(program.location[1], entity.pickDataPackage_vec4());
 
@@ -797,7 +796,7 @@ public final class BUtil_GLImpl {
                 GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
                 GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
                 GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
-                for (InstanceType instanceType : InstanceType.values()) BUtil_InstanceDataMemoryPool.rebindSSBO(instanceType);
+                for (InstanceType instanceType : InstanceType.values()) BUtil_InstanceDataMemoryPool.getPool(instanceType).rebindBase();
             }
             StandardShaderPacks.resetBloomStage();
             context.applyBeforeLowestLayerRender(viewport, isCampaign == BoxEnum.TRUE,

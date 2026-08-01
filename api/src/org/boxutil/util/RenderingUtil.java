@@ -16,18 +16,16 @@ import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.entity.*;
 import org.boxutil.units.standard.misc.TextFieldObject;
 import org.boxutil.util.concurrent.SpinLock;
-import de.unkrig.commons.nullanalysis.NotNull;
-import de.unkrig.commons.nullanalysis.Nullable;
 import org.boxutil.base.api.InstanceDataAPI;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.manager.CampaignRenderingManager;
 import org.boxutil.manager.CombatRenderingManager;
 import org.boxutil.units.standard.attribute.Instance2Data;
-import org.lazywizard.console.Console;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
@@ -36,10 +34,8 @@ import java.awt.*;
 import java.nio.FloatBuffer;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class RenderingUtil {
     private static final CombatEngineLayers[] _COMBAT_LAYER = CombatEngineLayers.values();
     private static final EnumMap<CombatEngineLayers, Integer> _COMBAT_LAYER_LINKED = new EnumMap<>(CombatEngineLayers.class);
@@ -696,6 +692,11 @@ public final class RenderingUtil {
                     sprite.setLayer(defaultFXLayer(isCampaign));
                     sprite.setControlData(controller);
 
+                    sprite.setAutoSubmitEntityData(false);
+                    sprite.setAutoSubmitModelMatrix(false);
+                    sprite.submitEntityData();
+                    sprite.submitModelMatrix();
+
                     putControllerFromMap(isCampaign, sprite, key, controller);
                 }
                 lock.unlock();
@@ -1116,6 +1117,11 @@ public final class RenderingUtil {
                     entity.setInnerOut(1.0f, 1.0f);
                     entity.setControlData(controller);
 
+                    entity.setAutoSubmitEntityData(false);
+                    entity.setAutoSubmitModelMatrix(false);
+                    entity.submitEntityData();
+                    entity.submitModelMatrix();
+
                     putControllerFromMap(isCampaign, entity, key, controller);
                 }
                 lock.unlock();
@@ -1140,6 +1146,11 @@ public final class RenderingUtil {
                     entity.setInnerFull(0.5f, 0.5f);
                     entity.setInnerOut(0.9f, 0.9f);
                     entity.setControlData(controller);
+
+                    entity.setAutoSubmitEntityData(false);
+                    entity.setAutoSubmitModelMatrix(false);
+                    entity.submitEntityData();
+                    entity.submitModelMatrix();
 
                     putControllerFromMap(isCampaign, entity, key, controller);
                 }
@@ -1166,6 +1177,11 @@ public final class RenderingUtil {
                     entity.autoAspect();
                     entity.setLayer(defaultFXLayer(isCampaign));
                     entity.setControlData(controller);
+
+                    entity.setAutoSubmitEntityData(false);
+                    entity.setAutoSubmitModelMatrix(false);
+                    entity.submitEntityData();
+                    entity.submitModelMatrix();
 
                     putControllerFromMap(isCampaign, entity, key, controller);
                 }

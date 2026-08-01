@@ -12,7 +12,7 @@ import org.lwjgl.opengl.GL43;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
 
 /**
  * For example:
@@ -31,13 +31,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * </pre>
  */
 public class InstanceDataUpdateHelper {
-    private boolean _mapMode = true;
+    private boolean persistentMapping = false;
+    private boolean mapMode = true;
+    private boolean shouldUnlockAfter = true;
     private int putOffset;
-    private int _putOffsetReal;
-    private  ReentrantLock _lock = null;
-    private ByteBuffer _updateBuffer = null;
-    private FloatBuffer _mappingBuffer = null;
-    private long _memoryAddress = 0;
+    private int putOffsetReal;
+    private Lock lock = null;
+    private ByteBuffer updateBuffer = null;
+    private FloatBuffer mappingBuffer = null;
+    private long realMemAddress = 0;
 
     /**
      * @return <code>true</code> when success.
@@ -53,21 +55,35 @@ public class InstanceDataUpdateHelper {
      */
     public boolean glLoadMemory(MemoryBlock memory, boolean mappingMode, boolean syncUpdate) {
         if (memory == null || memory.address() < 0 || memory.size() < 1 || memory.is_free()) return false;
-        this._memoryAddress = memory.address();
-        this._mapMode = mappingMode;
-        if (this._mapMode) {
-            this._lock = BUtil_InstanceDataMemoryPool.getGPULock(memory.type());
+        final var pool = BUtil_InstanceDataMemoryPool.getPool(memory.meta());
+
+        this.mapMode = mappingMode;
+        this.persistentMapping = pool.isPersistentMapping() && pool.getMappingBuffer() != null;
+        this.putOffset = 0;
+        this.putOffsetReal = pool.getPoolBehavior().reservedSize;
+        this.realMemAddress = memory.address() + this.putOffsetReal;
+        this.lock = pool.getGPULock();
+
+        if (this.persistentMapping) {
+            this.lock.lock();
+            this.shouldUnlockAfter = true;
+            this.updateBuffer = pool.getMappingBuffer();
+            return true;
+        }
+
+        if (this.mapMode) {
             final int _access = syncUpdate ? GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT : GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
-            this._lock.lock();
-            this._updateBuffer = GL30.glMapBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, memory.address(), memory.size(), _access, null);
-            if (this._updateBuffer == null) {
+            this.lock.lock();
+            this.shouldUnlockAfter = true;
+            this.updateBuffer = GL30.glMapBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, this.realMemAddress, memory.size(), _access, null);
+            if (this.updateBuffer == null) {
+                this.shouldUnlockAfter = false;
                 GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
-                this._lock.unlock();
+                this.lock.unlock();
                 return false;
             }
-            this._mappingBuffer = this._updateBuffer.asFloatBuffer();
-        } else this._mappingBuffer = BufferUtils.createFloatBuffer((int) (memory.size() >> 2));
-        this.putOffset = this._putOffsetReal = 0;
+            this.mappingBuffer = this.updateBuffer.asFloatBuffer();
+        } else this.mappingBuffer = BufferUtils.createFloatBuffer((int) (this.realMemAddress >> 2));
         return true;
     }
 
@@ -77,51 +93,56 @@ public class InstanceDataUpdateHelper {
 
     public void glSetCurrentPutPosition(InstanceType type, int instanceIndex) {
         this.putOffset = instanceIndex;
-        this._putOffsetReal = instanceIndex * type.getComponent();
+        this.putOffsetReal = instanceIndex * type.getComponent();
     }
 
     public void glProcessDynamic2D(Dynamic2DStruct data) {
-        this._mappingBuffer.put(this._putOffsetReal + InstanceType.DYNAMIC_2D.getCompactOffset(), data.getDataCompact(), 0, InstanceType.DYNAMIC_2D.getCompactComponent());
-        this._putOffsetReal += InstanceType.DYNAMIC_2D.getComponent();
+        this.mappingBuffer.put(this.putOffsetReal + InstanceType.DYNAMIC_2D.getCompactOffset(), data.getDataCompact(), 0, InstanceType.DYNAMIC_2D.getCompactComponent());
+        this.putOffsetReal += InstanceType.DYNAMIC_2D.getComponent();
     }
 
     public void glProcessFixed2D(Fixed2DStruct data) {
-        this._mappingBuffer.put(this._putOffsetReal, data.getData(), 0, InstanceType.FIXED_2D.getComponent());
-        this._putOffsetReal += InstanceType.FIXED_2D.getComponent();
+        this.mappingBuffer.put(this.putOffsetReal, data.getData(), 0, InstanceType.FIXED_2D.getComponent());
+        this.putOffsetReal += InstanceType.FIXED_2D.getComponent();
     }
 
     public void glProcessDynamic3D(Dynamic3DStruct data) {
-        this._mappingBuffer.put(this._putOffsetReal + InstanceType.DYNAMIC_3D.getCompactOffset(), data.getDataCompact(), 0, InstanceType.DYNAMIC_3D.getCompactComponent());
-        this._putOffsetReal += InstanceType.DYNAMIC_3D.getComponent();
+        this.mappingBuffer.put(this.putOffsetReal + InstanceType.DYNAMIC_3D.getCompactOffset(), data.getDataCompact(), 0, InstanceType.DYNAMIC_3D.getCompactComponent());
+        this.putOffsetReal += InstanceType.DYNAMIC_3D.getComponent();
     }
 
     public void glProcessFixed3D(Fixed3DStruct data) {
-        this._mappingBuffer.put(this._putOffsetReal, data.getData(), 0, InstanceType.FIXED_3D.getComponent());
-        this._putOffsetReal += InstanceType.FIXED_3D.getComponent();
+        this.mappingBuffer.put(this.putOffsetReal, data.getData(), 0, InstanceType.FIXED_3D.getComponent());
+        this.putOffsetReal += InstanceType.FIXED_3D.getComponent();
     }
 
     public void glSubmitData() {
-        if (this._mapMode) {
-            this._updateBuffer.position(0);
-            this._updateBuffer.limit(this._updateBuffer.capacity());
+        if (this.persistentMapping) return;
+
+        if (this.mapMode) {
+            this.updateBuffer.position(0);
+            this.updateBuffer.limit(this.updateBuffer.capacity());
             GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
-            this._lock.unlock();
+            this.lock.unlock();
         } else {
-            this._mappingBuffer.position(0);
-            this._mappingBuffer.limit(this._mappingBuffer.capacity());
-            GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, this._memoryAddress, this._mappingBuffer);
+            this.mappingBuffer.position(0);
+            this.mappingBuffer.limit(this.mappingBuffer.capacity());
+            GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, this.realMemAddress, this.mappingBuffer);
         }
     }
 
     public void glCleanup() {
-        if (this._lock != null) {
-            if (this._lock.isLocked()) this._lock.unlock();
-            this._lock = null;
+        if (this.lock != null) {
+            if (this.shouldUnlockAfter) {
+                this.shouldUnlockAfter = false;
+                this.lock.unlock();
+            }
+            this.lock = null;
         }
-        this._updateBuffer = null;
-        this._mappingBuffer = null;
-        this._mapMode = true;
-        this._memoryAddress = this.putOffset = this._putOffsetReal = 0;
+        this.updateBuffer = null;
+        this.mappingBuffer = null;
+        this.mapMode = true;
+        this.realMemAddress = this.putOffset = this.putOffsetReal = 0;
         if (BoxDatabase.getGLState().GL_SSBO) GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
     }
 }

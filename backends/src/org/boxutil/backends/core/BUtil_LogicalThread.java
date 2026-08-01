@@ -21,8 +21,6 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTemplate {
-    private final static long _MEMORY_POOL_COMPACT_DELAY = 20_000_000_000L;
-
     private final static class ComputeNum {
         int begin;
         int end;
@@ -66,7 +64,7 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         final Deque<RenderDataAPI> queue = BUtil_ThreadResource.Logical.getEntitiesLogicalQueue();
         final float amount = BUtil_ThreadResource._CURR_AMOUNT;
         final boolean isPaused = BUtil_ThreadResource._CURR_PAUSED;
-        final boolean customShaderpacksDataLayout = BoxConfigs.getCurrShaderPacksContext().haveCustomInstanceDataLayout(), instanceDataSupported = !BUtil_InstanceDataMemoryPool.isNotSupported();
+        final boolean customShaderpacksDataLayout = BoxConfigs.getCurrShaderPacksContext().haveCustomInstanceDataLayout(), instanceDataSupported = !BUtil_InstanceDataMemoryPool.isPoolInvalid();
 
         RenderDataAPI entity;
         ControlDataAPI data;
@@ -134,11 +132,13 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
     }
 
     private static void compactMemoryPoolTarget(final InstanceType target) {
-        if (System.nanoTime() - BUtil_InstanceDataMemoryPool.getLastCompactTimeStampNano(target) > _MEMORY_POOL_COMPACT_DELAY) BUtil_InstanceDataMemoryPool._compact(target);
+        final var pool = BUtil_InstanceDataMemoryPool.getPool(target);
+        final long _poolCompactDelay = 20_000_000_000L;
+        if (System.nanoTime() - pool.getLastCompactTimestampNano() > _poolCompactDelay) pool.compact();
     }
 
     private void compactMemoryPool() {
-        if (BUtil_InstanceDataMemoryPool.isNotSupported()) return;
+        if (BUtil_InstanceDataMemoryPool.isPoolInvalid()) return;
         if (this._isAux) {
             compactMemoryPoolTarget(InstanceType.FIXED_2D);
             compactMemoryPoolTarget(InstanceType.FIXED_3D);
@@ -149,9 +149,9 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
     }
 
     private void preComputeInstance() {
-        if (!BoxConfigs.isShaderEnable() || BUtil_InstanceDataMemoryPool.isNotSupported()) return;
+        if (!BoxConfigs.isShaderEnable() || BUtil_InstanceDataMemoryPool.isPoolInvalid()) return;
         final var instanceType = this._isAux ? InstanceType.DYNAMIC_3D : InstanceType.DYNAMIC_2D;
-        final long edge = BUtil_InstanceDataMemoryPool.getBufferEdge(instanceType);
+        final long edge = BUtil_InstanceDataMemoryPool.getPool(instanceType).getBufferRightEdge();
         final int dataSize = instanceType.getSize();
         if (edge < dataSize) return;
 
@@ -187,7 +187,7 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         if (processQueue.isEmpty()) return;
         final var program = this._isAux ? ShaderCore.getInstanceMatrix3DProgram() : ShaderCore.getInstanceMatrix2DProgram();
         final float dimAMD = BoxDatabase.isGLDeviceAMD() ? 64.0f : 32.0f;
-        BUtil_InstanceDataMemoryPool.rebindSSBO(instanceType);
+        BUtil_InstanceDataMemoryPool.getPool(instanceType).rebindBase();
         program.active();
         GL20.glUniform1f(program.location[0], BUtil_ThreadResource._CURR_AMOUNT);
         for (var target : processQueue) {

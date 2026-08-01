@@ -5,8 +5,6 @@ import org.boxutil.base.api.MaterialRenderAPI;
 import org.boxutil.units.standard.attribute.MaterialData;
 import de.unkrig.commons.nullanalysis.Nullable;
 
-import java.nio.FloatBuffer;
-
 public abstract class BaseMIRenderData extends BaseInstanceRenderData implements MaterialRenderAPI {
     protected MaterialData material = new MaterialData();
 
@@ -29,9 +27,9 @@ public abstract class BaseMIRenderData extends BaseInstanceRenderData implements
     }
 
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
-        this._statePackageBuffer.put(13, this.getGlobalTimerAlpha());
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.material.getState(), 0, 12);
+        this.statePackageBuffer.put(13, this.getGlobalTimerAlpha());
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 }

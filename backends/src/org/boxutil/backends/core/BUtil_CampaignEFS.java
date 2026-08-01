@@ -4,7 +4,9 @@ import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
+import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
 import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUsage;
+import org.boxutil.backends.core.statictrail.BUtil_GLDrawStaticTrailMemoryUsage;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.config.BoxThreadSync;
@@ -27,7 +29,7 @@ public final class BUtil_CampaignEFS implements EveryFrameScript {
 
         BUtil_GLImpl.Operations.setCampaignFlag();
         if (player == null || player.getContainingLocation() == null) {
-            BUtil_GLDrawInstanceMemoryUsage.showGUI();
+            BUtil_GLDrawInfo.showInfo();
             return;
         }
         if (BUtil_GLImpl.Operations.checkCampaignCleanup()) {
@@ -59,7 +61,7 @@ public final class BUtil_CampaignEFS implements EveryFrameScript {
         }
 
         context.advanceInCampaign(sector, amount);
-        BUtil_GLDrawInstanceMemoryUsage.showGUI();
+        BUtil_GLDrawInfo.showInfo();
     }
 
     public boolean isDone() {

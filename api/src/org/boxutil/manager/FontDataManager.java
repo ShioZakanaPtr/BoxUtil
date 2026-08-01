@@ -4,6 +4,7 @@ import org.boxutil.units.standard.attribute.FontMapData;
 
 import java.util.HashMap;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class FontDataManager {
     private final static HashMap<String, FontMapData> _PATH_FONT = new HashMap<>(8);
 
@@ -16,7 +17,7 @@ public final class FontDataManager {
     }
 
     public static FontMapData putFont(String file, FontMapData font) {
-        if (file == null || file.isEmpty() || font == null || !font.isValid()) return null;
+        if (file == null || file.isBlank() || font == null || !font.isValid()) return null;
         return _PATH_FONT.put(file, font);
     }
 
@@ -25,7 +26,7 @@ public final class FontDataManager {
     }
 
     public static FontMapData loadFont(String file) {
-        if (file == null || file.isEmpty()) return null;
+        if (file == null || file.isBlank()) return null;
         FontMapData result = new FontMapData(file);
         return result.isValid() ? _PATH_FONT.put(file, result) : null;
     }

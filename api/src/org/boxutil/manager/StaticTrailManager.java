@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class StaticTrailManager {
     private final static HashMap<String, HashSet<StaticTrailData>> _PROJ_TRAIL = new HashMap<>(128);
     private final static Set<String> _CACHED_PATH = new HashSet<>(32);
@@ -54,6 +55,17 @@ public final class StaticTrailManager {
         return _PROJ_TRAIL.remove(id);
     }
 
+    private static boolean _invalidDuration(float fadeIn, float full, float fadeOut) {
+        return fadeIn < 0.0f || full < 0.0f || fadeOut < 0.0f || (fadeIn <= 0.0f && full <= 0.0f && fadeOut <= 0.0f) || fadeIn + full + fadeOut < StaticTrailData.MINIMUM_TOTAL_DURATION;
+    }
+
+    private static boolean _invalidWidth(float sizeIn, float sizeOut) {
+        return sizeIn == 0.0f || sizeOut == 0.0f;
+    }
+
+    /**
+     * For example: {@code StaticTrailManager.loadTrailData("data/config/modFiles/BUtil_trail_data.csv");}
+     */
     public static void loadTrailData(final String path) {
         _CACHED_PATH.add(path);
         try {
@@ -72,7 +84,7 @@ public final class StaticTrailManager {
                 diffusePath = objData.optString("diffuse_path");
                 emissivePath = objData.optString("emissive_path");
                 if (diffusePath.isBlank() && emissivePath.isBlank()) {
-                    _LOG.warn("'BoxUtil' static trail csv data have empty diffuse map and empty emissive map at lines '" + i + "' in: '" + path + "'.");
+                    _LOG.warn("'BoxUtil' static trail csv data have empty diffuse map and empty emissive map at id '" + trailID + "' in: '" + path + "'.");
                     continue;
                 }
 
@@ -80,13 +92,21 @@ public final class StaticTrailManager {
                 complexPath = objData.optString("complex_path");
                 tangentPath = objData.optString("tangent_path");
 
-                final float fadeIn = Math.max((float) objData.optDouble("fade_in", 0.1d), 0.0f),
-                        full = Math.max((float) objData.optDouble("full", 0.4d), 0.0f),
-                        fadeOut = Math.max((float) objData.optDouble("fade_out", 1.0d), 0.0f),
+                final float fadeIn = (float) objData.optDouble("fade_in", 0.1d),
+                        full = (float) objData.optDouble("full", 0.4d),
+                        fadeOut = (float) objData.optDouble("fade_out", 1.0d),
                         sizeIn = (float) objData.optDouble("size_in", 16.0d),
                         sizeOut = (float) objData.optDouble("size_out", 8.0d),
                         texPixels = (float) objData.optDouble("tex_pixels", 256.0d),
                         texSpeed = (float) objData.optDouble("tex_speed", -256.0d);
+                if (_invalidDuration(fadeIn, full, fadeOut)) {
+                    _LOG.warn("'BoxUtil' static trail csv data have illegal duration at id '" + trailID + "' in: '" + path + "'.");
+                    continue;
+                }
+                if (_invalidWidth(sizeIn, sizeOut)) {
+                    _LOG.warn("'BoxUtil' static trail csv data have zero size at id '" + trailID + "' in: '" + path + "'.");
+                    continue;
+                }
                 final boolean randomUV = objData.optBoolean("random_start_uv", true),
                         additiveBlend = objData.optBoolean("additive_blend", true),
                         velocityForward = objData.optBoolean("velocity_for_forward", false),
@@ -197,6 +217,9 @@ public final class StaticTrailManager {
         }
     }
 
+    /**
+     * For example: {@code StaticTrailManager.loadTrailData("data/config/modFiles/BUtil_trail_data_magiclib.csv");}
+     */
     public static void loadMagicLibLayoutTrailData(final String path) {
         _CACHED_MAGIC_LIB_LAYOUT_PATH.add(path);
         try {
@@ -214,18 +237,30 @@ public final class StaticTrailManager {
 
                 diffuseKey = objData.optString("sprite");
                 if (diffuseKey.isBlank()) {
-                    _LOG.warn("'BoxUtil' static trail csv data have empty sprite at lines '" + i + "' in: '" + path + "'.");
+                    _LOG.warn("'BoxUtil' static trail csv data have empty sprite at id '" + trailID + "' in: '" + path + "'.");
                     continue;
                 }
 
-                final float fadeIn = Math.max((float) objData.optDouble("fadeIn", 0.1d), 0.0f),
-                        full = Math.max((float) objData.optDouble("duration", 0.4d), 0.0f),
-                        fadeOut = Math.max((float) objData.optDouble("fadeOut", 1.0d), 0.0f),
+                final float fadeIn = (float) objData.optDouble("fadeIn", 0.1d),
+                        full = (float) objData.optDouble("duration", 0.4d),
+                        fadeOut = (float) objData.optDouble("fadeOut", 1.0d),
                         sizeIn = (float) objData.optDouble("sizeIn", 16.0d),
                         sizeOut = (float) objData.optDouble("sizeOut", 8.0d),
                         texPixels = (float) objData.optDouble("textLength", 256.0d),
                         texSpeed = (float) objData.optDouble("textScroll", -256.0d),
                         opacityMultiply = (float) objData.optDouble("opacity", 1.0d);
+                if (_invalidDuration(fadeIn, full, fadeOut)) {
+                    _LOG.warn("'BoxUtil' static trail csv data have illegal duration at id '" + trailID + "' in: '" + path + "'.");
+                    continue;
+                }
+                if (_invalidWidth(sizeIn, sizeOut)) {
+                    _LOG.warn("'BoxUtil' static trail csv data have zero size at id '" + trailID + "' in: '" + path + "'.");
+                    continue;
+                }
+                if (opacityMultiply <= 0.0f) {
+                    _LOG.warn("'BoxUtil' static trail csv data have completely transparent trail at id '" + trailID + "' in: '" + path + "'.");
+                    continue;
+                }
                 final boolean randomUV = objData.optBoolean("randomTextureOffset", true),
                         additiveBlend = objData.optBoolean("additive", true),
                         velocityForward = objData.optBoolean("angleAdjustment", false),

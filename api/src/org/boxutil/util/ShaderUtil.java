@@ -31,6 +31,7 @@ import java.util.function.Function;
  * <tr><th>C</th><th>Compute shader</th></tr>
  * </table>
  */
+@SuppressWarnings("UnusedReturnValue")
 public final class ShaderUtil {
     private final static int[] _GEN_SDF_FORMAT = new int[]{GL30.GL_RGBA16UI, GL30.GL_R8, GL30.GL_R16};
     private final static HashMap<Integer, String> _SHADER_TYPE = new HashMap<>();

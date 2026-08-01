@@ -9,13 +9,14 @@ import org.boxutil.manager.CombatRenderingManager;
 import org.boxutil.units.standard.attribute.NodeData;
 import org.boxutil.units.standard.entity.SegmentEntity;
 import org.boxutil.units.standard.entity.TrailEntity;
-import de.unkrig.commons.nullanalysis.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.util.vector.*;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class CurveUtil {
     private final static V3Sort _V3_COMPARATOR = new V3Sort();
     private final static V4Sort _V4_COMPARATOR = new V4Sort();

@@ -20,7 +20,6 @@ uniform mat4 u_modelMatrix;
 // vec4(sizeIn, powerIn, powerFull), vec4(sizeFull, powerOut, hardnessRing), vec4(sizeOut, fadeInFactor, fadeOutFactor)
 // vec4(sizeInRatio, sizeFullRatio), vec4(sizeOutRatio, hardnessInner, globalTimerRaw), vec4(arcStart, arcEnd, innerCenter)
 uniform vec4 u_statePackage[6];
-uniform float u_screenScale;
 uniform int u_instanceDataOffset;
 
 out VERTEX_BLOCK {
@@ -151,6 +150,6 @@ void main() {
 	if (power == 0.0) currPos.xyz = vec3(-65536.0);
 	gl_Position = currPos;
 	vb_data.fragUVMask = vec4(a_vertex, a_vertex / size.zw - u_statePackage[5].zw);
-	vb_data.fragUVScreen = vec4(getUV(location.xy), locationSize.xy / gameScreenBorder.zw * a_vertex * u_screenScale * power);
+	vb_data.fragUVScreen = vec4(getUV(location.xy), locationSize.xy / gameScreenBorder.zw * a_vertex * power * 0.5);
 	vb_data.fragGlobalHardness = emissiveParam.w;
 }

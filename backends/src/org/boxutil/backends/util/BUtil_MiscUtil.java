@@ -9,6 +9,32 @@ import org.lwjgl.util.vector.Vector4f;
 import java.util.function.Function;
 
 public final class BUtil_MiscUtil {
+    public static String getMemoryNumStr(long size) {
+        if (size < 1) return "    0 Byte";
+        final boolean isByte = size < 1024;
+        final String[] unit = new String[]{"Byte", " KiB", " MiB", " GiB", " TiB", " PiB", " EiB"};
+
+        byte pick = 0;
+        byte decimal = 0;
+        double result = size;
+        if (!isByte) {
+            result = Math.log10(size);
+            pick = (byte) (result / 3.010299956639812d);
+            result = (pick < 4) ? (1 << (pick * 10)) : Math.pow(1024.0d, pick);
+            result = (double) size / result;
+            if (result >= 1.0d) decimal = (byte) (4 - (byte) Math.log10(result));
+        }
+
+        String resultStr;
+        if (isByte) {
+            resultStr = String.format("%5s", size) + ' ';
+        } else {
+            String formatStr = "%." + Math.max(decimal, 0) + "f";
+            resultStr = String.format(formatStr, result);
+        }
+        return resultStr + unit[pick];
+    }
+
     public static void getColorArray(final String colorArray, byte[] array) {
         if (colorArray.length() < 9) return;
         byte index = 0;

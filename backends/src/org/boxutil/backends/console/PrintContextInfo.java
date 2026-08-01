@@ -1,13 +1,12 @@
 package org.boxutil.backends.console;
 
-import com.fs.starfarer.api.Global;
 import org.boxutil.define.BoxDatabase;
-import de.unkrig.commons.nullanalysis.NotNull;
+import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.Console;
 
 public class PrintContextInfo implements BaseCommand {
-    public CommandResult runCommand(@NotNull String s, @NotNull BaseCommand.CommandContext commandContext) {
+    public CommandResult runCommand(@NotNull String args, @NotNull CommandContext context) {
         BoxDatabase.GLState state = BoxDatabase.getGLState();
         Console.showMessage(state.getPrintInfo());
         state.print();

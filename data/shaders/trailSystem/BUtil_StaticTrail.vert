@@ -72,12 +72,17 @@ void main() {
     float rndID, timeStamp;
     decodeTimeStamp(rndID, timeStamp);
     float elapsedTime = u_time - timeStamp;
-    float life = clamp(elapsedTime / (u_statePackage[TIMER_STATE].x + u_statePackage[TIMER_STATE].y + u_statePackage[TIMER_STATE].z), 0.0, 1.0);
+    float intoFadeOutLife = u_statePackage[TIMER_STATE].x + u_statePackage[TIMER_STATE].y;
+    float totalLife = intoFadeOutLife + u_statePackage[TIMER_STATE].z;
+    float life = clamp(elapsedTime / totalLife, 0.0, 1.0);
 
-    float nodeUV = fract(a_distance - u_statePackage[6].w * elapsedTime) * u_statePackage[6].z;
+    float nodeUV = abs(fract(a_distance - u_statePackage[6].w * elapsedTime) * u_statePackage[6].z);
     if (u_statePackage[5].w > 0.0) nodeUV += rndID;
     vec4 nodeColor = mix(u_statePackage[3], u_statePackage[4], life);
     vec2 currPosition = a_position + currPositionOffset(timeStamp * rndID, elapsedTime, life);
+
+    if (elapsedTime < u_statePackage[TIMER_STATE].x) nodeColor.w *= elapsedTime / u_statePackage[TIMER_STATE].x;
+    if (elapsedTime > intoFadeOutLife) nodeColor.w = 1.0 - ((elapsedTime - intoFadeOutLife) / u_statePackage[TIMER_STATE].z);
 
     vgb_data.geomEntityColor = nodeColor * u_statePackage[COLOR];
     vgb_data.geomMixEmissive = nodeColor * mix(u_statePackage[EMISSIVE_COLOR], u_statePackage[EMISSIVE_COLOR] * u_statePackage[COLOR], vec4(vec3(u_statePackage[EMISSIVE_SA].y), u_statePackage[EMISSIVE_SA].x));

@@ -4,6 +4,7 @@ package org.boxutil.util;
  * All angle value must be <code>[0, 360]</code> or <code>[0, 2π]</code>.<p>
  * For avoid some calculation of trigonometric functions.
  */
+@SuppressWarnings("UnusedReturnValue")
 public final class TrigUtil {
     public final static float PI_F = (float) Math.PI;
     public final static float PI2_F = PI_F + PI_F;

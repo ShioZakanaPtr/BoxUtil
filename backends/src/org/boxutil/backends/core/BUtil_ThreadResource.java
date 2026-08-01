@@ -7,7 +7,6 @@ import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.impl.campaign.ids.Factions;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import org.boxutil.backends.core.statictrail.BUtil_StaticTrailSysObject;
 import org.boxutil.base.api.DirectDrawEntity;
 import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
@@ -42,7 +41,6 @@ public final class BUtil_ThreadResource {
     final static EnumMap<CombatEngineLayers, EnumMap<LayeredEntityType, List<RenderDataAPI>>> _COMBAT_ENTITIES_R = new EnumMap<>(CombatEngineLayers.class);
     final static EnumMap<CombatEngineLayers, Set<LayeredRenderingPlugin>> _COMBAT_LAYERED_PLUGIN = new EnumMap<>(CombatEngineLayers.class);
     final static EnumMap<DirectEntityType, List<RenderDataAPI>> _COMBAT_DIRECT_MAP = new EnumMap<>(DirectEntityType.class);
-    final static EnumMap<CombatEngineLayers, BUtil_StaticTrailSysObject> _COMBAT_TRAIL = new EnumMap<>(CombatEngineLayers.class);
     final static Set<TemporaryCleanupPlugin> _COMBAT_CLEANUP_PLUGIN = new HashSet<>(4);
     // manager resource
     final static EnumSet<CombatEngineLayers> _COMBAT_ACTIVE_LAYER = EnumSet.noneOf(CombatEngineLayers.class);
@@ -57,7 +55,6 @@ public final class BUtil_ThreadResource {
     final static EnumMap<CampaignEngineLayers, EnumMap<LayeredEntityType, List<RenderDataAPI>>> _CAMPAIGN_ENTITIES_R = new EnumMap<>(CampaignEngineLayers.class);
     final static EnumMap<CampaignEngineLayers, Set<LayeredRenderingPlugin>> _CAMPAIGN_LAYERED_PLUGIN = new EnumMap<>(CampaignEngineLayers.class);
     final static EnumMap<DirectEntityType, List<RenderDataAPI>> _CAMPAIGN_DIRECT_MAP = new EnumMap<>(DirectEntityType.class);
-    final static EnumMap<CampaignEngineLayers, BUtil_StaticTrailSysObject> _CAMPAIGN_TRAIL = new EnumMap<>(CampaignEngineLayers.class);
     final static Set<TemporaryCleanupPlugin> _CAMPAIGN_CLEANUP_PLUGIN = new HashSet<>(4);
     // manager resource
     final static EnumMap<CampaignEngineLayers, BUtil_CampaignRenderingPlugin> _CAMPAIGN_MANAGERS = new EnumMap<>(CampaignEngineLayers.class);

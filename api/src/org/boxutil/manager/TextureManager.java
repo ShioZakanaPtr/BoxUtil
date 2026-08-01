@@ -17,6 +17,7 @@ import org.lwjgl.opengl.GLContext;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class TextureManager {
     private final static int[][] _INTERNAL_FORMAT = new int[][]{new int[]{GL30.GL_R8, GL30.GL_RG8, GL11.GL_RGB8, GL11.GL_RGBA8}, new int[]{GL30.GL_R8UI, GL30.GL_RG8UI, GL30.GL_RGB8UI, GL30.GL_RGBA8UI}};
     private final static int[][] _FORMAT = new int[][]{new int[]{GL11.GL_RED, GL30.GL_RG, GL11.GL_RGB, GL11.GL_RGBA}, new int[]{GL30.GL_RED_INTEGER, GL30.GL_RG_INTEGER, GL30.GL_RGB_INTEGER, GL30.GL_RGBA_INTEGER}};
@@ -35,7 +36,7 @@ public final class TextureManager {
     }
 
     public static int putTexture(String file, int texture) {
-        if (file == null || file.isEmpty() || texture < 1) return 0;
+        if (file == null || file.isBlank() || texture < 1) return 0;
         Integer result = _PATH_TEX.put(file, texture);
         return result == null ? 0 : result;
     }

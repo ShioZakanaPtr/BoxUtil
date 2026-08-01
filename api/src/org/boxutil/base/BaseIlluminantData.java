@@ -40,25 +40,25 @@ public class BaseIlluminantData extends BaseInstanceRenderData implements Illumi
 
     public void resetInstanceData() {
         if (BoxConfigs.getCurrShaderPacksContext().haveCustomInstanceDataLayout()) {
-            this._sync_lock.lock();
+            this.sync_lock.lock();
             BoxConfigs.getCurrShaderPacksContext().getCustomInstanceDataLayout().resetInstanceData(this);
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
         } else super.resetInstanceData();
     }
 
     public void submitInstance() {
         if (BoxConfigs.getCurrShaderPacksContext().haveCustomInstanceDataLayout()) {
-            this._sync_lock.lock();
+            this.sync_lock.lock();
             BoxConfigs.getCurrShaderPacksContext().getCustomInstanceDataLayout().submitInstance(this);
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
         } else super.submitInstance();
     }
 
     public void mallocInstance(InstanceType target, int dataNum) {
         if (BoxConfigs.getCurrShaderPacksContext().haveCustomInstanceDataLayout()) {
-            this._sync_lock.lock();
+            this.sync_lock.lock();
             BoxConfigs.getCurrShaderPacksContext().getCustomInstanceDataLayout().mallocInstance(this, target, dataNum);
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
         } else super.mallocInstance(target, dataNum);
     }
 
@@ -161,8 +161,14 @@ public class BaseIlluminantData extends BaseInstanceRenderData implements Illumi
     }
 
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.stateBase, 0, 5);
-        this._statePackageBuffer.put(6, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
+        this.statePackageBuffer.put(0, this.stateBase, 0, 5);
+        this.statePackageBuffer.put(5, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
+    }
+
+    public FloatBuffer pickDataPackage_vec4() {
+        if (this.autoSubmitDataBuffer) this.submitEntityData();
+        else this.statePackageBuffer.put(5, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
+        return this.statePackageBuffer;
     }
 
     @Deprecated

@@ -182,6 +182,10 @@ public class SimpleParticleControlData extends BaseControlData {
     }
 
     /**
+     * @param maxDur The maximum duration for all particles.
+     *               When a particle is added (unless {@link SimpleParticleControlData#setRemainingTimeToReset(float)} or {@link SimpleParticleControlData#refreshRemainingTimeToReset(float)} called after that), the internal timer is set to this value.
+     *               Once the timer expires, all particles are considered to have finished playing,
+     *               at which point the data is reset and rendering is paused until new particles are added.
      * @param dataDur rendering once if at <strong>(-3000.0f, -1000.0f)</strong>, always active if less than <strong>-3000.0f</strong>.
      */
     public SimpleParticleControlData(int maxParticles, float maxDur, float dataDur, boolean ignorePaused, boolean use3D) {
@@ -193,6 +197,10 @@ public class SimpleParticleControlData extends BaseControlData {
     }
 
     /**
+     * @param maxDur The maximum duration for all particles.
+     *               When a particle is added (unless {@link SimpleParticleControlData#setRemainingTimeToReset(float)} or {@link SimpleParticleControlData#refreshRemainingTimeToReset(float)} called after that), the internal timer is set to this value.
+     *               Once the timer expires, all particles are considered to have finished playing,
+     *               at which point the data is reset and rendering is paused until new particles are added.
      * @param dataDur rendering once if at <strong>(-3000.0f, -1000.0f)</strong>, always active if less than <strong>-3000.0f</strong>.
      */
     public SimpleParticleControlData(int maxParticles, float maxDur, float dataDur, boolean ignorePaused) {

@@ -134,8 +134,8 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                             Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"), Color.WHITE,
                             Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"), Color.ORANGE,
                             16.0f, 512.0f, 0.1f, 1.5f, 0.9f, CombatEngineLayers.ABOVE_SHIPS_LAYER).one;
-                    beam.setAutoSubmitModelMatrix(false);
                     beam.setAutoSubmitEntityData(false);
+                    beam.setAutoSubmitModelMatrix(false);
                     beam.submitEntityData();
                     beam.submitModelMatrix();
                 }
@@ -170,8 +170,8 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     segmentEntity.setAdditiveBlend();
                     segmentEntity.setGlobalTimer(0.0f, 1.5f, 0.5f);
 
-                    segmentEntity.setAutoSubmitModelMatrix(false);
                     segmentEntity.setAutoSubmitEntityData(false);
+                    segmentEntity.setAutoSubmitModelMatrix(false);
                     segmentEntity.submitEntityData();
                     segmentEntity.submitModelMatrix();
                     CombatRenderingManager.addEntity(segmentEntity);
@@ -187,8 +187,8 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                             Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"), Color.WHITE,
                             Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"), Color.ORANGE,
                             16.0f, 512.0f, 0.1f, 1.5f, 0.9f, CombatEngineLayers.ABOVE_SHIPS_LAYER).one;
-                    beam.setAutoSubmitModelMatrix(false);
                     beam.setAutoSubmitEntityData(false);
+                    beam.setAutoSubmitModelMatrix(false);
                     beam.submitEntityData();
                     beam.submitModelMatrix();
                 }
@@ -232,8 +232,8 @@ public class MissionDefinition implements MissionDefinitionPlugin {
 
                         particleEntity.setLayer(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
 
-                        particleEntity.setAutoSubmitModelMatrix(false);
                         particleEntity.setAutoSubmitEntityData(false);
+                        particleEntity.setAutoSubmitModelMatrix(false);
                         particleEntity.submitEntityData();
                         particleEntity.submitModelMatrix();
                         CombatRenderingManager.addEntity(particleEntity);
@@ -246,7 +246,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     this.togHanabi = !this.togHanabi;
                 } else if (this.hanabiTogTimer < 0.5f) this.hanabiTogTimer += amount;
 
-                if (BoxConfigs.isShaderEnable() && BoxConfigs.isBaseGL43Supported()) {
+                if (BoxConfigs.isShaderEnable()) {
                     if (this.particle == null) {
                         this.particle = new SimpleParticleControlData(512, 2.0f, -5120.0f, false);
 
@@ -266,6 +266,11 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                         particleEntity.setAdditiveBlend();
                         particleEntity.setLayer(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
                         particleEntity.setControlData(this.particle);
+
+                        particleEntity.setAutoSubmitEntityData(false);
+                        particleEntity.setAutoSubmitModelMatrix(false);
+                        particleEntity.submitEntityData();
+                        particleEntity.submitModelMatrix();
                         CombatRenderingManager.addEntity(particleEntity);
                     } else {
                         if (this.time5 > 0.05f) {
@@ -310,9 +315,6 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     ((Instance2Data) this.flareEntity.getInstanceData().get(0)).setLocation(ship.getLocation());
                     this.flareEntity.submitInstance();
                 }
-//                this.flareEntity.appendToEntity(ship);
-                if (this.flareEntity2 != null) this.flareEntity2.setStateVanilla(new Vector2f(ship.getLocation().x, ship.getLocation().y + 100.0f), 0.0f);
-//                this.flareEntity.setLocation(ship.getLocation().x + 100.0f, ship.getLocation().y + 200.0f);
             } else {
                 this.flareEntity = new FlareEntity();
                 this.flareEntity.setSize(640, 16);
@@ -328,8 +330,8 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.flareEntity.setNoisePower(0.33f);
                 this.flareEntity.autoAspect();
 
-                this.flareEntity.setAutoSubmitModelMatrix(false);
                 this.flareEntity.setAutoSubmitEntityData(false);
+                this.flareEntity.setAutoSubmitModelMatrix(false);
                 this.flareEntity.submitEntityData();
                 this.flareEntity.submitModelMatrix();
                 Instance2Data fixedA = new Instance2Data();
@@ -341,7 +343,10 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.flareEntity.setRenderingCount(1);
                 this.flareEntity.setGlobalTimer(0.0f, 8192.0f, 2.0f);
                 CombatRenderingManager.addEntity(this.flareEntity);
-
+            }
+            if (this.flareEntity2 != null) {
+                this.flareEntity2.setStateVanilla(new Vector2f(ship.getLocation().x, ship.getLocation().y + 100.0f), 0.0f);
+            } else {
                 Pair<FlareEntity, Byte> p = RenderingUtil.addCombatFlareField(ship.getLocation(), 128, ship.getFacing(), 360, 512.0f, new Vector4f(96, 5, 256, 12), Misc.getPositiveHighlightColor(), Color.WHITE, 10.0f, 3.0f, CombatEngineLayers.ABOVE_PARTICLES);
                 this.flareEntity2 = p.one;
                 this.flareEntity2.setAdditiveBlend();
@@ -349,6 +354,9 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.flareEntity2.setFringeAlpha(1.0f);
                 this.flareEntity2.setCoreAlpha(1.0f);
                 this.flareEntity2.setGlowPower(1.0f);
+
+                this.flareEntity2.setAutoSubmitEntityData(false);
+                this.flareEntity2.submitEntityData();
             }
             if (this.curveEntity != null) {
                 this.curveEntity.setLocation(ship.getLocation().x + 100.0f, ship.getLocation().y - 200.0f);
@@ -365,10 +373,16 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.curveEntity.setFillEndAlpha(0.0f);
                 this.curveEntity.setFillStartFactor(0.95f);
                 this.curveEntity.setFillEndFactor(0.25f);
+
+                this.curveEntity.setAutoSubmitEntityData(false);
+                this.curveEntity.submitEntityData();
                 CombatRenderingManager.addEntity(this.curveEntity);
             }
             if (this.segmentEntity != null) {
-                this.segmentEntity.setStateVanilla(new Vector2f(ship.getLocation().x, ship.getLocation().y), ship.getFacing() + 90.0f);
+                TransformUtil.createModelMatrixVanilla(
+                        new Vector2f(ship.getLocation().x, ship.getLocation().y),
+                        ship.getFacing() + 90.0f,
+                        0, this.segmentEntity.getModelMatrixBuffer());
             } else {
                 List<Vector2f> points = new ArrayList<>(5);
                 points.add(new Vector2f(-100.0f, -100.0f));
@@ -385,6 +399,10 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.segmentEntity.setLayer(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
                 this.segmentEntity.setAdditiveBlend();
                 this.segmentEntity.setGlobalTimer(0.0f, 8192.0f, 2.0f);
+
+                this.segmentEntity.setAutoSubmitEntityData(false);
+                this.segmentEntity.setAutoSubmitModelMatrix(false);
+                this.segmentEntity.submitEntityData();
                 CombatRenderingManager.addEntity(this.segmentEntity);
             }
             if (this.trailEntity != null) {
@@ -413,6 +431,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.trailEntity.setLayer(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
                 this.trailEntity.setAdditiveBlend();
                 this.trailEntity.setCustomPrimeMatrix();
+                TransformUtil.createWindowOrthoMatrix(false, this.trailEntity.getPrimeMatrixBuffer());
                 this.trailEntity.setPrimeMatrix(TransformUtil.createWindowOrthoMatrix(null));
                 this.trailEntity.addNode(new Vector2f(512.0f, 128.0f));
                 this.trailEntity.addNode(mousePosScreenSpace);
@@ -422,6 +441,12 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.trailEntity.setNodeRefreshAllFromCurrentIndex();
                 this.trailEntity.submitNodes();
                 this.trailEntity.setGlobalTimer(0.0f, 8192.0f, 2.0f);
+
+                this.trailEntity.setAutoSubmitEntityData(false);
+                this.trailEntity.setAutoSubmitPrimeMatrix(false);
+                this.trailEntity.setAutoSubmitModelMatrix(false);
+                this.trailEntity.submitEntityData();
+                this.trailEntity.submitModelMatrix();
                 CombatRenderingManager.addEntity(this.trailEntity);
             }
             if (this.distortion != null) {
@@ -437,19 +462,30 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.distortion.setPowerOut(0.0f);
                 this.distortion.setSizeFull(128, 128);
                 this.distortion.setSizeOut(96, 96);
+
+                this.distortion.setAutoSubmitEntityData(false);
+                this.distortion.submitEntityData();
                 CombatRenderingManager.addEntity(this.distortion);
             }
             if (this.commonEntity != null) {
-                this.commonEntity.setModelMatrix(TransformUtil.createModelMatrixRotateOnly(TransformUtil.rotationZXY(
-                                        ship.getFacing(), (this.engine.getTotalElapsedTime(false) * 60.0f) % 360.0f, 0.0f
-                                ), null));
-                this.commonEntity.getModelMatrix().m30 = ship.getLocation().x;
-                this.commonEntity.getModelMatrix().m31 = ship.getLocation().y;
+                TransformUtil.createModelMatrixRotateOnly(
+                        TransformUtil.rotationZXY(
+                                ship.getFacing(), (this.engine.getTotalElapsedTime(false) * 60.0f) % 360.0f, 0.0f
+                        ),
+                        0, this.commonEntity.getModelMatrixBuffer());
+                this.commonEntity.getModelMatrixBuffer().put(12, ship.getLocation().x);
+                this.commonEntity.getModelMatrixBuffer().put(13, ship.getLocation().y);
+                this.commonEntity.getModelMatrixBuffer().position(0);
+                this.commonEntity.getModelMatrixBuffer().limit(this.commonEntity.getModelMatrixBuffer().capacity());
             } else {
                 this.commonEntity = new CommonEntity(BoxGeometry.DEMO_BOX, true);
                 this.commonEntity.setBaseSize3D(200, 200, 200);
                 this.commonEntity.setLayer(CombatEngineLayers.ABOVE_SHIPS_LAYER);
                 this.commonEntity.setGlobalTimer(1.0f, 8192.0f, 0.0f);
+
+                this.commonEntity.setAutoSubmitEntityData(false);
+                this.commonEntity.setAutoSubmitModelMatrix(false);
+                this.commonEntity.submitEntityData();
                 CombatRenderingManager.addEntity(this.commonEntity);
             }
             if (this.spriteEntity != null) {
@@ -466,6 +502,9 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.spriteEntity.getMaterialData().setEmissiveColor(1.0f, 0.8f, 0.3f, 1.0f);
                 this.spriteEntity.setLayer(CombatEngineLayers.JUST_BELOW_WIDGETS);
                 this.spriteEntity.setGlobalTimer(1.0f, 8192.0f, 0.0f);
+
+                this.spriteEntity.setAutoSubmitEntityData(false);
+                this.spriteEntity.submitEntityData();
                 CombatRenderingManager.addEntity(this.spriteEntity);
             }
             if (this.textEntityDirect == null) {
@@ -491,8 +530,14 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.textEntityDirect.setTextDataRefreshAllFromCurrentIndex();
                 this.textEntityDirect.submitText();
                 this.textEntityDirect.setCustomPrimeMatrix();
-                this.textEntityDirect.setPrimeMatrix(TransformUtil.createWindowOrthoMatrix(null));
+                TransformUtil.createWindowOrthoMatrix(false, this.textEntityDirect.getPrimeMatrixBuffer());
                 this.textEntityDirect.setLocation(2.0f, (ShaderCore.getScreenHeight() + this.textEntityDirect.getCurrentVisualHeight()) * 0.5f);
+
+                this.textEntityDirect.setAutoSubmitEntityData(false);
+                this.textEntityDirect.setAutoSubmitPrimeMatrix(false);
+                this.textEntityDirect.setAutoSubmitModelMatrix(false);
+                this.textEntityDirect.submitEntityData();
+                this.textEntityDirect.submitModelMatrix();
                 CombatRenderingManager.addCleanupPlugin(new CleanupData(this.textEntityDirect));
 //                CombatRenderingManager.addEntity(BoxEnum.ENTITY_TEXT, textEntity);
             } else {
@@ -532,6 +577,9 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 this.textFieldEntity.setBlendBloomColor(true);
                 this.textFieldEntity.setBloomColorStrength(0.5f);
                 this.textFieldEntity.setLayer(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
+
+                this.textFieldEntity.setAutoSubmitEntityData(false);
+                this.textFieldEntity.submitEntityData();
                 CombatRenderingManager.addEntity(textFieldEntity);
             } else {
                 if (engine.getPlayerShip() != null) this.textFieldEntity.setLocation(engine.getPlayerShip().getLocation());
@@ -622,8 +670,12 @@ public class MissionDefinition implements MissionDefinitionPlugin {
             this.text.setBloomColorStrength(0.5f);
             this.text.setLayer(CombatEngineLayers.ABOVE_PARTICLES);
             this.text.setCustomPrimeMatrix();
-            this.text.setPrimeMatrix(TransformUtil.createWindowOrthoMatrix(null));
+            TransformUtil.createWindowOrthoMatrix(false, this.text.getPrimeMatrixBuffer());
             this.charLength = this.text.getValidCharLength();
+
+            this.text.setAutoSubmitEntityData(false);
+            this.text.setAutoSubmitPrimeMatrix(false);
+            this.text.submitEntityData();
             CombatRenderingManager.addEntity(this.text);
             CombatRenderingManager.addBackgroundLogicalPlugin(this);
             CombatRenderingManager.addCleanupPlugin(this);

@@ -3,8 +3,6 @@ package org.boxutil.units.standard.light;
 import org.boxutil.base.BaseIlluminantData;
 import org.boxutil.define.DirectEntityType;
 
-import java.nio.FloatBuffer;
-
 /**
  * Default direction is <code>vec3(1.0, 0.0, 0.0)</code>, use model matrix to rotate it<p>
  * For instanced data: scaleX to controls attenuation radius scale, scaleY to controls cone of illuminant.
@@ -75,10 +73,10 @@ public class SpotLight extends BaseIlluminantData {
 
     public void submitEntityData() {
         super.submitEntityData();
-        this._statePackageBuffer.put(6, Math.max(this.state[0] - this.state[1], 0.0f));
-        this._statePackageBuffer.put(7, this.state[1]);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(6, Math.max(this.state[0] - this.state[1], 0.0f));
+        this.statePackageBuffer.put(7, this.state[1]);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public Object entityType() {

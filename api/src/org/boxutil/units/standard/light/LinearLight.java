@@ -3,8 +3,6 @@ package org.boxutil.units.standard.light;
 import org.boxutil.base.BaseIlluminantData;
 import org.boxutil.define.DirectEntityType;
 
-import java.nio.FloatBuffer;
-
 /**
  * For beam or ray, the default ends is <code>start=vec3(-lengthHalf, 0.0, 0.0)</code> and <code>end=vec3(lengthHalf, 0.0, 0.0)</code>.<p>
  * Should fastest in all the illuminant (in LTCs BRDF lighting).<p>
@@ -50,10 +48,10 @@ public class LinearLight extends BaseIlluminantData {
 
     public void submitEntityData() {
         super.submitEntityData();
-        this._statePackageBuffer.put(6, this.state[0]);
-        this._statePackageBuffer.put(7, this.state[1]);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(6, this.state[0]);
+        this.statePackageBuffer.put(7, this.state[1]);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public Object entityType() {

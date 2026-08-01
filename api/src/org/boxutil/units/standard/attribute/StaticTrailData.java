@@ -6,33 +6,42 @@ import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
 /**
- * Recommended to use const returns for all.
+ * Recommended to use const returns for all.<p>
+ * For each object, a fixed amount of video memory is pre‑allocated for storing its rendering data,
+ * this amount depends on the trail <b>duration(fadeIn + full + fadeOut)</b> and the trail quality configuration.<p>
+ * Therefore, the duration should not be set too long, as doing so may consume excessive video memory.
  */
 public abstract class StaticTrailData {
+    public final static float MINIMUM_TOTAL_DURATION = 0.0334f;
+
     /**
-     * <b>IMPORTANT, the unique ID in game.</b><p>
-     * <b>MUST BE the const returns.</b>
+     * <b>IMPORTANT</b>, the unique ID in game.<p>
+     * <b>MUST</b> be the const returns.<p>
+     * <b>CANNOT</b> be empty or contains only {@linkplain Character#isWhitespace(int) white space} codepoints.
      */
     public abstract String id();
-    
+
+    /**
+     * @return should be a class or static field, or a variable held by a manager – that is, an object that can be persistently referenced.
+     */
     public abstract MaterialData getMaterial();
 
     /**
-     * <b>MUST BE the const returns, and greater than or equal to zero.</b>
+     * <b>MUST be the const returns, and greater than or equal to zero.</b>
      */
     public float getFadeInTime() {
         return 0.1f;
     }
 
     /**
-     * <b>MUST BE the const returns, and greater than or equal to zero.</b>
+     * <b>MUST be the const returns, and greater than or equal to zero.</b>
      */
     public float getFullTime() {
         return 0.4f;
     }
 
     /**
-     * <b>MUST BE the const returns, and greater than or equal to zero.</b>
+     * <b>MUST be the const returns, and greater than or equal to zero.</b>
      */
     public float getFadeOutTime() {
         return 1.0f;
@@ -60,6 +69,9 @@ public abstract class StaticTrailData {
         return null;
     }
 
+    /**
+     * Should be a nonnegative number.
+     */
     public float getTexturePixels() {
         return 256.0f;
     }
@@ -109,14 +121,14 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * <b>MUST BE the const returns.</b>
+     * <b>MUST be the const returns.</b>
      */
     public boolean isAdditiveBlend() {
         return true;
     }
 
     /**
-     * <b>Only for system-gen trail, invalid for custom trail.</b><p>
+     * <b>Only for system-gen trail, invalid for custom trail, not required to override.</b><p>
      * Based on forward direction.
      *
      * @return <code>{minOffset.xy, maxOffset.xy}</code>, returns <code>null</code> if without offset
@@ -126,7 +138,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * <b>Only for system-gen trail, invalid for custom trail.</b>
+     * <b>Only for system-gen trail, invalid for custom trail, not required to override.</b>
      *
      * @return use the facing of entity for forward direction when <code>false</code>, use the velocity of entity when <code>true</code>
      */
@@ -135,7 +147,7 @@ public abstract class StaticTrailData {
     }
 
     /**
-     * <b>Only for system-gen trail, invalid for custom trail.</b>
+     * <b>Only for system-gen trail, invalid for custom trail, not required to override.</b>
      *
      * @return rendering at {@link CombatEngineLayers#BELOW_INDICATORS_LAYER} when <code>false</code>, at {@link CombatEngineLayers#ABOVE_SHIPS_LAYER} when <code>true</code>
      */

@@ -116,7 +116,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
     }
 
     public void resetNodes() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList != null) this.nodeList.clear();
         if (this._distance != null) this._distance.clear();
         this._lastNodeLength = 0;
@@ -126,7 +126,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         this.shouldRenderingCount = 0;
         this.stateB[5] = false;
         this.stateB[6] = true;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     protected int computePrim(int num) {
@@ -141,13 +141,13 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when an empty node list or refresh count is zero.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte submitNodes() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null || this.nodeList.size() < 2) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         if (!this.isValid()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED_OTHER;
         }
         final int nodeSize = this.nodeList.size();
@@ -155,7 +155,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
         final int refreshCount = newBuffer ? nodeSize - refreshIndex : this.nodeRefreshState[1];
         if (refreshCount < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         final int refreshLimit = refreshIndex + refreshCount;
@@ -175,7 +175,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
                 GL15.glUnmapBuffer(GL31.GL_TEXTURE_BUFFER);
                 GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
                 this.shouldRenderingCount = 0;
-                this._sync_lock.unlock();
+                this.sync_lock.unlock();
                 return BoxEnum.STATE_FAILED_OTHER;
             }
         } else {
@@ -220,7 +220,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
         if (newBuffer) this._lastNodeLength = nodeSize;
         this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -233,13 +233,13 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte mallocNodeData(int nodeNum) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (nodeNum < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         if (!this.isValid()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED_OTHER;
         }
 
@@ -252,7 +252,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
         this._lastNodeLength = nodeNum;
         this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -264,9 +264,9 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * <strong>High performance impact when is synchronized.</strong>
      */
     public void setSynchronousSubmit(boolean sync) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.stateB[5] = sync;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public boolean isMappingModeSubmitData() {
@@ -280,9 +280,9 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * @param mappingMode to controls whether submit use <code>glMapBufferRange()</code>, else use <code>glBufferSubData()</code>.
      */
     public void setMappingModeSubmitData(boolean mappingMode) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.stateB[6] = mappingMode;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getNodeRefreshIndex() {
@@ -293,37 +293,37 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * @param index Will refresh node data start from this index.
      */
     public void setNodeRefreshIndex(int index) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.nodeRefreshState[0] = Math.min(Math.max(index, 0), Math.max(this.nodeList.size() - 1, 0));
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
      * @param size Will refresh node data count.
      */
     public void setNodeRefreshSize(int size) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         final int nodeSize = this.nodeList.size();
         this.nodeRefreshState[1] = this.nodeRefreshState[0] + size > nodeSize ? nodeSize - this.nodeRefreshState[0] : Math.max(size, 0);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public void setNodeRefreshAllFromCurrentIndex() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.nodeRefreshState[1] = this.nodeList.size() - this.nodeRefreshState[0];
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getValidNodeCount() {
@@ -362,26 +362,26 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * @param nodeList Cannot have any null-node, and at least have two nodes, if not then pass this entity when rendering.
      */
     public void setNodes(@NotNull List<Vector2f> nodeList) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (nodeList.size() > BoxConfigs.getMaxInstanceDataSize()) this.nodeList = nodeList.subList(0, BoxConfigs.getMaxInstanceDataSize());
         else this.nodeList = nodeList;
         if (this._distance == null) this._distance = new ArrayList<>(this.nodeList.size());
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
      * Node at index 0 will be the end point of the trail, and draw from index end to the last index/ the start point.
      */
     public void addNode(@NotNull Vector2f node) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) this.nodeList = new ArrayList<>();
         if (this.nodeList.size() > BoxConfigs.getMaxInstanceDataSize()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.nodeList.add(node);
         if (this._distance == null) this._distance = new ArrayList<>();
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public void putShaderTrailData() {
@@ -746,13 +746,13 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
     }
 
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
-        this._statePackageBuffer.put(13, this.glPrimCount());
-        this._statePackageBuffer.put(14, this.state, 0, 9);
-        this._statePackageBuffer.put(23, this.isFlick() ? this.getFlickMixValue() : -10.0f);
-        this._statePackageBuffer.put(24, this.colorState); // 24
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.material.getState(), 0, 12);
+        this.statePackageBuffer.put(13, this.glPrimCount());
+        this.statePackageBuffer.put(14, this.state, 0, 9);
+        this.statePackageBuffer.put(23, this.isFlick() ? this.getFlickMixValue() : -10.0f);
+        this.statePackageBuffer.put(24, this.colorState); // 24
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public Object entityType() {

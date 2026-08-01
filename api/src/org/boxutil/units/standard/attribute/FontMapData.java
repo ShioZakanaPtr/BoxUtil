@@ -10,12 +10,13 @@ import org.boxutil.units.standard.entity.TextFieldEntity;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.BreakIterator;
 import java.util.*;
 
 /**
  * Only supported one page loading now.
  * Do not use large texture font-map;
- * The font height is 255 the maximum, and 0 is the minimum.
+ * The font height or width is 255 the maximum, and 0 is the minimum.
  */
 public class FontMapData {
     protected final static FontData _RESERVED_FONT = new FontData(BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, (byte) 8);
@@ -25,27 +26,29 @@ public class FontMapData {
         _RESERVED_FONT.uv[2] = -512.0f;
         _RESERVED_FONT.uv[3] = -512.0f;
     }
-    protected String name = "";
-    protected SpriteAPI fontMap = null;
-    protected int fontMapID = 0;
+
     protected HashMap<Character, FontData> fonts = new HashMap<>(128);
     protected HashMap<Character, HashMap<Character, Byte>> kerning = null;
 
+    protected final boolean isBold;
+    protected final boolean isItalic;
+    protected final boolean isUnicode;
+    protected final boolean isSmooth;
     protected final byte fontSize;
     protected final byte stretchH;
     protected final byte aaLevel;
     protected final byte spacingX;
     protected final byte spacingY;
-    protected final boolean isBold;
-    protected final boolean isItalic;
-    protected final boolean isUnicode;
-    protected final boolean isSmooth;
-    protected final int charCount;
     protected final byte lineHeight;
     protected final byte baseHeight;
+    protected boolean isValid = true;
     protected final short mapWidth;
     protected final short mapHeight;
-    protected boolean isValid = true;
+    protected final int charCount;
+    protected int fontMapID = 0;
+    protected String name = "";
+    protected SpriteAPI fontMap = null;
+    protected long[] _glyphData = new long[3];
 
     private FontMapData() {
         this.fontSize = 0;
@@ -355,7 +358,20 @@ public class FontMapData {
         return this.kerning.get(character);
     }
 
-    public static class FontData{
+    protected void buildGlyphStruct(char codePoint, short rawX, short rawY, short x, short y, byte width, byte height, byte xOffset, byte yOffset, byte xAdvance, byte channel) {
+        final int uvXOffset = rawX / 2, uvYOffset = rawY / 2;
+        this._glyphData[codePoint] = Float.floatToRawIntBits((float) (x - uvXOffset) / (float) rawX) |
+                ((long) Float.floatToRawIntBits((float) (rawY - y - height - uvYOffset) / (float) rawY) << 32);
+        this._glyphData[codePoint + 1] = Float.floatToRawIntBits((float) (x + width - uvXOffset) / (float) rawX) |
+                ((long) Float.floatToRawIntBits((float) (rawY - y - uvYOffset) / (float) rawY) << 32);
+        this._glyphData[codePoint + 2] = width | (height << 8) | (xOffset << 16) | (yOffset << 24) | ((long) xAdvance << 32) | ((long) channel << 40);
+    }
+
+    protected boolean withoutGlyph(char codePoint) {
+        return this._glyphData[codePoint + 2] < 0;
+    }
+
+    public static class FontData {
         public final float[] uv = new float[]{0.0f, 0.0f, 1.0f, 1.0f}; // uvBLx, uvBLy, uvTRx, uvTRy
         public final byte[] byteState = new byte[6]; // vec2(size), xOffset, yOffset, xAdvance, page, channel
 

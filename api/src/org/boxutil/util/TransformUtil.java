@@ -8,6 +8,7 @@ import org.lwjgl.util.vector.*;
 
 import java.nio.FloatBuffer;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class TransformUtil {
     /**
      * @return null when determinants got zero.

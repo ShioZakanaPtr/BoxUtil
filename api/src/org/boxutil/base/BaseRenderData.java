@@ -24,18 +24,18 @@ import java.nio.FloatBuffer;
 
 public abstract class BaseRenderData implements RenderDataAPI {
     protected byte primeMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
-    protected byte _blendState = BoxEnum.ENTITY_NORMAL_BLEND;
+    protected byte blendState = BoxEnum.ENTITY_NORMAL_BLEND;
     protected boolean timingWhenPaused = false;
     protected boolean isTimerPaused = false;
     protected boolean autoSubmitPrimeMat = true;
     protected boolean autoSubmitModelMat = true;
     protected boolean autoSubmitDataBuffer = true;
-    protected volatile boolean _hasDelete;
+    protected volatile boolean hasDelete;
 
-    protected final SpinLock _sync_lock = new SpinLock();
+    protected final SpinLock sync_lock = new SpinLock();
     protected final FloatBuffer primeMatBuffer;
     protected final FloatBuffer modelMatBuffer;
-    protected final FloatBuffer _statePackageBuffer;
+    protected final FloatBuffer statePackageBuffer;
     protected Matrix4f primeMatrix = new Matrix4f();
     protected Matrix4f modelMatrix = new Matrix4f();
 
@@ -53,30 +53,30 @@ public abstract class BaseRenderData implements RenderDataAPI {
     public BaseRenderData() {
         this.primeMatBuffer = CommonUtil.createIdentityMatrix4x4f();
         this.modelMatBuffer = CommonUtil.createIdentityMatrix4x4f();
-        this._statePackageBuffer = BufferUtils.createFloatBuffer(this._StatePackageStack() << 2);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer = BufferUtils.createFloatBuffer(this._StatePackageStack() << 2);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     protected void _deleteExc() {
-        this._hasDelete = true;
+        this.hasDelete = true;
         this.primeMatBuffer.clear();
         this.modelMatBuffer.clear();
-        this._statePackageBuffer.clear();
+        this.statePackageBuffer.clear();
         if (this.getControlData() != null) this.getControlData().controlRemove(this);
     }
 
     public void delete() {
-        this._sync_lock.lock();
-        if (!this._hasDelete) this._deleteExc();
-        this._sync_lock.unlock();
+        this.sync_lock.lock();
+        if (!this.hasDelete) this._deleteExc();
+        this.sync_lock.unlock();
     }
 
     /**
      * @return Should not use this entity when true.
      */
     public boolean hasDelete() {
-        return this._hasDelete;
+        return this.hasDelete;
     }
 
     public void glDraw() {
@@ -109,14 +109,14 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[2] = GL11.GL_ONE_MINUS_SRC_ALPHA;
         this.blendConfig[3] = GL11.GL_ONE_MINUS_SRC_ALPHA;
         this.blendConfig[4] = GL14.GL_FUNC_ADD;
-        this._blendState = BoxEnum.ENTITY_NORMAL_BLEND;
+        this.blendState = BoxEnum.ENTITY_NORMAL_BLEND;
         this.layer = null;
     }
 
     public void reset() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this._resetExc();
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public boolean isAutoSubmitEntityData() {
@@ -135,9 +135,9 @@ public abstract class BaseRenderData implements RenderDataAPI {
      * Without matrix data or timer settings.
      */
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.getGlobalTimerAlpha());
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.getGlobalTimerAlpha());
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public ControlDataAPI getControlData() {
@@ -452,7 +452,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
      */
     public FloatBuffer pickDataPackage_vec4() {
         if (this.autoSubmitDataBuffer) this.submitEntityData();
-        return this._statePackageBuffer;
+        return this.statePackageBuffer;
     }
 
     public int getBlendColorSRC() {
@@ -476,7 +476,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
     }
 
     public byte getBlendState() {
-        return this._blendState;
+        return this.blendState;
     }
 
     /**
@@ -487,7 +487,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[1] = dstFactor;
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
-        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
+        this.blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     /**
@@ -498,7 +498,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[1] = dstColorFactor;
         this.blendConfig[2] = srcAlphaFactor;
         this.blendConfig[3] = dstAlphaFactor;
-        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
+        this.blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     /**
@@ -506,7 +506,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
      */
     public void setBlendEquation(int mode) {
         this.blendConfig[4] = mode;
-        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
+        this.blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     public void setAdditiveBlend() {
@@ -515,7 +515,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
         this.blendConfig[4] = GL14.GL_FUNC_ADD;
-        this._blendState = BoxEnum.ENTITY_ADDITIVE_BLEND;
+        this.blendState = BoxEnum.ENTITY_ADDITIVE_BLEND;
     }
 
     /**
@@ -527,7 +527,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
         this.blendConfig[4] = GL14.GL_FUNC_ADD;
-        this._blendState = BoxEnum.ENTITY_NORMAL_BLEND;
+        this.blendState = BoxEnum.ENTITY_NORMAL_BLEND;
     }
 
     /**
@@ -539,11 +539,11 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.blendConfig[2] = GL11.GL_ZERO;
         this.blendConfig[3] = GL11.GL_ONE;
         this.blendConfig[4] = GL14.GL_FUNC_REVERSE_SUBTRACT;
-        this._blendState = BoxEnum.ENTITY_OTHER_BLEND;
+        this.blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
     public void setDisableBlend() {
-        this._blendState = BoxEnum.ENTITY_DISABLED_BLEND;
+        this.blendState = BoxEnum.ENTITY_DISABLED_BLEND;
     }
 
     public Object getLayer() {

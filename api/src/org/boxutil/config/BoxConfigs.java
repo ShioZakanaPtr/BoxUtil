@@ -66,7 +66,8 @@ public final class BoxConfigs {
     // Dev config values.
     private static boolean BUtil_AAStatus = false;
     private static byte BUtil_MultiPassMode = BoxEnum.MP_BEAUTY;
-    private static boolean BUtil_ShowMemoryPool = false;
+    private static boolean BUtil_ShowInstanceMemoryUsage = false;
+    private static boolean BUtil_ShowStaticTrailMemoryUsage = false;
 
     // Shader Packs values.
     private final static Set<BaseShaderPacksContext> _SHADER_PACKS_CONTEXTS = new LinkedHashSet<>(8);
@@ -92,6 +93,15 @@ public final class BoxConfigs {
 
     private static int clampI(int value, int min, int max) {
         return Math.max(Math.min(value, max), min);
+    }
+
+    private static short getTrailSystemQualityNodes(byte quality) {
+        return switch (quality) {
+            case BoxEnum.QUALITY_NORMAL -> 30;
+            case BoxEnum.QUALITY_HIGH -> 60;
+            case BoxEnum.QUALITY_ULTRA -> 144;
+            default -> throw new IllegalStateException("Unexpected trail system quality value: " + quality);
+        };
     }
 
     public static String getRebootValueRealString(byte master, byte item) {
@@ -127,18 +137,16 @@ public final class BoxConfigs {
                         switch (BUtil_TrailSystemQuality) {
                             case BoxEnum.QUALITY_NORMAL -> {
                                 result = "BUtil_ConfigPanel_QualityNormal";
-                                append = " - 30";
                             }
                             case BoxEnum.QUALITY_HIGH -> {
                                 result = "BUtil_ConfigPanel_QualityHigh";
-                                append = " - 60";
                             }
                             case BoxEnum.QUALITY_ULTRA -> {
                                 result = "BUtil_ConfigPanel_QualityUltra";
-                                append = " - 144";
                             }
                             default -> throw new IllegalStateException("Not a valid trail system quality value.");
                         }
+                        append = " - " + getTrailSystemQualityNodes(BUtil_TrailSystemQuality);
                     }
                 }
                 break;
@@ -194,18 +202,16 @@ public final class BoxConfigs {
                         switch (BUtil_TrailSystemQualityDisplay) {
                             case BoxEnum.QUALITY_NORMAL -> {
                                 result = "BUtil_ConfigPanel_QualityNormal";
-                                append = " - 30";
                             }
                             case BoxEnum.QUALITY_HIGH -> {
                                 result = "BUtil_ConfigPanel_QualityHigh";
-                                append = " - 60";
                             }
                             case BoxEnum.QUALITY_ULTRA -> {
                                 result = "BUtil_ConfigPanel_QualityUltra";
-                                append = " - 144";
                             }
                             default -> throw new IllegalStateException("Not a valid trail system quality value.");
                         }
+                        append = " - " + getTrailSystemQualityNodes(BUtil_TrailSystemQualityDisplay);
                     }
                 }
                 break;
@@ -436,7 +442,7 @@ public final class BoxConfigs {
     }
 
     public synchronized static void sysCheck() {
-        BUtil_EnableShader &= ShaderCore.isValid() && !BUtil_InstanceDataMemoryPool.isNotSupported();
+        BUtil_EnableShader &= ShaderCore.isValid() && !BUtil_InstanceDataMemoryPool.isPoolInvalid();
         BUtil_EnableCL &= KernelCore.isValid();
         BUtil_EnableTrailSystem &= BoxDatabase.getGLState().GL_GL32 && ShaderCore.isStaticTrailSystemValid();
     }
@@ -599,6 +605,10 @@ public final class BoxConfigs {
         return BUtil_TrailSystemQuality;
     }
 
+    public static short getTrailSystemNodesPerSecond() {
+        return getTrailSystemQualityNodes(BUtil_TrailSystemQuality);
+    }
+
     public static short getMaxCurveNodeSize() {
         return BUtil_CurveNode == -1 ? Short.MAX_VALUE : BUtil_CurveNode;
     }
@@ -678,11 +688,19 @@ public final class BoxConfigs {
     }
 
     public static boolean isShowInstanceMemoryUsage() {
-        return BUtil_ShowMemoryPool;
+        return BUtil_ShowInstanceMemoryUsage;
     }
 
     public static void setShowInstanceMemoryUsage(boolean value) {
-        BUtil_ShowMemoryPool = value;
+        BUtil_ShowInstanceMemoryUsage = value;
+    }
+
+    public static boolean isShowStaticTrailMemoryUsage() {
+        return BUtil_ShowStaticTrailMemoryUsage;
+    }
+
+    public static void setShowStaticTrailMemoryUsage(boolean value) {
+        BUtil_ShowStaticTrailMemoryUsage = value;
     }
 
     public static BaseShaderPacksContext getCurrShaderPacksContext() {

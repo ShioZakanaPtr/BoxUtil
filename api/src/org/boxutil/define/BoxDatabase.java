@@ -23,6 +23,7 @@ public final class BoxDatabase {
     public final static String BUILTIN_OBJ_CSV = "data/config/modFiles/BUtil_obj_data.csv";
     public final static String BUILTIN_TEXTURE_CSV = "data/config/modFiles/BUtil_texture_data.csv";
     public final static String BUILTIN_ILLUMINANT_CSV = "data/config/modFiles/BUtil_illuminant_data.csv";
+    public final static String BUILTIN_STATIC_TRAIL_CSV = "data/config/modFiles/BUtil_trail_data.csv";
     public final static String CONFIG_FILE_PATH = "BUtil_Configs.json";
     public final static String SHADERPACKS_CONFIG_FILE_PATH = "shaderpacks/";
     public final static String SHADERPACKS_SELECT_FILE_PATH = "shaderpacks/BUtil_SelectedShaderPacks.json";

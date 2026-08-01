@@ -2,60 +2,78 @@ package org.boxutil.backends.core.instancedrendering;
 
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
+import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
+import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.InstanceType;
 import org.boxutil.manager.ShaderCore;
-import org.boxutil.units.standard.attribute.FontMapData;
 import org.boxutil.units.standard.entity.TextFieldEntity;
 import org.boxutil.units.standard.misc.TextFieldObject;
 import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
-import org.boxutil.util.TransformUtil;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
-import java.nio.FloatBuffer;
 import java.util.Locale;
 
-public final class BUtil_GLDrawInstanceMemoryUsage {
-    private final static TextFieldObject _TEXT = new TextFieldObject();
-    private final static TextFieldObject _HOVER_TEXT = new TextFieldObject();
-    private final static InstanceType[] _TYPES = InstanceType.values();
-    private final static float _BAR_WIDTH = 512.0f, _BAR_HEIGHT = 32.0f, _SPACE = 10.0f;
-    private final static byte[][] _COLOR;
-    private static FloatBuffer _MATRIX = null;
+public final class BUtil_GLDrawInstanceMemoryUsage implements BUtil_GLDrawInfo.Drawable {
+    private final TextFieldObject[] title = new TextFieldObject[InstanceType.values().length];
+    private final TextFieldObject[] hoverText = new TextFieldObject[InstanceType.values().length];
+    private final InstanceType[] types;
+    private final byte[][] textColor;
+    private final long[][] last_state = new long[InstanceType.values().length][2];
 
-    static {
-        _COLOR = new byte[][]{CommonUtil.colorToByteArray(Misc.getNegativeHighlightColor()), CommonUtil.colorToByteArray(Misc.getPositiveHighlightColor())};
+    public BUtil_GLDrawInstanceMemoryUsage() {
+        for (final var type : InstanceType.values()) {
+            this.initTitleText(type);
+            this.initHoverText(type);
+        }
+
+        this.types = InstanceType.values();
+        this.textColor = new byte[][]{CommonUtil.colorToByteArray(Misc.getNegativeHighlightColor()), CommonUtil.colorToByteArray(Misc.getPositiveHighlightColor())};
     }
 
-    private static String getNum(long size) {
-        if (size < 1) return "    0 Byte";
-        final boolean isByte = size < 1024;
-        final String[] unit = new String[]{"Byte", " KiB", " MiB", " GiB", " TiB", " PiB", " EiB"};
+    private void initTitleText(final InstanceType type) {
+        byte ordinal = (byte) type.ordinal();
+        this.title[ordinal] = new TextFieldObject("graphics/fonts/FiraCodeModified/Fira_Code_SemiBold_14.fnt");
+        final var text = this.title[ordinal];
+        text.mallocTextData(50);
+        text.addText(String.format("%-11s", type.name()), 0.0f, Misc.getNegativeHighlightColor(), true);
+        text.addText("▼ ");
+        text.addText("    0 Byte", 0.0f, Misc.getHighlightColor());
+        text.addText(" / ");
+        text.addText("    0 Byte", 0.0f, Misc.getHighlightColor());
+        text.addText(" ≈ ");
+        text.addText("  - %", 0.0f, Misc.getHighlightColor());
+        text.addText(" Usage");
+        text.setFieldWidth(512.0f);
+        text.setFieldHeight(32.0f);
+        text.setTextDataRefreshIndex(0);
+        text.setTextDataRefreshAllFromCurrentIndex();
+        text.submitText();
+        text.setShouldRenderingCharCount(50);
+        text.setRefreshRenderingLengthWhenSubmit(false);
+        text.setTextDataRefreshIndex(0);
+        text.setTextDataRefreshSize(7);
+    }
 
-        byte pick = 0;
-        byte decimal = 0;
-        double result = size;
-        if (!isByte) {
-            result = Math.log10(size);
-            pick = (byte) (result / 3.010299956639812d);
-            result = (pick < 4) ? (1 << (pick * 10)) : Math.pow(1024.0d, pick);
-            result = (double) size / result;
-            if (result >= 1.0d) decimal = (byte) (4 - (byte) Math.log10(result));
-        }
-
-        String resultStr;
-        if (isByte) {
-            resultStr = String.format("%5s", size) + ' ';
-        } else {
-            String formatStr = "%." + Math.max(decimal, 0) + "f";
-            resultStr = String.format(formatStr, result);
-        }
-        return resultStr + unit[pick];
+    private void initHoverText(final InstanceType type) {
+        byte ordinal = (byte) type.ordinal();
+        this.hoverText[ordinal] = new TextFieldObject("graphics/fonts/FiraCodeModified/Fira_Code_SemiBold_14.fnt");
+        final var text = this.hoverText[ordinal];
+        text.setAlignment(TextFieldEntity.Alignment.MID);
+        text.mallocTextData(60);
+        text.addText("0");
+        text.addText(" / ");
+        text.addText("0");
+        text.addText(" Byte");
+        text.setFieldWidth(512.0f);
+        text.setFieldHeight(32.0f);
+        text.setTextDataRefreshIndex(0);
+        text.setTextDataRefreshAllFromCurrentIndex();
+        text.submitText();
     }
 
     private static String getUsageP(double div) {
@@ -66,115 +84,86 @@ public final class BUtil_GLDrawInstanceMemoryUsage {
         return String.format(formatStr, result) + '%';
     }
 
-    public static void showGUI() {
-        if (!BoxConfigs.isShowInstanceMemoryUsage() || BUtil_InstanceDataMemoryPool.isNotSupported()) return;
-        if (_TEXT.getFontMap() == null) {
-            _TEXT.setFontMap(new FontMapData("graphics/fonts/FiraCodeModified/Fira_Code_SemiBold_14.fnt"));
-            _TEXT.mallocTextData(50);
-            _TEXT.addText("DYNAMIC_2D ", true);
-            _TEXT.addText("▼ ");
-            _TEXT.addText("9999.9 KiB", 0.0f, Misc.getHighlightColor());
-            _TEXT.addText(" / ");
-            _TEXT.addText("0.9999 MiB", 0.0f, Misc.getHighlightColor());
-            _TEXT.addText(" ≈ ");
-            _TEXT.addText("99.9%", 0.0f, Misc.getHighlightColor());
-            _TEXT.addText(" Usage");
-            _TEXT.setFieldWidth(512.0f);
-            _TEXT.setFieldHeight(32.0f);
-            _TEXT.setTextDataRefreshIndex(0);
-            _TEXT.setTextDataRefreshAllFromCurrentIndex();
-            _TEXT.submitText();
-            _TEXT.setShouldRenderingCharCount(50);
-            _TEXT.setRefreshRenderingLengthWhenSubmit(false);
-            _TEXT.setTextDataRefreshIndex(0);
-            _TEXT.setTextDataRefreshSize(7);
-        }
-        if (_HOVER_TEXT.getFontMap() == null) {
-            _HOVER_TEXT.setFontMap(new FontMapData("graphics/fonts/FiraCodeModified/Fira_Code_SemiBold_14.fnt"));
-            _HOVER_TEXT.setAlignment(TextFieldEntity.Alignment.MID);
-            _HOVER_TEXT.mallocTextData(60);
-            _HOVER_TEXT.addText("0");
-            _HOVER_TEXT.addText(" / ");
-            _HOVER_TEXT.addText("0");
-            _HOVER_TEXT.addText(" Byte");
-            _HOVER_TEXT.setFieldWidth(512.0f);
-            _HOVER_TEXT.setFieldHeight(32.0f);
-            _HOVER_TEXT.setTextDataRefreshIndex(0);
-            _HOVER_TEXT.setTextDataRefreshAllFromCurrentIndex();
-            _HOVER_TEXT.submitText();
-        }
+    public boolean isShown() {
+        return BoxConfigs.isShowInstanceMemoryUsage() && !BUtil_InstanceDataMemoryPool.isPoolInvalid();
+    }
 
-        final float fixedTextHeight = _TEXT.getFontMap().getLineHeight(), hoverTextHeight = _HOVER_TEXT.getFontMap().getLineHeight();
-        final float locX = ShaderCore.getScreenWidth(), locY = ShaderCore.getScreenHeight();
-        if (_MATRIX == null) _MATRIX = CommonUtil.createFloatBuffer(TransformUtil.createWindowOrthoMatrix(new Matrix4f()));
-        GL11.glPushAttrib(GL11.GL_VIEWPORT_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TRANSFORM_BIT | GL11.GL_POLYGON_BIT);
-        GL11.glViewport(0, 0, ShaderCore.getScreenScaleWidth(), ShaderCore.getScreenScaleHeight());
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPushMatrix();
-        GL11.glLoadMatrix(_MATRIX);
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glPushMatrix();
-        GL11.glLoadIdentity();
+    public float glDraw(float totalYOffset) {
+        final float barWidth = 512.0f, barHeight = 32.0f, topPadding = 24.0f, widgetSpace = 10.0f,
+                fixedTextHeight = this.title[0].getFontMap().getLineHeight(), hoverTextHeight = this.hoverText[0].getFontMap().getLineHeight(),
+                locX = ShaderCore.getScreenWidth(), locY = ShaderCore.getScreenHeight();
 
-        final var mousePos = new Vector2f(Mouse.getX(), Mouse.getY());
-        final var aabb = new Vector2f[]{new Vector2f(), new Vector2f(locX - _SPACE, locY - 32.0f)};
-        aabb[0].x = aabb[1].x - _BAR_WIDTH;
-        aabb[0].y = aabb[1].y - fixedTextHeight - _BAR_HEIGHT;
-        GL11.glTranslatef(aabb[0].x, aabb[0].y, 0.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_POLYGON_SMOOTH);
-        GL11.glDisable(GL11.GL_STENCIL_TEST);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        final Vector2f mousePos = new Vector2f(Mouse.getX(), Mouse.getY()), renderingPos = new Vector2f(0.0f, 0.0f);
+        final var aabb = new Vector2f[]{new Vector2f(), new Vector2f(locX - widgetSpace, locY - topPadding - totalYOffset)};
+        aabb[0].x = aabb[1].x - barWidth;
+        aabb[0].y = aabb[1].y - fixedTextHeight - barHeight;
+        GL11.glPushMatrix();
+        GL11.glTranslatef(aabb[0].x - locX, aabb[0].y - locY, 0.0f);
 
         Pair<Long, Long> values;
+        TextFieldObject text;
         TextFieldEntity.TextData textData;
-        long usageValue;
-        float drawOffset;
-        boolean notShowHover = true;
-        for (var type : _TYPES) {
+        byte ordinal;
+        long usageValue = 0;
+        float drawOffset = -topPadding, totalDrawOffset = 0.0f;
+        byte[] pickTextColor;
+        boolean notShowHover = true, refreshText;
+        for (final var type : this.types) {
+            ordinal = (byte) type.ordinal();
+            if (totalDrawOffset < -topPadding) GL11.glTranslatef(0.0f, drawOffset, 0.0f);
+
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glPushMatrix();
-            GL11.glScalef(_BAR_WIDTH, _BAR_HEIGHT, 1.0f);
-            values = BUtil_InstanceDataMemoryPool.glDrawMemoryUsage(type);
+            GL11.glScalef(barWidth, barHeight, 1.0f);
+            values = BUtil_InstanceDataMemoryPool.getPool(type).glDrawMemoryUsage();
             GL11.glPopMatrix();
 
-            usageValue = values.two - values.one;
-            textData = _TEXT.getTextDataList().get(0);
-            textData.text = String.format("%-11s", type.name());
-            System.arraycopy(_COLOR[values.two < 1 ? 0 : 1], 0, textData.byteState, 2, 4);
-            _TEXT.getTextDataList().get(2).text = getNum(usageValue);
-            _TEXT.getTextDataList().get(4).text = getNum(values.two);
-            _TEXT.getTextDataList().get(6).text = getUsageP((double) usageValue / values.two);
-            _TEXT.submitText();
-            _TEXT.render(new Vector2f(0, fixedTextHeight + _BAR_HEIGHT), 0, false, null);
+            text = this.title[ordinal];
+            refreshText = values.one != this.last_state[ordinal][0] || values.two != this.last_state[ordinal][1];
+            if (refreshText) {
+                this.last_state[ordinal][0] = values.one;
+                this.last_state[ordinal][1] = values.two;
+                usageValue = values.two - values.one;
+                
+                textData = text.getTextDataList().get(0);
+                textData.setText(String.format("%-11s", type.name()));
+                pickTextColor = values.two < 1 ? this.textColor[0] : this.textColor[1];
+                textData.setColor(pickTextColor[0], pickTextColor[1], pickTextColor[2], pickTextColor[3]);
+                text.getTextDataList().get(2).setText(BUtil_MiscUtil.getMemoryNumStr(usageValue));
+                text.getTextDataList().get(4).setText(BUtil_MiscUtil.getMemoryNumStr(values.two));
+                text.getTextDataList().get(6).setText(getUsageP((double) usageValue / values.two));
+                text.submitText();
+            }
+
+            renderingPos.set(0.0f, fixedTextHeight + barHeight);
+            text.render(renderingPos, 0.0f, false, null);
+
+            text = this.hoverText[ordinal];
+            if (refreshText) {
+                text.getTextDataList().get(0).setText(String.format(Locale.US, "%,d", usageValue));
+                text.getTextDataList().get(2).setText(String.format(Locale.US, "%,d", values.two));
+                text.submitText();
+            }
 
             if (notShowHover && CalculateUtil.isPointWithinAABB(mousePos, aabb)) {
                 notShowHover = false;
                 aabb[0].x = 0.0f;
-                aabb[0].y = (hoverTextHeight + _BAR_HEIGHT) * 0.5f;
+                aabb[0].y = (hoverTextHeight + barHeight) * 0.5f;
                 aabb[1].x = 1.5f;
                 aabb[1].y = aabb[0].y - 1.5f;
-                _HOVER_TEXT.getTextDataList().get(0).text = String.format(Locale.US, "%,d", usageValue);
-                _HOVER_TEXT.getTextDataList().get(2).text = String.format(Locale.US, "%,d", values.two);
-                _HOVER_TEXT.submitText();
-                _HOVER_TEXT.render(aabb[1], 0, false, Color.BLACK);
-                _HOVER_TEXT.render(aabb[0], 0, false, null);
+
+                text.render(aabb[1], 0.0f, false, Color.BLACK);
+                text.render(aabb[0], 0.0f, false, null);
             }
 
-            drawOffset = -(fixedTextHeight + _BAR_HEIGHT + _SPACE);
-            GL11.glTranslatef(0.0f, drawOffset, 0.0f);
+            drawOffset = -(fixedTextHeight + barHeight + widgetSpace);
+            totalDrawOffset += drawOffset;
             if (notShowHover) {
                 aabb[0].y += drawOffset;
                 aabb[1].y += drawOffset;
             }
         }
-
         GL11.glPopMatrix();
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-        GL11.glPopAttrib();
+        return totalDrawOffset;
     }
 }

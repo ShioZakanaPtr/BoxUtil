@@ -1,5 +1,5 @@
-#ifndef BUtil_GBufferTool
-#define BUtil_GBufferTool
+#ifndef BUtil_GBufferTool_H
+#define BUtil_GBufferTool_H
 
 #if __VERSION__ < 420
 layout (std140) uniform BUtilGlobalData {
@@ -25,4 +25,4 @@ vec3 decodePos(in vec3 posRaw) {
 #endif
 }
 
-#endif // BUtil_GBufferTool
+#endif // BUtil_GBufferTool_H

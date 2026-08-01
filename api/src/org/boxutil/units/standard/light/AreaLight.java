@@ -9,8 +9,6 @@ import org.boxutil.define.DirectEntityType;
 import de.unkrig.commons.nullanalysis.Nullable;
 import org.lwjgl.opengl.GL11;
 
-import java.nio.FloatBuffer;
-
 /**
  * Highest performance cost in all illuminates.<p>
  * Default rectangle normal direction is <code>vec3(0.0, 0.0, -1.0)</code><p>
@@ -230,11 +228,11 @@ public class AreaLight extends BaseIlluminantData {
 
     public void submitEntityData() {
         super.submitEntityData();
-        this._statePackageBuffer.put(6, this.size[0]);
-        this._statePackageBuffer.put(7, this.size[1]);
-        this._statePackageBuffer.put(8, this.texturedLightingMapping, 0, 4);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(6, this.size[0]);
+        this.statePackageBuffer.put(7, this.size[1]);
+        this.statePackageBuffer.put(8, this.texturedLightingMapping, 0, 4);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public Object entityType() {

@@ -23,6 +23,7 @@ import java.util.Set;
  * For asteroid, in general managed by each shader packs, and use {@link SpriteAPI#getTextureId()} as <code>key</code>.<p>
  * For battle objective, use {@link BattleObjectiveAPI#getType()} as <code>key</code>.
  */
+@SuppressWarnings("UnusedReturnValue")
 public final class EntityShadingDataManager {
     public final static String WEAPON_BARREL_SUFFIX = "_BARREL";
     public final static String WEAPON_UNDER_SUFFIX = "_UNDER";
@@ -320,7 +321,7 @@ public final class EntityShadingDataManager {
      * @param id the spec id of <strong>ship</strong> and <strong>battle objective</strong>.
      */
     public static TextureSet putEntityTextureSet(String id, TextureSet textureSet) {
-        if (id == null || id.isEmpty() || textureSet == null) return null;
+        if (id == null || id.isBlank() || textureSet == null) return null;
         return _ENTITY.put(id, textureSet);
     }
 
@@ -349,7 +350,7 @@ public final class EntityShadingDataManager {
      * @param id the spec id of <strong>missile
      */
     public static TextureSet putMissileTextureSet(String id, TextureSet textureSet) {
-        if (id == null || id.isEmpty() || textureSet == null) return null;
+        if (id == null || id.isBlank() || textureSet == null) return null;
         return _MISSILE.put(id, textureSet);
     }
 
@@ -381,7 +382,7 @@ public final class EntityShadingDataManager {
      * @param isHardpoint values {@link BoxEnum#TRUE} and {@link BoxEnum#FALSE}.
      */
     public static TextureSet putWeaponTextureSet(String id, byte isHardpoint, TextureSet textureSet) {
-        if (id == null || id.isEmpty() || textureSet == null) return null;
+        if (id == null || id.isBlank() || textureSet == null) return null;
         return _WEAPON[isHardpoint].put(id, textureSet);
     }
 
@@ -414,7 +415,7 @@ public final class EntityShadingDataManager {
      * @param isHardpoint values {@link BoxEnum#TRUE} and {@link BoxEnum#FALSE}.
      */
     public static TextureSet putWeaponCoverTextureSet(String id, byte isHardpoint, WeaponAPI.WeaponSize size, TextureSet textureSet) {
-        if (id == null || id.isEmpty() || textureSet == null) return null;
+        if (id == null || id.isBlank() || textureSet == null) return null;
         return _WEAPON_COVER[isHardpoint][size.ordinal()].put(id, textureSet);
     }
 
@@ -444,7 +445,7 @@ public final class EntityShadingDataManager {
      * @param id the id of <strong>projectile spec</strong>.
      */
     public static ProjectileIlluminantData putProjectileIlluminantData(String id, ProjectileIlluminantData illuminantData) {
-        if (id == null || id.isEmpty() || illuminantData == null) return null;
+        if (id == null || id.isBlank() || illuminantData == null) return null;
         return _PROJ_ILLUM.put(id, illuminantData);
     }
 
@@ -473,7 +474,7 @@ public final class EntityShadingDataManager {
      * @param id the id of <strong>beam weapon</strong>.
      */
     public static IsoIlluminantData putBeamIlluminantData(String id, IsoIlluminantData illuminantData) {
-        if (id == null || id.isEmpty() || illuminantData == null) return null;
+        if (id == null || id.isBlank() || illuminantData == null) return null;
         return _BEAM_ILLUM.put(id, illuminantData);
     }
 
@@ -502,7 +503,7 @@ public final class EntityShadingDataManager {
      * @param id the id of <strong>engine style</strong>.
      */
     public static IsoIlluminantData putEngineIlluminantData(String id, IsoIlluminantData illuminantData) {
-        if (id == null || id.isEmpty() || illuminantData == null) return null;
+        if (id == null || id.isBlank() || illuminantData == null) return null;
         return _ENGINE_ILLUM.put(id, illuminantData);
     }
 
@@ -547,7 +548,7 @@ public final class EntityShadingDataManager {
                 } else {
                     isHardpoint = texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[3]);
                     texSubType = objData.optString("subType").toUpperCase();
-                    if ((texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[2]) || isHardpoint) && !texSubType.isEmpty()) {
+                    if ((texType.contentEquals(BoxDatabase.SHADING_TEXTURE_DATA_TYPE[2]) || isHardpoint) && !texSubType.isBlank()) {
                         valid = true;
                         frame = (byte) objData.optInt("frame", -1);
                         weaponSlotPicker = isHardpoint ? BoxEnum.TRUE : BoxEnum.FALSE;

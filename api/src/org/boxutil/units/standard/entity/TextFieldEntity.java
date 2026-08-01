@@ -19,7 +19,6 @@ import org.lwjgl.util.vector.Vector4f;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -152,10 +151,10 @@ public class TextFieldEntity extends BaseRenderData {
      * @param map all the font height (or font size) should be near or equal.
      */
     public void setFontMap(@NotNull FontMapData map) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.fontMapList == null) this.fontMapList = new FontMapData[4];
         this.fontMapList[0] = map;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
@@ -164,10 +163,10 @@ public class TextFieldEntity extends BaseRenderData {
      */
     public void setFontMap(@NotNull FontMapData map, byte index) {
         if (index > 3) return;
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.fontMapList == null) this.fontMapList = new FontMapData[4];
         this.fontMapList[index] = map;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
@@ -324,7 +323,7 @@ public class TextFieldEntity extends BaseRenderData {
     }
 
     public void resetText() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.fontMapList = null;
         this.textStateAfterSubmit[0] = 0.0f;
         this.textStateAfterSubmit[1] = 0.0f;
@@ -337,7 +336,7 @@ public class TextFieldEntity extends BaseRenderData {
         this.stateB[1] = true;
         this.stateB[2] = false;
         this.stateB[3] = true;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     protected TextData createTextData(String text, float padding, Color color, boolean invert, boolean italic, boolean underline, boolean strikeout, int fontMapIndex) {
@@ -358,11 +357,11 @@ public class TextFieldEntity extends BaseRenderData {
      */
     public TextData addText(String text, float padding, Color color, boolean invert, boolean italic, boolean underline, boolean strikeout, int fontMapIndex) {
         if (fontMapIndex < 0) return null;
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this._lastTextDataList == null) this._lastTextDataList = new ArrayList<>();
         TextData para = createTextData(text, padding, color, invert, italic, underline, strikeout, fontMapIndex);
         this._lastTextDataList.add(para);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return para;
     }
 
@@ -384,13 +383,13 @@ public class TextFieldEntity extends BaseRenderData {
      */
     public TextData replaceTextAtParagraph(@NotNull String text, float padding, Color color, boolean invert, boolean italic, boolean underline, boolean strikeout, int fontMapIndex, int paragraphIndex) {
         if (fontMapIndex < 0) return null;
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this._lastTextDataList == null || paragraphIndex >= this._lastTextDataList.size()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return null;
         }
         final var para = this._lastTextDataList.set(paragraphIndex, createTextData(text, padding, color, invert, italic, underline, strikeout, fontMapIndex));
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return para;
     }
 
@@ -501,20 +500,20 @@ public class TextFieldEntity extends BaseRenderData {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when an empty text data list or refresh count is zero.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte submitText() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this._lastTextDataList == null || this._lastTextDataList.isEmpty()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         if (!this.isValid()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED_OTHER;
         }
         final int textDataRefreshIndex = this.textDataRefreshState[1];
         final int textDataRefreshCount = this.textDataRefreshState[2];
         final int textDataRefreshLimit = textDataRefreshIndex + textDataRefreshCount;
         if (textDataRefreshCount < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         if (this._lastTextDataState == null) this._lastTextDataState = new ArrayList<>(textDataRefreshCount);
@@ -694,7 +693,7 @@ public class TextFieldEntity extends BaseRenderData {
         if (putWidthDataCheck && !lastLineAlignmentData.one.isEmpty()) currLineAlignmentData.add(lastLineAlignmentData);
 
         if (charLength < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
 
@@ -715,7 +714,7 @@ public class TextFieldEntity extends BaseRenderData {
                 GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
                 if (this.isRefreshRenderingLengthWhenSubmit()) this.textDataRefreshState[4] = 0;
-                this._sync_lock.unlock();
+                this.sync_lock.unlock();
                 return BoxEnum.STATE_FAILED_OTHER;
             }
         } else {
@@ -747,7 +746,7 @@ public class TextFieldEntity extends BaseRenderData {
         if (useMapping) GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
         else GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, subBufferIndex, buffer);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -760,13 +759,13 @@ public class TextFieldEntity extends BaseRenderData {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte mallocTextData(int charNum) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (!this.isValid()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED_OTHER;
         }
         if (charNum < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
 
@@ -775,7 +774,7 @@ public class TextFieldEntity extends BaseRenderData {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         this.textDataRefreshState[0] = charNum;
         this.textDataRefreshState[4] = 0;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -784,9 +783,9 @@ public class TextFieldEntity extends BaseRenderData {
     }
 
     public void setSubmitFeedback(TextSubmitFeedbackAPI plugin) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this._submitFeedback = plugin;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public boolean isRefreshRenderingLengthWhenSubmit() {
@@ -794,9 +793,9 @@ public class TextFieldEntity extends BaseRenderData {
     }
 
     public void setRefreshRenderingLengthWhenSubmit(boolean refresh) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.stateB[1] = refresh;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
@@ -810,9 +809,9 @@ public class TextFieldEntity extends BaseRenderData {
      * <strong>High performance impact when is synchronized.</strong>
      */
     public void setSynchronousSubmit(boolean sync) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.stateB[2] = sync;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
@@ -829,9 +828,9 @@ public class TextFieldEntity extends BaseRenderData {
      * @param mappingMode to controls whether submit use <code>glMapBufferRange()</code>, else use <code>glBufferSubData()</code>.
      */
     public void setMappingModeSubmitData(boolean mappingMode) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.stateB[3] = mappingMode;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getTextDataRefreshIndex() {
@@ -842,37 +841,37 @@ public class TextFieldEntity extends BaseRenderData {
      * @param index Will refresh text data start from the index.
      */
     public void setTextDataRefreshIndex(int index) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this._lastTextDataList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.textDataRefreshState[1] = Math.min(Math.max(index, 0), Math.max((short) this._lastTextDataList.size() - 1, 0));
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
      * @param size Will refresh text data count.
      */
     public void setTextDataRefreshSize(int size) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this._lastTextDataList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         final int total = this._lastTextDataList.size();
         this.textDataRefreshState[2] = this.textDataRefreshState[1] + size > total ? total - this.textDataRefreshState[1] : Math.max(size, 0);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public void setTextDataRefreshAllFromCurrentIndex() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this._lastTextDataList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.textDataRefreshState[2] = this._lastTextDataList.size() - this.textDataRefreshState[1];
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public List<TextData> getTextDataList() {
@@ -904,9 +903,9 @@ public class TextFieldEntity extends BaseRenderData {
     }
 
     public void setAlignment(Alignment alignment) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.alignment = alignment;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public float getFontWidthSpace() {
@@ -1079,9 +1078,9 @@ public class TextFieldEntity extends BaseRenderData {
     }
 
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.state, 4, 8);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.state, 4, 8);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public Object entityType() {

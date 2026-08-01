@@ -9,11 +9,6 @@ import org.boxutil.config.BoxConfigGUI;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.manager.*;
-import org.lwjgl.Sys;
-
-import java.io.PrintStream;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * A multi-thread OpenGL based lib/engine of the game <a href="https://fractalsoftworks.com/">Starsector</a>.
@@ -34,7 +29,6 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
     public synchronized static void initPre() {
         if (isPreInitialized) return;
         final var modSpec = Global.getSettings().getModManager().getModSpec(BoxDatabase.MOD_ID);
-        modSpec.setSortString("\t\t\t\t\tBoxUtil");
         Global.getLogger(BoxUtilModPlugin.class).info("BoxUtil' version '" + modSpec.getVersionInfo().getString() + "' pre-initializing...");
         BoxDatabase.initGLState();
         BoxConfigs.init();
@@ -42,6 +36,7 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
         ModelManager.loadModelDataCSV(BoxDatabase.BUILTIN_OBJ_CSV);
         EntityShadingDataManager.loadTextureData(BoxDatabase.BUILTIN_TEXTURE_CSV);
         EntityShadingDataManager.loadIlluminantData(BoxDatabase.BUILTIN_ILLUMINANT_CSV);
+        StaticTrailManager.loadTrailData(BoxDatabase.BUILTIN_STATIC_TRAIL_CSV);
         isPreInitialized = true;
     }
 

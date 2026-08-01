@@ -16,7 +16,6 @@ import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,7 +144,7 @@ public class CurveEntity extends BaseMIRenderData {
     }
 
     public void resetNodes() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList != null) this.nodeList.clear();
         if (this._distance != null) this._distance.clear();
         this._lastNodeLength = 0;
@@ -155,7 +154,7 @@ public class CurveEntity extends BaseMIRenderData {
         this.nodeRefreshState[2] = 8;
         this.stateB[2] = false;
         this.stateB[3] = true;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
@@ -166,13 +165,13 @@ public class CurveEntity extends BaseMIRenderData {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when an empty node list or refresh count is zero.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte submitNodes() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null || this.nodeList.size() < 2) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         if (!this.isValid()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED_OTHER;
         }
         final int nodeSize = this.nodeList.size();
@@ -180,7 +179,7 @@ public class CurveEntity extends BaseMIRenderData {
         final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
         final int refreshCount = newBuffer ? nodeSize : this.nodeRefreshState[1];
         if (refreshCount < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         final int refreshLimit = refreshIndex + refreshCount;
@@ -199,7 +198,7 @@ public class CurveEntity extends BaseMIRenderData {
                 GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
                 this._lastNodeLengthReal = this.shouldRenderingCount = 0;
-                this._sync_lock.unlock();
+                this.sync_lock.unlock();
                 return BoxEnum.STATE_FAILED_OTHER;
             }
         } else {
@@ -236,7 +235,7 @@ public class CurveEntity extends BaseMIRenderData {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         if (newBuffer) this._lastNodeLength = nodeSize;
         this._lastNodeLengthReal = this.shouldRenderingCount = nodeSize * 2 - 2;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -249,13 +248,13 @@ public class CurveEntity extends BaseMIRenderData {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte mallocNodeData(int nodeNum) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (nodeNum < 1) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED;
         }
         if (!this.isValid()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return BoxEnum.STATE_FAILED_OTHER;
         }
 
@@ -266,7 +265,7 @@ public class CurveEntity extends BaseMIRenderData {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getNodesVBO());
         GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bufferSize, GL15.GL_DYNAMIC_DRAW);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
 
@@ -281,9 +280,9 @@ public class CurveEntity extends BaseMIRenderData {
      * <strong>High performance impact when is synchronized.</strong>
      */
     public void setSynchronousSubmit(boolean sync) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.stateB[2] = sync;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
@@ -300,9 +299,9 @@ public class CurveEntity extends BaseMIRenderData {
      * @param mappingMode to controls whether submit use <code>glMapBufferRange()</code>, else use <code>glBufferSubData()</code>.
      */
     public void setMappingModeSubmitData(boolean mappingMode) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.stateB[3] = mappingMode;
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getNodeRefreshIndex() {
@@ -313,37 +312,37 @@ public class CurveEntity extends BaseMIRenderData {
      * @param index Will refresh node data start from this index.
      */
     public void setNodeRefreshIndex(int index) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.nodeRefreshState[0] = Math.min(Math.max(index, 0), Math.max(this.nodeList.size() - 1, 0));
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
      * @param size Will refresh node data count.
      */
     public void setNodeRefreshSize(int size) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         final int nodeSize = this.nodeList.size();
         this.nodeRefreshState[1] = this.nodeRefreshState[0] + size > nodeSize ? nodeSize - this.nodeRefreshState[0] : Math.max(size, 0);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public void setNodeRefreshAllFromCurrentIndex() {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.nodeRefreshState[1] = this.nodeList.size() - this.nodeRefreshState[0];
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getSubmitLengthCalculatingStep() {
@@ -354,9 +353,9 @@ public class CurveEntity extends BaseMIRenderData {
      * @param step must be greater than zero.
      */
     public void setSubmitLengthCalculatingStep(int step) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         this.nodeRefreshState[2] = Math.max(step, 1);
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public int getValidNodeCount() {
@@ -387,23 +386,23 @@ public class CurveEntity extends BaseMIRenderData {
      * @param nodeList Cannot have any null-node, and at least have two nodeList, if not then pass this entity when rendering.
      */
     public void setNodes(@NotNull List<NodeData> nodeList) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (nodeList.size() > BoxConfigs.getMaxCurveNodeSize()) this.nodeList = nodeList.subList(0, BoxConfigs.getMaxCurveNodeSize());
         else this.nodeList = nodeList;
         if (this._distance == null) this._distance = new ArrayList<>(this.nodeList.size());
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     public void addNode(@NotNull NodeData node) {
-        this._sync_lock.lock();
+        this.sync_lock.lock();
         if (this.nodeList == null) this.nodeList = new ArrayList<>();
         if (this.nodeList.size() > BoxConfigs.getMaxCurveNodeSize()) {
-            this._sync_lock.unlock();
+            this.sync_lock.unlock();
             return;
         }
         this.nodeList.add(node);
         if (this._distance == null) this._distance = new ArrayList<>();
-        this._sync_lock.unlock();
+        this.sync_lock.unlock();
     }
 
     /**
@@ -617,13 +616,13 @@ public class CurveEntity extends BaseMIRenderData {
 
     public void submitEntityData() {
         final float iPO = this.interpolation + 1;
-        this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
-        this._statePackageBuffer.put(12, iPO);
-        this._statePackageBuffer.put(13, this.state[1]);
-        this._statePackageBuffer.put(14, this.stateB[1] ? 1.0f / (this._lastNodeLength - 1) : -1.0f);
-        this._statePackageBuffer.put(16, this.state, 2, 4);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.material.getState(), 0, 12);
+        this.statePackageBuffer.put(12, iPO);
+        this.statePackageBuffer.put(13, this.state[1]);
+        this.statePackageBuffer.put(14, this.stateB[1] ? 1.0f / (this._lastNodeLength - 1) : -1.0f);
+        this.statePackageBuffer.put(16, this.state, 2, 4);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public Object entityType() {

@@ -1,16 +1,16 @@
 package org.boxutil.define.struct.instance;
 
 import org.boxutil.define.InstanceType;
+import org.boxutil.define.struct.GPUMemory;
 
-public interface MemoryBlock {
+/**
+ * Maybe renaming at next Starsector update.
+ */
+public interface MemoryBlock extends GPUMemory<InstanceType> {
+    @Deprecated
     InstanceType type();
 
-    int reference();
-
-    /**
-     * The corresponding offset on SSBO memory.
-     */
-    long address();
+    InstanceType meta();
 
     /**
      * The corresponding offset on SSBO memory as instance data.
@@ -18,19 +18,9 @@ public interface MemoryBlock {
     int address_instance();
 
     /**
-     * The corresponding length on SSBO memory.
-     */
-    long size();
-
-    /**
      * As <code>size() / sizeof(instance_type)</code>
      */
     int instance_count();
-
-    /**
-     * The memory as <code>nullptr</code> when true.
-     */
-    boolean is_free();
 
     boolean is_type_2D();
 

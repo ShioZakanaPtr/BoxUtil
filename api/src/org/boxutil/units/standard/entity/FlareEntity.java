@@ -341,12 +341,18 @@ public class FlareEntity extends BaseInstanceRenderData {
     }
 
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.lensState, 0, 11);
-        this._statePackageBuffer.put(11, this.lensState_B[1] * 10 + this.lensState_B[2]);
-        this._statePackageBuffer.put(12, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
-        this._statePackageBuffer.put(13, this.extraState, 0, 7);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.lensState, 0, 11);
+        this.statePackageBuffer.put(11, this.lensState_B[1] * 10 + this.lensState_B[2]);
+        this.statePackageBuffer.put(12, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
+        this.statePackageBuffer.put(13, this.extraState, 0, 7);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
+    }
+
+    public FloatBuffer pickDataPackage_vec4() {
+        if (this.autoSubmitDataBuffer) this.submitEntityData();
+        else this.statePackageBuffer.put(12, this.haveValidInstanceData() ? this.getInstanceTimerOverride() : this.getGlobalTimerAlpha());
+        return this.statePackageBuffer;
     }
 
     public Object entityType() {

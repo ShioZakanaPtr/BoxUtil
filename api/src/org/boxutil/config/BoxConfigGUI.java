@@ -14,6 +14,10 @@ import com.fs.starfarer.api.util.Pair;
 import com.fs.starfarer.combat.CombatState;
 import com.fs.starfarer.title.TitleScreenState;
 import com.fs.state.AppDriver;
+import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
+import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUsage;
+import org.boxutil.backends.core.statictrail.BUtil_GLDrawStaticTrailMemoryUsage;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.manager.KernelCore;
 import org.boxutil.manager.ShaderCore;
@@ -130,7 +134,8 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
         ShaderCore.init();
         ShaderCore.initMiscShaderPrograms();
         ShaderCore.initGlobalDataUBO();
-        BUtil_InstanceDataMemoryPool.init();
+        BUtil_InstanceDataMemoryPool.initPool();
+        BUtil_StaticTrailMemoryPool.initPool();
         GL11.glFinish();
         KernelCore.init();
         BoxDatabase.initCLState();
@@ -158,8 +163,10 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
             GL11.glEnable(GL43.GL_DEBUG_OUTPUT);
             GL11.glEnable(GL43.GL_DEBUG_OUTPUT_SYNCHRONOUS);
             GL43.glDebugMessageCallback(new KHRDebugCallback());
-            GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, (IntBuffer) null, true);
+            GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, null, true);
         }
+        BUtil_GLDrawInfo.addInfo(new BUtil_GLDrawInstanceMemoryUsage());
+        BUtil_GLDrawInfo.addInfo(new BUtil_GLDrawStaticTrailMemoryUsage());
         globalInit = true;
     }
 
@@ -180,8 +187,8 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
             } else {
                 texData[0] = ShaderCore.getScreenFixWidth();
                 texData[1] = ShaderCore.getScreenFixHeight();
-                _backgroundTexUV[0] = ShaderCore.getScreenFixU();;
-                _backgroundTexUV[1] = ShaderCore.getScreenFixV();;
+                _backgroundTexUV[0] = ShaderCore.getScreenFixU();
+                _backgroundTexUV[1] = ShaderCore.getScreenFixV();
             }
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, texData[0], texData[1], 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);

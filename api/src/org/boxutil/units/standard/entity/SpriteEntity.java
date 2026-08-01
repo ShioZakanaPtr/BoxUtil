@@ -7,8 +7,6 @@ import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.LayeredEntityType;
 import org.lwjgl.util.vector.Vector2f;
 
-import java.nio.FloatBuffer;
-
 /**
  * Advanced sprite rendering.<p>
  * Sprite entity will not apply AA if depth based AA is enabled.
@@ -258,13 +256,13 @@ public class SpriteEntity extends BaseMIRenderData {
     }
 
     public void submitEntityData() {
-        this._statePackageBuffer.put(0, this.material.getState(), 0, 12);
-        this._statePackageBuffer.put(12, this.spriteState, 0, 9);
-        this._statePackageBuffer.put(21, this.getCurrentTileCount() - 1);
-        this._statePackageBuffer.put(22, this.baseSize[0]);
-        this._statePackageBuffer.put(23, this.baseSize[1]);
-        this._statePackageBuffer.position(0);
-        this._statePackageBuffer.limit(this._statePackageBuffer.capacity());
+        this.statePackageBuffer.put(0, this.material.getState(), 0, 12);
+        this.statePackageBuffer.put(12, this.spriteState, 0, 9);
+        this.statePackageBuffer.put(21, this.getCurrentTileCount() - 1);
+        this.statePackageBuffer.put(22, this.baseSize[0]);
+        this.statePackageBuffer.put(23, this.baseSize[1]);
+        this.statePackageBuffer.position(0);
+        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
     }
 
     public Object entityType() {

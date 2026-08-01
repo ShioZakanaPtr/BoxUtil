@@ -3,7 +3,7 @@ package org.boxutil.util;
 import com.fs.starfarer.api.combat.BoundsAPI;
 import com.fs.starfarer.api.util.Pair;
 import org.boxutil.backends.struct.BUtil_Stack2i;
-import de.unkrig.commons.nullanalysis.NotNull;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -17,6 +17,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.*;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class MeshUtil {
     /**
      * Return tangent and bi-tangent, array size is 2.

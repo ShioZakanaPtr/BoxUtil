@@ -1,5 +1,5 @@
-#ifndef BUtil_InstanceDataSSBO
-#define BUtil_InstanceDataSSBO
+#ifndef BUtil_InstanceDataSSBO_H
+#define BUtil_InstanceDataSSBO_H
 
 // 80 byte
 struct Dynamic2D { // binding 4
@@ -153,4 +153,4 @@ mat4 fetchFixed3DMatrix(in Fixed3D data) {
     );
 }
 
-#endif // BUtil_InstanceDataSSBO
+#endif // BUtil_InstanceDataSSBO_H

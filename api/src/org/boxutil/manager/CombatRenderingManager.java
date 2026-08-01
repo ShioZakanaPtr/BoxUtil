@@ -5,6 +5,7 @@ import org.boxutil.backends.core.BUtil_ThreadResource;
 import org.boxutil.base.api.*;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
 import org.boxutil.base.api.everyframe.LayeredRenderingPlugin;
+import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.units.standard.attribute.StaticTrailData;
 import org.boxutil.base.api.resource.TemporaryCleanupPlugin;
 import org.boxutil.backends.shader.BUtil_GLImpl;
@@ -18,6 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class CombatRenderingManager {
     /**
      * <strong>NOTE: If entity at highest layer, without any post effect likes bloom or AA.</strong>
@@ -66,7 +68,7 @@ public final class CombatRenderingManager {
      *
      * @return returns <code>true</code> when trail data was existed, else <code>false</code> if it not.
      */
-    public static boolean addStaticTrailGenerator(@NotNull final StaticTrailData trailData, @NotNull final CombatEngineLayers layer, @NotNull final StaticTrailData tacker) {
+    public static boolean addStaticTrailGenerator(@NotNull final StaticTrailData trailData, @NotNull final CombatEngineLayers layer, @NotNull final StaticTrailTracker tacker) {
         // todo
         return false;
     }

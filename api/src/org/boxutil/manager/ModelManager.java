@@ -1,7 +1,6 @@
 package org.boxutil.manager;
 
 import com.fs.starfarer.api.Global;
-import de.unkrig.commons.nullanalysis.Nullable;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.util.BUtil_MiscUtil;
@@ -11,6 +10,7 @@ import org.boxutil.backends.struct.BUtil_Stack2f;
 import org.boxutil.backends.struct.BUtil_Stack3f;
 import org.boxutil.backends.struct.BUtil_TriIndex;
 import org.boxutil.units.standard.attribute.ModelData;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class ModelManager {
     private static final HashMap<String, ModelData> _MODEL_DATA = new HashMap<>();
     private static final HashMap<String, LegacyModelData> _LEGACY_MODEL = new HashMap<>();
@@ -93,7 +94,7 @@ public final class ModelManager {
     }
 
     public static LegacyModelData putLegacyModelData(String file, LegacyModelData data) {
-        if (file == null || file.isEmpty() || data == null) return null;
+        if (file == null || file.isBlank() || data == null) return null;
         return _LEGACY_MODEL.put(file, data);
     }
 
@@ -168,11 +169,11 @@ public final class ModelManager {
         }
 
         int diffuse, normalMap, complex, emissive, tangent;
-        if (diffusePath == null || diffusePath.isEmpty()) diffuse = BoxDatabase.BUtil_ONE.getTextureId(); else diffuse = BUtil_MiscUtil.tryTexture(diffusePath, TextureManager::tryTexture);
-        if (normalPath == null || normalPath.isEmpty()) normalMap = BoxDatabase.BUtil_Z.getTextureId(); else normalMap = BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3);
-        if (complexPath == null || complexPath.isEmpty()) complex = BoxDatabase.BUtil_COMPLEX_DEF.getTextureId(); else complex = BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3);
-        if (emissivePath == null || emissivePath.isEmpty()) emissive = BoxDatabase.BUtil_NONE.getTextureId(); else emissive = BUtil_MiscUtil.tryTexture(emissivePath, TextureManager::tryTexture);
-        if (tangentPath == null || tangentPath.isEmpty()) tangent = BoxDatabase.BUtil_X.getTextureId(); else tangent = BUtil_MiscUtil.tryTangentTexture(tangentPath, isAngleMap, true, false);
+        if (diffusePath == null || diffusePath.isBlank()) diffuse = BoxDatabase.BUtil_ONE.getTextureId(); else diffuse = BUtil_MiscUtil.tryTexture(diffusePath, TextureManager::tryTexture);
+        if (normalPath == null || normalPath.isBlank()) normalMap = BoxDatabase.BUtil_Z.getTextureId(); else normalMap = BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3);
+        if (complexPath == null || complexPath.isBlank()) complex = BoxDatabase.BUtil_COMPLEX_DEF.getTextureId(); else complex = BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3);
+        if (emissivePath == null || emissivePath.isBlank()) emissive = BoxDatabase.BUtil_NONE.getTextureId(); else emissive = BUtil_MiscUtil.tryTexture(emissivePath, TextureManager::tryTexture);
+        if (tangentPath == null || tangentPath.isBlank()) tangent = BoxDatabase.BUtil_X.getTextureId(); else tangent = BUtil_MiscUtil.tryTangentTexture(tangentPath, isAngleMap, true, false);
 
         _LOG.info("'BoxUtil' loaded common OBJ data with ID: '" + initID + "', at path: '" + objPath + "'.");
         _LOG.info("'BoxUtil' OBJ data ID: '" + initID + "' have vertices count: " + vertex.size() + " and triangles count: " + tri.size() + ".");
@@ -188,11 +189,11 @@ public final class ModelManager {
             objData = objDataArray.getJSONObject(i);
             objID = objData.optString("obj_id");
             objPath = objData.optString("obj_path");
-            if (!objID.isEmpty() && !objPath.isEmpty()) {
+            if (!objID.isBlank() && !objPath.isBlank()) {
                 typeString = objData.optString("type").toUpperCase();
                 boolean isAngleMap = objData.optBoolean("isTangentAngleMap", true);
                 int type = GL30.GL_HALF_FLOAT;
-                if (!typeString.isEmpty()) type = typeString.contentEquals("F8") ? GL11.GL_BYTE : typeString.contentEquals("F32") ? GL11.GL_FLOAT : GL30.GL_HALF_FLOAT;
+                if (!typeString.isBlank()) type = typeString.contentEquals("F8") ? GL11.GL_BYTE : typeString.contentEquals("F32") ? GL11.GL_FLOAT : GL30.GL_HALF_FLOAT;
                 ModelData obj = addModelData(objID, objPath,
                         objData.optString("diffuse_path", null),
                         objData.optString("normal_path", null),

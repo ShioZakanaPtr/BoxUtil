@@ -26,6 +26,7 @@ import org.lwjgl.opengl.*;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class ShaderCore {
     private final static byte _SHADER_COUNT = 34;
     private final static byte _COMMON = 0;
@@ -521,7 +522,7 @@ public final class ShaderCore {
                     .loadSubroutineIndex("p_smoothMode")
                     .loadSubroutineIndex("p_sharpMode")
                     .loadSubroutineIndex("p_smoothDiscMode")
-                    .loadSubroutineIndex("sp_harpDiscMode")
+                    .loadSubroutineIndex("p_sharpDiscMode")
 
                     .initSubroutineUniformSize(1, 1)
                     .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
@@ -568,11 +569,10 @@ public final class ShaderCore {
 
     private static void initDistortionProgram() {
         if (_SHADER_PROGRAM[_DIST].isValid()) {
-            _SHADER_PROGRAM[_DIST].initUniformSize(4)
+            _SHADER_PROGRAM[_DIST].initUniformSize(3)
                     .beginUniform()
                     .loadUniformIndex("u_modelMatrix")
                     .loadUniformIndex("u_statePackage")
-                    .loadUniformIndex("u_screenScale")
                     .loadUniformIndex("u_instanceDataOffset")
 
                     .initUniformBlockSize(1)
@@ -950,8 +950,9 @@ public final class ShaderCore {
             _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM] = new ShaderProgram(shaderID);
         }
 
-        if (_SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].isValid()) {
-            _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].initUniformSize(4)
+        final var program = _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM];
+        if (program.isValid()) {
+            program.initUniformSize(4)
                     .beginUniform()
                     .loadUniformIndex("u_statePackage")
                     .loadUniformIndex("u_time")
@@ -959,7 +960,17 @@ public final class ShaderCore {
                     .loadUniformIndex("u_dataBit");
 
             if (!fullFeatures) {
-                final int programID = _SHADER_PROGRAM[_STATIC_TRAIL_SYSTEM].getId(),
+                final int u_diffuse = GL20.glGetUniformLocation(program.getId(), "u_diffuseMap"),
+                        u_complex = GL20.glGetUniformLocation(program.getId(), "u_complexMap"),
+                        u_emissive = GL20.glGetUniformLocation(program.getId(), "u_emissiveMap");
+
+                program.active();
+                GL20.glUniform1i(u_diffuse, 0);
+                GL20.glUniform1i(u_complex, 2);
+                GL20.glUniform1i(u_emissive, 3);
+                program.close();
+
+                final int programID = program.getId(),
                         blockIndex = GL31.glGetUniformBlockIndex(programID, "BUtilGlobalData");
                 GL31.glUniformBlockBinding(programID, blockIndex, _GLSL_MATRIX_UBO_BINDING);
             }

@@ -1,11 +1,7 @@
 package org.boxutil.util;
 
-import com.fs.starfarer.api.Global;
-import de.unkrig.commons.nullanalysis.NotNull;
-import de.unkrig.commons.nullanalysis.Nullable;
-import org.apache.log4j.Level;
 import org.boxutil.manager.KernelCore;
-import org.lwjgl.BufferUtils;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.opencl.*;
 import org.lwjgl.opengl.GL11;
@@ -14,6 +10,7 @@ import org.lwjgl.opengl.GL12;
 import java.nio.*;
 import java.util.List;
 
+@SuppressWarnings("UnusedReturnValue")
 public final class KernelUtil {
     public static CLMem ioBuffer(long flags, DoubleBuffer buffer, @Nullable IntBuffer errorReport) {
         if (!KernelCore.isInitialized()) return null;
