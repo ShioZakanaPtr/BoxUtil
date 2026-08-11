@@ -38,7 +38,7 @@ uniform float u_time;
 in VERT_GEOM_BLOCK {
     vec4 geomEntityColor;
     vec4 geomMixEmissive;
-    float geomNodeLife;
+    float geomDistance;
 } vgb_datas[];
 
 out GEOM_FRAG_BLOCK {
@@ -59,9 +59,10 @@ out GEOM_FRAG_BLOCK {
 #endif
 
 void main() {
-    if (vgb_datas[1].geomNodeLife >= vgb_datas[2].geomNodeLife) return; // cutoff check
+    if (vgb_datas[1].geomDistance >= vgb_datas[2].geomDistance) return; // cutoff check
 
-    bool isLeftAuxPoint = gl_in[0].gl_Position.z < 0.0, isRightAuxPoint = gl_in[3].gl_Position.z < 0.0;
+    bool isLeftAuxPoint = (gl_in[0].gl_Position.z < 0.0) || (vgb_datas[0].geomDistance >= vgb_datas[1].geomDistance);
+    bool isRightAuxPoint = (gl_in[3].gl_Position.z < 0.0) || (vgb_datas[2].geomDistance >= vgb_datas[3].geomDistance);
     vec2 leftPos = gl_in[0].gl_Position.xy, startPos = gl_in[1].gl_Position.xy, endPos = gl_in[2].gl_Position.xy, rightPos = gl_in[3].gl_Position.xy;
 
     vec2 trailDir, midNormal, startNormal, endNormal;

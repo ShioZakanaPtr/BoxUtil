@@ -37,7 +37,7 @@ uniform float u_time;
 out VERT_GEOM_BLOCK {
     vec4 geomEntityColor;
     vec4 geomMixEmissive;
-    float geomNodeLife;
+    float geomDistance;
     // vec4 geomPos_UV_Width; // as gl_Position
 } vgb_data;
 
@@ -50,7 +50,7 @@ float hash31(in vec2 a, in float b) {
 void decodeTimeStamp(out float rndValue, out float timeStamp) {
     rndValue = float((a_timeStampRaw >> 29u) & 7u) * 0.125;
     uint rawBits = a_timeStampRaw & 536870911u;
-    timeStamp = uintBitsToFloat(((rawBits & 268435456u) > 1u) ? (rawBits & 536870912u) : (rawBits & 1073741824u));
+    timeStamp = uintBitsToFloat(rawBits | (((rawBits & 268435456u) > 0u) ? 536870912u : 1073741824u));
 }
 
 vec2 currPositionOffset(in float rndSeed, in float elapsedTime, in float life) {
@@ -64,7 +64,7 @@ vec2 currPositionOffset(in float rndSeed, in float elapsedTime, in float life) {
 void main() {
     if (a_distance < 0.0f) {
         vgb_data.geomEntityColor = u_statePackage[COLOR];
-        vgb_data.geomMixEmissive = u_statePackage[COLOR];
+        vgb_data.geomMixEmissive = u_statePackage[EMISSIVE_COLOR];
         gl_Position = vec4(-1.0);
         return;
     }
@@ -82,10 +82,10 @@ void main() {
     vec2 currPosition = a_position + currPositionOffset(timeStamp * rndID, elapsedTime, life);
 
     if (elapsedTime < u_statePackage[TIMER_STATE].x) nodeColor.w *= elapsedTime / u_statePackage[TIMER_STATE].x;
-    if (elapsedTime > intoFadeOutLife) nodeColor.w = 1.0 - ((elapsedTime - intoFadeOutLife) / u_statePackage[TIMER_STATE].z);
+    if (elapsedTime > intoFadeOutLife) nodeColor.w = 1.0 - min((elapsedTime - intoFadeOutLife) / u_statePackage[TIMER_STATE].z, 1.0);
 
     vgb_data.geomEntityColor = nodeColor * u_statePackage[COLOR];
     vgb_data.geomMixEmissive = nodeColor * mix(u_statePackage[EMISSIVE_COLOR], u_statePackage[EMISSIVE_COLOR] * u_statePackage[COLOR], vec4(vec3(u_statePackage[EMISSIVE_SA].y), u_statePackage[EMISSIVE_SA].x));
-    vgb_data.geomNodeLife = life;
+    vgb_data.geomDistance = a_distance;
     gl_Position = vec4(currPosition, nodeUV, mix(u_statePackage[6].x, u_statePackage[6].y, life));
 }

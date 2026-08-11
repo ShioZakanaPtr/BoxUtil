@@ -2,6 +2,7 @@ package org.boxutil.manager;
 
 import com.fs.starfarer.api.campaign.*;
 import org.boxutil.backends.core.BUtil_ThreadResource;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.base.api.*;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
 import org.boxutil.base.api.everyframe.LayeredRenderingPlugin;
@@ -9,15 +10,12 @@ import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.base.api.resource.TemporaryCleanupPlugin;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.define.BoxEnum;
-import org.boxutil.units.standard.attribute.StaticTrailData;
+import org.boxutil.define.struct.statictrail.StaticTrailData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector4f;
 
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class CampaignRenderingManager {
@@ -66,26 +64,38 @@ public final class CampaignRenderingManager {
 
     /**
      * @param trailData will submit once automatically if this trail data is not exist in system before add.
+     * @param linkedEntity for declare this trail subordinate to the entity.
      *
-     * @return returns <code>true</code> when trail data was existed, else <code>false</code> if it not.
+     * @return returns <code>true</code> when trail data adding success, else <code>false</code> if it not.
      */
-    public static boolean addStaticTrailGenerator(@NotNull final StaticTrailData trailData, @NotNull final CampaignEngineLayers layer, @NotNull final StaticTrailTracker tacker) {
-        // todo
-        return false;
+    public static boolean addStaticTrailGenerator(@NotNull final StaticTrailData trailData, @Nullable final SectorEntityToken linkedEntity, @NotNull final CampaignEngineLayers layer, @NotNull final StaticTrailTracker tacker) {
+        return BUtil_StaticTrailMemoryPool.addTracker(trailData, BUtil_StaticTrailMemoryPool.toLayerLoc(layer), tacker);
     }
 
     /**
-     * Call if something changes for trail data in this frame, only once executed in each frame.
+     * Call if something changes(include material) for trail data in this frame, only once executed in each frame and have active trail tracker.
      */
     public void submitTrailDataChanges(@NotNull final StaticTrailData trailData) {
-
+        BUtil_StaticTrailMemoryPool.submitTrailDataChanges(trailData);
     }
 
     /**
+     * Notifies all the trails that the linked entity have to cut off the current trail segment before the next draw, so that it will be treated as a new trail segment.<p>
+     * For performance and thread‑safety reasons,
+     * this method must be called after the start of the <b>advance</b> stage of the current frame <b>AND</b> before the start of the <b>lowest layer rendering</b> stage of the next frame; otherwise,
+     * unexpected visual effects may occur.
+     */
+    public void tryCutTrailOnEntity(@NotNull final SectorEntityToken linkedEntity) {
+        BUtil_StaticTrailMemoryPool.offerCutTrail(linkedEntity);
+    }
+
+    /**
+     * Directly remove the all the trail about this trail data, ignore layer or lifetime.
+     *
      * @return returns <code>true</code> when trail data was existed before call this method, else <code>false</code> if it not.
      */
     public static boolean removeStaticTrailGenerator(@NotNull final StaticTrailData trailData) {
-        return false;
+        return BUtil_StaticTrailMemoryPool.removeTracker(trailData);
     }
 
     /**

@@ -911,14 +911,15 @@ public final class ShaderCore {
 
     public static void initStaticTrailSystem() {
         final boolean fullFeatures = isValid();
-        String extensionName = "";
-        if (!fullFeatures) {
-            if (BoxDatabase.getGLState().ARB_SHADER_BIT_ENCODING) {
-                extensionName = "GL_ARB_shader_bit_encoding";
-            } else if (BoxDatabase.getGLState().ARB_GPU_SHADER5) {
-                extensionName = "GL_ARB_gpu_shader5";
-            } else return;
-        }
+        final String extensionName;
+        if (BoxDatabase.getGLState().ARB_SHADER_BIT_ENCODING) {
+            extensionName = "GL_ARB_shader_bit_encoding";
+        } else if (BoxDatabase.getGLState().ARB_GPU_SHADER5) {
+            extensionName = "GL_ARB_gpu_shader5";
+        } else if (fullFeatures) {
+            extensionName = "GL_ARB_shader_bit_encoding";
+        } else return;
+
         final String gl_arbExtensionTitle = "ARB_EXTENSION_TITLE",
                 gl_trailVersionTitle = "TRAIL_VERSION_TITLE",
                 gl_trailVersion = fullFeatures ? "MODERN_TRAIL_MODE" : "LEGACY_TRAIL_MODE",

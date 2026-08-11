@@ -7,6 +7,7 @@ import com.fs.starfarer.api.input.InputEventAPI;
 import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
 import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUsage;
 import org.boxutil.backends.core.statictrail.BUtil_GLDrawStaticTrailMemoryUsage;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.config.BoxConfigGUI;
 import org.boxutil.config.BoxConfigs;
@@ -32,12 +33,14 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
                 context.cleanupCampaign(true);
                 BUtil_ThreadResource.Rendering.Campaign.cleanupQueue();
                 BUtil_ThreadResource.Rendering.Campaign.cleanupCustomData();
+                BUtil_StaticTrailMemoryPool.cleanupPool(false);
             }
         }
         if (BUtil_GLImpl.Operations.checkTitleCleanup()) {
             context.cleanupCombat();
             BUtil_ThreadResource.Rendering.Combat.cleanupQueue();
             BUtil_ThreadResource.Rendering.Combat.cleanupCustomData();
+            BUtil_StaticTrailMemoryPool.cleanupPool(true);
         }
         BUtil_ThreadResource.Rendering.Combat.initBasicLayers();
         context.initCombat(this.engine);
@@ -50,8 +53,6 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
         final boolean isPaused = this.engine.isPaused();
         BUtil_GLImpl.Operations.advanceTimer(amount, isPaused);
 
-        BUtil_ThreadResource._CURR_AMOUNT = amount;
-        BUtil_ThreadResource._CURR_PAUSED = isPaused;
         if (BUtil_ThreadResource.__SHOULD_ADVANCE_SYNC_CURRENT_FRAME.compareAndSet(false, true)) {
             BoxThreadSync.Logical.beginAdvance().arriveAndAwaitAdvance();
             BUtil_ThreadResource.tryGLSync(BUtil_ThreadResource.__SYNC_BEGIN_ADVANCE);
@@ -105,6 +106,7 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
                     BUtil_ThreadResource.tryGLSync(BUtil_ThreadResource.__SYNC_AUX_FINISH_ADVANCE);
                 }
                 BUtil_ThreadResource.Rendering.Combat.delayAdd();
+                BUtil_StaticTrailMemoryPool.processCurTrail();
 
                 BoxThreadSync.Rendering.beforeRendering().arriveAndAwaitAdvance();
                 BUtil_ThreadResource.Logical.runEntitySubmit(false);
@@ -127,15 +129,16 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
 
                 notMultiPass &= BoxConfigs.isMultiPassBeauty() || BoxConfigs.isMultiPassColor();
                 if (notMultiPass) GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-                BUtil_GLImpl.MeshRender.processDistortionEntity(BoxConfigs.isDistortionEnable() && notMultiPass, BUtil_ThreadResource._COMBAT_DIRECT_MAP.get(DirectEntityType.DISTORTION), viewport);
+                BUtil_GLImpl.MeshRender.processDistortionEntity(BoxConfigs.isDistortionEnable() && notMultiPass, BUtil_ThreadResource._COMBAT_DIRECT_MAP.get(DirectEntityType.DISTORTION));
 
                 if (BoxConfigs.isMultiPassBeauty()) context.applyPostEffectPass(viewport, false);
                 if (notMultiPass) GL11.glEnable(GL11.GL_BLEND);
             }
 
+            final int staticTrailLayerLoc = BUtil_StaticTrailMemoryPool.toLayerLoc(layer);
             final var meshArray = BUtil_ThreadResource._COMBAT_ENTITIES_R.get(layer);
             final var pluginSet = BUtil_ThreadResource._COMBAT_LAYERED_PLUGIN.get(layer);
-            final boolean stageContinue = BUtil_GLImpl.Operations.checkSkipMeshCurrentLayout(meshArray, pluginSet);
+            final boolean stageContinue = BUtil_GLImpl.Operations.checkSkipMeshCurrentLayout(meshArray, pluginSet) && BUtil_StaticTrailMemoryPool.bypassDrawTrail(staticTrailLayerLoc);
             if (stageContinue) {
                 if (shaderEnable && this._highestLayer) ShaderCore.glEndDraw();
                 if (this._highestLayer == this._lowestLayer) {
@@ -164,6 +167,7 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
             }
 
             BUtil_GLImpl.Operations.processMeshCurrentLayout(this._layerBits, this.layer, notMultiPass, viewport, meshArray, pluginSet);
+            BUtil_GLImpl.MeshRender.processStaticTrail(notMultiPass, staticTrailLayerLoc, this._layerBits);
             BUtil_GLImpl.Operations.resetGLAttrib();
             if (notMultiPass) {
                 if (!this._highestLayer) {

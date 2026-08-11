@@ -1,13 +1,15 @@
 package org.boxutil.units.standard;
 
+import com.fs.starfarer.api.Global;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.define.BoxDatabase;
-import org.boxutil.define.struct.GPUMemory;
-import org.boxutil.define.struct.GPUPoolBehavior;
+import org.boxutil.define.struct.memorypool.GPUMemory;
+import org.boxutil.define.struct.memorypool.GPUPoolBehavior;
 import org.boxutil.util.concurrent.SpinLock;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
+import org.lwjgl.util.glu.GLU;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -95,6 +97,9 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         T make(D oldMeta, long address, long size, int index, GPUMemoryPool<T, D> pool);
     }
 
+    /**
+     * Do not forget override the {@link GPUMemory#meta()} if you need.
+     */
     public static class InternalMemory<D> implements GPUMemory<D> {
         protected int _index;
         protected long address;
@@ -198,6 +203,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         this.immutableBuffer = BoxDatabase.getGLState().GL_GL44 && this.behavior.immutableBufferAllow;
         this.persistentMapping = this.immutableBuffer && this.behavior.persistentMappingAllow;
         this.invalid = false;
+        if (this.behavior.glPoolInit != null) this.behavior.glPoolInit.accept(this);
         this.gpuLock.unlock();
         this.clientLock.unlock();
     }
@@ -207,6 +213,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         this.gpuLock.lock();
         this._cleanupClientMem();
         this._invalidateBuffer();
+        if (this.behavior.glPoolDestroy != null) this.behavior.glPoolDestroy.accept(this);
         this.init = false;
         this.invalid = true;
         this.gpuLock.unlock();
@@ -316,11 +323,14 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     protected void _allocateBuffer(long size) {
         final long realSize = this.behavior.reservedSize + size;
         if (this.immutableBuffer) {
-            final int access = this.persistentMapping ?
-                    GL44.GL_DYNAMIC_STORAGE_BIT | GL30.GL_MAP_READ_BIT | GL30.GL_MAP_WRITE_BIT | GL44.GL_MAP_PERSISTENT_BIT | GL44.GL_MAP_COHERENT_BIT :
-                    GL44.GL_DYNAMIC_STORAGE_BIT | GL30.GL_MAP_READ_BIT | GL30.GL_MAP_WRITE_BIT;
-            GL44.glBufferStorage(this.behavior.glTarget, realSize, access);
-            if (this.persistentMapping) this.clientMapping = GL30.glMapBufferRange(this.behavior.glTarget, 0, realSize, access, null);
+            final int access_mapping = this.persistentMapping ?
+                    GL30.GL_MAP_READ_BIT | GL30.GL_MAP_WRITE_BIT | GL44.GL_MAP_PERSISTENT_BIT | GL44.GL_MAP_COHERENT_BIT :
+                    GL30.GL_MAP_READ_BIT | GL30.GL_MAP_WRITE_BIT;
+            GL44.glBufferStorage(this.behavior.glTarget, realSize, GL44.GL_DYNAMIC_STORAGE_BIT | access_mapping);
+            if (this.persistentMapping) {
+                this.clientMapping = GL30.glMapBufferRange(this.behavior.glTarget, 0, realSize, access_mapping, null);
+                this.clientMapping.position(0).limit((int) realSize);
+            }
         } else GL15.glBufferData(this.behavior.glTarget, realSize, GL15.GL_DYNAMIC_DRAW);
     }
 
@@ -333,9 +343,10 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         this._runtimeBufferIDCheck();
         GL15.glBindBuffer(this.behavior.glTarget, this.glID);
         this._allocateBuffer(this.memTotal);
-        if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
         GL15.glBindBuffer(this.behavior.glTarget, 0);
         this.memRef.set(0);
+
+        if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
         this.gpuLock.unlock();
 
         this._eraseMemory(meta);
@@ -451,11 +462,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         }
         this.glID = newBuffer;
 
-        if (this.behavior.glRebindBuffer != null) {
-            GL15.glBindBuffer(this.behavior.glTarget, this.glID);
-            this.behavior.glRebindBuffer.accept(this);
-            GL15.glBindBuffer(this.behavior.glTarget, 0);
-        }
+        if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
         this.gpuLock.unlock();
     }
 
@@ -966,11 +973,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         if (BoxDatabase.getGLState().GL_GL42) GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT); else GL11.glFlush();
         this.glID = newBuffer;
 
-        if (this.behavior.glRebindBuffer != null) {
-            GL15.glBindBuffer(this.behavior.glTarget, this.glID);
-            this.behavior.glRebindBuffer.accept(this);
-            GL15.glBindBuffer(this.behavior.glTarget, 0);
-        }
+        if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
         
         final long ts = System.nanoTime(), compactTime = ts - this.lastCompactTime;
         this.lastCompactTime = ts;

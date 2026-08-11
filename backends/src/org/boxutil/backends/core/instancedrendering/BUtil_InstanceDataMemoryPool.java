@@ -6,7 +6,7 @@ import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.define.InstanceType;
-import org.boxutil.define.struct.GPUPoolBehavior;
+import org.boxutil.define.struct.memorypool.GPUPoolBehavior;
 import org.boxutil.manager.InstanceDataMemoryPool;
 import org.boxutil.units.standard.GPUMemoryPool;
 import org.lwjgl.opengl.*;
@@ -31,7 +31,10 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
 
     private static void poolRebind(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> pool) {
         final var poolCast = (BUtil_InstanceDataMemoryPool) pool;
-        GL30.glBindBufferBase(pool.getPoolBehavior().glTarget, poolCast.binding, poolCast.glID);
+        final var target = pool.getPoolBehavior().glTarget;
+        GL15.glBindBuffer(target, poolCast.glID);
+        GL30.glBindBufferBase(target, poolCast.binding, poolCast.glID);
+        GL15.glBindBuffer(target, 0);
     }
 
     private static BUtil_InstanceMemory makeEmptyMem(InstanceType meta, long address, long size, int index, GPUMemoryPool<BUtil_InstanceMemory, InstanceType> pool) {
@@ -87,9 +90,7 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
             return;
         }
 
-        GL15.glBindBuffer(this.behavior.glTarget, this.glID);
-        GL30.glBindBufferBase(this.behavior.glTarget, this.binding, this.glID);
-        GL15.glBindBuffer(this.behavior.glTarget, 0);
+        this.behavior.glRebindBuffer.accept(this);
         this.gpuLock.unlock();
         this.clientLock.unlock();
     }

@@ -1,23 +1,34 @@
 package org.boxutil.backends.core;
 
+import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.combat.CombatEngineLayers;
+import com.fs.starfarer.api.combat.DamagingProjectileAPI;
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
+import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.base.BaseIlluminantData;
 import org.boxutil.base.api.ControlDataAPI;
 import org.boxutil.base.api.InstanceRenderAPI;
 import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
+import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.config.BoxThreadSync;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.instance.MemoryBlock;
+import org.boxutil.manager.CombatRenderingManager;
 import org.boxutil.manager.ShaderCore;
+import org.boxutil.manager.StaticTrailManager;
+import org.boxutil.define.struct.statictrail.StaticTrailData;
+import org.boxutil.util.CalculateUtil;
+import org.boxutil.util.TrigUtil;
 import org.lwjgl.opengl.*;
+import org.lwjgl.util.vector.Vector2f;
+import org.lwjgl.util.vector.Vector4f;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTemplate {
@@ -46,8 +57,8 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         this._tmpQueue_plugin.clear();
 
         final Deque<BackgroundEveryFramePlugin> queue = BUtil_ThreadResource.Logical.getThreadPluginQueue();
-        final float amount = BUtil_ThreadResource._CURR_AMOUNT;
-        final boolean isPaused = BUtil_ThreadResource._CURR_PAUSED;
+        final float amount = BUtil_GLImpl.Operations.getLastFrameAmount();
+        final boolean isPaused = BUtil_GLImpl.Operations.isPaused();
 
         BackgroundEveryFramePlugin plugin;
         while ((plugin = this._isAux ? queue.pollLast() : queue.pollFirst()) != null) {
@@ -62,8 +73,8 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         this._tmpQueue_entity.clear();
 
         final Deque<RenderDataAPI> queue = BUtil_ThreadResource.Logical.getEntitiesLogicalQueue();
-        final float amount = BUtil_ThreadResource._CURR_AMOUNT;
-        final boolean isPaused = BUtil_ThreadResource._CURR_PAUSED;
+        final float amount = BUtil_GLImpl.Operations.getLastFrameAmount();
+        final boolean isPaused = BUtil_GLImpl.Operations.isPaused();
         final boolean customShaderpacksDataLayout = BoxConfigs.getCurrShaderPacksContext().haveCustomInstanceDataLayout(), instanceDataSupported = !BUtil_InstanceDataMemoryPool.isPoolInvalid();
 
         RenderDataAPI entity;
@@ -137,7 +148,7 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         if (System.nanoTime() - pool.getLastCompactTimestampNano() > _poolCompactDelay) pool.compact();
     }
 
-    private void compactMemoryPool() {
+    private void compactMemoryPool() { // maybe static trail pool compact was needless
         if (BUtil_InstanceDataMemoryPool.isPoolInvalid()) return;
         if (this._isAux) {
             compactMemoryPoolTarget(InstanceType.FIXED_2D);
@@ -189,7 +200,7 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         final float dimAMD = BoxDatabase.isGLDeviceAMD() ? 64.0f : 32.0f;
         BUtil_InstanceDataMemoryPool.getPool(instanceType).rebindBase();
         program.active();
-        GL20.glUniform1f(program.location[0], BUtil_ThreadResource._CURR_AMOUNT);
+        GL20.glUniform1f(program.location[0], BUtil_GLImpl.Operations.getLastFrameAmount());
         for (var target : processQueue) {
             final int computeBegin = target.begin, computeEnd = target.end, itemDim = (int) Math.ceil(Math.sqrt((computeEnd - computeBegin) / dimAMD));
             GL20.glUniform2i(program.location[1], computeBegin, computeEnd);
@@ -197,6 +208,70 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         }
         program.close();
         GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
+    }
+
+    private void markAndGenProjectiles() {
+        final List<DamagingProjectileAPI> projList = Global.getCombatEngine().getProjectiles();
+        final int listSize = projList.size(), i_mid = listSize / 2, i_start = this._isAux ? i_mid : 0, i_limit = this._isAux ? listSize : i_mid;
+
+        for (int i = i_start; i < i_limit; i++) { // just get all and quickly check, do not modify, ignore changes from another threads
+            final DamagingProjectileAPI proj = projList.get(i);
+            if (proj == null || proj.wasRemoved() || proj.isExpired()) continue;
+
+            final String projID = proj.getProjectileSpecId();
+            if (projID == null || projID.isBlank()) continue;
+
+            final HashSet<String> trailConfig = StaticTrailManager.getTrailDataConfig(projID);
+            if (trailConfig == null || trailConfig.isEmpty()) continue;
+            if (BUtil_ThreadResource._AUTOGEN_MARKED_PROJ.add(proj)) {
+                for (String trailID : trailConfig) {
+                    if (trailID == null || trailID.isBlank()) continue;
+
+                    final StaticTrailData trail = StaticTrailManager.getTrailData(trailID);
+                    CombatRenderingManager.addStaticTrailGenerator(trail, proj,
+                            trail.renderBelowExplosions ? CombatEngineLayers.ABOVE_SHIPS_LAYER : CombatEngineLayers.BELOW_INDICATORS_LAYER,
+                            (amount, elapsedTime, callback) -> {
+                                if (callback.isExpired()) return;
+                                if (proj.wasRemoved() || proj.isExpired()) callback.destroy();
+
+                                final Vector2f loc = proj.getLocation();
+                                if (callback.isNotRecommendedRecordsCurrent(loc)) {
+                                    callback.pauseOnce();
+                                    return;
+                                }
+                                callback.setCurrentLocation(loc);
+
+                                boolean velForForward = trail.velocityForForward;
+                                float offsetRotateC = 1.0f, offsetRotateS = 0.0f;
+                                if (velForForward) {
+                                    final Vector2f velocity = proj.getVelocity();
+                                    final float velLength = velocity.length();
+                                    velForForward = velLength != 0.0f;
+                                    if (velForForward) {
+                                        offsetRotateC = velocity.x / velLength;
+                                        offsetRotateS = velocity.y / velLength;
+                                        callback.setCurrentFacing(offsetRotateC, offsetRotateS);
+                                    }
+                                }
+                                if (!velForForward) {
+                                    final float a = (float) Math.toRadians(proj.getFacing());
+                                    offsetRotateC = (float) Math.cos(a);
+                                    offsetRotateS = TrigUtil.sinFormCosRadiansF(offsetRotateC, a);
+                                    callback.setCurrentFacing(offsetRotateC, offsetRotateS);
+                                }
+
+                                final Vector4f spawnOffsetRange = trail.fixedSpawnOffsetRange;
+                                if (spawnOffsetRange != null) {
+                                    final float rnd = (float) Math.random(),
+                                            offsetX = CalculateUtil.mix(spawnOffsetRange.x, spawnOffsetRange.z, rnd),
+                                            offsetY = CalculateUtil.mix(spawnOffsetRange.y, spawnOffsetRange.w, rnd);
+                                    callback.getCurrentLocation().x += offsetX * offsetRotateC - offsetY * offsetRotateS;
+                                    callback.getCurrentLocation().y += offsetX * offsetRotateS + offsetY * offsetRotateC;
+                                }
+                            });
+                }
+            }
+        }
     }
 
     private void sendBeginAdvanceSync() {
@@ -225,10 +300,13 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
 
         BoxThreadSync.Logical.beginInstanceCompute().arriveAndAwaitAdvance();
         this.preComputeInstance();
+        this.markAndGenProjectiles();
+        if (!BUtil_GLImpl.Operations.isPaused()) BUtil_StaticTrailMemoryPool.computeTrailNode(BUtil_GLImpl.Operations.getLastFrameAmount(), BUtil_GLImpl.Operations.getElapsedTimeWithoutPaused(), BUtil_GLImpl.Operations.isInCampaignSector(), this._isAux);
         this.sendFinishAdvanceSync();
 
         BoxThreadSync.Logical.finishAdvance().arriveAndAwaitAdvance();
         this.runThreadPlugin(false);
+        BUtil_StaticTrailMemoryPool.delayAddTracker(this._isAux);
         this.sendBeginAdvanceSync();
     }
 

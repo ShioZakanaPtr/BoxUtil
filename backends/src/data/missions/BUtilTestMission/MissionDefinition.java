@@ -11,6 +11,7 @@ import com.fs.starfarer.api.mission.MissionDefinitionAPI;
 import com.fs.starfarer.api.mission.MissionDefinitionPlugin;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
+import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.base.BaseBackgroundEveryFramePlugin;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.BaseTemporaryCleanupPlugin;
@@ -19,13 +20,13 @@ import org.boxutil.base.api.InstanceDataAPI;
 import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.base.api.resource.TemporaryCleanupPlugin;
 import org.boxutil.config.BoxConfigs;
-import org.boxutil.define.BoxEnum;
 import org.boxutil.define.BoxGeometry;
 import org.boxutil.define.InstanceType;
-import org.boxutil.helper.legacy.LegacyNormalMapHelper;
 import org.boxutil.manager.*;
+import org.boxutil.units.standard.GPUMemoryPool;
 import org.boxutil.units.standard.attribute.Instance2Data;
 import org.boxutil.units.standard.attribute.NodeData;
+import org.boxutil.define.struct.statictrail.StaticTrailData;
 import org.boxutil.units.standard.entity.*;
 import org.boxutil.units.standard.misc.ArcObject;
 import org.boxutil.units.standard.misc.NumberObject;
@@ -84,6 +85,8 @@ public class MissionDefinition implements MissionDefinitionPlugin {
         private boolean tog = false;
         private boolean togHanabi = false;
         private TextFieldEntity textEntityDirect = null;
+
+        private StaticTrailData trailData = null;
 
         public void init(CombatEngineAPI engine) {
             this.engine = engine;
@@ -246,7 +249,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     this.togHanabi = !this.togHanabi;
                 } else if (this.hanabiTogTimer < 0.5f) this.hanabiTogTimer += amount;
 
-                if (BoxConfigs.isShaderEnable()) {
+                if (BoxConfigs.isShaderEnable() && false) {
                     if (this.particle == null) {
                         this.particle = new SimpleParticleControlData(512, 2.0f, -5120.0f, false);
 
@@ -307,6 +310,38 @@ public class MissionDefinition implements MissionDefinitionPlugin {
 //                                0.2f, 0.7f, 1.0f, Color.ORANGE);
 //                    }
 //                    this.time6 += amount;
+                }
+
+                if (this.trailData == null) {
+                    this.trailData = new StaticTrailData("BUtil_TestTrail");
+                    this.trailData.material.setDiffuse(Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"));
+                    this.trailData.material.setEmissive(Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"));
+                    this.trailData.material.setColor(Color.WHITE);
+                    this.trailData.material.setEmissiveColor(Color.ORANGE);
+                    this.trailData.durFadeIn = 0.3f;
+                    this.trailData.durFull = 0.9f;
+                    this.trailData.durFadeOut = 3.0f;
+                    this.trailData.velocityOutRange = new Vector4f(-32.0f, -32.0f, 32.0f, 32.0f);
+                    this.trailData.angularOutRange = new Vector2f(-11.25f, 11.25f);
+                    this.trailData.colorOut = CommonUtil.colorNormalization4f(new Color(0xFF4640FF), 1.0f);
+
+                    CombatRenderingManager.addStaticTrailGenerator(this.trailData, null,
+                            CombatEngineLayers.ABOVE_PARTICLES,
+                            (l_amount, l_elapsedTime, l_callback) -> {
+                                final CombatEngineAPI l_engine = Global.getCombatEngine();
+                                if (l_engine == null) return;
+                                final ViewportAPI l_viewport = l_engine.getViewport();
+
+                                l_callback.setCurrentLocation(
+                                        l_viewport.convertScreenXToWorldX(BUtil_GLImpl.Operations.getMouseX() / Global.getSettings().getScreenScaleMult()),
+                                        l_viewport.convertScreenYToWorldY(BUtil_GLImpl.Operations.getMouseY() / Global.getSettings().getScreenScaleMult())
+                                );
+//                                if (Float.isNaN(l_callback.getPreviousRecordsLocation().x)) l_callback.setCurrentFacing(1.0f, 0.0f);
+//                                else {
+//                                    Vector2f.sub(l_callback.getCurrentLocation(), l_callback.getPreviousRecordsLocation(), l_callback.getCurrentFacing());
+//                                    l_callback.getCurrentFacing().normalise(l_callback.getCurrentFacing());
+//                                }
+                            });
                 }
             }
 

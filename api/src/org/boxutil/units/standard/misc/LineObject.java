@@ -32,8 +32,8 @@ public class LineObject implements SimpleVAOAPI {
 
         GL20.glVertexAttribPointer(0, 2, GL11.GL_BYTE, true, BoxDatabase.BYTE_SIZE * 2, 0); // v
         GL20.glEnableVertexAttribArray(0);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         GL30.glBindVertexArray(0);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         if (this._lineID > 0 && this._lineVBO > 0) this.isValid = true;
     }
 

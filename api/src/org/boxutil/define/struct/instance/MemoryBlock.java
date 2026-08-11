@@ -1,7 +1,7 @@
 package org.boxutil.define.struct.instance;
 
 import org.boxutil.define.InstanceType;
-import org.boxutil.define.struct.GPUMemory;
+import org.boxutil.define.struct.memorypool.GPUMemory;
 
 /**
  * Maybe renaming at next Starsector update.

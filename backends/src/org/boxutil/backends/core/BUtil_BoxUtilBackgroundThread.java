@@ -8,7 +8,6 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.*;
 
 import java.util.concurrent.*;
-import java.util.function.Supplier;
 
 public final class BUtil_BoxUtilBackgroundThread {
     private final static ExecutorService __POOL = Executors.newFixedThreadPool(3, r -> {
@@ -29,7 +28,7 @@ public final class BUtil_BoxUtilBackgroundThread {
 
     @FunctionalInterface
     private interface _ThreadInit {
-        _ThreadTemplate apply(Thread thread, SharedDrawable drawable, Object args);
+        _ThreadTemplate apply(Thread thread, Drawable drawable, Object args);
     }
 
     private static void setupThread(byte target, final _ThreadInit thread, final Object args, final String name) {

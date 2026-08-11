@@ -4,6 +4,7 @@ import com.fs.starfarer.Version;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
+import com.fs.starfarer.api.combat.DamagingProjectileAPI;
 import com.fs.starfarer.api.impl.campaign.ids.Factions;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.shader.BUtil_GLImpl;
@@ -33,8 +34,6 @@ import java.util.function.Consumer;
 
 public final class BUtil_ThreadResource {
     final static AtomicBoolean __SHOULD_ADVANCE_SYNC_CURRENT_FRAME = new AtomicBoolean(false);
-    static float _CURR_AMOUNT = 0.0f;
-    static boolean _CURR_PAUSED = false;
 
 
     // combat resource
@@ -42,6 +41,7 @@ public final class BUtil_ThreadResource {
     final static EnumMap<CombatEngineLayers, Set<LayeredRenderingPlugin>> _COMBAT_LAYERED_PLUGIN = new EnumMap<>(CombatEngineLayers.class);
     final static EnumMap<DirectEntityType, List<RenderDataAPI>> _COMBAT_DIRECT_MAP = new EnumMap<>(DirectEntityType.class);
     final static Set<TemporaryCleanupPlugin> _COMBAT_CLEANUP_PLUGIN = new HashSet<>(4);
+    final static ConcurrentHashMap.KeySetView<DamagingProjectileAPI, Boolean> _AUTOGEN_MARKED_PROJ = ConcurrentHashMap.newKeySet(8192);
     // manager resource
     final static EnumSet<CombatEngineLayers> _COMBAT_ACTIVE_LAYER = EnumSet.noneOf(CombatEngineLayers.class);
     final static EnumSet<CombatEngineLayers> _COMBAT_DELAY_LAYER = EnumSet.noneOf(CombatEngineLayers.class);
@@ -91,8 +91,6 @@ public final class BUtil_ThreadResource {
     private static volatile boolean _THREAD_CATCH_EXCEPTION = false;
 
     public final static class Logical {
-        final static SpinLock __OP_LOCK = new SpinLock();
-
         static void runEntitySubmit(final boolean atLast) {
             final Deque<Consumer<Void>> queue = _SUBMIT_DEQUE;
             Consumer<Void> command;
@@ -107,9 +105,7 @@ public final class BUtil_ThreadResource {
         }
 
         static void addAllThreadPlugin(Collection<? extends BackgroundEveryFramePlugin> c) {
-            __OP_LOCK.lock();
             _LOGICAL_PLUGIN_DEQUE.addAll(c);
-            __OP_LOCK.unlock();
         }
 
         static Deque<RenderDataAPI> getEntitiesLogicalQueue() {
@@ -117,9 +113,7 @@ public final class BUtil_ThreadResource {
         }
 
         static void addAllEntitiesLogical(Collection<? extends RenderDataAPI> c) {
-            __OP_LOCK.lock();
             _ENTITIES_L.addAll(c);
-            __OP_LOCK.unlock();
         }
 
         public static void offerSubmitInstance(Consumer<Void> command) {
@@ -158,9 +152,9 @@ public final class BUtil_ThreadResource {
                 }
             }
 
-            private static void delayAdd(Deque<Consumer<Void>> var0) {
+            private static void delayAdd(Deque<Consumer<Void>> deque) {
                 Consumer<Void> adder;
-                while ((adder = var0.poll()) != null) {
+                while ((adder = deque.poll()) != null) {
                     adder.accept(null);
                 }
             }

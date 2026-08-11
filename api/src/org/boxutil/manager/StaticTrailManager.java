@@ -3,9 +3,11 @@ package org.boxutil.manager;
 import com.fs.starfarer.api.Global;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.util.BUtil_MiscUtil;
-import org.boxutil.units.standard.attribute.StaticTrailData;
+import org.boxutil.define.struct.statictrail.StaticTrailData;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.util.CommonUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,13 +15,17 @@ import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class StaticTrailManager {
-    private final static HashMap<String, HashSet<StaticTrailData>> _PROJ_TRAIL = new HashMap<>(128);
+    private final static Map<String, HashSet<String>> PROJ_TRAIL = new HashMap<>(128);
+    private final static Map<String, StaticTrailData> TRAILS = new HashMap<>(128);
     private final static Set<String> _CACHED_PATH = new HashSet<>(32);
     private final static Set<String> _CACHED_MAGIC_LIB_LAYOUT_PATH = new HashSet<>(32);
 
@@ -28,31 +34,62 @@ public final class StaticTrailManager {
     /**
      * @param id the id of <strong>projectile spec</strong>.
      */
-    public static boolean haveTrailData(final String id) {
-        return _PROJ_TRAIL.containsKey(id);
+    public static boolean haveTrailDataConfig(final String id) {
+        return PROJ_TRAIL.containsKey(id);
     }
 
     /**
      * @param id the id of <strong>projectile spec</strong>.
      */
-    public static HashSet<StaticTrailData> getTrailData(final String id) {
-        return _PROJ_TRAIL.get(id);
+    public static HashSet<String> getTrailDataConfig(final String id) {
+        return PROJ_TRAIL.get(id);
     }
 
     /**
-     * @param id the id of <strong>projectile spec</strong>.
+     * @param projID the id of <strong>projectile spec</strong>.
+     * @param trailID same as {@link StaticTrailData#id}.
      *
      * @return <code>true</code> if not contain this trail data.
      */
-    public static boolean putTrailData(final String id, final StaticTrailData trailData) {
-        return _PROJ_TRAIL.computeIfAbsent(id, k -> new HashSet<>(2)).add(trailData);
+    public static boolean putTrailDataConfig(@NotNull final String projID, final String trailID) {
+        if (projID.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        return PROJ_TRAIL.computeIfAbsent(projID, k -> new HashSet<>(2)).add(trailID);
     }
 
     /**
      * @param id the id of <strong>projectile spec</strong>.
      */
-    public static HashSet<StaticTrailData> removeTrailData(final String id) {
-        return _PROJ_TRAIL.remove(id);
+    public static HashSet<String> removeTrailDataConfig(final String id) {
+        return PROJ_TRAIL.remove(id);
+    }
+
+    /**
+     * @param id same as {@link StaticTrailData#id}.
+     */
+    public static boolean haveTrailData(final String id) {
+        return TRAILS.containsKey(id);
+    }
+
+    /**
+     * @param id same as {@link StaticTrailData#id}.
+     */
+    public static StaticTrailData getTrailData(final String id) {
+        return TRAILS.get(id);
+    }
+
+    /**
+     * @return see {@link Map#put(Object, Object)}
+     */
+    public static StaticTrailData putTrailData(@NotNull final StaticTrailData trailData) {
+        if (trailData.id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        return TRAILS.put(trailData.id, trailData);
+    }
+
+    /**
+     * @param id same as {@link StaticTrailData#id}.
+     */
+    public static StaticTrailData removeTrailData(final String id) {
+        return TRAILS.remove(id);
     }
 
     private static boolean _invalidDuration(float fadeIn, float full, float fadeOut) {
@@ -63,10 +100,20 @@ public final class StaticTrailManager {
         return sizeIn == 0.0f || sizeOut == 0.0f;
     }
 
+    private static @Nullable <V> V writeVec(final JSONObject json, final String key, final BiConsumer<String, V> fun, final Supplier<V> make) {
+        final String tmpStr = json.optString(key);
+        V result = null;
+        if (!tmpStr.isBlank()) {
+            result = make.get();
+            fun.accept(tmpStr, result);
+        }
+        return result;
+    }
+
     /**
      * For example: {@code StaticTrailManager.loadTrailData("data/config/modFiles/BUtil_trail_data.csv");}
      */
-    public static void loadTrailData(final String path) {
+    public static void loadTrailData(@NotNull final String path) {
         _CACHED_PATH.add(path);
         try {
             JSONArray objDataArray = Global.getSettings().loadCSV(path);
@@ -78,6 +125,12 @@ public final class StaticTrailManager {
                 final String projID = objData.optString("proj_id"), trailID = objData.optString("trail_id");
                 if (projID.isBlank() || trailID.isBlank()) {
                     _LOG.warn("'BoxUtil' static trail csv data have empty id or trail-id at lines '" + i + "' in: '" + path + "'.");
+                    continue;
+                }
+
+                final boolean isExistingTrail = objData.optBoolean("use_existing_trail", false);
+                if (isExistingTrail) {
+                    PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
                     continue;
                 }
 
@@ -111,106 +164,42 @@ public final class StaticTrailManager {
                         additiveBlend = objData.optBoolean("additive_blend", true),
                         velocityForward = objData.optBoolean("velocity_for_forward", false),
                         renderBelowExplosions = objData.optBoolean("render_below_explosions", false);
-                final Vector4f colorIn = new Vector4f(), colorOut = new Vector4f(), velIn = new Vector4f(), velOut = new Vector4f(), spawnOffset = new Vector4f();
-                final Vector2f angularIn = new Vector2f(), angularOut = new Vector2f();
-
-                BUtil_MiscUtil.getVec4Color(objData.getString("color_in"), colorIn);
-                BUtil_MiscUtil.getVec4Color(objData.getString("color_out"), colorOut);
-                BUtil_MiscUtil.getVec4(objData.getString("velocity_in_range"), velIn);
-                BUtil_MiscUtil.getVec4(objData.getString("velocity_out_range"), velOut);
-                BUtil_MiscUtil.getVec4(objData.getString("spawn_offset_range"), spawnOffset);
-                BUtil_MiscUtil.getVec2(objData.getString("angular_in_range"), angularIn);
-                BUtil_MiscUtil.getVec2(objData.getString("angular_out_range"), angularOut);
+                final Vector4f colorIn = writeVec(objData, "color_in", BUtil_MiscUtil::getVec4Color, Vector4f::new),
+                        colorOut = writeVec(objData, "color_out", BUtil_MiscUtil::getVec4Color, Vector4f::new),
+                        velIn = writeVec(objData, "velocity_in_range", BUtil_MiscUtil::getVec4, Vector4f::new),
+                        velOut = writeVec(objData, "velocity_out_range", BUtil_MiscUtil::getVec4, Vector4f::new),
+                        spawnOffset = writeVec(objData, "spawn_offset_range", BUtil_MiscUtil::getVec4, Vector4f::new);
+                final Vector2f angularIn = writeVec(objData, "angular_in_range", BUtil_MiscUtil::getVec2, Vector2f::new),
+                        angularOut = writeVec(objData, "angular_out_range", BUtil_MiscUtil::getVec2, Vector2f::new);
 
                 final MaterialData material = new MaterialData();
                 material.setDiffuse(diffusePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(diffusePath, TextureManager::tryTexture));
                 if (!normalPath.isBlank()) material.setNormal(BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3));
                 if (!complexPath.isBlank()) material.setComplex(BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3));
                 material.setEmissive(emissivePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(emissivePath, TextureManager::tryTexture));
-                if (!tangentPath.isBlank()) material.setTangent(BUtil_MiscUtil.tryTangentTexture(tangentPath, objData.optBoolean("isTangentAngleMap", true), true, false));
+                if (!tangentPath.isBlank()) material.setTangent(BUtil_MiscUtil.tryTangentTexture(tangentPath, objData.optBoolean("is_tangent_angle_map", true), true, false));
 
-                final StaticTrailData data = new StaticTrailData() {
-                    public String id() {
-                        return projID;
-                    }
-
-                    public MaterialData getMaterial() {
-                        return material;
-                    }
-
-                    public float getFadeInTime() {
-                        return fadeIn;
-                    }
-
-                    public float getFullTime() {
-                        return full;
-                    }
-
-                    public float getFadeOutTime() {
-                        return fadeOut;
-                    }
-
-                    public float getSizeIn() {
-                        return sizeIn;
-                    }
-
-                    public float getSizeOut() {
-                        return sizeOut;
-                    }
-
-                    public Vector4f getColorIn() {
-                        return colorIn;
-                    }
-
-                    public Vector4f getColorOut() {
-                        return colorOut;
-                    }
-
-                    public float getTexturePixels() {
-                        return texPixels;
-                    }
-
-                    public float getTextureSpeed() {
-                        return texSpeed;
-                    }
-
-                    public boolean isRandomUVStartOffset() {
-                        return randomUV;
-                    }
-
-                    public Vector4f getVelocityInRange() {
-                        return velIn;
-                    }
-
-                    public Vector4f getVelocityOutRange() {
-                        return velOut;
-                    }
-
-                    public Vector2f getAngularInRange() {
-                        return angularIn;
-                    }
-
-                    public Vector2f getAngularOutRange() {
-                        return angularOut;
-                    }
-
-                    public boolean isAdditiveBlend() {
-                        return additiveBlend;
-                    }
-
-                    public Vector4f getFixedSpawnOffsetRange() {
-                        return spawnOffset;
-                    }
-
-                    public boolean isVelocityForForward() {
-                        return velocityForward;
-                    }
-
-                    public boolean isRenderBelowExplosions() {
-                        return renderBelowExplosions;
-                    }
-                };
-                _PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(data);
+                final StaticTrailData data = new StaticTrailData(trailID);
+                data.durFadeIn = fadeIn;
+                data.durFull = full;
+                data.durFadeOut = fadeOut;
+                data.sizeIn = sizeIn;
+                data.sizeOut = sizeOut;
+                data.colorIn = colorIn;
+                data.colorOut = colorOut;
+                data.texturePixels = texPixels;
+                data.textureSpeed = texSpeed;
+                data.randomUVStartOffset = randomUV;
+                data.velocityInRange = velIn;
+                data.velocityOutRange = velOut;
+                data.angularInRange = angularIn;
+                data.angularOutRange = angularOut;
+                data.additiveBlend = additiveBlend;
+                data.fixedSpawnOffsetRange = spawnOffset;
+                data.velocityForForward = velocityForward;
+                data.renderBelowExplosions = renderBelowExplosions;
+                PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
+                TRAILS.put(trailID, data);
             }
         } catch (JSONException | IOException e) {
             CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' static trail csv data loading failed at: '" + path + "': ", e);
@@ -220,7 +209,7 @@ public final class StaticTrailManager {
     /**
      * For example: {@code StaticTrailManager.loadTrailData("data/config/modFiles/BUtil_trail_data_magiclib.csv");}
      */
-    public static void loadMagicLibLayoutTrailData(final String path) {
+    public static void loadMagicLibLayoutTrailData(@NotNull final String path) {
         _CACHED_MAGIC_LIB_LAYOUT_PATH.add(path);
         try {
             JSONArray objDataArray = Global.getSettings().loadCSV(path);
@@ -265,7 +254,9 @@ public final class StaticTrailManager {
                         additiveBlend = objData.optBoolean("additive", true),
                         velocityForward = objData.optBoolean("angleAdjustment", false),
                         renderBelowExplosions = objData.optBoolean("renderBelowExplosions", false);
-                final Vector4f colorIn = new Vector4f(), colorOut = new Vector4f(), velIn = new Vector4f(), velOut = new Vector4f(), spawnOffset = new Vector4f();
+                final Vector4f colorIn = writeVec(objData, "colorIn", BUtil_MiscUtil::getVec4Color, Vector4f::new),
+                        colorOut = writeVec(objData, "colorOut", BUtil_MiscUtil::getVec4Color, Vector4f::new),
+                        velIn = new Vector4f(), velOut = new Vector4f(), spawnOffset = new Vector4f();
                 final Vector2f angularIn = new Vector2f(), angularOut = new Vector2f();
 
                 final float distance = (float) objData.optDouble("distance", 0.0d),
@@ -276,10 +267,8 @@ public final class StaticTrailManager {
                         rotationIn = (float) objData.optDouble("rotationIn", 0.0d),
                         rotationOut = (float) objData.optDouble("rotationOut", 0.0d);
                 final boolean randomRotation_not = !objData.optBoolean("randomRotation", false);
-                BUtil_MiscUtil.getVec4Color(objData.getString("colorIn"), colorIn);
-                BUtil_MiscUtil.getVec4Color(objData.getString("colorOut"), colorOut);
-                colorIn.w *= opacityMultiply;
-                colorOut.w *= opacityMultiply;
+                if (colorIn != null) colorIn.w *= opacityMultiply;
+                if (colorOut != null) colorOut.w *= opacityMultiply;
                 spawnOffset.x = spawnOffset.z = -distance;
 
                 velIn.x = velIn.z = -velocityIn;
@@ -299,88 +288,27 @@ public final class StaticTrailManager {
                 final MaterialData material = new MaterialData();
                 material.setDiffuse(Global.getSettings().getSprite("fx", diffuseKey));
 
-                final StaticTrailData data = new StaticTrailData() {
-                    public String id() {
-                        return projID;
-                    }
-
-                    public MaterialData getMaterial() {
-                        return material;
-                    }
-
-                    public float getFadeInTime() {
-                        return fadeIn;
-                    }
-
-                    public float getFullTime() {
-                        return full;
-                    }
-
-                    public float getFadeOutTime() {
-                        return fadeOut;
-                    }
-
-                    public float getSizeIn() {
-                        return sizeIn;
-                    }
-
-                    public float getSizeOut() {
-                        return sizeOut;
-                    }
-
-                    public Vector4f getColorIn() {
-                        return colorIn;
-                    }
-
-                    public Vector4f getColorOut() {
-                        return colorOut;
-                    }
-
-                    public float getTexturePixels() {
-                        return texPixels;
-                    }
-
-                    public float getTextureSpeed() {
-                        return texSpeed;
-                    }
-
-                    public boolean isRandomUVStartOffset() {
-                        return randomUV;
-                    }
-
-                    public Vector4f getVelocityInRange() {
-                        return velIn;
-                    }
-
-                    public Vector4f getVelocityOutRange() {
-                        return velOut;
-                    }
-
-                    public Vector2f getAngularInRange() {
-                        return angularIn;
-                    }
-
-                    public Vector2f getAngularOutRange() {
-                        return angularOut;
-                    }
-
-                    public boolean isAdditiveBlend() {
-                        return additiveBlend;
-                    }
-
-                    public Vector4f getFixedSpawnOffsetRange() {
-                        return spawnOffset;
-                    }
-
-                    public boolean isVelocityForForward() {
-                        return velocityForward;
-                    }
-
-                    public boolean isRenderBelowExplosions() {
-                        return renderBelowExplosions;
-                    }
-                };
-                _PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(data);
+                final StaticTrailData data = new StaticTrailData(trailID);
+                data.durFadeIn = fadeIn;
+                data.durFull = full;
+                data.durFadeOut = fadeOut;
+                data.sizeIn = sizeIn;
+                data.sizeOut = sizeOut;
+                data.colorIn = colorIn;
+                data.colorOut = colorOut;
+                data.texturePixels = texPixels;
+                data.textureSpeed = texSpeed;
+                data.randomUVStartOffset = randomUV;
+                data.velocityInRange = velIn;
+                data.velocityOutRange = velOut;
+                data.angularInRange = angularIn;
+                data.angularOutRange = angularOut;
+                data.additiveBlend = additiveBlend;
+                data.fixedSpawnOffsetRange = spawnOffset;
+                data.velocityForForward = velocityForward;
+                data.renderBelowExplosions = renderBelowExplosions;
+                PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
+                TRAILS.put(trailID, data);
             }
         } catch (JSONException | IOException e) {
             CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' static trail csv data loading failed at: '" + path + "': ", e);

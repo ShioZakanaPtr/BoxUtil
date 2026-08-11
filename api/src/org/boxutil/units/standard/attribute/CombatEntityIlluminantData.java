@@ -10,7 +10,7 @@ import java.awt.*;
  * {@code
  * CombatEntityIlluminantData flag = new CombatEntityIlluminantData();
  * // *here any setting for flag*
- * combatEntity.setCustomData(CombatEntityIlluminantData.class.getName(), flag);
+ * combatEntity.setCustomData(CombatEntityIlluminantData.KEY, flag);
  * }
  * </pre>
  * ------------<p>

@@ -6,9 +6,9 @@ import org.boxutil.define.BoxDatabase;
  * For how to use custom material data for any combat entity:
  * <pre>
  * {@code
- * CombatEntityOverrideData flag = new CombatEntityOverrideData();
+ * CombatEntityMaterialData flag = new CombatEntityMaterialData();
  * // *here any setting for flag*
- * combatEntity.setCustomData(CombatEntityOverrideData.class.getName(), flag);
+ * combatEntity.setCustomData(CombatEntityMaterialData.KEY, flag);
  * }
  * </pre>
  * ------------<p>

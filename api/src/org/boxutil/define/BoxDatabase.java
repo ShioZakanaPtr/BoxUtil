@@ -43,6 +43,12 @@ public final class BoxDatabase {
     public final static String ZH_CN = "_zh_cn";
     public final static String EN_US = "_en_us";
 
+    public final static byte TEX2D_BINDING_DIFFUSE = 0;
+    public final static byte TEX2D_BINDING_NORMAL = 1;
+    public final static byte TEX2D_BINDING_COMPLEX = 2;
+    public final static byte TEX2D_BINDING_EMISSIVE = 3;
+    public final static byte TEX2D_BINDING_TANGENT = 4;
+
     public final static byte ENTITY_TOTAL_TYPE_NORMAL = 8;
     public final static byte ENTITY_TOTAL_TYPE_DIRECT = 6;
     public final static byte ENTITY_TOTAL_TYPE_DIRECT_COMMON = 1;

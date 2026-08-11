@@ -1,4 +1,4 @@
-package org.boxutil.define.struct;
+package org.boxutil.define.struct.memorypool;
 
 import org.jetbrains.annotations.NotNull;
 

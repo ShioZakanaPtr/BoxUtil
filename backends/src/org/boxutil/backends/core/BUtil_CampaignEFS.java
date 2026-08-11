@@ -7,6 +7,7 @@ import com.fs.starfarer.api.campaign.*;
 import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
 import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUsage;
 import org.boxutil.backends.core.statictrail.BUtil_GLDrawStaticTrailMemoryUsage;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.config.BoxThreadSync;
@@ -36,6 +37,7 @@ public final class BUtil_CampaignEFS implements EveryFrameScript {
             context.cleanupCombat();
             BUtil_ThreadResource.Rendering.Combat.cleanupQueue();
             BUtil_ThreadResource.Rendering.Combat.cleanupCustomData();
+            BUtil_StaticTrailMemoryPool.cleanupPool(true);
         }
         final var playerLoc = player.getContainingLocation();
 
@@ -45,6 +47,7 @@ public final class BUtil_CampaignEFS implements EveryFrameScript {
             BUtil_ThreadResource.Rendering.Campaign.LOG.info("'BoxUtil' Campaign rendering manager invited!");
         } else if (this.lastLocation != playerLoc) {
             context.cleanupCampaign(false);
+            BUtil_StaticTrailMemoryPool.cleanupPool(false);
             this.refreshManagerEntity(playerLoc);
             context.initCampaign(sector, false, false);
         }
@@ -52,8 +55,6 @@ public final class BUtil_CampaignEFS implements EveryFrameScript {
         final boolean isPaused = Global.getSector().isPaused();
         BUtil_GLImpl.Operations.advanceTimer(amount, isPaused);
 
-        BUtil_ThreadResource._CURR_AMOUNT = amount;
-        BUtil_ThreadResource._CURR_PAUSED = isPaused;
         if (BUtil_ThreadResource.__SHOULD_ADVANCE_SYNC_CURRENT_FRAME.compareAndSet(false, true)) {
             BoxThreadSync.Logical.beginAdvance().arriveAndAwaitAdvance();
             BUtil_ThreadResource.tryGLSync(BUtil_ThreadResource.__SYNC_BEGIN_ADVANCE);

@@ -4,6 +4,7 @@ import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.BaseShaderPacksContext;
 import org.boxutil.base.api.*;
@@ -21,6 +22,7 @@ import org.boxutil.util.CommonUtil;
 import org.boxutil.util.TransformUtil;
 import org.boxutil.util.TrigUtil;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Matrix4f;
 
@@ -34,15 +36,18 @@ public final class BUtil_GLImpl {
     private final static Matrix4f[] _PERSPECTIVE_VIEWPORT = new Matrix4f[]{new Matrix4f(), new Matrix4f()};
     private final static FloatBuffer _VANILLA_MATRIX = BufferUtils.createFloatBuffer(20);
     private final static FloatBuffer _PERSPECTIVE_MATRIX = BufferUtils.createFloatBuffer(20);
-    private final static float[] _TIMER = new float[5]; // lastFrameAmount, frameTime, frameTimePausedCheck, fractionIncludePaused, fractionIncludePaused
+    private final static float[] _TIMER = new float[6]; // lastFrameAmount, frameTime, frameTimePausedCheck, fractionIncludePaused, fractionIncludePaused, staticTrailComputeCycle
     private final static int[] _FBO_RESOURCE = new int[10];
+    private final static int[] _MOUSE_POS = new int[2];
     private static GameState _LAST_GAME_STATE = GameState.TITLE;
     private static GameState _TITLE_LAST_GAME_STATE = GameState.TITLE;
+    private static boolean _IS_PAUSED = false;
     private static boolean _IN_CAMPAIGN_FLAG = false;
+    private static boolean _STATIC_TRAIL_COMPUTE_WAIT = false;
     private static boolean _CLEANUP_ILLUMINANT_AFTER_SHADERPACKS_SWITCH = false;
 
     public final static class MeshRender {
-        public static void processCommonEntity(List<RenderDataAPI> list, int layer) {
+        public static void processCommonEntity(List<RenderDataAPI> list, int layerBits) {
             if (list == null || list.isEmpty()) return;
             RenderDataAPI entity;
             InstanceRenderAPI instance;
@@ -94,7 +99,7 @@ public final class BUtil_GLImpl {
                 GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                 GL20.glUniform4(program.location[1], entity.pickDataPackage_vec4());
                 GL20.glUniform3f(program.location[2], commonEntity.getBaseSizeX(), commonEntity.getBaseSizeY(), commonEntity.getBaseSizeZ());
-                dataBit = layer;
+                dataBit = layerBits;
                 if (material.isIgnoreIllumination()) dataBit |= 0b10;
                 if (material.getAnisotropic() < 0.0f) dataBit |= 0b100;
                 GL30.glUniform3ui(program.location[3], material.isAdditionEmissive() ? 1 : 0, dataBit, validInstanceData ? memory.address_instance() + instance.getRenderingOffset() : 0);
@@ -112,7 +117,7 @@ public final class BUtil_GLImpl {
             GL11.glDisable(GL11.GL_CULL_FACE);
         }
 
-        public static void processSpriteEntity(List<RenderDataAPI> list, int layer) {
+        public static void processSpriteEntity(List<RenderDataAPI> list, int layerBits) {
             if (list == null || list.isEmpty()) return;
             RenderDataAPI entity;
             InstanceRenderAPI instance;
@@ -163,7 +168,7 @@ public final class BUtil_GLImpl {
 
                 GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                 GL20.glUniform4(program.location[1], entity.pickDataPackage_vec4());
-                dataBit = layer;
+                dataBit = layerBits;
                 if (material.isIgnoreIllumination()) dataBit |= 0b10;
                 if (material.getAnisotropic() < 0.0f) dataBit |= 0b100;
                 GL30.glUniform3ui(program.location[2], material.isAdditionEmissive() ? 1 : 0, dataBit, validInstanceData ? memory.address_instance() + instance.getRenderingOffset() : 0);
@@ -184,7 +189,7 @@ public final class BUtil_GLImpl {
             program.close();
         }
 
-        public static void processCurveEntity(List<RenderDataAPI> list, int layer) {
+        public static void processCurveEntity(List<RenderDataAPI> list, int layerBits) {
             if (list == null || list.isEmpty()) return;
             RenderDataAPI entity;
             InstanceRenderAPI instance;
@@ -231,11 +236,11 @@ public final class BUtil_GLImpl {
 
                 GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                 FloatBuffer buffer = entity.pickDataPackage_vec4();
-                uvFlow = (curveEntity.getTextureSpeed() == 0.0f || curveEntity.getTexturePixels() == 0.0f) ? 0.0f : curveEntity.getTextureSpeed() / curveEntity.getTexturePixels() * (curveEntity.isFlowWhenPaused() ? Operations.getFrameTime() : Operations.getFrameTimeWithoutPaused());
+                uvFlow = (curveEntity.getTextureSpeed() == 0.0f || curveEntity.getTexturePixels() == 0.0f) ? 0.0f : curveEntity.getTextureSpeed() / curveEntity.getTexturePixels() * (curveEntity.isFlowWhenPaused() ? Operations.getElapsedTime() : Operations.getElapsedTimeWithoutPaused());
                 buffer.put(15, CalculateUtil.fraction(uvFlow + curveEntity.getUVOffset()));
                 GL20.glUniform4(program.location[1], buffer);
                 GL20.glUniform1f(program.location[2], curveEntity.getValidNodeCount() - 1);
-                dataBit = layer;
+                dataBit = layerBits;
                 if (material.isIgnoreIllumination()) dataBit |= 0b10;
                 if (material.getAnisotropic() < 0.0f) dataBit |= 0b100;
                 GL30.glUniform2ui(program.location[3], material.isAdditionEmissive() ? 1 : 0, dataBit);
@@ -251,7 +256,7 @@ public final class BUtil_GLImpl {
             program.close();
         }
 
-        public static void processSegmentEntity(List<RenderDataAPI> list, int layer) {
+        public static void processSegmentEntity(List<RenderDataAPI> list, int layerBits) {
             if (list == null || list.isEmpty()) return;
             RenderDataAPI entity;
             MaterialData material;
@@ -280,10 +285,10 @@ public final class BUtil_GLImpl {
 
                 GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                 FloatBuffer buffer = entity.pickDataPackage_vec4();
-                uvFlow = (segmentEntity.getTextureSpeed() == 0.0f || segmentEntity.getTexturePixels() == 0.0f) ? 0.0f : segmentEntity.getTextureSpeed() / segmentEntity.getTexturePixels() * (segmentEntity.isFlowWhenPaused() ? Operations.getFrameTime() : Operations.getFrameTimeWithoutPaused());
+                uvFlow = (segmentEntity.getTextureSpeed() == 0.0f || segmentEntity.getTexturePixels() == 0.0f) ? 0.0f : segmentEntity.getTextureSpeed() / segmentEntity.getTexturePixels() * (segmentEntity.isFlowWhenPaused() ? Operations.getElapsedTime() : Operations.getElapsedTimeWithoutPaused());
                 buffer.put(15, CalculateUtil.fraction(uvFlow + segmentEntity.getUVOffset()));
                 GL20.glUniform4(program.location[1], buffer);
-                dataBit = layer;
+                dataBit = layerBits;
                 if (material.isIgnoreIllumination()) dataBit |= 0b10;
                 if (material.getAnisotropic() < 0.0f) dataBit |= 0b100;
                 GL30.glUniform2ui(program.location[2], material.isAdditionEmissive() ? 1 : 0, dataBit);
@@ -297,7 +302,7 @@ public final class BUtil_GLImpl {
             program.close();
         }
 
-        public static void processTrailEntity(List<RenderDataAPI> list, int layer) {
+        public static void processTrailEntity(List<RenderDataAPI> list, int layerBits) {
             if (list == null || list.isEmpty()) return;
             RenderDataAPI entity;
             MaterialData material;
@@ -327,15 +332,15 @@ public final class BUtil_GLImpl {
                 material = ((MaterialRenderAPI) entity).getMaterialData();
 
                 FloatBuffer buffer = entity.pickDataPackage_vec4();
-                uvFlow = (trailEntity.getTextureSpeed() == 0.0f || trailEntity.getTexturePixels() == 0.0f) ? 0.0f : trailEntity.getTextureSpeed() / trailEntity.getTexturePixels() * (trailEntity.isFlowWhenPaused() ? Operations.getFrameTime() : Operations.getFrameTimeWithoutPaused());
+                uvFlow = (trailEntity.getTextureSpeed() == 0.0f || trailEntity.getTexturePixels() == 0.0f) ? 0.0f : trailEntity.getTextureSpeed() / trailEntity.getTexturePixels() * (trailEntity.isFlowWhenPaused() ? Operations.getElapsedTime() : Operations.getElapsedTimeWithoutPaused());
                 buffer.put(12, CalculateUtil.fraction(uvFlow + trailEntity.getUVOffset()));
                 GL20.glUniform4(program.location[1], buffer);
 
-                flickValue = trailEntity.getCurrentFlickerSyncValue() + (trailEntity.isFlickWhenPaused() ? Operations.getFrameTime() : Operations.getFrameTimeWithoutPaused());
+                flickValue = trailEntity.getCurrentFlickerSyncValue() + (trailEntity.isFlickWhenPaused() ? Operations.getElapsedTime() : Operations.getElapsedTimeWithoutPaused());
                 if (!trailEntity.isSyncFlick()) flickValue = -flickValue;
                 GL20.glUniform3f(program.location[2], trailEntity.getCurrentFlickerSyncValue(), flickValue, entity.getGlobalTimerAlpha());
 
-                dataBit = layer;
+                dataBit = layerBits;
                 if (material.isIgnoreIllumination()) dataBit |= 0b10;
                 if (material.getAnisotropic() < 0.0f) dataBit |= 0b100;
                 GL30.glUniform2ui(program.location[3], material.isAdditionEmissive() ? 1 : 0, dataBit);
@@ -353,7 +358,7 @@ public final class BUtil_GLImpl {
             program.close();
         }
 
-        public static void processFlareEntity(List<RenderDataAPI> list, int layer) {
+        public static void processFlareEntity(List<RenderDataAPI> list, int layerBits) {
             if (list == null || list.isEmpty()) return;
             RenderDataAPI entity;
             InstanceRenderAPI instance;
@@ -367,7 +372,7 @@ public final class BUtil_GLImpl {
             byte lastStyleBit = 0;
             program.putUniformSubroutine(GL20.GL_VERTEX_SHADER, 0, instanceBit);
             program.putUniformSubroutine(GL20.GL_FRAGMENT_SHADER, 1, lastStyleBit);
-            GL30.glUniform1ui(program.location[2], layer | 0b10);
+            GL30.glUniform1ui(program.location[2], layerBits | 0b10);
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
                 if (entity == null) {
@@ -404,7 +409,7 @@ public final class BUtil_GLImpl {
 
                 GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                 FloatBuffer buffer = entity.pickDataPackage_vec4();
-                float flickerTime = flareEntity.isFlickWhenPaused() ? Operations.getFrameTime() : Operations.getFrameTimeWithoutPaused();
+                float flickerTime = flareEntity.isFlickWhenPaused() ? Operations.getElapsedTime() : Operations.getElapsedTimeWithoutPaused();
                 flickerTime *= flareEntity.getFlickerAnimationRateMulti();
                 buffer.put(15, flickerTime);
                 GL20.glUniform4(program.location[1], buffer);
@@ -421,14 +426,14 @@ public final class BUtil_GLImpl {
             program.close();
         }
 
-        public static void processTextFieldEntity(List<RenderDataAPI> list, int layer) {
+        public static void processTextFieldEntity(List<RenderDataAPI> list, int layerBits) {
             if (list == null || list.isEmpty()) return;
             RenderDataAPI entity;
             ControlDataAPI data;
             TextFieldEntity textFieldEntity;
             BaseShaderData program = ShaderCore.getTextProgram();
             program.active();
-            GL30.glUniform1ui(program.location[7], layer | 0b11);
+            GL30.glUniform1ui(program.location[7], layerBits | 0b11);
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
                 if (entity == null) {
@@ -453,13 +458,12 @@ public final class BUtil_GLImpl {
                 }
 
                 Operations.glEntityDraw(entity);
-                program.active();
                 Operations.removeCheck(entitiesI, data, entity);
             }
             program.close();
         }
 
-        public static void processDistortionEntity(boolean canRendering, List<RenderDataAPI> list, ViewportAPI viewport) {
+        public static void processDistortionEntity(boolean canRendering, List<RenderDataAPI> list) {
             if (list == null || list.isEmpty()) return;
             if (canRendering) {
                 RenderDataAPI entity;
@@ -506,7 +510,7 @@ public final class BUtil_GLImpl {
                     GL20.glUniformMatrix4(program.location[0], false, entity.pickModelMatrixPackage_mat4());
                     GL20.glUniform4(program.location[1], entity.pickDataPackage_vec4());
 
-                    Operations.matrixCheck(entity);
+                    Operations.matrixCheck(entity.getPrimeMatrixState(), entity.pickPrimeMatrixPackage_mat4());
                     entity.glDraw();
 
                     if (notDefaultInstanceDataType) {
@@ -518,6 +522,16 @@ public final class BUtil_GLImpl {
                 }
                 program.close();
             } else Operations.glDisabledIterator(list);
+        }
+
+        public static void processStaticTrail(boolean canRendering, int layerLoc, int layerBits) {
+            if (BUtil_StaticTrailMemoryPool.bypassDrawTrail(layerLoc)) return;
+            if (canRendering) {
+                final var program = ShaderCore.getStaticTrailProgram();
+                program.active();
+                BUtil_StaticTrailMemoryPool.drawEachTrail(program, layerLoc, layerBits);
+                program.close();
+            }
         }
 
         private MeshRender() {}
@@ -686,13 +700,20 @@ public final class BUtil_GLImpl {
         }
 
         public static void resetTimer() {
-            _TIMER[0] = _TIMER[1] = _TIMER[2] = _TIMER[3] = _TIMER[4] = 0.0f;
+            _TIMER[0] = _TIMER[1] = _TIMER[2] = _TIMER[3] = _TIMER[4] = _TIMER[5] = 0.0f;
         }
         
         public static void advanceTimer(float amount, boolean paused) {
+            _IS_PAUSED = paused;
             _TIMER[0] = amount;
             _TIMER[1] += amount;
-            if (!paused) _TIMER[2] += amount;
+            if (!paused) {
+                _TIMER[2] += amount;
+                if (_TIMER[5] >= BoxConfigs.getTrailSystemNodesRecordsCycle()) {
+                    _TIMER[5] = amount;
+                    _STATIC_TRAIL_COMPUTE_WAIT = false;
+                } else _TIMER[5] += amount;
+            }
 
             if (!paused) {
                 _TIMER[3] += amount;
@@ -702,15 +723,23 @@ public final class BUtil_GLImpl {
             _TIMER[4] -= (byte) _TIMER[4];
         }
 
+        public static boolean isPaused() {
+            return _IS_PAUSED;
+        }
+
+        public static boolean waitStaticTrailCompute() {
+            return _STATIC_TRAIL_COMPUTE_WAIT;
+        }
+
         public static float getLastFrameAmount() {
             return _TIMER[0];
         }
 
-        public static float getFrameTime() {
+        public static float getElapsedTime() {
             return _TIMER[1];
         }
 
-        public static float getFrameTimeWithoutPaused() {
+        public static float getElapsedTimeWithoutPaused() {
             return _TIMER[2];
         }
 
@@ -722,8 +751,20 @@ public final class BUtil_GLImpl {
             return _TIMER[4];
         }
 
+        public static int getMouseX() {
+            return _MOUSE_POS[0];
+        }
+
+        public static int getMouseY() {
+            return _MOUSE_POS[1];
+        }
+
         public static void setCampaignFlag() {
             _IN_CAMPAIGN_FLAG = true;
+        }
+
+        public static boolean isInCampaignSector() {
+            return _IN_CAMPAIGN_FLAG;
         }
 
         public static boolean checkCampaignCleanup() {
@@ -776,6 +817,8 @@ public final class BUtil_GLImpl {
         }
         
         public static void refreshCurrFrameState(ViewportAPI viewport, BaseShaderPacksContext context, final byte isCampaign) {
+            _MOUSE_POS[0] = Mouse.getX();
+            _MOUSE_POS[1] = Mouse.getY();
             TransformUtil.createGameOrthoMatrix(viewport, _ORTHO_VIEWPORT[isCampaign]);
             TransformUtil.createGamePerspectiveMatrix(40.0f, viewport, _PERSPECTIVE_VIEWPORT[isCampaign]);
             _VANILLA_MATRIX.put(0, CommonUtil.getMatrix4fArray(_ORTHO_VIEWPORT[isCampaign]), 0, 16);
@@ -799,6 +842,16 @@ public final class BUtil_GLImpl {
                 for (InstanceType instanceType : InstanceType.values()) BUtil_InstanceDataMemoryPool.getPool(instanceType).rebindBase();
             }
             StandardShaderPacks.resetBloomStage();
+            if (!BUtil_StaticTrailMemoryPool.isNotSupported() && BUtil_StaticTrailMemoryPool.getTrailTypes() > 0) {
+                final var staticTrailProgram = ShaderCore.getStaticTrailProgram();
+                if (BoxDatabase.getGLState().GL_GL41) GL41.glProgramUniform1f(staticTrailProgram.getId(), staticTrailProgram.location[1], _TIMER[2]);
+                else {
+                    staticTrailProgram.active();
+                    GL20.glUniform1f(staticTrailProgram.location[1], _TIMER[2]);
+                    staticTrailProgram.close();
+                }
+            }
+            _STATIC_TRAIL_COMPUTE_WAIT = true;
             context.applyBeforeLowestLayerRender(viewport, isCampaign == BoxEnum.TRUE,
                     _FBO_RESOURCE[0],
                     _FBO_RESOURCE[1],
@@ -853,27 +906,29 @@ public final class BUtil_GLImpl {
         }
 
         public static void glMaterialEntityDraw(RenderDataAPI entity, MaterialData material) {
-            cullCheck(material);
+            cullCheck(material.getCullFace());
             glEntityDraw(entity);
         }
 
         public static void glMaterialEntityFlatDraw(RenderDataAPI entity, MaterialData material) {
-            cullCheck(material);
+            cullCheck(material.getCullFace());
             glEntityDraw(entity);
         }
 
         public static void glEntityDraw(RenderDataAPI entity) {
-            matrixCheck(entity);
-            blendCheck(entity);
+            matrixCheck(entity.getPrimeMatrixState(), entity.pickPrimeMatrixPackage_mat4());
+            blendCheck(entity.getBlendState(), entity.getBlendColorSRC(), entity.getBlendColorDST(), entity.getBlendAlphaSRC(), entity.getBlendAlphaDST(), entity.getBlendEquation());
             entity.glDraw();
         }
 
         private static byte _LAST_MATRIX_STATE = 0;
 
-        public static void matrixCheck(RenderDataAPI entity) {
-            final var currState = entity.getPrimeMatrixState();
-            if (currState == _LAST_MATRIX_STATE && currState != BoxEnum.ENTITY_CUSTOM_PRIME_MATRIX) return;
-            switch (currState) {
+        /**
+         * @param mat only req {@link BoxEnum#ENTITY_CUSTOM_PRIME_MATRIX}
+         */
+        public static void matrixCheck(byte state, final FloatBuffer mat) {
+            if (state == _LAST_MATRIX_STATE && state != BoxEnum.ENTITY_CUSTOM_PRIME_MATRIX) return;
+            switch (state) {
                 case BoxEnum.ENTITY_VANILLA_PRIME_MATRIX: {
                     ShaderCore.refreshGameViewportMatrix(_VANILLA_MATRIX);
                     break;
@@ -883,53 +938,59 @@ public final class BUtil_GLImpl {
                     break;
                 }
                 case BoxEnum.ENTITY_CUSTOM_PRIME_MATRIX: {
-                    ShaderCore.refreshGameViewportMatrix(entity.pickPrimeMatrixPackage_mat4());
+                    ShaderCore.refreshGameViewportMatrix(mat);
                     break;
                 }
                 default: { // BoxEnum.ENTITY_NONE_PRIME_MATRIX
                     ShaderCore.refreshGameViewportMatrixNone();
                 }
             }
-            _LAST_MATRIX_STATE = currState;
+            _LAST_MATRIX_STATE = state;
         }
 
         private static byte _LAST_BLEND_STATE = BoxEnum.ENTITY_NORMAL_BLEND;
 
-        public static void blendCheck(RenderDataAPI entity) {
-            final var currState = entity.getBlendState();
-            if (currState == _LAST_BLEND_STATE && currState != BoxEnum.ENTITY_OTHER_BLEND) return;
+        /**
+         * GLenum only for {@link BoxEnum#ENTITY_OTHER_BLEND}
+         */
+        public static void blendCheck(byte state, int srcColor, int dstColor, int srcAlpha, int dstAlpha, int equation) {
+            if (state == _LAST_BLEND_STATE && state != BoxEnum.ENTITY_OTHER_BLEND) return;
             if (_LAST_BLEND_STATE == BoxEnum.ENTITY_DISABLED_BLEND) GL11.glEnable(GL11.GL_BLEND);
             if (_LAST_BLEND_STATE == BoxEnum.ENTITY_OTHER_BLEND) {
                 GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
                 GL40.glBlendEquationi(1, GL14.GL_FUNC_ADD);
             }
-            switch (currState) {
-                case BoxEnum.ENTITY_NORMAL_BLEND, BoxEnum.ENTITY_ADDITIVE_BLEND: {
-                    GL40.glBlendFunci(0, entity.getBlendColorSRC(), entity.getBlendColorDST());
-                    GL40.glBlendFunci(1, entity.getBlendColorSRC(), entity.getBlendColorDST());
+            switch (state) {
+                case BoxEnum.ENTITY_NORMAL_BLEND: {
+                    GL40.glBlendFunci(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                    GL40.glBlendFunci(1, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                    break;
+                }
+                case BoxEnum.ENTITY_ADDITIVE_BLEND: {
+                    GL40.glBlendFunci(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+                    GL40.glBlendFunci(1, GL11.GL_SRC_ALPHA, GL11.GL_ONE);
                     break;
                 }
                 case BoxEnum.ENTITY_OTHER_BLEND: {
-                    GL40.glBlendFuncSeparatei(0, entity.getBlendColorSRC(), entity.getBlendColorDST(), entity.getBlendAlphaSRC(), entity.getBlendAlphaDST());
-                    GL40.glBlendEquationi(0, entity.getBlendEquation());
-                    GL40.glBlendFuncSeparatei(1, entity.getBlendColorSRC(), entity.getBlendColorDST(), entity.getBlendAlphaSRC(), entity.getBlendAlphaDST());
-                    GL40.glBlendEquationi(1, entity.getBlendEquation());
+                    GL40.glBlendFuncSeparatei(0, srcColor, dstColor, srcAlpha, dstAlpha);
+                    GL40.glBlendEquationi(0, equation);
+                    GL40.glBlendFuncSeparatei(1, srcColor, dstColor, srcAlpha, dstAlpha);
+                    GL40.glBlendEquationi(1, equation);
                     break;
                 }
                 default: { // BoxEnum.ENTITY_DISABLED_BLEND
                     GL11.glDisable(GL11.GL_BLEND);
                 }
             }
-            _LAST_BLEND_STATE = currState;
+            _LAST_BLEND_STATE = state;
         }
 
         private static byte _LAST_CULL_STATE = BoxEnum.MATERIAL_CULL_BACK;
 
-        public static void cullCheck(MaterialData material) {
-            final var currState = material.getCullFace();
-            if (currState == _LAST_CULL_STATE) return;
+        public static void cullCheck(byte state) {
+            if (state == _LAST_CULL_STATE) return;
             if (_LAST_CULL_STATE == BoxEnum.MATERIAL_CULL_DISABLED) GL11.glEnable(GL11.GL_CULL_FACE);
-            switch (material.getCullFace()) {
+            switch (state) {
                 case BoxEnum.MATERIAL_CULL_BACK: {
                     GL11.glCullFace(GL11.GL_BACK);
                     break;
@@ -946,7 +1007,7 @@ public final class BUtil_GLImpl {
                     GL11.glDisable(GL11.GL_CULL_FACE);
                 }
             }
-            _LAST_CULL_STATE = currState;
+            _LAST_CULL_STATE = state;
         }
 
         public static void resetGLAttrib() {

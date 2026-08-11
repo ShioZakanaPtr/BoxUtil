@@ -1,4 +1,4 @@
-package org.boxutil.define.struct;
+package org.boxutil.define.struct.memorypool;
 
 import org.boxutil.units.standard.GPUMemoryPool;
 import org.boxutil.util.CalculateUtil;
@@ -43,13 +43,28 @@ public class GPUPoolBehavior<T extends GPUMemoryPool.InternalMemory<D>, D> {
      */
     public Function<? super GPUMemoryPool<T, D>, Boolean> glContextRequirements = null;
     /**
-     * After a new buffer has created, maybe you want to bind it to any location in shader, without {@link GL15#glBindBuffer(int, int)} calls.<p>
+     * After a new buffer has created, maybe you want to bind it to any location in shader; without {@link GL15#glBindBuffer(int, int)} before or after this calls,
+     * so you should be bind and unbind your buffer in method.<p>
+     * <b>NOTE:</b> For objects that are <b>private</b> to the OpenGL context – such as a VBO thread pool with an associated VAO –
+     * the reBind operation should dispatch a signal (or closure) to the actual thread that requires it,
+     * thereby deferring VAO configuration to be performed on that thread.<p>
      * <code>null</code> when without rebind behavior.
      */
     public Consumer<? super GPUMemoryPool<T, D>> glRebindBuffer = null;
     /**
+     * At end of the buffer object {@link GPUMemoryPool#init()}.<p>
+     * <code>null</code> when without after-init behavior.
+     */
+    public Consumer<? super GPUMemoryPool<T, D>> glPoolInit = null;
+    /**
+     * At end of the buffer object {@link GPUMemoryPool#destroy()}, for delete some vao/texture object.<p>
+     * <code>null</code> when without after-destroy behavior.
+     */
+    public Consumer<? super GPUMemoryPool<T, D>> glPoolDestroy = null;
+    /**
      * The memory allocation behavior when malloc is first called after initialization.<p>
-     * The first <code>Long</code> parameter is the requested size for that {@linkplain GPUMemoryPool#malloc(Object, long) malloc} call, and this function should return a value no less than that parameter.
+     * The first <code>Long</code> parameter is the requested size for that {@linkplain GPUMemoryPool#malloc(Object, long) malloc} call,
+     * and this function should return a value no less than that parameter.
      */
     @NotNull
     public BiFunction<Long, ? super GPUMemoryPool<T, D>, Long> bufferInitRule = (req, pool) -> req < this.defaultBufferSize ? this.defaultBufferSize : CalculateUtil.getPOTMax(req << 1);
@@ -72,5 +87,25 @@ public class GPUPoolBehavior<T extends GPUMemoryPool.InternalMemory<D>, D> {
         this.glTarget = glTarget;
         this.newEmptyMemory = newEmptyMemory;
         this.newNotEmptyMemory = newNotEmptyMemory;
+    }
+
+    /**
+     * Shallow copy constructor.
+     */
+    public GPUPoolBehavior(final GPUPoolBehavior<T, D> src) {
+        this.immutableBufferAllow = src.immutableBufferAllow;
+        this.persistentMappingAllow = src.persistentMappingAllow;
+        this.glTarget = src.glTarget;
+        this.reservedSize = src.reservedSize;
+        this.defaultBufferSize = src.defaultBufferSize;
+        this.maxBufferSize = src.maxBufferSize;
+        this.glContextRequirements = src.glContextRequirements;
+        this.glRebindBuffer = src.glRebindBuffer;
+        this.glPoolInit = src.glPoolInit;
+        this.glPoolDestroy = src.glPoolDestroy;
+        this.bufferInitRule = src.bufferInitRule;
+        this.bufferExpendRule = src.bufferExpendRule;
+        this.newEmptyMemory = src.newEmptyMemory;
+        this.newNotEmptyMemory = src.newNotEmptyMemory;
     }
 }

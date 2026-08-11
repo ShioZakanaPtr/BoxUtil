@@ -80,6 +80,9 @@ public final class BoxConfigs {
     private static boolean BUtil_TBOSupported = false;
     private static boolean BUtil_VAOSupported = false;
 
+    private static short BUtil_StaticTrailSystemMaxNodes = getTrailSystemQualityNodes(BUtil_TrailSystemQuality);
+    private static float BUtil_StaticTrailSystemRecordsCycle = (float) (1.0d / (double) BUtil_StaticTrailSystemMaxNodes);
+
     private static boolean configInit = false;
     private static JSONObject data = null;
 
@@ -386,6 +389,9 @@ public final class BoxConfigs {
             BUtil_TrailSystemQuality = (byte) (byte) clampI(BUtil_TrailSystemQuality, 0, _MAX_TRAIL_QUALITY);;
             BUtil_TrailSystemQualityLocal = BUtil_TrailSystemQuality;
 
+            BUtil_StaticTrailSystemMaxNodes = getTrailSystemQualityNodes(BUtil_TrailSystemQuality);
+            BUtil_StaticTrailSystemRecordsCycle = (float) (1.0d / (double) BUtil_StaticTrailSystemMaxNodes);
+
             BUtil_EnableDebug = data.optBoolean("BUtil_EnableDebug", false);
             BUtil_EnableDebugLocal = BUtil_EnableDebug;
             load();
@@ -605,8 +611,12 @@ public final class BoxConfigs {
         return BUtil_TrailSystemQuality;
     }
 
-    public static short getTrailSystemNodesPerSecond() {
-        return getTrailSystemQualityNodes(BUtil_TrailSystemQuality);
+    public static short getMaxTrailSystemNodePerSeconds() {
+        return BUtil_StaticTrailSystemMaxNodes;
+    }
+
+    public static float getTrailSystemNodesRecordsCycle() {
+        return BUtil_StaticTrailSystemRecordsCycle;
     }
 
     public static short getMaxCurveNodeSize() {

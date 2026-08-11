@@ -294,7 +294,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
     }
 
     /**
-     * Generally, in there it is viewport and camera matrix, means 'main' not 'prime matrix'.<p>
+     * Generally, in there it is viewport and camera matrix(VP matrix, View and Projection in MVP), means 'main' not 'prime matrix'.<p>
      * In shader program: <strong>[this matrix * model matrix * vertex]</strong><p>
      * Must call {@link RenderDataAPI#setCustomPrimeMatrix()} if use it.
      *

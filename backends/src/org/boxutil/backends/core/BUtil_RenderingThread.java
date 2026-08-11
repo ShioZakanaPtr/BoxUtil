@@ -1,5 +1,6 @@
 package org.boxutil.backends.core;
 
+import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
 import org.boxutil.config.BoxThreadSync;
 import org.lwjgl.opengl.*;
@@ -20,8 +21,8 @@ final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread._ThreadT
 
     private void runThreadPlugin(final ExcFun stage) {
         final Iterator<BackgroundEveryFramePlugin> list = BUtil_ThreadResource.Rendering.getThreadPluginQueue().iterator();
-        final float amount = BUtil_ThreadResource._CURR_AMOUNT;
-        final boolean isPaused = BUtil_ThreadResource._CURR_PAUSED;
+        final float amount = BUtil_GLImpl.Operations.getLastFrameAmount();
+        final boolean isPaused = BUtil_GLImpl.Operations.isPaused();
 
         BackgroundEveryFramePlugin plugin;
         while (list.hasNext()) {
@@ -34,10 +35,6 @@ final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread._ThreadT
             }
             if (plugin.isRenderingExpired()) list.remove();
         }
-    }
-
-    private void updateTrailData() {
-        // todo
     }
 
     private void sendBeginRenderingSync() {
@@ -69,7 +66,6 @@ final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread._ThreadT
         this.sendAfterRenderingSync();
 
         BoxThreadSync.Rendering.afterRendering().arriveAndAwaitAdvance();
-        this.updateTrailData();
         this.runThreadPlugin(ExcFun.AFTER_RENDERING);
         this.sendBeginRenderingSync();
     }

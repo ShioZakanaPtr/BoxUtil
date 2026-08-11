@@ -8,17 +8,18 @@ v1.5.6 / 2026.12.32
     增加控制台指令 ShowStaticTrailMemoryUsage 用于获知尾迹系统当前的显存占用情况
     于 org.boxutil.base.api.resource 增加 StaticTrailTracker 接口，用于控制自定义尾迹的生成行为
     于 org.boxutil.manager 增加 StaticTrailManager 管理类，用于加载可被内置系统自动生成并管理的尾迹
-    于 org.boxutil.units.standard.attribute 增加 StaticTrailData 用于设定专用自定义尾迹的状态
+    于 org.boxutil.define.struct.statictrail 增加 StaticTrailData 用于设定专用自定义尾迹的状态
     于 org.boxutil.units.standard 增加 GPUMemoryPool，用于创建一个供自定义渲染或计算使用的GPU内存池
-    于 org.boxutil.define.struct 增加 GPUMemory 接口与 GPUPoolBehavior 类供自定义GPU内存池使用，同时 MemoryBlock 继承 GPUMemory 接口
+    于 org.boxutil.define.struct.memorypool 增加 GPUMemory 接口与 GPUPoolBehavior 类供自定义GPU内存池使用，同时 MemoryBlock 继承 GPUMemory 接口
     接口类 MemoryBlock 可能会于下一次游戏原版更新后重命名类名
+    工具类 TrigUtil 于下一次游戏原版更新后会更正部分拼写错误的方法名
     SpinLock 与 ReentrantSpinLock 现在皆实现了 java.util.concurrent.locks.Lock 接口
 
     着色器文件转为本地文件加载
     主线程绘制调度改进
     实例化数据 submitInstance 阶段逻辑调整
     TransformUtil 中部分投影矩阵计算方式改为根据当前传入Viewport进行，而非使用预计算屏幕尺寸，同时部分方法的实现优化
-    改进了 FontMapData 保存字形信息的方式，现在拥有更高的缓存命中率与更低内存占用
+    改进了 FontMapData 保存字形信息的方式，现在拥有更高的缓存命中率，提升了用作显示动态信息时的性能
 
     RenderDataAPI 新增方法：
         boolean isAutoSubmitEntityData();
@@ -137,13 +138,15 @@ v1.5.6 / 2026.12.32
         MaterialData(MaterialData);
 
     CombatRenderingManager 新增方法：
-        boolean addStaticTrailGenerator(StaticTrailData, CombatEngineLayers, StaticTrailData);
+        boolean addStaticTrailGenerator(StaticTrailData, CombatEntityAPI, CombatEngineLayers, StaticTrailData);
         void submitTrailDataChanges(StaticTrailData);
+        void tryCutTrailOnEntity(CombatEntityAPI);
         boolean removeStaticTrialGenerator(StaticTrailData);
 
     CampaignRenderingManager 新增方法：
-        boolean addStaticTrailGenerator(StaticTrailData, CampaignEngineLayers, StaticTrailData);
+        boolean addStaticTrailGenerator(StaticTrailData, SectorEntityToken, CampaignEngineLayers, StaticTrailData);
         void submitTrailDataChanges(StaticTrailData);
+        void tryCutTrailOnEntity(SectorEntityToken);
         boolean removeStaticTrialGenerator(StaticTrailData);
 
     TransformUtil 标记弃用方法：

@@ -8,16 +8,43 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.ResultCallb
     private boolean triggerDestroy = false;
     private boolean triggerDestroyImmediate = false;
     private float length = 0.0f;
-    private final Vector2f lastLoc = new Vector2f();
+    private final Vector2f lastLoc = new Vector2f(Float.NaN, Float.NaN);
     private final Vector2f location = new Vector2f();
-    private final Vector2f facing = new Vector2f();
+    private final Vector2f facing = new Vector2f(1.0f, 0.0f);
 
-    public float getLength() {
+    public float getElapsedLength() {
         return this.length;
     }
 
-    public Vector2f getPreviousFrameLocation() {
+    public Vector2f getPreviousRecordsLocation() {
         return this.lastLoc;
+    }
+
+    public float getPreviousRecordsDistanceSq(float targetX, float targetY) {
+        if (Float.isNaN(this.lastLoc.x) || Float.isNaN(this.lastLoc.y)) return Float.NaN;
+        final float x_diff = this.lastLoc.x - targetX, y_diff = this.lastLoc.y - targetY;
+        return x_diff * x_diff + y_diff * y_diff;
+    }
+
+    public float getPreviousRecordsDistanceSq(final Vector2f targetLocation) {
+        return this.getPreviousRecordsDistanceSq(targetLocation.x, targetLocation.y);
+    }
+
+    public float getPreviousRecordsDistanceSq() {
+        return this.getPreviousRecordsDistanceSq(this.location.x, this.location.y);
+    }
+
+    public boolean isNotRecommendedRecordsCurrent(float targetX, float targetY) {
+        final float preDist = this.getPreviousRecordsDistanceSq(targetX, targetY);
+        return !Float.isNaN(preDist) && preDist < StaticTrailTracker.MINIMAL_VALID_LENGTH_SQ;
+    }
+
+    public boolean isNotRecommendedRecordsCurrent(Vector2f targetLocation) {
+        return false;
+    }
+
+    public boolean isNotRecommendedRecordsCurrent() {
+        return false;
     }
 
     public Vector2f getCurrentLocation() {
@@ -56,9 +83,8 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.ResultCallb
         this.triggerDestroyImmediate = true;
     }
 
-    public float distSq() {
-        final float x_diff = this.lastLoc.x - this.location.x, y_diff = this.lastLoc.y - this.location.y;
-        return x_diff * x_diff + y_diff * y_diff;
+    public boolean isExpired() {
+        return this.triggerDestroy || this.triggerDestroyImmediate;
     }
 
     public void nextFrame(final float segLength) {
@@ -69,9 +95,9 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.ResultCallb
 
     public void idleReset() {
         this.length = 0.0f;
-        this.lastLoc.set(0.0f, 0.0f);
+        this.lastLoc.set(Float.NaN, Float.NaN);
         this.location.set(0.0f, 0.0f);
-        this.facing.set(0.0f, 0.0f);
+        this.facing.set(1.0f, 0.0f);
     }
 
     public boolean isPaused() {

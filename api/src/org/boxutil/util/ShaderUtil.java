@@ -78,7 +78,7 @@ public final class ShaderUtil {
     public final static byte BIND_FRAGMENT_OUTPUT = 1;
 
     /**
-     * @param target {@link ShaderUtil#BIND_VERTEX_ATTRIB} for vertex attrib location, {@link ShaderUtil#BIND_FRAGMENT_OUTPUT} for fragment output, location.
+     * @param target {@link ShaderUtil#BIND_VERTEX_ATTRIB} for vertex attrib location, OpenGL 2.0 required; {@link ShaderUtil#BIND_FRAGMENT_OUTPUT} for fragment output/location, OpenGL 3.0 required.
      * @param location vertex attrib index or color attachment index.
      * @param name the field name that what them in shader source is.
      */

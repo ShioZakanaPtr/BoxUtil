@@ -5,6 +5,7 @@ import com.fs.starfarer.api.campaign.CampaignEngineLayers;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.combat.ViewportAPI;
 import com.fs.starfarer.api.impl.campaign.BaseCustomEntityPlugin;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.config.BoxConfigGUI;
 import org.boxutil.config.BoxConfigs;
@@ -61,6 +62,7 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
                 BUtil_ThreadResource.tryGLSync(BUtil_ThreadResource.__SYNC_AUX_FINISH_ADVANCE);
             }
             BUtil_ThreadResource.Rendering.Campaign.delayAdd();
+            BUtil_StaticTrailMemoryPool.processCurTrail();
 
             BoxThreadSync.Rendering.beforeRendering().arriveAndAwaitAdvance();
             BUtil_ThreadResource.Logical.runEntitySubmit(false);
@@ -83,15 +85,16 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
 
             notMultiPass &= BoxConfigs.isMultiPassBeauty() || BoxConfigs.isMultiPassColor();
             if (notMultiPass) GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-            BUtil_GLImpl.MeshRender.processDistortionEntity(BoxConfigs.isDistortionEnable() && notMultiPass, BUtil_ThreadResource._CAMPAIGN_DIRECT_MAP.get(DirectEntityType.DISTORTION), viewport);
+            BUtil_GLImpl.MeshRender.processDistortionEntity(BoxConfigs.isDistortionEnable() && notMultiPass, BUtil_ThreadResource._CAMPAIGN_DIRECT_MAP.get(DirectEntityType.DISTORTION));
 
             if (BoxConfigs.isMultiPassBeauty()) context.applyPostEffectPass(viewport, true);
             if (notMultiPass) GL11.glEnable(GL11.GL_BLEND);
         }
 
+        final int staticTrailLayerLoc = BUtil_StaticTrailMemoryPool.toLayerLoc(layer);
         final var meshArray = BUtil_ThreadResource._CAMPAIGN_ENTITIES_R.get(layer);
         final var pluginSet = BUtil_ThreadResource._CAMPAIGN_LAYERED_PLUGIN.get(layer);
-        final boolean stageContinue = BUtil_GLImpl.Operations.checkSkipMeshCurrentLayout(meshArray, pluginSet);
+        final boolean stageContinue = BUtil_GLImpl.Operations.checkSkipMeshCurrentLayout(meshArray, pluginSet) && BUtil_StaticTrailMemoryPool.bypassDrawTrail(staticTrailLayerLoc);
         if (stageContinue) {
             if (shaderEnable && this._highestLayer) ShaderCore.glEndDraw();
             if (this._highestLayer == this._lowestLayer) {
@@ -118,6 +121,7 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
         }
 
         BUtil_GLImpl.Operations.processMeshCurrentLayout(this._layerBits, layer, notMultiPass, viewport, meshArray, pluginSet);
+        BUtil_GLImpl.MeshRender.processStaticTrail(notMultiPass, staticTrailLayerLoc, this._layerBits);
         BUtil_GLImpl.Operations.resetGLAttrib();
         if (shaderEnable) {
             if (!this._highestLayer) {

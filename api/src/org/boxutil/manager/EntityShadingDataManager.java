@@ -9,6 +9,7 @@ import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.util.CommonUtil;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -320,8 +321,9 @@ public final class EntityShadingDataManager {
     /**
      * @param id the spec id of <strong>ship</strong> and <strong>battle objective</strong>.
      */
-    public static TextureSet putEntityTextureSet(String id, TextureSet textureSet) {
-        if (id == null || id.isBlank() || textureSet == null) return null;
+    public static TextureSet putEntityTextureSet(@NotNull String id, TextureSet textureSet) {
+        if (id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (textureSet == null) return null;
         return _ENTITY.put(id, textureSet);
     }
 
@@ -349,8 +351,9 @@ public final class EntityShadingDataManager {
     /**
      * @param id the spec id of <strong>missile
      */
-    public static TextureSet putMissileTextureSet(String id, TextureSet textureSet) {
-        if (id == null || id.isBlank() || textureSet == null) return null;
+    public static TextureSet putMissileTextureSet(@NotNull String id, TextureSet textureSet) {
+        if (id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (textureSet == null) return null;
         return _MISSILE.put(id, textureSet);
     }
 
@@ -381,8 +384,9 @@ public final class EntityShadingDataManager {
      * @param id the spec id of <strong>weapon</strong> and <strong>missile projectile</strong>.
      * @param isHardpoint values {@link BoxEnum#TRUE} and {@link BoxEnum#FALSE}.
      */
-    public static TextureSet putWeaponTextureSet(String id, byte isHardpoint, TextureSet textureSet) {
-        if (id == null || id.isBlank() || textureSet == null) return null;
+    public static TextureSet putWeaponTextureSet(@NotNull String id, byte isHardpoint, TextureSet textureSet) {
+        if (id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (textureSet == null) return null;
         return _WEAPON[isHardpoint].put(id, textureSet);
     }
 
@@ -414,8 +418,9 @@ public final class EntityShadingDataManager {
      * @param id the id of <strong>hull style</strong>.
      * @param isHardpoint values {@link BoxEnum#TRUE} and {@link BoxEnum#FALSE}.
      */
-    public static TextureSet putWeaponCoverTextureSet(String id, byte isHardpoint, WeaponAPI.WeaponSize size, TextureSet textureSet) {
-        if (id == null || id.isBlank() || textureSet == null) return null;
+    public static TextureSet putWeaponCoverTextureSet(@NotNull String id, byte isHardpoint, WeaponAPI.WeaponSize size, TextureSet textureSet) {
+        if (id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (textureSet == null) return null;
         return _WEAPON_COVER[isHardpoint][size.ordinal()].put(id, textureSet);
     }
 
@@ -444,8 +449,9 @@ public final class EntityShadingDataManager {
     /**
      * @param id the id of <strong>projectile spec</strong>.
      */
-    public static ProjectileIlluminantData putProjectileIlluminantData(String id, ProjectileIlluminantData illuminantData) {
-        if (id == null || id.isBlank() || illuminantData == null) return null;
+    public static ProjectileIlluminantData putProjectileIlluminantData(@NotNull String id, ProjectileIlluminantData illuminantData) {
+        if (id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (illuminantData == null) return null;
         return _PROJ_ILLUM.put(id, illuminantData);
     }
 
@@ -473,8 +479,9 @@ public final class EntityShadingDataManager {
     /**
      * @param id the id of <strong>beam weapon</strong>.
      */
-    public static IsoIlluminantData putBeamIlluminantData(String id, IsoIlluminantData illuminantData) {
-        if (id == null || id.isBlank() || illuminantData == null) return null;
+    public static IsoIlluminantData putBeamIlluminantData(@NotNull String id, IsoIlluminantData illuminantData) {
+        if (id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (illuminantData == null) return null;
         return _BEAM_ILLUM.put(id, illuminantData);
     }
 
@@ -502,8 +509,9 @@ public final class EntityShadingDataManager {
     /**
      * @param id the id of <strong>engine style</strong>.
      */
-    public static IsoIlluminantData putEngineIlluminantData(String id, IsoIlluminantData illuminantData) {
-        if (id == null || id.isBlank() || illuminantData == null) return null;
+    public static IsoIlluminantData putEngineIlluminantData(@NotNull String id, IsoIlluminantData illuminantData) {
+        if (id.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (illuminantData == null) return null;
         return _ENGINE_ILLUM.put(id, illuminantData);
     }
 
