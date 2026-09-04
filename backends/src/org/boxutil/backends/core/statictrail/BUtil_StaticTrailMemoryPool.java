@@ -54,7 +54,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
     private final static OpResource RES = new OpResource();
 
     private final static class OpResource {
-        private boolean invalid = true;
+        private boolean valid = false;
         private boolean additiveBlend = true;
         private final ConcurrentMap<StaticTrailData, BUtil_StaticTrailMemoryPool> trailPoolMap = new ConcurrentHashMap<>(64);
         private final Deque<Runnable> deferredAddTrail = new ConcurrentLinkedDeque<>();
@@ -85,7 +85,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
     private final int maxFullNodes;
     private final float maxDur;
     private final long allocSize;
-    private final FloatBuffer statePackageMem = BufferUtils.createFloatBuffer(40).position(0).limit(40);
+    private final FloatBuffer statePackageMem = BufferUtils.createFloatBuffer(40).clear();
     private final StaticTrailData trailData;
     private final AtomicInteger trailComputeIdx = new AtomicInteger(0);
     private final AtomicInteger trailVertexBufIdx = new AtomicInteger(0);
@@ -430,11 +430,13 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
     }
 
     public static void drawEachTrail(final BaseShaderData program, int layerLoc, int layerBits) {
-        final boolean unbind = !RES.trailPoolMap.isEmpty();
-        RES.additiveBlend = true;
-        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
-        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE);
-        if (!GLWrapper.VAO.valid() && unbind) {
+        final boolean active = !RES.trailPoolMap.isEmpty();
+        if (!BoxConfigs.isShaderEnable()) {
+            RES.additiveBlend = true;
+            GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+            GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE);
+        }
+        if (!GLWrapper.VAO.valid() && active) {
             GLWrapper.VAO.glEnableVertexAttribArray(0);
             GLWrapper.VAO.glEnableVertexAttribArray(1);
             GLWrapper.VAO.glEnableVertexAttribArray(2);
@@ -445,7 +447,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
             if (pool == null || pool.isInvalid() || pool.getBufferReference() < 1) continue;
             pool.glDrawTrail(program, layerLoc, layerBits);
         }
-        if (unbind) {
+        if (active) {
             if (GLWrapper.VAO.valid()) {
                 GLWrapper.VAO.glBindVertexArray(0);
             } else {
@@ -584,15 +586,15 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
 
     public static void initPool() {
         if (!poolReq(null)) return;
-        RES.invalid = false;
+        RES.valid = true;
     }
 
     public static BUtil_StaticTrailMemoryPool getPool(final StaticTrailData target) {
         return RES.trailPoolMap.get(target);
     }
 
-    public static boolean isNotSupported() {
-        return RES.invalid;
+    public static boolean isSupported() {
+        return RES.valid;
     }
 
     public static int getTrailTypes() {

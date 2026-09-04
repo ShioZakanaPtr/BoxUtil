@@ -95,7 +95,7 @@ public final class BUtil_GLDrawStaticTrailMemoryUsage implements BUtil_GLDrawInf
     }
 
     public boolean isShown() {
-        return BoxConfigs.isShowStaticTrailMemoryUsage() && !BUtil_StaticTrailMemoryPool.isNotSupported();
+        return BoxConfigs.isShowStaticTrailMemoryUsage() && BUtil_StaticTrailMemoryPool.isSupported();
     }
 
     private static void refreshValue(final TextFieldObject text, long value) {

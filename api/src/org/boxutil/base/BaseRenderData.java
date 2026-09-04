@@ -135,8 +135,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
      */
     public void submitEntityData() {
         this.statePackageBuffer.put(0, this.getGlobalTimerAlpha());
-        this.statePackageBuffer.position(0);
-        this.statePackageBuffer.limit(this.statePackageBuffer.capacity());
+        this.statePackageBuffer.clear();
     }
 
     public ControlDataAPI getControlData() {
@@ -284,8 +283,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
     public void submitPrimeMatrix() {
         this.primeMatBuffer.position(0);
         this.primeMatrix.store(this.primeMatBuffer);
-        this.primeMatBuffer.position(0);
-        this.primeMatBuffer.limit(16);
+        this.primeMatBuffer.clear();
     }
 
     public void initIdentityPrimeMatrix() {
@@ -351,8 +349,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
     public void submitModelMatrix() {
         this.modelMatBuffer.position(0);
         this.modelMatrix.store(this.modelMatBuffer);
-        this.modelMatBuffer.position(0);
-        this.modelMatBuffer.limit(16);
+        this.modelMatBuffer.clear();
     }
 
     public void initIdentityModelMatrix() {

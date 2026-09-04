@@ -3,6 +3,7 @@ package org.boxutil.config;
 import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.Pair;
+import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.backends.core.thread.BUtil_BoxUtilBackgroundThread;
 import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.base.BaseShaderPacksContext;
@@ -450,7 +451,7 @@ public final class BoxConfigs {
     public synchronized static void sysCheck() {
         BUtil_EnableShader &= ShaderCore.isValid() && ShaderCore.isGlobalDataUBOValid() && !BUtil_InstanceDataMemoryPool.isPoolInvalid();
         BUtil_EnableCL &= KernelCore.isValid();
-        BUtil_EnableTrailSystem &= ShaderCore.isGlobalDataUBOValid() && ShaderCore.isStaticTrailShaderValid();
+        BUtil_EnableTrailSystem &= ShaderCore.isGlobalDataUBOValid() && ShaderCore.isStaticTrailShaderValid() && BUtil_StaticTrailMemoryPool.isSupported();
     }
 
     /**

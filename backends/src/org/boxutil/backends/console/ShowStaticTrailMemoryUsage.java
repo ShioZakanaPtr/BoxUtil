@@ -9,7 +9,7 @@ import org.lazywizard.console.Console;
 
 public class ShowStaticTrailMemoryUsage implements BaseCommand {
     public CommandResult runCommand(@NotNull String args, @NotNull CommandContext context) {
-        if (BUtil_StaticTrailMemoryPool.isNotSupported()) {
+        if (!BUtil_StaticTrailMemoryPool.isSupported()) {
             Console.showMessage("'BoxUtil' static trail memory pool was not supported.", Level.WARN);
             return CommandResult.ERROR;
         }
