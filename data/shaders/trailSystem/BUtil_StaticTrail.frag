@@ -1,4 +1,4 @@
-#version OVERWRITE_VERSION
+#version OVERWRITE_VERSION_TITLE
 
 #define COLOR 0
 #define EMISSIVE_COLOR 1
@@ -14,7 +14,7 @@
 // 3: vec4(colorIn)
 // 4: vec4(colorOut)
 // 5: vec4(fadeIn, full, fadeOut, randomUVStart)
-// 6: vec4(sizeIn, sizeOut, texPixelsDiv, texSpeed)
+// 6: vec4(sizeIn, sizeOut, smoothEnds, texUVScroll)
 // 7: vec4(velInRange)
 // 8: vec4(velOutRange)
 // 9: vec4(angluarInRange, angluarOutRange)
@@ -27,30 +27,28 @@ uniform uint u_dataBit;
 uniform sampler2D u_diffuseMap;
 uniform sampler2D u_complexMap;
 uniform sampler2D u_emissiveMap;
+
+in vec4 gfb_fragEntityColor;
+in vec4 gfb_fragMixEmissive;
+in vec2 gfb_fragUV;
+in float gfb_fragEndsAlpha;
+
+out vec4 o_fragColor;
 #else
 layout (binding = 0) uniform sampler2D u_diffuseMap;
 layout (binding = 1) uniform sampler2D u_normalMap;
 layout (binding = 2) uniform sampler2D u_complexMap;
 layout (binding = 3) uniform sampler2D u_emissiveMap;
 layout (binding = 4) uniform sampler2D u_tangentMap;
-#endif
-
 
 in GEOM_FRAG_BLOCK {
     vec4 fragEntityColor;
     vec4 fragMixEmissive;
-#ifdef LEGACY_TRAIL_MODE
-    vec2 fragUV;
-#else
     vec4 fragUV_TBN;
     vec2 fragPosN;
-#endif
+    float fragEndsAlpha;
 } gfb_data;
 
-
-#ifdef LEGACY_TRAIL_MODE
-out vec4 o_fragColor;
-#else
 layout (location = 0) out vec4 o_fragColor; // draw to RGB8
 layout (location = 1) out vec4 o_fragEmissive; // draw to RGB8
 layout (location = 2) out vec4 o_fragWorldPos; // draw to RGB16
@@ -62,19 +60,28 @@ layout (location = 6) out uvec4 o_fragData; // depth, alpha, flag; draw to RGB10
 
 void main() {
 #ifdef LEGACY_TRAIL_MODE
-    vec4 diffuse = texture(u_diffuseMap, gfb_data.fragUV) * gfb_data.fragEntityColor;
-    vec4 emissive = texture(u_emissiveMap, gfb_data.fragUV) * gfb_data.fragMixEmissive;
+    float in_EndsAlpha = gfb_fragEndsAlpha;
+    vec2 realFragUV = gfb_fragUV;
+    vec4 in_entityColor = gfb_fragEntityColor,
+        in_emissiveColor = gfb_fragMixEmissive;
 #else
-    vec4 diffuse = texture(u_diffuseMap, gfb_data.fragUV_TBN.xy) * gfb_data.fragEntityColor;
-    vec4 emissive = texture(u_emissiveMap, gfb_data.fragUV_TBN.xy) * gfb_data.fragMixEmissive;
+    float in_EndsAlpha = gfb_data.fragEndsAlpha;
+    vec2 realFragUV = gfb_data.fragUV_TBN.xy;
+    vec4 in_entityColor = gfb_data.fragEntityColor,
+        in_emissiveColor = gfb_data.fragMixEmissive;
 #endif
+    realFragUV.x = fract(realFragUV.x);
+    vec4 diffuse = texture(u_diffuseMap, realFragUV) * in_entityColor;
+    vec4 emissive = texture(u_emissiveMap, realFragUV) * in_emissiveColor;
+    if (in_EndsAlpha < 1.0) {
+        float endsSmoothAlpha = smoothstep(0.0, u_statePackage[6].z, in_EndsAlpha);
+        diffuse.w *= endsSmoothAlpha;
+        emissive.w *= endsSmoothAlpha;
+    }
+
     if (diffuse.w + emissive.w <= ALPHA_THRESHOLD) discard;
 
-#ifdef LEGACY_TRAIL_MODE
-    vec3 complexRaw = texture(u_complexMap, gfb_data.fragUV).xyz;
-#else
-    vec3 complexRaw = texture(u_complexMap, gfb_data.fragUV_TBN.xy).xyz;
-#endif
+    vec3 complexRaw = texture(u_complexMap, realFragUV).xyz;
     emissive.xyz += diffuse.xyz * complexRaw.x;
 
     diffuse.w = min(diffuse.w, 1.0);
@@ -84,7 +91,7 @@ void main() {
     mat2 TBN = mat2(gfb_data.fragUV_TBN.zw, -gfb_data.fragUV_TBN.w, gfb_data.fragUV_TBN.z);
 
     bool ignoreIllum = (u_dataBit & 2u) == 2u;
-    vec4 normalRaw = texture(u_normalMap, gfb_data.fragUV_TBN.xy);
+    vec4 normalRaw = texture(u_normalMap, realFragUV);
     normalRaw.xyz = fma(normalRaw.xyz, vec3(2.0), vec3(-1.0));
     if (normalRaw.w <= 0.0) normalRaw.xyz = vec3(0.0, 0.0, 1.0); else {
         normalRaw.xyz = normalRaw.xyz;
@@ -95,7 +102,7 @@ void main() {
     if (!ignoreIllum) {
         resultTangent.w = diffuse.w;
         if (u_statePackage[EMISSIVE_SA].w != 0.0) {
-            resultTangent.xyz = fma(texture(u_tangentMap, gfb_data.fragUV_TBN.xy).xyz, vec3(2.0), vec3(-1.0));
+            resultTangent.xyz = fma(texture(u_tangentMap, realFragUV).xyz, vec3(2.0), vec3(-1.0));
             resultTangent.xy = TBN * resultTangent.xy;
         }
     }

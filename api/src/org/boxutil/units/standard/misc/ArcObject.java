@@ -1,6 +1,7 @@
 package org.boxutil.units.standard.misc;
 
 import org.boxutil.base.BaseShaderData;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -14,7 +15,7 @@ import java.nio.FloatBuffer;
 
 /**
  * Easy way for rendering arc with thinness anywhere.<p>
- * Required <strong>OpenGL 2.0</strong> supported.
+ * Required {@link GLWrapper.Shader#valid()}.
  */
 public class ArcObject {
     // vec2(inner), ringHardness, innerHardness
@@ -30,8 +31,8 @@ public class ArcObject {
         GL11.glPushMatrix();
         GL11.glTranslatef(location.x + radiusWidth, location.y + radiusHeight, 0.0f);
         if (facing != 0.0f) GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw(radiusWidth, radiusHeight);
         GL11.glPopMatrix();
     }
@@ -43,8 +44,8 @@ public class ArcObject {
         GL11.glPushMatrix();
         GL11.glTranslatef(location.x, location.y, 0.0f);
         GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw(radiusWidth, radiusHeight);
         GL11.glPopMatrix();
     }
@@ -58,9 +59,9 @@ public class ArcObject {
         this.color.store(buffer);
         buffer.flip();
         program.active();
-        GL20.glUniform4(program.location[0], buffer);
-        GL20.glUniform1f(program.location[1], this.arcValue);
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GLWrapper.Shader.glUniform4(program.location[0], buffer);
+        GLWrapper.Shader.glUniform1f(program.location[1], this.arcValue);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glVertex2f(-radiusWidth, -radiusHeight);
         GL11.glVertex2f(radiusWidth, -radiusHeight);
         GL11.glVertex2f(-radiusHeight, radiusHeight);

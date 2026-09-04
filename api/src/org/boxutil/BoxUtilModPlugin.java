@@ -3,11 +3,12 @@ package org.boxutil;
 import com.fs.starfarer.Version;
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
-import org.boxutil.backends.core.BUtil_CampaignEFS;
-import org.boxutil.backends.core.BUtil_ThreadResource;
+import org.boxutil.backends.core.gameloop.BUtil_CampaignEFS;
+import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.config.BoxConfigGUI;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.*;
 
 /**
@@ -17,7 +18,7 @@ import org.boxutil.manager.*;
  * <blockquote>For how to use <strong>BoxUtil</strong> as lib: <a href="https://www.fossic.org/thread-15746-1-1.html">This Website</a></blockquote>
  * @since 2024.08.18
  * @author ShioZakana
- * @version 2026.06.32 - 1.5.6
+ * @version 2026.09.31 - 1.6.0
  */
 public final class BoxUtilModPlugin extends BaseModPlugin {
     private static final String _ADAPTATION_VERSION = "0.98";
@@ -28,8 +29,10 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
      */
     public synchronized static void initPre() {
         if (isPreInitialized) return;
+        isPreInitialized = true;
         final var modSpec = Global.getSettings().getModManager().getModSpec(BoxDatabase.MOD_ID);
         Global.getLogger(BoxUtilModPlugin.class).info("BoxUtil' version '" + modSpec.getVersionInfo().getString() + "' pre-initializing...");
+        GLWrapper.init();
         BoxDatabase.initGLState();
         BoxConfigs.init();
         ShaderCore.initScreenSize();
@@ -37,7 +40,6 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
         EntityShadingDataManager.loadTextureData(BoxDatabase.BUILTIN_TEXTURE_CSV);
         EntityShadingDataManager.loadIlluminantData(BoxDatabase.BUILTIN_ILLUMINANT_CSV);
         StaticTrailManager.loadTrailData(BoxDatabase.BUILTIN_STATIC_TRAIL_CSV);
-        isPreInitialized = true;
     }
 
     /**
@@ -76,8 +78,8 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
 
     public void beforeGameSave() {
         if (Global.getSector() != null) Global.getSector().getListenerManager().removeListenerOfClass(BUtil_CampaignEFS.class);
-        BUtil_ThreadResource.Rendering.Campaign.cleanupQueue();
-        BUtil_ThreadResource.Rendering.Campaign.cleanupCustomData();
+        BUtil_ResourceStorage.campaignLayered().cleanupAllQueue();
+        BUtil_ResourceStorage.campaignLayered().cleanupCustomData();
     }
 
     public void afterGameSave() {

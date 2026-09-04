@@ -2,6 +2,7 @@ package org.boxutil.units.standard.misc;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.graphics.SpriteAPI;
+import org.boxutil.define.GLWrapper;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
@@ -57,9 +58,9 @@ public class UIBorderObject {
         if (translucentBackground) this._sprites[_S_CENTER] = Global.getSettings().getSprite("ui", "BUtil_panel00_center");
         else this._sprites[_S_CENTER] = Global.getSettings().getSprite("graphics/ui/bgs/panel00_center.png");
         if (this._sprites[_S_BL].getTextureId() != 0 && this._sprites[_S_CENTER].getTextureId() != 0) {
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this._sprites[_S_BL].getTextureId());
-            this._sizeStyle = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this._sprites[_S_BL].getTextureId());
+            this._sizeStyle = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
             this.isValid = this._sizeStyle > 0;
         } else {
             this._sizeStyle = 0;
@@ -77,9 +78,9 @@ public class UIBorderObject {
             this._sprites[i] = sprites[i];
         }
         if (this._sprites[_S_BL].getTextureId() != 0 && this._sprites[_S_CENTER].getTextureId() != 0) {
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this._sprites[_S_BL].getTextureId());
-            this._sizeStyle = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this._sprites[_S_BL].getTextureId());
+            this._sizeStyle = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
             this.isValid = this._sizeStyle > 0;
         } else {
             this._sizeStyle = 0;
@@ -95,9 +96,9 @@ public class UIBorderObject {
         if (!this.isSizeValid() || !this.isValid) return;
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0.0f);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Texture.GL_TEXTURE_2D);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw();
         GL11.glPopMatrix();
     }
@@ -109,9 +110,9 @@ public class UIBorderObject {
         if (!this.isSizeValid() || !this.isValid) return;
         GL11.glPushMatrix();
         GL11.glTranslatef(x - this.size.x, y - this.size.y, 0.0f);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Texture.GL_TEXTURE_2D);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw();
         GL11.glPopMatrix();
     }
@@ -123,7 +124,7 @@ public class UIBorderObject {
         GL11.glColor4f(this.color.x, color.y, this.color.z, this.color.w);
 
         this._sprites[_S_BL].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(0.0f, 0.0f);
         GL11.glTexCoord2f(0.0f, 1.0f);
@@ -135,7 +136,7 @@ public class UIBorderObject {
         GL11.glEnd();
 
         this._sprites[_S_B].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(this._sizeStyle, 0.0f);
         GL11.glTexCoord2f(0.0f, 1.0f);
@@ -147,7 +148,7 @@ public class UIBorderObject {
         GL11.glEnd();
 
         this._sprites[_S_BR].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(verticesValue[0], 0.0f);
         GL11.glTexCoord2f(0.0f, 1.0f);
@@ -159,7 +160,7 @@ public class UIBorderObject {
         GL11.glEnd();
 
         this._sprites[_S_L].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(0.0f, this._sizeStyle);
         GL11.glTexCoord2f(0.0f, uvScroll[1]);
@@ -171,7 +172,7 @@ public class UIBorderObject {
         GL11.glEnd();
 
         this._sprites[_S_R].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(verticesValue[0], this._sizeStyle);
         GL11.glTexCoord2f(0.0f, uvScroll[1]);
@@ -183,7 +184,7 @@ public class UIBorderObject {
         GL11.glEnd();
 
         this._sprites[_S_TL].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(0.0f, verticesValue[1]);
         GL11.glTexCoord2f(0.0f, 1.0f);
@@ -195,7 +196,7 @@ public class UIBorderObject {
         GL11.glEnd();
 
         this._sprites[_S_T].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(this._sizeStyle, verticesValue[1]);
         GL11.glTexCoord2f(0.0f, 1.0f);
@@ -207,7 +208,7 @@ public class UIBorderObject {
         GL11.glEnd();
 
         this._sprites[_S_TR].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(verticesValue[0], verticesValue[1]);
         GL11.glTexCoord2f(0.0f, 1.0f);
@@ -222,7 +223,7 @@ public class UIBorderObject {
         final float halfCutB = verticesValue[0] + this.expend;
         final float halfCutC = verticesValue[1] + this.expend;
         this._sprites[_S_CENTER].bindTexture();
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(0.0f, 0.0f);
         GL11.glVertex2f(halfCutA, halfCutA);
         GL11.glTexCoord2f(0.0f, uvScroll[1]);

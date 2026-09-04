@@ -1,6 +1,8 @@
 package org.boxutil.units.standard.entity;
 
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.LayeredEntityType;
+import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.CurveUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
@@ -13,7 +15,6 @@ import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.units.standard.attribute.NodeData;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
@@ -58,40 +59,40 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         final int type;
         final int typeSize;
         if (this.isHalfFloatData()) {
-            type = GL30.GL_HALF_FLOAT;
+            type = GLWrapper.DataType.GL_HALF_FLOAT;
             typeSize = BoxDatabase.HALF_FLOAT_SIZE;
         } else {
-            type = GL11.GL_FLOAT;
+            type = GLWrapper.DataType.GL_FLOAT;
             typeSize = BoxDatabase.FLOAT_SIZE;
         }
         final int index5Offset = 7 * typeSize;
-        GL30.glBindVertexArray(this.getSegmentID());
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getNodesVBO());
-        GL20.glVertexAttribPointer(0, 2, type, false, size, 0); // loc
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(1, 2, type, false, size, 2 * typeSize); // tangent
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(2, 1, type, false, size, 4 * typeSize); // width
-        GL20.glEnableVertexAttribArray(2);
-        GL20.glVertexAttribPointer(3, 1, type, false, size, 5 * typeSize); // mixFactor
-        GL20.glEnableVertexAttribArray(3);
-        GL20.glVertexAttribPointer(4, 1, type, false, size, 6 * typeSize); // nodeDistance
-        GL20.glEnableVertexAttribArray(4);
-        GL20.glVertexAttribPointer(5, 4, GL11.GL_UNSIGNED_BYTE, true, size, index5Offset); // color
-        GL20.glEnableVertexAttribArray(5);
-        GL20.glVertexAttribPointer(6, 4, GL11.GL_UNSIGNED_BYTE, true, size, index5Offset + BoxDatabase.FLOAT_SIZE); // emissiveColor
-        GL20.glEnableVertexAttribArray(6);
-        GL30.glBindVertexArray(0);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.VAO.glBindVertexArray(this.getSegmentID());
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+        GLWrapper.VAO.glVertexAttribPointer(0, 2, type, false, size, 0); // loc
+        GLWrapper.VAO.glEnableVertexAttribArray(0);
+        GLWrapper.VAO.glVertexAttribPointer(1, 2, type, false, size, 2 * typeSize); // tangent
+        GLWrapper.VAO.glEnableVertexAttribArray(1);
+        GLWrapper.VAO.glVertexAttribPointer(2, 1, type, false, size, 4 * typeSize); // width
+        GLWrapper.VAO.glEnableVertexAttribArray(2);
+        GLWrapper.VAO.glVertexAttribPointer(3, 1, type, false, size, 5 * typeSize); // mixFactor
+        GLWrapper.VAO.glEnableVertexAttribArray(3);
+        GLWrapper.VAO.glVertexAttribPointer(4, 1, type, false, size, 6 * typeSize); // nodeDistance
+        GLWrapper.VAO.glEnableVertexAttribArray(4);
+        GLWrapper.VAO.glVertexAttribPointer(5, 4, GLWrapper.DataType.GL_UNSIGNED_BYTE, true, size, index5Offset); // color
+        GLWrapper.VAO.glEnableVertexAttribArray(5);
+        GLWrapper.VAO.glVertexAttribPointer(6, 4, GLWrapper.DataType.GL_UNSIGNED_BYTE, true, size, index5Offset + BoxDatabase.FLOAT_SIZE); // emissiveColor
+        GLWrapper.VAO.glEnableVertexAttribArray(6);
+        GLWrapper.VAO.glBindVertexArray(0);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
     }
 
     /**
      * @param useHalfFloat <code>true</code> that the data buffer will use <code>half-float</code>, else use <code>float</code>.
      */
     public SegmentEntity(boolean useHalfFloat) {
-        this._segmentID = BoxConfigs.isVAOSupported() ? GL30.glGenVertexArrays() : 0;
-        this._nodesVBO = BoxConfigs.isVAOSupported() ? GL15.glGenBuffers() : 0;
-        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getSegmentID() > 0 && this.getNodesVBO() > 0;
+        this._segmentID = GLWrapper.VAO.valid() ? GLWrapper.VAO.glGenVertexArrays() : 0;
+        this._nodesVBO = GLWrapper.Buffer.VBO.valid() ? GLWrapper.Buffer.glGenBuffers() : 0;
+        this._isValid = BoxDatabase.getGLState().GL_GL43 && ShaderCore.getSegmentProgram() != null && ShaderCore.getSegmentProgram().isValid() && BoxConfigs.isBackgroundThreadGLValid() && this.getSegmentID() > 0 && this.getNodesVBO() > 0;
         this._useHalfFloat = useHalfFloat;
         this._currNodeSize = this.isHalfFloatData() ? _NODE_SIZE_F16 : _NODE_SIZE_F32;
         this._currNodeBitOffset = (byte) (this.isHalfFloatData() ? 1 : 2);
@@ -131,19 +132,20 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         if (this._distance != null) this._distance.clear();
         this._distance = null;
         if (this.getSegmentID() > 0) {
-            GL30.glBindVertexArray(0);
-            GL30.glDeleteVertexArrays(this.getSegmentID());
+            GLWrapper.VAO.glBindVertexArray(0);
+            GLWrapper.VAO.glDeleteVertexArrays(this.getSegmentID());
         }
         if (this.getNodesVBO() > 0) {
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-            GL15.glDeleteBuffers(this.getNodesVBO());
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            GLWrapper.Buffer.glDeleteBuffers(this.getNodesVBO());
         }
     }
 
     public void glDraw() {
-        if (!this.isHaveValidNodeCount()) return;
-        GL30.glBindVertexArray(this.getSegmentID());
-        GL11.glDrawArrays(GL40.GL_PATCHES, 0, this.shouldRenderingCount);
+        if (this.isHaveValidNodeCount() && this.isValid()) {
+            GLWrapper.VAO.glBindVertexArray(this.getSegmentID());
+            GLWrapper.Drawcall.glDrawArrays(GLWrapper.Shader.Tess.GL_PATCHES, 0, this.shouldRenderingCount);
+        }
     }
 
     protected void _resetExc() {
@@ -211,16 +213,16 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         final long bufferSize = (long) refreshCount * this._currNodeSize;
         final long bufferIndex = (long) refreshIndex * this._currNodeSize;
 
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getNodesVBO());
-        if (newBuffer) GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bufferSize, GL15.GL_DYNAMIC_DRAW);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+        if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
         final boolean useMapping = this.isMappingModeSubmitData();
         ByteBuffer buffer;
         if (useMapping) {
-            final int _access = this.isSynchronousSubmit() ? GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT : GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
-            buffer = GL30.glMapBufferRange(GL15.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
+            final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+            buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
             if (buffer == null || buffer.capacity() < 1) {
-                GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
                 this.shouldRenderingCount = 0;
                 this.sync_lock.unlock();
                 return BoxEnum.STATE_FAILED_OTHER;
@@ -280,9 +282,9 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         buffer.position(0);
         buffer.limit(buffer.capacity());
 
-        if (useMapping) GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
-        else GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, bufferIndex, buffer);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+        else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, buffer);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         if (newBuffer) this._lastNodeLength = nodeSize;
         this.shouldRenderingCount = refreshIndex + refreshCount;
         this.sync_lock.unlock();
@@ -310,9 +312,9 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         }
 
         final long bufferSize = (long) realSize * this._currNodeSize;
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getNodesVBO());
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bufferSize, GL15.GL_DYNAMIC_DRAW);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+        GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         this._lastNodeLength = this.shouldRenderingCount = realSize;
         this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
@@ -474,7 +476,7 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
     }
 
     /**
-     * Create a line-strip as {@link GL11#GL_LINE_STRIP}, and submit nodeList.<p>
+     * Create a line-strip as <code>GL_LINE_STRIP</code>, and submit nodeList.<p>
      * Flat tangent, just a line-strip.
      *
      * @param points size must be larger than 2.

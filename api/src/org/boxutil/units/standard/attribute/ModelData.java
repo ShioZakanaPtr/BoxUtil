@@ -1,28 +1,29 @@
 package org.boxutil.units.standard.attribute;
 
-import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.backends.struct.BUtil_TriIndex;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.util.CommonUtil;
 import org.boxutil.util.MeshUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.List;
 
 public class ModelData {
+    protected final boolean _isImmutableBuffer;
+    protected boolean isValid = false;
+    protected final int _dataType;
     protected final String _rawID;
+    protected final IntBuffer multiBind = BufferUtils.createIntBuffer(1).clear();
     protected final int[] _objectData = new int[3];
     // TBN, vn, vt
     protected final int[] _verticesDataTBO = new int[2]; // tbo, tex
-    protected final int _dataType;
     protected final int[] _textures = new int[5];
-    protected final boolean _isImmutableBuffer;
-    protected boolean isValid = false;
 
     public ModelData(String rawID, ModelData entity, int diffuse, int normal, int complex, int emissive, int tangent) {
         this._rawID = rawID;
@@ -38,7 +39,7 @@ public class ModelData {
         this._textures[3] = emissive;
         this._textures[4] = tangent;
         this._isImmutableBuffer = entity._isImmutableBuffer;
-        if (this._objectData[0] > 0 && this._objectData[1] > 0 && this._objectData[2] > 0) isValid = true;
+        this.isValid = this._objectData[0] > 0 && this._objectData[1] > 0 && this._objectData[2] > 0;
     }
 
     public ModelData(String rawID, List<Vector3f> vertex, List<Vector3f> normal, List<Vector2f> uv, List<BUtil_TriIndex> patchIndex, int diffuse, int normalMap, int complex, int emissive, int tangent, int type) {
@@ -52,12 +53,12 @@ public class ModelData {
         this._textures[3] = emissive;
         this._textures[4] = tangent;
 
-        this._isImmutableBuffer = BoxDatabase.getGLState() != null && BoxDatabase.getGLState().GL_GL44;
+        this._isImmutableBuffer = GLWrapper.Buffer.valid_BufferStorage();
 
-        if (!BoxConfigs.isTBOSupported()) return;
+        if (!GLWrapper.DataType.valid_FP16() || !GLWrapper.Texture.valid_TexFloat() || !GLWrapper.Buffer.TBO.valid() || !GLWrapper.VAO.valid() || !GLWrapper.Buffer.VBO.valid()) return;
 
-        final boolean normalize = type == GL11.GL_BYTE;
-        final int s = type == GL11.GL_BYTE ? BoxDatabase.BYTE_SIZE : (type == GL30.GL_HALF_FLOAT ? BoxDatabase.HALF_FLOAT_SIZE : BoxDatabase.FLOAT_SIZE);
+        final boolean normalize = type == GLWrapper.DataType.GL_BYTE;
+        final int s = type == GLWrapper.DataType.GL_BYTE ? BoxDatabase.BYTE_SIZE : (type == GLWrapper.DataType.GL_HALF_FLOAT ? BoxDatabase.HALF_FLOAT_SIZE : BoxDatabase.FLOAT_SIZE);
         final int patchVertexSize = 8 * s;
 
         ByteBuffer vertexBuffer = BufferUtils.createByteBuffer(patchIndex.size() * 24 * s);
@@ -82,7 +83,7 @@ public class ModelData {
                 patchNormal = normal.get(patchNormalIndex);
                 patchUV[j] = uv.get(patchUVIndex);
 
-                if (type == GL11.GL_BYTE) {
+                if (type == GLWrapper.DataType.GL_BYTE) {
                     vertexBuffer.put(vertexBufferIndex, CommonUtil.normalizedFloatToByte(patchVertex[j].getX()));
                     vertexBuffer.put(vertexBufferIndex + 1, CommonUtil.normalizedFloatToByte(patchVertex[j].getY()));
                     vertexBuffer.put(vertexBufferIndex + 2, CommonUtil.normalizedFloatToByte(patchVertex[j].getZ()));
@@ -93,7 +94,7 @@ public class ModelData {
 
                     vertexBuffer.put(vertexBufferIndex + 6, CommonUtil.normalizedFloatToByte(patchUV[j].getX()));
                     vertexBuffer.put(vertexBufferIndex + 7, CommonUtil.normalizedFloatToByte(patchUV[j].getY()));
-                } else if (type == GL30.GL_HALF_FLOAT) {
+                } else if (type == GLWrapper.DataType.GL_HALF_FLOAT) {
                     vertexBuffer.asShortBuffer().put(vertexBufferIndex, CommonUtil.float16ToShort(patchVertex[j].getX()));
                     vertexBuffer.asShortBuffer().put(vertexBufferIndex + 1, CommonUtil.float16ToShort(patchVertex[j].getY()));
                     vertexBuffer.asShortBuffer().put(vertexBufferIndex + 2, CommonUtil.float16ToShort(patchVertex[j].getZ()));
@@ -130,40 +131,39 @@ public class ModelData {
             }
         }
 
-        vertexBuffer.position(0);
-        vertexBuffer.limit(vertexBuffer.capacity());
+        vertexBuffer.clear();
+        tbnBuffer_A.clear();
 
-        tbnBuffer_A.position(0);
-        tbnBuffer_A.limit(tbnBuffer_A.capacity());
+        this._verticesDataTBO[0] = GLWrapper.Buffer.glGenBuffers();
+        this._verticesDataTBO[1] = GLWrapper.Texture.glGenTextures();
+        this.multiBind.put(0, this._verticesDataTBO[1]);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this._verticesDataTBO[0]);
+        if (this._isImmutableBuffer) GLWrapper.Buffer.glBufferStorage(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, tbnBuffer_A, 0);
+        else GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, tbnBuffer_A, GLWrapper.Buffer.GL_STATIC_DRAW);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this._verticesDataTBO[1]);
+        GLWrapper.Buffer.TBO.glTexBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, GLWrapper.Texture.GL_RGB32F, this._verticesDataTBO[0]);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
 
-        this._verticesDataTBO[0] = GL15.glGenBuffers();
-        this._verticesDataTBO[1] = GL11.glGenTextures();
-        GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, this._verticesDataTBO[0]);
-        if (this._isImmutableBuffer) GL44.glBufferStorage(GL31.GL_TEXTURE_BUFFER, tbnBuffer_A, 0);
-        else GL15.glBufferData(GL31.GL_TEXTURE_BUFFER, tbnBuffer_A, GL15.GL_STATIC_DRAW);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, this._verticesDataTBO[1]);
-        GL31.glTexBuffer(GL31.GL_TEXTURE_BUFFER, GL30.GL_RGB32F, this._verticesDataTBO[0]);
-        GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
+        this._objectData[0] = GLWrapper.VAO.glGenVertexArrays();
+        GLWrapper.VAO.glBindVertexArray(this._objectData[0]);
 
-        this._objectData[0] = GL30.glGenVertexArrays();
-        GL30.glBindVertexArray(this._objectData[0]);
+        this._objectData[1] = GLWrapper.Buffer.glGenBuffers();
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this._objectData[1]);
+        if (this._isImmutableBuffer) GLWrapper.Buffer.glBufferStorage(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, vertexBuffer, 0);
+        else GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, vertexBuffer, GLWrapper.Buffer.GL_STATIC_DRAW);
 
-        this._objectData[1] = GL15.glGenBuffers();
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this._objectData[1]);
-        if (this._isImmutableBuffer)GL44.glBufferStorage(GL15.GL_ARRAY_BUFFER, vertexBuffer, 0);
-        else GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vertexBuffer, GL15.GL_STATIC_DRAW);
+        GLWrapper.VAO.glVertexAttribPointer(0, 3, type, normalize, patchVertexSize, 0); // v
+        GLWrapper.VAO.glEnableVertexAttribArray(0);
+        GLWrapper.VAO.glVertexAttribPointer(1, 3, type, normalize, patchVertexSize, s * 3); // vn
+        GLWrapper.VAO.glEnableVertexAttribArray(1);
+        GLWrapper.VAO.glVertexAttribPointer(2, 2, type, normalize, patchVertexSize, s * 6); // vt
+        GLWrapper.VAO.glEnableVertexAttribArray(2);
 
-        GL20.glVertexAttribPointer(0, 3, type, normalize, patchVertexSize, 0); // v
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(1, 3, type, normalize, patchVertexSize, s * 3); // vn
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(2, 2, type, normalize, patchVertexSize, s * 6); // vt
-        GL20.glEnableVertexAttribArray(2);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-        GL30.glBindVertexArray(0);
+        GLWrapper.VAO.glBindVertexArray(0);
+        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
 
-        if (this._objectData[0] > 0 && this._objectData[1] > 0 && this._objectData[2] > 0) isValid = true;
+        this.isValid = this._objectData[0] > 0 && this._objectData[1] > 0 && this._objectData[2] > 0;
     }
 
     public String getRawID() {
@@ -181,26 +181,30 @@ public class ModelData {
     public void destroy() {
         this.isValid = false;
         if (this.getVAO() > 0) {
-            GL30.glBindVertexArray(0);
-            GL30.glDeleteVertexArrays(this.getVAO());
+            GLWrapper.VAO.glBindVertexArray(0);
+            GLWrapper.VAO.glDeleteVertexArrays(this.getVAO());
         }
         if (this.getVBO() > 0) {
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-            GL15.glDeleteBuffers(this.getVBO());
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            GLWrapper.Buffer.glDeleteBuffers(this.getVBO());
         }
         if (this.getTBNDataTBOTex() > 0) {
-            GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
-            GL11.glDeleteTextures(this.getTBNDataTBOTex());
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            GLWrapper.Texture.glDeleteTextures(this.getTBNDataTBOTex());
         }
         if (this.getTBNDataTBO() > 0) {
-            GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
-            GL15.glDeleteBuffers(this.getTBNDataTBO());
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            GLWrapper.Buffer.glDeleteBuffers(this.getTBNDataTBO());
         }
     }
 
     public void putTBNShaderData() {
-        GL13.glActiveTexture(GL13.GL_TEXTURE8);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, this.getTBNDataTBOTex());
+        if (GLWrapper.Texture.valid_MultiBind()) {
+            GLWrapper.Texture.glBindTextures(8, 1, this.multiBind);
+        } else if (GLWrapper.Drawcall.MultiTex.valid()) {
+            GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE8);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getTBNDataTBOTex());
+        }
     }
 
     public int getDataType() {

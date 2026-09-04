@@ -19,6 +19,6 @@
 		"tags":["not_random_mission_target"],
 		"layers":[ABOVE],
 		"interactable":false,
-		"pluginClass":"org.boxutil.backends.core.BUtil_CampaignRenderingPlugin"
+		"pluginClass":"org.boxutil.backends.core.gameloop.BUtil_CampaignRenderingPlugin"
 	}
 }

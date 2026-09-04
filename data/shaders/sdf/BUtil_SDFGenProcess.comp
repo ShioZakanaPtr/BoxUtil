@@ -1,14 +1,11 @@
 #version 430
 
-precision OVERWRITE_PRECISION float;
-precision highp int;
-
 #define MAX_DISTANCE 268435456.0
 
 layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
 
 layout(binding = 0) uniform isampler2D u_coordMapIn;
-layout(binding = 0, rgba16i) uniform iimage2D u_coordMapOut;
+layout(binding = 0, rgba16i) restrict writeonly uniform iimage2D u_coordMapOut;
 
 uniform ivec2 u_size;
 uniform int u_step;

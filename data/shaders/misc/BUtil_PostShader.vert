@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 420
 
 layout (location = 0) in vec2 a_vertex;
 

@@ -10,7 +10,6 @@ import org.boxutil.base.api.shaderpacks.IlluminantInstanceDataLayoutAPI;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
-import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.units.standard.light.*;
 import de.unkrig.commons.nullanalysis.Nullable;
 import org.json.JSONException;
@@ -75,7 +74,7 @@ public abstract class BaseShaderPacksContext {
      * @return byte[] result = {state, maxLevel};<p>state returns {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when implements code(compute shader etc.) not supported.
      */
     public byte[] applyTexturedAreaLightPreFiltering(int src, int preFiltering, boolean shouldAllocate) {
-        return BUtil_GLImpl.StandardShaderPacks.applyTexturedAreaLightPreFiltering(src, preFiltering, shouldAllocate);
+        return StandardShaderpacksPass.applyTexturedAreaLightPreFiltering(src, preFiltering, shouldAllocate);
     }
 
     /**
@@ -139,14 +138,14 @@ public abstract class BaseShaderPacksContext {
     public void applyAfterIlluminationPass(ViewportAPI viewport, boolean isCampaign, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap, int auxFBO, int auxEmissive) {}
 
     public void applyAAPass(ViewportAPI viewport, boolean isCampaign, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap) {
-        BUtil_GLImpl.StandardShaderPacks.applyFXAA(true, false, false, colorMap, worldDataMap);
+        StandardShaderpacksPass.applyFXAA(true, false, false, colorMap, worldDataMap);
     }
 
     /**
      * @param isMultiPassBloom if ture, draw to black screen.
      */
     public void applyBloomPass(ViewportAPI viewport, boolean isCampaign, boolean isMultiPassBloom, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap, int auxFBO, int auxEmissive) {
-        BUtil_GLImpl.StandardShaderPacks.applyBloom(isMultiPassBloom, emissiveMap, false, 0);
+        StandardShaderpacksPass.applyBloom(isMultiPassBloom, emissiveMap, false, 0);
     }
 
     public void applyPostEffectPass(ViewportAPI viewport, boolean isCampaign) {}

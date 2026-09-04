@@ -1,7 +1,7 @@
 package org.boxutil.base.api.resource;
 
 /**
- * <strong>Running on another thread, not the vanilla thread.</strong>
+ * <strong>Always running on vanilla thread.</strong>
  * @see org.boxutil.manager.CombatRenderingManager#addCleanupPlugin(TemporaryCleanupPlugin)
  * @see org.boxutil.manager.CampaignRenderingManager#addCleanupPlugin(TemporaryCleanupPlugin)
  */

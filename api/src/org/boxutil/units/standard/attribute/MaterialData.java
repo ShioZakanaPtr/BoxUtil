@@ -2,28 +2,36 @@ package org.boxutil.units.standard.attribute;
 
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import org.boxutil.define.BoxEnum;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.util.CommonUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
 import org.boxutil.define.BoxDatabase;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL44;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.awt.*;
+import java.nio.IntBuffer;
 
 // The material is only 2D-Texture supported.
 public class MaterialData {
     protected byte cullFace = BoxEnum.MATERIAL_CULL_BACK;
     // diffuse, normal, complex, emissive, tangent
-    protected final SpriteAPI[] textures = new SpriteAPI[]{BoxDatabase.BUtil_ONE, BoxDatabase.BUtil_Z, BoxDatabase.BUtil_COMPLEX_DEF, BoxDatabase.BUtil_NONE, BoxDatabase.BUtil_X};
-    protected final int[] glTex = new int[]{this.textures[0].getTextureId(), this.textures[1].getTextureId(), this.textures[2].getTextureId(), this.textures[3].getTextureId(), this.textures[4].getTextureId()};
+    protected final SpriteAPI[] textures = new SpriteAPI[5];
+    protected final int[] glTex = new int[5];
     // vec4(color), vec4(emissive), vec4(alphaMix, colorMix, glowPower, anisotropic)
-    protected final float[] state = new float[]{BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ONE, 0.0f, BoxEnum.ONE, 0.0f};
-    protected final boolean[] stateB = new boolean[]{true, false}; // additionEmissive, ignoreIllumination
+    protected final float[] state = new float[12];
+    protected final boolean[] stateB = new boolean[2]; // additionEmissive, ignoreIllumination
+    protected final IntBuffer bindTextureBuf = GLWrapper.Texture.valid_MultiBind() ? BufferUtils.createIntBuffer(5).clear() : null;
 
-    public MaterialData() {}
+    public MaterialData() {
+        this.reset();
+        this.clearTextures();
+    }
 
     public MaterialData(MaterialData material) {
         this.cullFace = material.cullFace;
@@ -31,6 +39,10 @@ public class MaterialData {
         System.arraycopy(material.glTex, 0, this.glTex, 0, this.glTex.length);
         System.arraycopy(material.state, 0, this.state, 0, this.state.length);
         System.arraycopy(material.stateB, 0, this.stateB, 0, this.stateB.length);
+        if (this.bindTextureBuf != null && material.bindTextureBuf != null) {
+            this.bindTextureBuf.put(material.bindTextureBuf.clear()).clear();
+            material.bindTextureBuf.clear();
+        }
     }
 
     public void clearTextures() {
@@ -44,6 +56,13 @@ public class MaterialData {
         this.glTex[3] = this.textures[3].getTextureId();
         this.textures[4] = BoxDatabase.BUtil_X;
         this.glTex[4] = this.textures[4].getTextureId();
+        if (GLWrapper.Texture.valid_MultiBind()) {
+            this.bindTextureBuf.put(0, this.glTex[0]);
+            this.bindTextureBuf.put(1, this.glTex[1]);
+            this.bindTextureBuf.put(2, this.glTex[2]);
+            this.bindTextureBuf.put(3, this.glTex[3]);
+            this.bindTextureBuf.put(4, this.glTex[4]);
+        }
     }
 
     public void syncTextures(ModelData entity) {
@@ -52,6 +71,13 @@ public class MaterialData {
         this.glTex[2] = entity.getComplexID();
         this.glTex[3] = entity.getEmissiveID();
         this.glTex[4] = entity.getTangentID();
+        if (GLWrapper.Texture.valid_MultiBind()) {
+            this.bindTextureBuf.put(0, this.glTex[0]);
+            this.bindTextureBuf.put(1, this.glTex[1]);
+            this.bindTextureBuf.put(2, this.glTex[2]);
+            this.bindTextureBuf.put(3, this.glTex[3]);
+            this.bindTextureBuf.put(4, this.glTex[4]);
+        }
     }
 
     /**
@@ -71,19 +97,24 @@ public class MaterialData {
         this.state[9] = 0.0f;
         this.state[10] = BoxEnum.ONE;
         this.state[11] = 0.0f;
+        this.stateB[0] = true;
+        this.stateB[1] = false;
     }
 
     public void putShaderTexture() {
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.glTex[0]);
-        GL13.glActiveTexture(GL13.GL_TEXTURE1);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.glTex[1]);
-        GL13.glActiveTexture(GL13.GL_TEXTURE2);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.glTex[2]);
-        GL13.glActiveTexture(GL13.GL_TEXTURE3);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.glTex[3]);
-        GL13.glActiveTexture(GL13.GL_TEXTURE4);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.glTex[4]);
+        if (GLWrapper.Texture.valid_MultiBind()) GLWrapper.Texture.glBindTextures(0, 5, this.bindTextureBuf);
+        else if (GLWrapper.Drawcall.MultiTex.valid()) {
+            GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.glTex[0]);
+            GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE1);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.glTex[1]);
+            GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE2);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.glTex[2]);
+            GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE3);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.glTex[3]);
+            GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE4);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.glTex[4]);
+        }
     }
 
     /**
@@ -95,6 +126,24 @@ public class MaterialData {
 
     public int[] getTexturesID() {
         return this.glTex;
+    }
+
+    protected void writeBindTexture(int target, SpriteAPI sprite, SpriteAPI defaultSprite) {
+        if (sprite == null) {
+            this.textures[target] = defaultSprite;
+            this.glTex[target] = this.textures[target].getTextureId();
+        } else {
+            this.textures[0] = sprite;
+            this.glTex[target] = sprite.getTextureId();
+        }
+    }
+
+    protected void writeBindTextureDirect(int target, int texture) {
+        this.glTex[target] = Math.max(texture, 0);
+    }
+
+    protected void writeBindTextureBuf(int target) {
+        if (GLWrapper.Texture.valid_MultiBind()) this.bindTextureBuf.put(target, this.glTex[target]);
     }
 
     /**
@@ -112,17 +161,13 @@ public class MaterialData {
      * Set null for default.
      */
     public void setDiffuse(@Nullable SpriteAPI diffuse) {
-        if (diffuse == null) {
-            this.textures[0] = BoxDatabase.BUtil_ONE;
-            this.glTex[0] = this.textures[0].getTextureId();
-        } else {
-            this.textures[0] = diffuse;
-            this.glTex[0] = diffuse.getTextureId();
-        }
+        this.writeBindTexture(0, diffuse, BoxDatabase.BUtil_ONE);
+        this.writeBindTextureBuf(0);
     }
 
     public void setDiffuse(int diffuse) {
-        this.glTex[0] = Math.max(diffuse, 0);
+        this.writeBindTextureDirect(0, diffuse);
+        this.writeBindTextureBuf(0);
     }
 
     /**
@@ -140,17 +185,13 @@ public class MaterialData {
      * Set null for default.
      */
     public void setNormal(@Nullable SpriteAPI normal) {
-        if (normal == null) {
-            this.textures[1] = BoxDatabase.BUtil_Z;
-            this.glTex[1] = this.textures[1].getTextureId();
-        } else {
-            this.textures[1] = normal;
-            this.glTex[1] = normal.getTextureId();
-        }
+        this.writeBindTexture(1, normal, BoxDatabase.BUtil_Z);
+        this.writeBindTextureBuf(1);
     }
 
     public void setNormal(int normal) {
-        this.glTex[1] = Math.max(normal, 0);
+        this.writeBindTextureDirect(1, normal);
+        this.writeBindTextureBuf(1);
     }
 
     /**
@@ -178,13 +219,8 @@ public class MaterialData {
      * </pre>
      */
     public void setComplex(@Nullable SpriteAPI complex) {
-        if (complex == null) {
-            this.textures[2] = BoxDatabase.BUtil_COMPLEX_DEF;
-            this.glTex[2] = this.textures[2].getTextureId();
-        } else {
-            this.textures[2] = complex;
-            this.glTex[2] = complex.getTextureId();
-        }
+        this.writeBindTexture(2, complex, BoxDatabase.BUtil_COMPLEX_DEF);
+        this.writeBindTextureBuf(2);
     }
 
     /**
@@ -201,7 +237,8 @@ public class MaterialData {
      * </pre>
      */
     public void setComplex(int complex) {
-        this.glTex[2] = Math.max(complex, 0);
+        this.writeBindTextureDirect(2, complex);
+        this.writeBindTextureBuf(2);
     }
 
     /**
@@ -219,17 +256,13 @@ public class MaterialData {
      * Set null for default.
      */
     public void setEmissive(@Nullable SpriteAPI emissive) {
-        if (emissive == null) {
-            this.textures[3] = BoxDatabase.BUtil_NONE;
-            this.glTex[3] = this.textures[3].getTextureId();
-        } else {
-            this.textures[3] = emissive;
-            this.glTex[3] = emissive.getTextureId();
-        }
+        this.writeBindTexture(3, emissive, BoxDatabase.BUtil_NONE);
+        this.writeBindTextureBuf(3);
     }
 
     public void setEmissive(int emissive) {
-        this.glTex[3] = Math.max(emissive, 0);
+        this.writeBindTextureDirect(3, emissive);
+        this.writeBindTextureBuf(3);
     }
 
     /**
@@ -247,17 +280,13 @@ public class MaterialData {
      * Set null for default.
      */
     public void setTangent(@Nullable SpriteAPI tangent) {
-        if (tangent == null) {
-            this.textures[4] = BoxDatabase.BUtil_X;
-            this.glTex[4] = this.textures[4].getTextureId();
-        } else {
-            this.textures[4] = tangent;
-            this.glTex[4] = tangent.getTextureId();
-        }
+        this.writeBindTexture(4, tangent, BoxDatabase.BUtil_X);
+        this.writeBindTextureBuf(4);
     }
 
     public void setTangent(int tangent) {
-        this.glTex[4] = Math.max(tangent, 0);
+        this.writeBindTextureDirect(4, tangent);
+        this.writeBindTextureBuf(4);
     }
 
     public byte getCullFace() {

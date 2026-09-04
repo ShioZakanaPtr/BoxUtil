@@ -4,6 +4,7 @@ import com.fs.starfarer.api.graphics.SpriteAPI;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -18,7 +19,7 @@ import java.nio.FloatBuffer;
 
 /**
  * Easy way for rendering texture in arc with thinness anywhere.<p>
- * Required <code>OpenGL 2.0</code> supported.
+ * Required {@link GLWrapper.Shader#valid()}.
  */
 public class TexArcObject {
     // ringHardness, innerHardness, innerFactor, arc
@@ -35,8 +36,8 @@ public class TexArcObject {
         GL11.glPushMatrix();
         GL11.glTranslatef(location.x + radiusWidth, location.y + radiusHeight, 0.0f);
         if (facing != 0.0f) GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw(radiusWidth, radiusHeight);
         GL11.glPopMatrix();
     }
@@ -48,8 +49,8 @@ public class TexArcObject {
         GL11.glPushMatrix();
         GL11.glTranslatef(location.x, location.y, 0.0f);
         GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw(radiusWidth, radiusHeight);
         GL11.glPopMatrix();
     }
@@ -63,10 +64,10 @@ public class TexArcObject {
         this.color.store(buffer);
         buffer.flip();
         program.active();
-        GL20.glUniform4(program.location[0], buffer);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.glTex);
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GLWrapper.Shader.glUniform4(program.location[0], buffer);
+        if (GLWrapper.Drawcall.MultiTex.valid()) GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.glTex);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glVertex2f(-radiusWidth, -radiusHeight);
         GL11.glVertex2f(radiusWidth, -radiusHeight);
         GL11.glVertex2f(-radiusHeight, radiusHeight);

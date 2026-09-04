@@ -1,12 +1,12 @@
 package org.boxutil.util.lut;
 
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
 import org.boxutil.util.SerializationUtil;
 import org.boxutil.util.TrigUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -39,29 +39,29 @@ public final class ShadingLUT {
          * @return int[] = {M0(m00, m01, m02), M1(m10, m11, m12), M2(m20, m21, m22)};
          */
         public static int[] genLTCMatrix(boolean useTextureStorage) {
-            if (!BoxDatabase.getGLState().GL_GL30) return new int[3];
-            final boolean texStorage = useTextureStorage && BoxDatabase.getGLState().GL_TEXTURE_STORAGE;
+            if (!GLWrapper.Texture.valid_TexFloat()) return new int[3];
+            final boolean texStorage = useTextureStorage && GLWrapper.Texture.valid_TexStorage();
             final int size = 8 * 8 * 64;
-            int[] result = new int[]{GL11.glGenTextures(), GL11.glGenTextures(), GL11.glGenTextures()};
+            int[] result = new int[]{GLWrapper.Texture.glGenTextures(), GLWrapper.Texture.glGenTextures(), GLWrapper.Texture.glGenTextures()};
             FloatBuffer data;
             for (byte i = 0; i < 3; ++i) {
                 data = SerializationUtil.loadFloatLUT(BoxDatabase.AnisotropicLTC[i]);
                 if (data == null || data.capacity() < size) {
-                    GL11.glDeleteTextures(CommonUtil.createIntBuffer(result));
+                    GLWrapper.Texture.glDeleteTextures(CommonUtil.createIntBuffer(result));
                     return null;
                 }
-                GL11.glBindTexture(GL12.GL_TEXTURE_3D, result[0]);
-                if (texStorage) GL42.glTexStorage3D(GL12.GL_TEXTURE_3D, 1, GL30.GL_RGB32F, 8, 8, 64);
-                else GL12.glTexImage3D(GL12.GL_TEXTURE_3D, 0, GL30.GL_RGB32F, 8, 8, 64, 0, GL11.GL_RGB, GL11.GL_FLOAT, (ByteBuffer) null);
-                GL12.glTexSubImage3D(GL12.GL_TEXTURE_3D, 0, 0, 0, 0, 32, 8, 64, GL11.GL_RGB, GL11.GL_FLOAT, data);
-                GL11.glTexParameteri(GL12.GL_TEXTURE_3D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL12.GL_TEXTURE_3D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL12.GL_TEXTURE_3D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-                GL11.glTexParameteri(GL12.GL_TEXTURE_3D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-                GL11.glTexParameteri(GL12.GL_TEXTURE_3D, GL12.GL_TEXTURE_WRAP_R, GL12.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_3D, result[0]);
+                if (texStorage) GLWrapper.Texture.glTexStorage3D(GLWrapper.Texture.GL_TEXTURE_3D, 1, GLWrapper.Texture.GL_RGB32F, 8, 8, 64);
+                else GLWrapper.Texture.glTexImage3D(GLWrapper.Texture.GL_TEXTURE_3D, 0, GLWrapper.Texture.GL_RGB32F, 8, 8, 64, 0, GLWrapper.Texture.GL_RGB, GLWrapper.DataType.GL_FLOAT, (ByteBuffer) null);
+                GLWrapper.Texture.glTexSubImage3D(GLWrapper.Texture.GL_TEXTURE_3D, 0, 0, 0, 0, 32, 8, 64, GLWrapper.Texture.GL_RGB, GLWrapper.DataType.GL_FLOAT, data);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_3D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_3D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_3D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_3D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_3D, GLWrapper.Texture.GL_TEXTURE_WRAP_R, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
             }
-            GL11.glBindTexture(GL12.GL_TEXTURE_3D, 0);
-            if (result[0] > 0 && result[1] > 0 && result[2] > 0) GL11.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f, 1.0f));
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_3D, 0);
+            if (result[0] > 0 && result[1] > 0 && result[2] > 0) GLWrapper.Texture.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f, 1.0f));
             return result;
         }
 
@@ -77,25 +77,25 @@ public final class ShadingLUT {
          * @return InvMatrix(m[0].x, m[0].z, m[2].x, m[2].z);
          */
         public static int genLTCMatrix(boolean useTextureStorage) {
-            if (!BoxDatabase.getGLState().GL_GL30) return 0;
-            final boolean texStorage = useTextureStorage && BoxDatabase.getGLState().GL_TEXTURE_STORAGE;
+            if (!GLWrapper.Texture.valid_TexFloat()) return 0;
+            final boolean texStorage = useTextureStorage && GLWrapper.Texture.valid_TexStorage();
             final int size = 16384;
-            int result = GL11.glGenTextures();
+            int result = GLWrapper.Texture.glGenTextures();
             FloatBuffer data = SerializationUtil.loadFloatLUT(BoxDatabase.IsotropicLTC[0]);
             if (data == null || data.capacity() < size) {
-                GL11.glDeleteTextures(result);
+                GLWrapper.Texture.glDeleteTextures(result);
                 return 0;
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, result);
-            if (texStorage) GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, GL30.GL_RGBA32F, 64, 64);
-            else GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_RGBA32F, 64, 64, 0, GL11.GL_RGBA, GL11.GL_FLOAT, (ByteBuffer) null);
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 64, 64, GL11.GL_RGBA, GL11.GL_FLOAT, data);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            if (result > 0) GL11.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f));
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result);
+            if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, GLWrapper.Texture.GL_RGBA32F, 64, 64);
+            else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGBA32F, 64, 64, 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_FLOAT, (ByteBuffer) null);
+            GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, 64, 64, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_FLOAT, data);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+            if (result > 0) GLWrapper.Texture.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f));
             return result;
         }
 
@@ -106,30 +106,30 @@ public final class ShadingLUT {
          * @return int[] = {Integral(GGX norm, fresnel), Clipping(sphere for horizon-clipping)};
          */
         public static int[] genLTCMagnitudeSplit(boolean useTextureStorage) {
-            if (!BoxDatabase.getGLState().GL_GL30) return new int[2];
-            final boolean texStorage = useTextureStorage && BoxDatabase.getGLState().GL_TEXTURE_STORAGE;
+            if (!GLWrapper.Texture.valid_TexFloat()) return new int[2];
+            final boolean texStorage = useTextureStorage && GLWrapper.Texture.valid_TexStorage();
             final int[] size = new int[]{8192, 4096};
-            final int[] internalFormat = new int[]{GL30.GL_RG32F, GL30.GL_R32F};
-            final int[] format = new int[]{GL30.GL_RG, GL11.GL_RED};
-            int[] result = new int[]{GL11.glGenTextures(), GL11.glGenTextures()};
+            final int[] internalFormat = new int[]{GLWrapper.Texture.GL_RG32F, GLWrapper.Texture.GL_R32F};
+            final int[] format = new int[]{GLWrapper.Texture.GL_RG, GLWrapper.Texture.GL_RED};
+            int[] result = new int[]{GLWrapper.Texture.glGenTextures(), GLWrapper.Texture.glGenTextures()};
             FloatBuffer data;
             for (byte i = 0; i < 2; ++i) {
                 data = SerializationUtil.loadFloatLUT(BoxDatabase.IsotropicLTC[i + 1]);
                 if (data == null || data.capacity() < size[i]) {
-                    GL11.glDeleteTextures(CommonUtil.createIntBuffer(result));
+                    GLWrapper.Texture.glDeleteTextures(CommonUtil.createIntBuffer(result));
                     return null;
                 }
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, result[i]);
-                if (texStorage) GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, internalFormat[i], 64, 64);
-                else GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, internalFormat[i], 64, 64, 0, format[i], GL11.GL_FLOAT, (ByteBuffer) null);
-                GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 64, 64, format[i], GL11.GL_FLOAT, data);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result[i]);
+                if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, internalFormat[i], 64, 64);
+                else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, internalFormat[i], 64, 64, 0, format[i], GLWrapper.DataType.GL_FLOAT, (ByteBuffer) null);
+                GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, 64, 64, format[i], GLWrapper.DataType.GL_FLOAT, data);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            if (result[0] > 0 && result[1] > 0) GL11.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f));
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+            if (result[0] > 0 && result[1] > 0) GLWrapper.Texture.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f));
             return result;
         }
 
@@ -140,25 +140,25 @@ public final class ShadingLUT {
          * @return Magnitude(GGX norm, fresnel, sphere for horizon-clipping);
          */
         public static int genLTCMagnitude(boolean useTextureStorage) {
-            if (!BoxDatabase.getGLState().GL_GL30) return 0;
-            final boolean texStorage = useTextureStorage && BoxDatabase.getGLState().GL_TEXTURE_STORAGE;
+            if (!GLWrapper.Texture.valid_TexFloat()) return 0;
+            final boolean texStorage = useTextureStorage && GLWrapper.Texture.valid_TexStorage();
             final int size = 12288;
-            int result = GL11.glGenTextures();
+            int result = GLWrapper.Texture.glGenTextures();
             FloatBuffer data = SerializationUtil.loadFloatLUT(BoxDatabase.IsotropicLTC[3]);
             if (data == null || data.capacity() < size) {
-                GL11.glDeleteTextures(result);
+                GLWrapper.Texture.glDeleteTextures(result);
                 return 0;
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, result);
-            if (texStorage) GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, GL30.GL_RGB32F, 64, 64);
-            else GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_RGB32F, 64, 64, 0, GL11.GL_RGB, GL11.GL_FLOAT, (ByteBuffer) null);
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 64, 64, GL11.GL_RGB, GL11.GL_FLOAT, data);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            if (result > 0) GL11.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f));
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result);
+            if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, GLWrapper.Texture.GL_RGB32F, 64, 64);
+            else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGB32F, 64, 64, 0, GLWrapper.Texture.GL_RGB, GLWrapper.DataType.GL_FLOAT, (ByteBuffer) null);
+            GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, 64, 64, GLWrapper.Texture.GL_RGB, GLWrapper.DataType.GL_FLOAT, data);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+            if (result > 0) GLWrapper.Texture.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f));
             return result;
         }
 
@@ -193,15 +193,15 @@ public final class ShadingLUT {
          * @return int[] = {EMu, EAvg};
          */
         public static int[] genApproximation(int sampleNum, byte sizeExponent, boolean useTextureStorage, boolean bit16) {
-            if (!BoxDatabase.getGLState().GL_GL30) return new int[2];
+            if (!GLWrapper.Texture.valid_TexFloat()) return new int[2];
             final int num = Math.max(sampleNum, 256), size = 1 << Math.max(sizeExponent, 1), bufferSize = size * size, q = bit16 ? 65535 : 255;
             final float weightDiv = 4.0f / num, eavgWeightDiv = 2.0f / size, sizeLimit = 1.0f / size;
-            final boolean texStorage = useTextureStorage && BoxDatabase.getGLState().GL_TEXTURE_STORAGE;
+            final boolean texStorage = useTextureStorage && GLWrapper.Texture.valid_TexStorage();
             Vector3f H = new Vector3f(), V = new Vector3f(), negV = new Vector3f(), L = new Vector3f();
             int storageValue;
             float roughness, alpha, NdotV;
             float weight, weightAvg;
-            int[] result = new int[]{GL11.glGenTextures(), GL11.glGenTextures()};
+            int[] result = new int[]{GLWrapper.Texture.glGenTextures(), GLWrapper.Texture.glGenTextures()};
             Buffer emuData = bit16 ? BufferUtils.createShortBuffer(bufferSize) : BufferUtils.createByteBuffer(bufferSize);
             Buffer eavgData = bit16 ? BufferUtils.createShortBuffer(bufferSize) : BufferUtils.createByteBuffer(bufferSize);
 
@@ -244,25 +244,25 @@ public final class ShadingLUT {
             eavgData.position(0);
             eavgData.limit(eavgData.capacity());
 
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, result[0]);
-            if (texStorage) GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, bit16 ? GL30.GL_R16 : GL30.GL_R8, size, size);
-            else GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, bit16 ? GL30.GL_R16 : GL30.GL_R8, size, size, 0, GL11.GL_RED, bit16 ? GL11.GL_UNSIGNED_SHORT : GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
-            if (bit16) GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, size, size, GL11.GL_RED, GL11.GL_UNSIGNED_SHORT, (ShortBuffer) emuData);
-            else GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, size, size, GL11.GL_RED, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) emuData);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL14.GL_MIRRORED_REPEAT);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL14.GL_MIRRORED_REPEAT);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, result[1]);
-            if (texStorage) GL42.glTexStorage1D(GL11.GL_TEXTURE_1D, 1, bit16 ? GL30.GL_R16 : GL30.GL_R8, size);
-            else GL11.glTexImage1D(GL11.GL_TEXTURE_1D, 0, bit16 ? GL30.GL_R16 : GL30.GL_R8, size, 0, GL11.GL_RED, bit16 ? GL11.GL_UNSIGNED_SHORT : GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
-            if (bit16) GL11.glTexSubImage1D(GL11.GL_TEXTURE_1D, 0, 0, size, GL11.GL_RED, GL11.GL_UNSIGNED_SHORT, (ShortBuffer) eavgData);
-            else GL11.glTexSubImage1D(GL11.GL_TEXTURE_1D, 0, 0, size, GL11.GL_RED, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) eavgData);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_WRAP_S, GL14.GL_MIRRORED_REPEAT);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            if (result[0] > 0 && result[1] > 0) GL11.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f));
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result[0]);
+            if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, bit16 ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8, size, size);
+            else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, bit16 ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8, size, size, 0, GLWrapper.Texture.GL_RED, bit16 ? GLWrapper.DataType.GL_UNSIGNED_SHORT : GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            if (bit16) GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, size, size, GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_UNSIGNED_SHORT, (ShortBuffer) emuData);
+            else GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, size, size, GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) emuData);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result[1]);
+            if (texStorage) GLWrapper.Texture.glTexStorage1D(GLWrapper.Texture.GL_TEXTURE_1D, 1, bit16 ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8, size);
+            else GLWrapper.Texture.glTexImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, bit16 ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8, size, 0, GLWrapper.Texture.GL_RED, bit16 ? GLWrapper.DataType.GL_UNSIGNED_SHORT : GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            if (bit16) GLWrapper.Texture.glTexSubImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, 0, size, GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_UNSIGNED_SHORT, (ShortBuffer) eavgData);
+            else GLWrapper.Texture.glTexSubImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, 0, size, GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) eavgData);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_1D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_1D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_1D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+            if (result[0] > 0 && result[1] > 0) GLWrapper.Texture.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f));
             return result;
         }
 
@@ -281,40 +281,40 @@ public final class ShadingLUT {
          * @return int[] = {EMu, EAvg};
          */
         public static int[] genApproximation(boolean useTextureStorage) {
-            if (!BoxDatabase.getGLState().GL_GL30) return new int[2];
-            final boolean texStorage = useTextureStorage && BoxDatabase.getGLState().GL_TEXTURE_STORAGE;
+            if (!GLWrapper.Texture.valid_TexFloat()) return new int[2];
+            final boolean texStorage = useTextureStorage && GLWrapper.Texture.valid_TexStorage();
             final int[] size = new int[]{4096, 64};
-            int[] result = new int[]{GL11.glGenTextures(), GL11.glGenTextures()};
+            int[] result = new int[]{GLWrapper.Texture.glGenTextures(), GLWrapper.Texture.glGenTextures()};
             ShortBuffer data;
             data = SerializationUtil.loadFloatLUTConvertHalfFloat(BoxDatabase.KullaContyBRDF[0]);
             if (data == null || data.capacity() < size[0]) {
-                GL11.glDeleteTextures(CommonUtil.createIntBuffer(result));
+                GLWrapper.Texture.glDeleteTextures(CommonUtil.createIntBuffer(result));
                 return null;
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, result[0]);
-            if (texStorage) GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, GL30.GL_R16F, size[1], size[1]);
-            else GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_R16F, size[1], size[1], 0, GL11.GL_RED, GL30.GL_HALF_FLOAT, (ByteBuffer) null);
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, size[1], size[1], GL11.GL_RED, GL30.GL_HALF_FLOAT, data);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result[0]);
+            if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, GLWrapper.Texture.GL_R16F, size[1], size[1]);
+            else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_R16F, size[1], size[1], 0, GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_HALF_FLOAT, (ByteBuffer) null);
+            GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, size[1], size[1], GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_HALF_FLOAT, data);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
 
             data = SerializationUtil.loadFloatLUTConvertHalfFloat(BoxDatabase.KullaContyBRDF[1]);
             if (data == null || data.capacity() < size[1]) {
-                GL11.glDeleteTextures(CommonUtil.createIntBuffer(result));
+                GLWrapper.Texture.glDeleteTextures(CommonUtil.createIntBuffer(result));
                 return null;
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_1D, result[0]);
-            if (texStorage) GL42.glTexStorage1D(GL11.GL_TEXTURE_1D, 1, GL30.GL_R16F, size[1]);
-            else GL11.glTexImage1D(GL11.GL_TEXTURE_1D, 0, GL30.GL_R16F, size[1], 0, GL11.GL_RED, GL30.GL_HALF_FLOAT, (ByteBuffer) null);
-            GL11.glTexSubImage1D(GL11.GL_TEXTURE_1D, 0, 0, size[1], GL11.GL_RED, GL30.GL_HALF_FLOAT, data);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_1D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glBindTexture(GL11.GL_TEXTURE_1D, 0);
-            if (result[0] > 0 && result[1] > 0) GL11.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f));
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_1D, result[0]);
+            if (texStorage) GLWrapper.Texture.glTexStorage1D(GLWrapper.Texture.GL_TEXTURE_1D, 1, GLWrapper.Texture.GL_R16F, size[1]);
+            else GLWrapper.Texture.glTexImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, GLWrapper.Texture.GL_R16F, size[1], 0, GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_HALF_FLOAT, (ByteBuffer) null);
+            GLWrapper.Texture.glTexSubImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, 0, size[1], GLWrapper.Texture.GL_RED, GLWrapper.DataType.GL_HALF_FLOAT, data);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_1D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_1D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_1D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_1D, 0);
+            if (result[0] > 0 && result[1] > 0) GLWrapper.Texture.glPrioritizeTextures(CommonUtil.createIntBuffer(result), CommonUtil.createFloatBuffer(1.0f, 1.0f));
             return result;
         }
 

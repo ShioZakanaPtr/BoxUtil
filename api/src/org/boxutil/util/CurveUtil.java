@@ -793,12 +793,16 @@ public final class CurveUtil {
 
         boolean isIgnore(CombatEntityAPI target);
 
-        boolean isPierceShield(ShipAPI target);
+        default boolean isPierceShield(ShipAPI target) {
+            return false;
+        }
 
         /**
          * @param beamT returns <code>distanceSquared</code> to start when use {@link CurveUtil#spawnDirectBeam(CombatEngineAPI, Vector2f, Vector2f, float, DealtController)}
          */
-        boolean isPierce(CombatEntityAPI target, Vector2f point, float beamT, boolean isShieldHit);
+        default boolean isPierce(CombatEntityAPI target, Vector2f point, float beamT, boolean isShieldHit) {
+            return false;
+        }
     }
 
     public static class SimpleDealtController implements DealtController {

@@ -1,5 +1,6 @@
 package org.boxutil.units.standard;
 
+import org.boxutil.backends.util.BUtil_BoundedIntMap;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.util.ShaderUtil;
 import org.jetbrains.annotations.Nullable;
@@ -15,11 +16,12 @@ import java.util.function.Supplier;
  * final String vertSrc, fragSrc;
  * final var program = new ShaderProgram("YourShaderProgramTag-TheCommonDraw", vertSrc, fragSrc);
  * if (program.isValid()) {
+ *     // location setup
  *     // If have uniform
  *     program.initUniformSize(2)
  *             .beginUniform()
- *             .loadUniformIndex("u00")
- *             .loadUniformIndex("u01")
+ *             .loadUniformIndex("u_u00")
+ *             .loadUniformIndex("u_u01")
  *
  *             // if have UBO
  *             .initUniformBlockSize(1)
@@ -29,21 +31,21 @@ import java.util.function.Supplier;
  *             // if have subroutine
  *             .initSubroutineSize(5, 2)
  *             .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
- *             .loadSubroutineIndex("funA_v00") // of "funA_vu"
- *             .loadSubroutineIndex("funA_v01") // of "funA_vu"
- *             .loadSubroutineIndex("funA_v02") // of "funA_vu"
- *             .loadSubroutineIndex("funB_v00") // of "funB_vu"
- *             .loadSubroutineIndex("funB_v01") // of "funB_vu"
+ *             .loadSubroutineIndex("p_funA_v00") // of "funA_vu"
+ *             .loadSubroutineIndex("p_funA_v01") // of "funA_vu"
+ *             .loadSubroutineIndex("p_funA_v02") // of "funA_vu"
+ *             .loadSubroutineIndex("p_funB_v00") // of "funB_vu"
+ *             .loadSubroutineIndex("p_funB_v01") // of "funB_vu"
  *             .beginSubroutine(1, GL20.GL_FRAGMENT_SHADER)
- *             .loadSubroutineIndex("fun_f00")
- *             .loadSubroutineIndex("fun_f01")
+ *             .loadSubroutineIndex("p_fun_f00")
+ *             .loadSubroutineIndex("p_fun_f01")
  *
  *             .initSubroutineUniformSize(2, 1)
  *             .beginSubroutineUniform(0, GL20.GL_VERTEX_SHADER)
- *             .loadSubroutineUniformIndex("funA_vu") // index 0
- *             .loadSubroutineUniformIndex("funB_vu") // index 1
+ *             .loadSubroutineUniformIndex("f_funA_vu") // index 0
+ *             .loadSubroutineUniformIndex("f_funB_vu") // index 1
  *             .beginSubroutineUniform(1, GL20.GL_FRAGMENT_SHADER)
- *             .loadSubroutineUniformIndex("fun_fu")
+ *             .loadSubroutineUniformIndex("f_fun_fu")
  *             .computeSubroutineUniformRoute();
  * }
  *
@@ -51,34 +53,35 @@ import java.util.function.Supplier;
  *
  * // When running
  * // set uniform
- * GL20.glUniform1i(program.uniform("u00"), 2); // put 2 to "u00" that use GL13.GL_TEXTURE2, if "u00" is a 'sampler2D' type uniform
+ * GL20.glUniform1i(program.uniform("u_u00"), 2); // put 2 to "u_u00" that use GL13.GL_TEXTURE2, if "u_u00" is a 'sampler2D' type uniform
  * //GL20.glUniform1i(program.location[0], 2); // or use index
  * final int texID;
- * program.bindTexture2D(2, texID); // bind to "u00"
+ * program.bindTexture2D(2, texID); // bind to "u_u00"
  *
- * GL20.glUniform2f(program.uniform("u01"), 1.0f, 0.0f); // put vec2(1.0f, 0.0f) to "u01", if "u01" is a 'vec2' type uniform
+ * GL20.glUniform2f(program.uniform("u_u01"), 1.0f, 0.0f); // put vec2(1.0f, 0.0f) to "u_u01", if "u_u01" is a 'vec2' type uniform
  * //GL20.glUniform2f(program.location[1], 1.0f, 0.0f); // or use index
  *
  *
- * // put "funA_v00" to "funA_vu" and put "funB_v00" to "funB_vu"
+ * // put "p_funA_v00" to "f_funA_vu" and put "p_funB_v00" to "f_funB_vu"
  * final int[] vertexSub = new int[2];
- * vertexSub[0] = program.subroutine(0, "funA_v00"); // "funA_vu" at index-0
+ * vertexSub[0] = program.subroutine(0, "p_funA_v00"); // "f_funA_vu" at index-0
  * //vertexSub[0] = program.subroutineLocation[0][0]; // or use index
- * vertexSub[1] = program.subroutine(0, "funB_v00"); // "funB_vu" at index-1
+ * vertexSub[1] = program.subroutine(0, "p_funB_v00"); // "f_funB_vu" at index-1
  * //vertexSub[1] = program.subroutineLocation[0][3]; // or use index
  * program.putUniformSubroutines(GL20.GL_VERTEX_SHADER, 0, vertexSub);
  *
  *
- * // put "fun_f00" to "fun_fu"
+ * // put "p_fun_f00" to "f_fun_fu"
  * program.putUniformSubroutine(GL20.GL_VERTEX_SHADER, 1, 0);
  * }
  * </pre>
  */
+@SuppressWarnings("unchecked")
 public class ShaderProgram extends BaseShaderData {
-    protected final HashMap<String, Integer> uniformMap = new HashMap<>(8);
-    protected final HashMap<String, Integer> uniformBlockMap = new HashMap<>(4);
-    protected HashMap<String, Integer>[] subroutineMap = null;
-    protected HashMap<String, Integer>[] subroutineUniformMap = null;
+    protected BUtil_BoundedIntMap<String> uniformMap = null;
+    protected BUtil_BoundedIntMap<String> uniformBlockMap = null;
+    protected BUtil_BoundedIntMap<String>[] subroutineMap = null;
+    protected BUtil_BoundedIntMap<String>[] subroutineUniformMap = null;
     protected final int[] _tmpIndex = new int[3];
 
     public ShaderProgram(final int id) {
@@ -127,6 +130,7 @@ public class ShaderProgram extends BaseShaderData {
 
     public ShaderProgram initUniformSize(int size) {
         this.location = new int[size];
+        this.uniformMap = new BUtil_BoundedIntMap<>(size, 0.8f);
         return this;
     }
 
@@ -148,12 +152,18 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
+    /**
+     * Quickly queries the cached uniform location value after it has been set up via <code>loadUniformIndex</code>.
+     *
+     * @return <code>-1</code> when does not contain this <code>name</code>.
+     */
     public int uniform(final String name) {
         return this.uniformMap.getOrDefault(name, -1);
     }
 
     public ShaderProgram initUniformBlockSize(int size) {
         this.uboLocation = new int[size];
+        this.uniformBlockMap = new BUtil_BoundedIntMap<>(size, 0.8f);
         return this;
     }
 
@@ -188,6 +198,11 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
+    /**
+     * Quickly queries the cached uniform block location value after it has been set up via <code>loadUniformBlockIndex</code> or <code>loadAndSetUniformBlockIndex</code>.
+     *
+     * @return <code>-1</code> when does not contain this <code>name</code>.
+     */
     public int uniform_block(final String name) {
         return this.uniformBlockMap.getOrDefault(name, -1);
     }
@@ -195,10 +210,10 @@ public class ShaderProgram extends BaseShaderData {
     public ShaderProgram initSubroutineSize(int... categorySize) {
         final int size = categorySize.length;
         this.subroutineLocation = new int[size][];
-        this.subroutineMap = new HashMap[size];
+        this.subroutineMap = new BUtil_BoundedIntMap[size];
         for (int i = 0; i < size; i++) {
             this.subroutineLocation[i] = new int[categorySize[i]];
-            this.subroutineMap[i] = new HashMap<>(4);
+            this.subroutineMap[i] = new BUtil_BoundedIntMap<>(categorySize[i], 0.8f);
         }
         return this;
     }
@@ -223,6 +238,11 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
+    /**
+     * Quickly queries the cached subroutine function location value after it has been set up via <code>loadSubroutineIndex</code>.
+     *
+     * @return <code>-1</code> when does not contain this <code>name</code>.
+     */
     public int subroutine(int category, final String name) {
         return this.subroutineMap[category].getOrDefault(name, -1);
     }
@@ -230,10 +250,10 @@ public class ShaderProgram extends BaseShaderData {
     public ShaderProgram initSubroutineUniformSize(int... categorySize) {
         final int size = categorySize.length;
         this.subroutineUniformLocation = new int[size][];
-        this.subroutineUniformMap = new HashMap[size];
+        this.subroutineUniformMap = new BUtil_BoundedIntMap[size];
         for (int i = 0; i < size; i++) {
             this.subroutineUniformLocation[i] = new int[categorySize[i]];
-            this.subroutineUniformMap[i] = new HashMap<>(2);
+            this.subroutineUniformMap[i] = new BUtil_BoundedIntMap<>(categorySize[i], 0.8f);
         }
         return this;
     }
@@ -258,6 +278,11 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
+    /**
+     * Quickly queries the cached subroutine uniform location value after it has been set up via <code>loadSubroutineUniformIndex</code>.
+     *
+     * @return <code>-1</code> when does not contain this <code>name</code>.
+     */
     public int subroutine_uniform(int category, final String name) {
         return this.subroutineUniformMap[category].getOrDefault(name, -1);
     }

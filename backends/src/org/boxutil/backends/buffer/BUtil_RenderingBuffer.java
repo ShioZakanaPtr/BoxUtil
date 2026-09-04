@@ -1,41 +1,26 @@
 package org.boxutil.backends.buffer;
 
 import com.fs.starfarer.api.Global;
-import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 public final class BUtil_RenderingBuffer {
-    private final static int[][] _INTERNAL_FORMAT = new int[][]{null, null};
-//    private final static int[][] _FORMAT = new int[][]{null, null};
-//    private final static int[][] _TYPE = new int[][]{null, null};
-    static {
-        // color, emissive, pos, normal, tangent, material, data
-        _INTERNAL_FORMAT[0] = new int[]{GL11.GL_RGB8, GL11.GL_RGB8, GL11.GL_RGB16, GL31.GL_RGB16_SNORM, GL31.GL_RGB16_SNORM, GL11.GL_RGB8, GL33.GL_RGB10_A2UI};
-        // blitEmissive
-        _INTERNAL_FORMAT[1] = new int[]{GL11.GL_RGB10_A2};
-//        _FORMAT[0] = new int[]{GL11.GL_RGB, GL11.GL_RGB, GL11.GL_RGB, GL11.GL_RGB, GL11.GL_RGB, GL11.GL_RGB, GL30.GL_RGBA_INTEGER};
-//        _FORMAT[1] = new int[]{GL11.GL_RGBA};
-//        _TYPE[0] = new int[]{GL11.GL_UNSIGNED_BYTE, GL11.GL_UNSIGNED_BYTE, GL11.GL_UNSIGNED_SHORT, GL11.GL_SHORT, GL11.GL_SHORT, GL11.GL_UNSIGNED_BYTE, GL12.GL_UNSIGNED_INT_2_10_10_10_REV};
-//        _TYPE[1] = new int[]{GL12.GL_UNSIGNED_INT_2_10_10_10_REV};
-    }
-
     private final static byte _SCALE_LAYERS = 8;
     private final static byte _BUFFER_COUNT = 2;
     private final int[] FBO = new int[_BUFFER_COUNT];
     private int RBO = 0;
-    private final int[][] texID = new int[][]{new int[_INTERNAL_FORMAT[0].length], new int[_INTERNAL_FORMAT[1].length]};
+    private final int[][] texID = new int[][]{new int[7], new int[1]};
     private final int[] bloomPingPongTex = new int[_SCALE_LAYERS];
     private final boolean[] finished = new boolean[_BUFFER_COUNT];
     private final int[][] scaleSize = new int[_SCALE_LAYERS][2];
     private final float[] scaleFactor = new float[_SCALE_LAYERS];
     private final float[][] scaleUV = new float[_SCALE_LAYERS][2];
-    private final IntBuffer[] allDrawBuffer = new IntBuffer[]{BufferUtils.createIntBuffer(_INTERNAL_FORMAT[0].length), BufferUtils.createIntBuffer(_INTERNAL_FORMAT[1].length)};
+    private final IntBuffer[] allDrawBuffer = new IntBuffer[]{BufferUtils.createIntBuffer(7).clear(), BufferUtils.createIntBuffer(1).clear()};
     private byte currLayerCount = 0;
 
     public BUtil_RenderingBuffer() {
@@ -56,69 +41,70 @@ public final class BUtil_RenderingBuffer {
         }
         ++this.currLayerCount;
 
-        for (byte i = 1; i < this.currLayerCount; ++i) {
-            this.bloomPingPongTex[i] = GL11.glGenTextures();
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.bloomPingPongTex[i]);
-            GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, _INTERNAL_FORMAT[1][0], this.scaleSize[i][0], this.scaleSize[i][1]);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL13.GL_CLAMP_TO_BORDER);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL13.GL_CLAMP_TO_BORDER);
-            borderColor.position(0);
-            borderColor.limit(borderColor.capacity());
-            GL11.glTexParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_BORDER_COLOR, borderColor);
-        }
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-
-        if (!BoxDatabase.getGLState().GL_FBO || !BoxDatabase.getGLState().GL_TEXTURE_STORAGE) {
+        if (!GLWrapper.FBO.valid_BoxUtilBase() || !GLWrapper.Texture.valid_RGB10_A2UI() || !GLWrapper.Texture.valid_TexSnorm() || !GLWrapper.Texture.valid_TexStorage() || !GLWrapper.Texture.valid_BorderClamp()) {
             Global.getLogger(ShaderCore.class).error("'BoxUtil' rendering framebuffers create failed: OpenGL Context unsupported.");
             return;
         }
 
-        for (byte f = 0; f < _BUFFER_COUNT; ++f) {
-            this.FBO[f] = GL30.glGenFramebuffers();
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.FBO[f]);
+        final int[][] internalFormat = new int[][]{null, null};
+        // color, emissive, pos, normal, tangent, material, data
+        internalFormat[0] = new int[]{GLWrapper.Texture.GL_RGB8, GLWrapper.Texture.GL_RGB8, GLWrapper.Texture.GL_RGB16, GLWrapper.Texture.GL_RGB16_SNORM, GLWrapper.Texture.GL_RGB16_SNORM, GLWrapper.Texture.GL_RGB8, GLWrapper.Texture.GL_RGB10_A2UI};
+        // blitEmissive
+        internalFormat[1] = new int[]{GLWrapper.Texture.GL_RGB10_A2};
 
-            ids = BufferUtils.createIntBuffer(_INTERNAL_FORMAT[f].length);
-            GL11.glGenTextures(ids);
-            for (byte i = 0; i < _INTERNAL_FORMAT[f].length; ++i) {
+        for (byte i = 1; i < this.currLayerCount; ++i) {
+            this.bloomPingPongTex[i] = GLWrapper.Texture.glGenTextures();
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.bloomPingPongTex[i]);
+            GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, internalFormat[1][0], this.scaleSize[i][0], this.scaleSize[i][1]);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_BORDER);
+            GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_BORDER);
+            GLWrapper.Texture.glTexParameter(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_BORDER_COLOR, borderColor);
+        }
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+
+        for (byte f = 0; f < _BUFFER_COUNT; ++f) {
+            this.FBO[f] = GLWrapper.FBO.glGenFramebuffers();
+            GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, this.FBO[f]);
+
+            ids = BufferUtils.createIntBuffer(internalFormat[f].length);
+            GLWrapper.Texture.glGenTextures(ids);
+            for (byte i = 0; i < internalFormat[f].length; ++i) {
                 this.texID[f][i] = ids.get(i);
                 if (f == 1 && i == 0) this.bloomPingPongTex[i] = this.texID[f][i];
-                int att = GL30.GL_COLOR_ATTACHMENT0 + i;
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.texID[f][i]);
-                GL42.glTexStorage2D(GL11.GL_TEXTURE_2D, 1, _INTERNAL_FORMAT[f][i], width, height);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+                int att = GLWrapper.FBO.GL_COLOR_ATTACHMENT0 + i;
+                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.texID[f][i]);
+                GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, internalFormat[f][i], width, height);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
                 if (f == 1 && i == 0) {
-                    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL13.GL_CLAMP_TO_BORDER);
-                    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL13.GL_CLAMP_TO_BORDER);
-                    borderColor.position(0);
-                    borderColor.limit(borderColor.capacity());
-                    GL11.glTexParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_BORDER_COLOR, borderColor);
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_BORDER);
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_BORDER);
+                    GLWrapper.Texture.glTexParameter(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_BORDER_COLOR, borderColor);
                 } else {
-                    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-                    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
                 }
-                GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, att, GL11.GL_TEXTURE_2D, this.texID[f][i], 0);
+
+                GLWrapper.FBO.glFramebufferTexture2D(GLWrapper.FBO.GL_FRAMEBUFFER, att, GLWrapper.Texture.GL_TEXTURE_2D, this.texID[f][i], 0);
                 this.allDrawBuffer[f].put(i, att);
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            this.allDrawBuffer[f].position(0);
-            this.allDrawBuffer[f].limit(this.allDrawBuffer[f].capacity());
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
 
             if (f == 0) {
-                this.RBO = GL30.glGenRenderbuffers();
-                GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, this.RBO);
-                GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, GL14.GL_DEPTH_COMPONENT16, width, height);
-                GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL30.GL_RENDERBUFFER, this.RBO);
-                GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, 0);
+                this.RBO = GLWrapper.FBO.glGenRenderbuffers();
+                GLWrapper.FBO.glBindRenderbuffer(GLWrapper.FBO.GL_RENDERBUFFER, this.RBO);
+                GLWrapper.FBO.glRenderbufferStorage(GLWrapper.FBO.GL_RENDERBUFFER, GLWrapper.FBO.GL_DEPTH_COMPONENT16, width, height);
+                GLWrapper.FBO.glFramebufferRenderbuffer(GLWrapper.FBO.GL_FRAMEBUFFER, GLWrapper.FBO.GL_DEPTH_ATTACHMENT, GLWrapper.FBO.GL_RENDERBUFFER, this.RBO);
+                GLWrapper.FBO.glBindRenderbuffer(GLWrapper.FBO.GL_RENDERBUFFER, 0);
             }
 
-            GL20.glDrawBuffers(this.allDrawBuffer[f]);
+            GLWrapper.FBO.glDrawBuffers(this.allDrawBuffer[f]);
 
-            state = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-            if (state == GL30.GL_FRAMEBUFFER_COMPLETE) {
+            state = GLWrapper.FBO.glCheckFramebufferStatus(GLWrapper.FBO.GL_FRAMEBUFFER);
+            GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
+            if (state == GLWrapper.FBO.GL_FRAMEBUFFER_COMPLETE) {
                 Global.getLogger(ShaderCore.class).info("'BoxUtil' rendering framebuffer-" + f + " has created.");
                 this.finished[f] = true;
             } else {
@@ -133,8 +119,8 @@ public final class BUtil_RenderingBuffer {
         return _BUFFER_COUNT;
     }
 
-    public static byte getAttachmentCount(byte index) {
-        return (byte) _INTERNAL_FORMAT[index].length;
+    public static byte getAttachmentCount(boolean isAux) {
+        return (byte) (isAux ? 1 : 7);
     }
 
     public byte getLayerCount() {
@@ -146,20 +132,20 @@ public final class BUtil_RenderingBuffer {
     }
 
     public void delete(int index) {
-        if (!BoxDatabase.getGLState().GL_FBO) return;
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-        GL11.glDeleteTextures(CommonUtil.createIntBuffer(this.texID[index]));
+        if (!GLWrapper.FBO.valid_BoxUtilBase()) return;
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+        GLWrapper.Texture.glDeleteTextures(CommonUtil.createIntBuffer(this.texID[index]));
         if (index == 0) {
             this.deleteBloomPingPongTex();
-            if (this.RBO > 0) GL30.glDeleteRenderbuffers(this.RBO);
+            if (this.RBO > 0) GLWrapper.FBO.glDeleteRenderbuffers(this.RBO);
         }
-        if (this.FBO[index] > 0) GL30.glDeleteFramebuffers(this.FBO[index]);
+        if (this.FBO[index] > 0) GLWrapper.FBO.glDeleteFramebuffers(this.FBO[index]);
         this.finished[index] = false;
     }
 
     public void deleteBloomPingPongTex() {
-        GL11.glDeleteTextures(CommonUtil.createIntBuffer(this.bloomPingPongTex));
+        GLWrapper.Texture.glDeleteTextures(CommonUtil.createIntBuffer(this.bloomPingPongTex));
     }
 
     public boolean[] isFinished() {
@@ -239,6 +225,6 @@ public final class BUtil_RenderingBuffer {
     }
 
     public void setScaleViewport(int level) {
-        GL11.glViewport(0, 0, this.scaleSize[level][0], this.scaleSize[level][1]);
+        GLWrapper.Operation.glViewport(0, 0, this.scaleSize[level][0], this.scaleSize[level][1]);
     }
 }

@@ -1,6 +1,8 @@
 package org.boxutil.units.standard.entity;
 
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.LayeredEntityType;
+import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.CurveUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
@@ -11,7 +13,6 @@ import org.boxutil.define.BoxEnum;
 import org.boxutil.units.standard.attribute.NodeData;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
@@ -48,30 +49,30 @@ public class CurveEntity extends BaseMIRenderData {
 
     protected void initResourceLayout() {
         final int size = _NODE_LENGTH * BoxDatabase.HALF_FLOAT_SIZE;
-        GL30.glBindVertexArray(this.getCurveID());
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getNodesVBO());
-        GL20.glVertexAttribPointer(0, 2, GL30.GL_HALF_FLOAT, false, size, 0); // loc
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(1, 4, GL30.GL_HALF_FLOAT, false, size, 2 * BoxDatabase.HALF_FLOAT_SIZE); // tangent
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(2, 1, GL30.GL_HALF_FLOAT, false, size, 6 * BoxDatabase.HALF_FLOAT_SIZE); // width
-        GL20.glEnableVertexAttribArray(2);
-        GL20.glVertexAttribPointer(3, 1, GL30.GL_HALF_FLOAT, false, size, 7 * BoxDatabase.HALF_FLOAT_SIZE); // mixFactor
-        GL20.glEnableVertexAttribArray(3);
-        GL20.glVertexAttribPointer(4, 1, GL30.GL_HALF_FLOAT, false, size, 8 * BoxDatabase.HALF_FLOAT_SIZE); // nodeDistance
-        GL20.glEnableVertexAttribArray(4);
-        GL20.glVertexAttribPointer(5, 4, GL11.GL_UNSIGNED_BYTE, true, size, 9 * BoxDatabase.HALF_FLOAT_SIZE); // color
-        GL20.glEnableVertexAttribArray(5);
-        GL20.glVertexAttribPointer(6, 4, GL11.GL_UNSIGNED_BYTE, true, size, 11 * BoxDatabase.HALF_FLOAT_SIZE); // emissiveColor
-        GL20.glEnableVertexAttribArray(6);
-        GL30.glBindVertexArray(0);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.VAO.glBindVertexArray(this.getCurveID());
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+        GLWrapper.VAO.glVertexAttribPointer(0, 2, GLWrapper.DataType.GL_HALF_FLOAT, false, size, 0); // loc
+        GLWrapper.VAO.glEnableVertexAttribArray(0);
+        GLWrapper.VAO.glVertexAttribPointer(1, 4, GLWrapper.DataType.GL_HALF_FLOAT, false, size, 2 * BoxDatabase.HALF_FLOAT_SIZE); // tangent
+        GLWrapper.VAO.glEnableVertexAttribArray(1);
+        GLWrapper.VAO.glVertexAttribPointer(2, 1, GLWrapper.DataType.GL_HALF_FLOAT, false, size, 6 * BoxDatabase.HALF_FLOAT_SIZE); // width
+        GLWrapper.VAO.glEnableVertexAttribArray(2);
+        GLWrapper.VAO.glVertexAttribPointer(3, 1, GLWrapper.DataType.GL_HALF_FLOAT, false, size, 7 * BoxDatabase.HALF_FLOAT_SIZE); // mixFactor
+        GLWrapper.VAO.glEnableVertexAttribArray(3);
+        GLWrapper.VAO.glVertexAttribPointer(4, 1, GLWrapper.DataType.GL_HALF_FLOAT, false, size, 8 * BoxDatabase.HALF_FLOAT_SIZE); // nodeDistance
+        GLWrapper.VAO.glEnableVertexAttribArray(4);
+        GLWrapper.VAO.glVertexAttribPointer(5, 4, GLWrapper.DataType.GL_UNSIGNED_BYTE, true, size, 9 * BoxDatabase.HALF_FLOAT_SIZE); // color
+        GLWrapper.VAO.glEnableVertexAttribArray(5);
+        GLWrapper.VAO.glVertexAttribPointer(6, 4, GLWrapper.DataType.GL_UNSIGNED_BYTE, true, size, 11 * BoxDatabase.HALF_FLOAT_SIZE); // emissiveColor
+        GLWrapper.VAO.glEnableVertexAttribArray(6);
+        GLWrapper.VAO.glBindVertexArray(0);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
     }
 
     public CurveEntity() {
-        this._curveID = BoxConfigs.isVAOSupported() ? GL30.glGenVertexArrays() : 0;
-        this._nodesVBO = BoxConfigs.isVAOSupported() ? GL15.glGenBuffers() : 0;
-        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getCurveID() > 0 && this.getNodesVBO() > 0;
+        this._curveID = GLWrapper.VAO.valid() ? GLWrapper.VAO.glGenVertexArrays() : 0;
+        this._nodesVBO = GLWrapper.Buffer.VBO.valid() ? GLWrapper.Buffer.glGenBuffers() : 0;
+        this._isValid = BoxDatabase.getGLState().GL_GL43 && ShaderCore.getCurveProgram() != null && ShaderCore.getCurveProgram().isValid() && BoxConfigs.isBackgroundThreadGLValid() && this.getCurveID() > 0 && this.getNodesVBO() > 0;
         this.getMaterialData().setDisableCullFace();
         this.getMaterialData().setIgnoreIllumination(true);
 
@@ -106,20 +107,20 @@ public class CurveEntity extends BaseMIRenderData {
         if (this._distance != null) this._distance.clear();
         this._distance = null;
         if (this.getCurveID() > 0) {
-            GL30.glBindVertexArray(0);
-            GL30.glDeleteVertexArrays(this.getCurveID());
+            GLWrapper.VAO.glBindVertexArray(0);
+            GLWrapper.VAO.glDeleteVertexArrays(this.getCurveID());
         }
         if (this.getNodesVBO() > 0) {
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-            GL15.glDeleteBuffers(this.getNodesVBO());
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            GLWrapper.Buffer.glDeleteBuffers(this.getNodesVBO());
         }
     }
 
     public void glDraw() {
         int realCount = Math.min(this.shouldRenderingCount, this.getRealValidNodeCount());
-        if (realCount < 2) return;
-        GL30.glBindVertexArray(this.getCurveID());
-        GL31.glDrawArraysInstanced(GL40.GL_PATCHES, 0, realCount, Math.max(Math.min(this.getValidInstanceDataCount(), this.getRenderingCount()), 1));
+        if (realCount < 2 || !this.isValid()) return;
+        GLWrapper.VAO.glBindVertexArray(this.getCurveID());
+        GLWrapper.Drawcall.glDrawArraysInstanced(GLWrapper.Shader.Tess.GL_PATCHES, 0, realCount, Math.max(Math.min(this.getValidInstanceDataCount(), this.getRenderingCount()), 1));
     }
 
     protected void _resetExc() {
@@ -185,18 +186,18 @@ public class CurveEntity extends BaseMIRenderData {
         final int refreshLimit = refreshIndex + refreshCount;
         final long bufferSize = (refreshCount > 1 ? (2L * refreshCount - 2) : refreshCount) * _NODE_LENGTH << 2;
 
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getNodesVBO());
-        if (newBuffer) GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bufferSize, GL15.GL_DYNAMIC_DRAW);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+        if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
 
         final long bufferIndex = (refreshIndex > 1 ? (2L * refreshIndex - 1) : refreshIndex) * _NODE_LENGTH << 2;
         final boolean useMapping = this.isMappingModeSubmitData();
         ByteBuffer buffer;
         if (useMapping) {
-            final int _access = this.isSynchronousSubmit() ? GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT : GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
-            buffer = GL30.glMapBufferRange(GL15.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
+            final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+            buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
             if (buffer == null || buffer.capacity() < 1) {
-                GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
                 this._lastNodeLengthReal = this.shouldRenderingCount = 0;
                 this.sync_lock.unlock();
                 return BoxEnum.STATE_FAILED_OTHER;
@@ -230,9 +231,9 @@ public class CurveEntity extends BaseMIRenderData {
         buffer.position(0);
         buffer.limit(buffer.capacity());
 
-        if (useMapping) GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
-        else GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, bufferIndex, buffer);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+        else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, buffer);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         if (newBuffer) this._lastNodeLength = nodeSize;
         this._lastNodeLengthReal = this.shouldRenderingCount = nodeSize * 2 - 2;
         this.sync_lock.unlock();
@@ -262,9 +263,9 @@ public class CurveEntity extends BaseMIRenderData {
         this._lastNodeLengthReal = this.shouldRenderingCount = nodeNum * 2 - 2;
         final long bufferSize = (long) this._lastNodeLengthReal * _NODE_LENGTH << 1;
 
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getNodesVBO());
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bufferSize, GL15.GL_DYNAMIC_DRAW);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+        GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
@@ -406,7 +407,7 @@ public class CurveEntity extends BaseMIRenderData {
     }
 
     /**
-     * Create a line-strip as {@link GL11#GL_LINE_STRIP}, and submit nodeList.<p>
+     * Create a line-strip as <code>GL_LINE_STRIP</code>, and submit nodeList.<p>
      * Flat tangent, just a line-strip.
      *
      * @param points size must be larger than 2.

@@ -5,6 +5,7 @@ import com.fs.starfarer.api.util.Pair;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.memorypool.GPUPoolBehavior;
 import org.boxutil.manager.InstanceDataMemoryPool;
@@ -32,9 +33,9 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
     private static void poolRebind(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> pool) {
         final var poolCast = (BUtil_InstanceDataMemoryPool) pool;
         final var target = pool.getPoolBehavior().glTarget;
-        GL15.glBindBuffer(target, poolCast.glID);
-        GL30.glBindBufferBase(target, poolCast.binding, poolCast.glID);
-        GL15.glBindBuffer(target, 0);
+        GLWrapper.Buffer.SSBO.glBindBuffer(target, poolCast.glID);
+        GLWrapper.Buffer.SSBO.glBindBufferBase(target, poolCast.binding, poolCast.glID);
+        GLWrapper.Buffer.SSBO.glBindBuffer(target, 0);
     }
 
     private static BUtil_InstanceMemory makeEmptyMem(InstanceType meta, long address, long size, int index, GPUMemoryPool<BUtil_InstanceMemory, InstanceType> pool) {
@@ -50,11 +51,11 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
 
         final InstanceType[] target = InstanceType.values();
         for (byte i = 0; i < poolSize; i++) {
-            final var behavior = new GPUPoolBehavior<>(GL43.GL_SHADER_STORAGE_BUFFER, BUtil_InstanceDataMemoryPool::makeEmptyMem, BUtil_InstanceDataMemoryPool::makeNotEmptyMem);
-            behavior.glContextRequirements = BUtil_InstanceDataMemoryPool::poolReq;
-            behavior.glRebindBuffer = BUtil_InstanceDataMemoryPool::poolRebind;
-            behavior.defaultBufferSize = target[i].getSize() * 65536L;
-            behavior.persistentMappingAllow = false;
+            final var behavior = new GPUPoolBehavior<>(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER, BUtil_InstanceDataMemoryPool::makeEmptyMem, BUtil_InstanceDataMemoryPool::makeNotEmptyMem)
+                    .setBufferAccessBits(GLWrapper.Buffer.GL_MAP_READ_BIT | GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_PERSISTENT_BIT)
+                    .setContextRequirements(BUtil_InstanceDataMemoryPool::poolReq)
+                    .setRebindBuffer(BUtil_InstanceDataMemoryPool::poolRebind)
+                    .setDefaultBufferSize(target[i].getSize() * 65536L);
 
             POOL[i] = new BUtil_InstanceDataMemoryPool(behavior, target[i], i);
             POOL[i].init();
@@ -73,39 +74,39 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
     public long compact() {
         final long timeNano = super.compact();
         if (timeNano > 0) {
-            final double time = super.compact() * 0.001d;
+            final double time = timeNano * 0.001d;
             final boolean toMS = time > 1000.0d;
             final String timeStr = String.format("%.3f", toMS ? time * 0.001d : time) + (toMS ? " ms'" : " us'");
             Global.getLogger(InstanceDataMemoryPool.class).info("'BoxUtil' [" + this.target.name() + "] instance memory pool compact elapsed: '" + timeStr);
         }
-        return super.compact();
+        return timeNano;
     }
 
     public void rebindBase() {
-        this.clientLock.lock();
-        this.gpuLock.lock();
+        this.getClientLock().lock();
+        this.poolGPULock().lock();
         if (this.glID < 1 || this.memTotal < 1) {
-            this.gpuLock.unlock();
-            this.clientLock.unlock();
+            this.poolGPULock().unlock();
+            this.getClientLock().unlock();
             return;
         }
 
         this.behavior.glRebindBuffer.accept(this);
-        this.gpuLock.unlock();
-        this.clientLock.unlock();
+        this.poolGPULock().unlock();
+        this.getClientLock().unlock();
     }
 
     /**
      * Anchor at bottom-left, default size <code>1.0d * 1.0d</code>
      *
-     * @return {space, total}
+     * @param values {space, total}
      */
-    public Pair<Long, Long> glDrawMemoryUsage() {
-        Pair<Long, Long> values = new Pair<>(0L, 0L);
-        this.clientLock.lock();
+    public void glDrawMemoryUsage(final long[] values) {
+        this.getClientLock().lock();
         if (this.glID < 1) {
             GL11.glColor4ub(BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ONE_COLOR);
             GL11.glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+            values[0] = values[1] = 0L;
         } else {
             final byte[] rgb = new byte[3];
             final double div = 1.0d / this.memTotal;
@@ -129,10 +130,9 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
                 GL11.glColor4ub(rgb[0], rgb[1], rgb[2], BoxEnum.ONE_COLOR);
                 GL11.glRectd(block.address() * div, 0.0d, (block.address() + block.size()) * div, 1.0d);
             }
-            values.one = this.memSpace;
-            values.two = this.memTotal;
+            values[0] = this.memSpace;
+            values[1] = this.memTotal;
         }
-        this.clientLock.unlock();
-        return values;
+        this.getClientLock().unlock();
     }
 }

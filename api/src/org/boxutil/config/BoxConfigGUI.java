@@ -19,6 +19,7 @@ import org.boxutil.backends.core.instancedrendering.BUtil_GLDrawInstanceMemoryUs
 import org.boxutil.backends.core.statictrail.BUtil_GLDrawStaticTrailMemoryUsage;
 import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.KernelCore;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
@@ -87,24 +88,24 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
             if (ids.get(_CONFIG_ICON) != 0) {
                 _textures[_CONFIG_ICON] = ids.get(_CONFIG_ICON);
                 Pair<int[], ByteBuffer> data = CommonUtil.getRawPixels("graphics/ui/BUtil_ConfigButton.png", 4);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_CONFIG_ICON]);
-                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, data.one[0], data.one[1], 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data.two);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, _textures[_CONFIG_ICON]);
+                GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGBA8, data.one[0], data.one[1], 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, data.two);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
             }
             if (ids.get(_FEATURES_ICON) != 0) {
                 _textures[_FEATURES_ICON] = ids.get(_FEATURES_ICON);
                 Pair<int[], ByteBuffer> data = CommonUtil.getRawPixels("graphics/ui/BUtil_FeaturesIcon.png", 4);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, _textures[_FEATURES_ICON]);
-                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, data.one[0], data.one[1], 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data.two);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+                GL11.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, _textures[_FEATURES_ICON]);
+                GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGBA8, data.one[0], data.one[1], 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, data.two);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
+                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_EDGE);
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
         }
         if (this._simpleBorder == null) {
             this._simpleBorder = new UIBorderObject(false, true);
@@ -131,43 +132,42 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
      */
     public static void globalInitLater() {
         if (globalInit) return;
-        ShaderCore.init();
-        ShaderCore.initMiscShaderPrograms();
-        ShaderCore.initGlobalDataUBO();
+        globalInit = true;
+        ShaderCore.initCore();
+        ShaderCore.initOptional();
         BUtil_InstanceDataMemoryPool.initPool();
         BUtil_StaticTrailMemoryPool.initPool();
-        GL11.glFinish();
+        GLWrapper.Operation.Sync.glFinish();
         KernelCore.init();
         BoxDatabase.initCLState();
         BoxConfigs.sysCheck();
         BoxConfigs.check();
         BoxConfigs.initShaderPacks();
         initBackgroundTex();
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, BoxDatabase.BUtil_ONE.getTextureId());
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, BoxDatabase.BUtil_ZERO.getTextureId());
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, BoxDatabase.BUtil_NONE.getTextureId());
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, BoxDatabase.BUtil_Z.getTextureId());
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, BoxDatabase.BUtil_TILES.getTextureId());
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, BoxDatabase.BUtil_ONE.getTextureId());
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, BoxDatabase.BUtil_ZERO.getTextureId());
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, BoxDatabase.BUtil_NONE.getTextureId());
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, BoxDatabase.BUtil_Z.getTextureId());
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, BoxDatabase.BUtil_TILES.getTextureId());
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
         if (BoxConfigs.isGLDebugOutputSupported() && BoxConfigs.isGLDebugEnable()) {
-            GL11.glEnable(GL43.GL_DEBUG_OUTPUT);
-            GL11.glEnable(GL43.GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            GLWrapper.Operation.glEnable(GL43.GL_DEBUG_OUTPUT);
+            GLWrapper.Operation.glEnable(GL43.GL_DEBUG_OUTPUT_SYNCHRONOUS);
             GL43.glDebugMessageCallback(new KHRDebugCallback());
-            GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, null, true);
+            GL43.glDebugMessageControl(GLWrapper.Operation.GL_DONT_CARE, GLWrapper.Operation.GL_DONT_CARE, GLWrapper.Operation.GL_DONT_CARE, null, true);
         }
         BUtil_GLDrawInfo.addInfo(new BUtil_GLDrawInstanceMemoryUsage());
         BUtil_GLDrawInfo.addInfo(new BUtil_GLDrawStaticTrailMemoryUsage());
-        globalInit = true;
     }
 
     public static boolean isGlobalInitialized() {

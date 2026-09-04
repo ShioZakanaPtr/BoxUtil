@@ -1,37 +1,41 @@
-package org.boxutil.backends.core;
+package org.boxutil.backends.core.thread;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.combat.DamagingProjectileAPI;
+import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.backends.shader.BUtil_GLImpl;
+import org.boxutil.backends.util.BUtil_SpinBarrier;
 import org.boxutil.base.BaseIlluminantData;
+import org.boxutil.base.BaseProjectileTrailTracker;
 import org.boxutil.base.api.ControlDataAPI;
 import org.boxutil.base.api.InstanceRenderAPI;
 import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
-import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.config.BoxThreadSync;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.instance.MemoryBlock;
 import org.boxutil.manager.CombatRenderingManager;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.manager.StaticTrailManager;
 import org.boxutil.define.struct.statictrail.StaticTrailData;
-import org.boxutil.util.CalculateUtil;
-import org.boxutil.util.TrigUtil;
 import org.lwjgl.opengl.*;
-import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector4f;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTemplate {
+final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemplate {
     private final static class ComputeNum {
         int begin;
         int end;
@@ -42,10 +46,17 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         }
     }
 
-    private final static Deque<ComputeNum>[] _SKIP_MEMORY = new Deque[]{new ConcurrentLinkedDeque<ComputeNum>(), new ConcurrentLinkedDeque<ComputeNum>()};
+    private interface InvokePluginFun {
+        void run(BackgroundEveryFramePlugin plugin, float amount, boolean isPaused);
+    }
 
-    private final Deque<BackgroundEveryFramePlugin> _tmpQueue_plugin = new ConcurrentLinkedDeque<>();
-    private final Deque<RenderDataAPI> _tmpQueue_entity = new ConcurrentLinkedDeque<>();
+    @SuppressWarnings("unchecked")
+    private final static Deque<ComputeNum>[] _SKIP_MEMORY = new Deque[]{new ConcurrentLinkedDeque<ComputeNum>(), new ConcurrentLinkedDeque<ComputeNum>()};
+    private final static BUtil_SpinBarrier _PROJ_SNAPSHOT_BARRIER = new BUtil_SpinBarrier(2);
+    private final static AtomicInteger _PROJ_SNAPSHOT_IDX = new AtomicInteger(0);
+    private final static List<DamagingProjectileAPI> _PROJ_SNAPSHOT = new ArrayList<>(1024);
+    private static volatile int _CURR_PROJ_SNAPSHOT_SIZE = 0;
+
     private final boolean _isAux;
 
     BUtil_LogicalThread(Thread hostThread, Drawable sharedDrawable, Object isAux) {
@@ -54,35 +65,36 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
     }
 
     private void runThreadPlugin(final boolean isBegin) {
-        this._tmpQueue_plugin.clear();
-
-        final Deque<BackgroundEveryFramePlugin> queue = BUtil_ThreadResource.Logical.getThreadPluginQueue();
-        final float amount = BUtil_GLImpl.Operations.getLastFrameAmount();
-        final boolean isPaused = BUtil_GLImpl.Operations.isPaused();
+        final var deque = BUtil_ResourceStorage.sharedResource().getLogicalPlugins();
+        final var dequeNext = BUtil_ResourceStorage.sharedResource().getNextLogicalPlugins();
+        final float amount = BUtil_GLImpl.getLastFrameAmount();
+        final boolean isPaused = BUtil_GLImpl.isPaused();
+        final Function<Deque<BackgroundEveryFramePlugin>, BackgroundEveryFramePlugin> invokePoll = this._isAux ? Deque::pollLast : Deque::pollFirst;
+        final InvokePluginFun invokePluginFun = isBegin ? BackgroundEveryFramePlugin::runBeginAdvance : BackgroundEveryFramePlugin::runAfterAdvance;
+        final BiPredicate<Deque<BackgroundEveryFramePlugin>, BackgroundEveryFramePlugin> invokeOffer = this._isAux ? Deque::offerFirst : Deque::offerLast;
 
         BackgroundEveryFramePlugin plugin;
-        while ((plugin = this._isAux ? queue.pollLast() : queue.pollFirst()) != null) {
-            if (isBegin) plugin.runBeginAdvance(amount, isPaused); else plugin.runAfterAdvance(amount, isPaused);
-            if (!plugin.isAdvanceExpired()) {
-                if (this._isAux) this._tmpQueue_plugin.offerFirst(plugin); else this._tmpQueue_plugin.offerLast(plugin);
-            }
+        while ((plugin = invokePoll.apply(deque)) != null) {
+            invokePluginFun.run(plugin, amount, isPaused);
+            if (!plugin.isAdvanceExpired()) invokeOffer.test(dequeNext, plugin);
         }
     }
 
     private void runEntityAdvance() {
-        this._tmpQueue_entity.clear();
-
-        final Deque<RenderDataAPI> queue = BUtil_ThreadResource.Logical.getEntitiesLogicalQueue();
-        final float amount = BUtil_GLImpl.Operations.getLastFrameAmount();
-        final boolean isPaused = BUtil_GLImpl.Operations.isPaused();
+        final var deque = BUtil_ResourceStorage.sharedResource().getSharedLogicalEntities();
+        final var dequeNext = BUtil_ResourceStorage.sharedResource().getNextSharedLogicalEntities();
+        final float amount = BUtil_GLImpl.getLastFrameAmount();
+        final boolean isPaused = BUtil_GLImpl.isPaused();
         final boolean customShaderpacksDataLayout = BoxConfigs.getCurrShaderPacksContext().haveCustomInstanceDataLayout(), instanceDataSupported = !BUtil_InstanceDataMemoryPool.isPoolInvalid();
+        final Function<Deque<RenderDataAPI>, RenderDataAPI> invokePoll = this._isAux ? Deque::pollLast : Deque::pollFirst;
+        final BiPredicate<Deque<RenderDataAPI>, RenderDataAPI> invokeOffer = this._isAux ? Deque::offerFirst : Deque::offerLast;
 
         RenderDataAPI entity;
         ControlDataAPI data;
         MemoryBlock memory;
         boolean toRemove, haveData, ignoreCompute, shaderpacksCustomData;
         int addBegin, addEnd, addBegin2, addEnd2;
-        while ((entity = this._isAux ? queue.pollLast() : queue.pollFirst()) != null) {
+        while ((entity = invokePoll.apply(deque)) != null) {
             data = entity.getControlData();
             haveData = data != null;
             if (entity.hasDelete()) continue;
@@ -132,14 +144,13 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
                 }
             }
 
-            if (toRemove) entity.delete(); else {
-                if (this._isAux) this._tmpQueue_entity.offerFirst(entity); else this._tmpQueue_entity.offerLast(entity);
-            }
+            if (toRemove) entity.delete(); else invokeOffer.test(dequeNext, entity);
         }
     }
 
     private void runEntitySubmit() {
-        BUtil_ThreadResource.Logical.runEntitySubmit(this._isAux);
+        BUtil_ResourceStorage.sharedResource().runEntitySubmit(this._isAux);
+        if (GLWrapper.Operation.Sync.valid_Barrier() && !GLWrapper.Buffer.valid_BufferStorage()) GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT);
     }
 
     private static void compactMemoryPoolTarget(final InstanceType target) {
@@ -157,10 +168,11 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
             compactMemoryPoolTarget(InstanceType.DYNAMIC_2D);
             compactMemoryPoolTarget(InstanceType.DYNAMIC_3D);
         }
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT);
     }
 
     private void preComputeInstance() {
-        if (!BoxConfigs.isShaderEnable() || BUtil_InstanceDataMemoryPool.isPoolInvalid()) return;
+        if (BUtil_InstanceDataMemoryPool.isPoolInvalid()) return;
         final var instanceType = this._isAux ? InstanceType.DYNAMIC_3D : InstanceType.DYNAMIC_2D;
         final long edge = BUtil_InstanceDataMemoryPool.getPool(instanceType).getBufferRightEdge();
         final int dataSize = instanceType.getSize();
@@ -196,118 +208,90 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread._ThreadTem
         skipBlocks.clear();
 
         if (processQueue.isEmpty()) return;
+        GLWrapper.Operation.Sync.glMemoryBarrier(
+                GLWrapper.Buffer.valid_BufferStorage() ?
+                        GLWrapper.Operation.Sync.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT : GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT
+        );
         final var program = this._isAux ? ShaderCore.getInstanceMatrix3DProgram() : ShaderCore.getInstanceMatrix2DProgram();
         final float dimAMD = BoxDatabase.isGLDeviceAMD() ? 64.0f : 32.0f;
         BUtil_InstanceDataMemoryPool.getPool(instanceType).rebindBase();
         program.active();
-        GL20.glUniform1f(program.location[0], BUtil_GLImpl.Operations.getLastFrameAmount());
+        GLWrapper.Shader.glUniform1f(program.location[0], BUtil_GLImpl.getLastFrameAmount());
         for (var target : processQueue) {
             final int computeBegin = target.begin, computeEnd = target.end, itemDim = (int) Math.ceil(Math.sqrt((computeEnd - computeBegin) / dimAMD));
-            GL20.glUniform2i(program.location[1], computeBegin, computeEnd);
-            GL43.glDispatchCompute(1, itemDim, itemDim);
+            GLWrapper.Shader.glUniform2i(program.location[1], computeBegin, computeEnd);
+            GLWrapper.Shader.Comp.glDispatchCompute(1, itemDim, itemDim);
         }
         program.close();
-        GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
     }
 
     private void markAndGenProjectiles() {
-        final List<DamagingProjectileAPI> projList = Global.getCombatEngine().getProjectiles();
-        final int listSize = projList.size(), i_mid = listSize / 2, i_start = this._isAux ? i_mid : 0, i_limit = this._isAux ? listSize : i_mid;
+        if (this._isAux) { // just get all and quickly check, do not modify, ignore changes from another threads
+            _PROJ_SNAPSHOT.clear();
+            _PROJ_SNAPSHOT.addAll(Global.getCombatEngine().getProjectiles());
+            _PROJ_SNAPSHOT_IDX.set(0);
+            _CURR_PROJ_SNAPSHOT_SIZE = _PROJ_SNAPSHOT.size();
+        }
+        _PROJ_SNAPSHOT_BARRIER.barrier();
 
-        for (int i = i_start; i < i_limit; i++) { // just get all and quickly check, do not modify, ignore changes from another threads
-            final DamagingProjectileAPI proj = projList.get(i);
+        final int totalProj = _CURR_PROJ_SNAPSHOT_SIZE;
+        if (totalProj < 1) return;
+
+        int i;
+        DamagingProjectileAPI proj;
+        while ((i = _PROJ_SNAPSHOT_IDX.getAndIncrement()) < totalProj) {
+            proj = _PROJ_SNAPSHOT.get(i);
             if (proj == null || proj.wasRemoved() || proj.isExpired()) continue;
 
             final String projID = proj.getProjectileSpecId();
             if (projID == null || projID.isBlank()) continue;
 
-            final HashSet<String> trailConfig = StaticTrailManager.getTrailDataConfig(projID);
+            final Set<String> trailConfig = StaticTrailManager.getTrailDataConfig(projID);
             if (trailConfig == null || trailConfig.isEmpty()) continue;
-            if (BUtil_ThreadResource._AUTOGEN_MARKED_PROJ.add(proj)) {
+            if (BUtil_ResourceStorage.combatLayered().checkAndMarkAutogenProjectile(proj)) {
                 for (String trailID : trailConfig) {
                     if (trailID == null || trailID.isBlank()) continue;
 
                     final StaticTrailData trail = StaticTrailManager.getTrailData(trailID);
-                    CombatRenderingManager.addStaticTrailGenerator(trail, proj,
+                    if (trail == null) continue;
+                    CombatRenderingManager.addStaticTrail(
+                            trail, proj,
                             trail.renderBelowExplosions ? CombatEngineLayers.ABOVE_SHIPS_LAYER : CombatEngineLayers.BELOW_INDICATORS_LAYER,
-                            (amount, elapsedTime, callback) -> {
-                                if (callback.isExpired()) return;
-                                if (proj.wasRemoved() || proj.isExpired()) callback.destroy();
-
-                                final Vector2f loc = proj.getLocation();
-                                if (callback.isNotRecommendedRecordsCurrent(loc)) {
-                                    callback.pauseOnce();
-                                    return;
-                                }
-                                callback.setCurrentLocation(loc);
-
-                                boolean velForForward = trail.velocityForForward;
-                                float offsetRotateC = 1.0f, offsetRotateS = 0.0f;
-                                if (velForForward) {
-                                    final Vector2f velocity = proj.getVelocity();
-                                    final float velLength = velocity.length();
-                                    velForForward = velLength != 0.0f;
-                                    if (velForForward) {
-                                        offsetRotateC = velocity.x / velLength;
-                                        offsetRotateS = velocity.y / velLength;
-                                        callback.setCurrentFacing(offsetRotateC, offsetRotateS);
-                                    }
-                                }
-                                if (!velForForward) {
-                                    final float a = (float) Math.toRadians(proj.getFacing());
-                                    offsetRotateC = (float) Math.cos(a);
-                                    offsetRotateS = TrigUtil.sinFormCosRadiansF(offsetRotateC, a);
-                                    callback.setCurrentFacing(offsetRotateC, offsetRotateS);
-                                }
-
-                                final Vector4f spawnOffsetRange = trail.fixedSpawnOffsetRange;
-                                if (spawnOffsetRange != null) {
-                                    final float rnd = (float) Math.random(),
-                                            offsetX = CalculateUtil.mix(spawnOffsetRange.x, spawnOffsetRange.z, rnd),
-                                            offsetY = CalculateUtil.mix(spawnOffsetRange.y, spawnOffsetRange.w, rnd);
-                                    callback.getCurrentLocation().x += offsetX * offsetRotateC - offsetY * offsetRotateS;
-                                    callback.getCurrentLocation().y += offsetX * offsetRotateS + offsetY * offsetRotateC;
-                                }
-                            });
+                            new BaseProjectileTrailTracker(proj, trail)
+                    );
                 }
             }
         }
     }
 
-    private void sendBeginAdvanceSync() {
-        if (this._FAILED) return;
-        BUtil_ThreadResource.sendGLSync(this._isAux ? BUtil_ThreadResource.__SYNC_AUX_BEGIN_ADVANCE : BUtil_ThreadResource.__SYNC_BEGIN_ADVANCE);
-    }
-
-    private void sendFinishAdvanceSync() {
-        if (this._FAILED) return;
-        BUtil_ThreadResource.sendGLSync(this._isAux ? BUtil_ThreadResource.__SYNC_AUX_FINISH_ADVANCE : BUtil_ThreadResource.__SYNC_FINISH_ADVANCE);
-    }
-
     protected void runBody() {
         BoxThreadSync.Logical.beginAdvance().arriveAndAwaitAdvance();
-        if (!this._FAILED) BUtil_ThreadResource.tryGLSync(this._isAux ? BUtil_ThreadResource.__SYNC_AUX_AFTER_RENDERING_HOST : BUtil_ThreadResource.__SYNC_AFTER_RENDERING_HOST);
-        if (!this._tmpQueue_plugin.isEmpty()) BUtil_ThreadResource.Logical.addAllThreadPlugin(this._tmpQueue_plugin);
         this.runThreadPlugin(true);
         this.runEntityAdvance();
         this.runEntitySubmit();
-        if (BoxConfigs.isShaderEnable()) GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT);
+        if (BoxConfigs.isTrailSystemEnable()) BUtil_StaticTrailMemoryPool.deferredDeletePool(this._isAux);
 
         BoxThreadSync.Logical.beginPoolCompact().arriveAndAwaitAdvance();
-        if (!this._tmpQueue_plugin.isEmpty()) BUtil_ThreadResource.Logical.addAllThreadPlugin(this._tmpQueue_plugin);
-        if (!this._tmpQueue_entity.isEmpty()) BUtil_ThreadResource.Logical.addAllEntitiesLogical(this._tmpQueue_entity);
         this.compactMemoryPool();
 
         BoxThreadSync.Logical.beginInstanceCompute().arriveAndAwaitAdvance();
-        this.preComputeInstance();
-        this.markAndGenProjectiles();
-        if (!BUtil_GLImpl.Operations.isPaused()) BUtil_StaticTrailMemoryPool.computeTrailNode(BUtil_GLImpl.Operations.getLastFrameAmount(), BUtil_GLImpl.Operations.getElapsedTimeWithoutPaused(), BUtil_GLImpl.Operations.isInCampaignSector(), this._isAux);
-        this.sendFinishAdvanceSync();
+        if (BoxConfigs.isShaderEnable()) this.preComputeInstance();
+        if (BoxConfigs.isTrailSystemEnable()) {
+            this.markAndGenProjectiles();
+            if (!BUtil_GLImpl.isPaused() && BUtil_GLImpl.doStaticTrailCompute()) BUtil_StaticTrailMemoryPool.computeTrailNode(this._isAux);
+        }
+        if (!this._FAILED) {
+            if (GLWrapper.Operation.Sync.valid_Barrier()) {
+                GLWrapper.Operation.Sync.glMemoryBarrier(
+                        GLWrapper.Buffer.valid_BufferStorage() ?
+                                GLWrapper.Operation.Sync.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT : GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT);
+            }
+            GLWrapper.Operation.Sync.glFlush();
+        }
 
         BoxThreadSync.Logical.finishAdvance().arriveAndAwaitAdvance();
         this.runThreadPlugin(false);
-        BUtil_StaticTrailMemoryPool.delayAddTracker(this._isAux);
-        this.sendBeginAdvanceSync();
+        if (BoxConfigs.isTrailSystemEnable()) BUtil_StaticTrailMemoryPool.deferredAddTracker(this._isAux);
     }
 
     protected void logicalInit() {

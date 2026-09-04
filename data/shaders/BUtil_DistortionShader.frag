@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 430
 
 #define HARDNESS_RING 1
 #define HARDNESS_INNER 4

@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 430
 
 #define FRINGE_COLOR 0
 #define CORE_COLOR 1

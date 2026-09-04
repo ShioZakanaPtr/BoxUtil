@@ -2,15 +2,18 @@ package org.boxutil.units.standard.attribute;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import org.apache.log4j.Level;
+import org.boxutil.backends.util.BUtil_GlyphKerningMap;
+import org.boxutil.backends.util.BUtil_GlyphSet;
+import org.boxutil.backends.util.BUtil_Glyph;
 import org.boxutil.define.BoxEnum;
+import org.boxutil.manager.FontDataManager;
 import org.boxutil.manager.TextureManager;
 import org.boxutil.units.standard.entity.TextFieldEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.text.BreakIterator;
 import java.util.*;
 
 /**
@@ -19,16 +22,7 @@ import java.util.*;
  * The font height or width is 255 the maximum, and 0 is the minimum.
  */
 public class FontMapData {
-    protected final static FontData _RESERVED_FONT = new FontData(BoxEnum.ONE, BoxEnum.ONE, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, (byte) 8);
-    static {
-        _RESERVED_FONT.uv[0] = -512.0f;
-        _RESERVED_FONT.uv[1] = -512.0f;
-        _RESERVED_FONT.uv[2] = -512.0f;
-        _RESERVED_FONT.uv[3] = -512.0f;
-    }
-
-    protected HashMap<Character, FontData> fonts = new HashMap<>(128);
-    protected HashMap<Character, HashMap<Character, Byte>> kerning = null;
+    protected final static BitMapGlyph _RESERVED_FONT = new BitMapGlyph();
 
     protected final boolean isBold;
     protected final boolean isItalic;
@@ -48,40 +42,29 @@ public class FontMapData {
     protected int fontMapID = 0;
     protected String name = "";
     protected SpriteAPI fontMap = null;
-    protected long[] _glyphData = new long[3];
-
-    private FontMapData() {
-        this.fontSize = 0;
-        this.stretchH = 0;
-        this.aaLevel = 0;
-        this.spacingX = 0;
-        this.spacingY = 0;
-        this.isBold = false;
-        this.isItalic = false;
-        this.isUnicode = false;
-        this.isSmooth = false;
-        this.charCount = 0;
-        this.lineHeight = 0;
-        this.baseHeight = 0;
-        this.mapWidth = 0;
-        this.mapHeight = 0;
-    }
+    protected final BUtil_GlyphSet<BitMapGlyph> glyphs;
+    protected final BUtil_GlyphKerningMap kerning;
 
     /**
-     * @param fontPath should register the texture of font in <strong>settings.json</strong>, or set handel after by manual.
+     * Recommend to use {@link FontDataManager#tryFont(String)} to make it.
+     *
+     * @param fontPath should register the texture of font in <strong>settings.json</strong>, or set handel after by manual; otherwise system will try for loading the texture by {@link TextureManager}.
      */
     public FontMapData(String fontPath) {
-        StringBuilder mapPath = new StringBuilder();
-        String[] fontFileFound = fontPath.split("/");
-        Set<Character> kerningSpace = new HashSet<>(4);
+        final StringBuilder mapPath = new StringBuilder();
+        final String[] fontFileFound = fontPath.split("/");
+        final Set<Character> kerningSpace = new HashSet<>(4);
         for (int i = 0; i < fontFileFound.length - 1; i++) {
             mapPath.append(fontFileFound[i]).append("/");
         }
         String fontFile;
-        final byte[] stateInteger = new byte[7];
         final boolean[] stateBool = new boolean[4];
+        final byte[] stateInteger = new byte[7];
         final short[] mapSize = new short[2];
-        int charCountIn = 0;
+        final Set<BitMapGlyph> tmpFonts = new HashSet<>(256);
+        final HashMap<Integer, Byte> tmpKerning = new HashMap<>(128);
+        BitMapGlyph tabGlyph = null, spaceGlyph = null;
+        int charCountIn = 0, maxCharValue = Math.max('\t' & 0xffff, ' ' & 0xffff);
         try {
             fontFile = Global.getSettings().loadText(fontPath);
             BufferedReader reader = new BufferedReader(new StringReader(fontFile));
@@ -175,10 +158,13 @@ public class FontMapData {
                             if (channelTmp == 8) channel = 0b000_100_00;
                         }
                     }
-                    this.fonts.put(id, new FontData(mapSize[0], mapSize[1], x, y, width, height, xOffset, yOffset, xAdvance, channel));
+                    final var toAddGlyph = new BitMapGlyph(id, mapSize[0], mapSize[1], x, y, width, height, xOffset, yOffset, xAdvance, channel);
+                    if (id == ' ' && spaceGlyph == null) spaceGlyph = toAddGlyph;
+                    if (id == '\t' && tabGlyph == null) tabGlyph = toAddGlyph;
+                    maxCharValue = Math.max(maxCharValue, id & 0xffff);
+                    tmpFonts.add(toAddGlyph);
                 }
                 if (lineLow.startsWith("kerning")) {
-                    if (this.kerning == null) this.kerning = new HashMap<>();
                     fieldFound = lineLow.split(" ");
                     char first = 0, second = 0;
                     byte amount = 0;
@@ -187,48 +173,40 @@ public class FontMapData {
                         if (check.startsWith("second=")) second = (char) Integer.parseInt(check.replace("second=", ""));
                         if (check.startsWith("amount=")) amount = Byte.parseByte(check.replace("amount=", ""));
                     }
-                    if (!this.fonts.containsKey(first)) {
-                        this.isValid = false;
-                        break;
-                    }
+                    final int fetchKerningKey = BUtil_GlyphKerningMap.fetchKey(first, second);
                     if (!kerningSpace.contains(first) && second == ' ') kerningSpace.add(first);
-                    if (!this.kerning.containsKey(first)) this.kerning.put(first, new HashMap<Character, Byte>());
-                    HashMap<Character, Byte> thisMap = this.kerning.get(first);
-                    thisMap.put(second, amount);
+                    final byte finalAmount = amount;
+                    tmpKerning.computeIfAbsent(fetchKerningKey, k -> finalAmount);
                 }
             }
 
-            FontData tabChar = this.getFont('\t'), spaceChar = this.getFont(' ');
-            HashMap<Character, Byte> spaceKerningMap;
-            if (spaceChar == null) {
-                spaceChar = new FontData((short) 0, (short) 0, (short) 0, (short) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) (stateInteger[0] / 2), (byte) 0b000_000_00);
-                this.fonts.put(' ', spaceChar);
+            if (spaceGlyph == null) {
+                spaceGlyph = new BitMapGlyph(' ', (short) 0, (short) 0, (short) 0, (short) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) (stateInteger[0] / 2), (byte) 0b000_000_00);
+                tmpFonts.add(spaceGlyph);
             }
-            if (tabChar == null) {
-                tabChar = new FontData((short) 0, (short) 0, (short) 0, (short) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0);
-                System.arraycopy(spaceChar.byteState, 0, tabChar.byteState, 0, tabChar.byteState.length);
-                System.arraycopy(spaceChar.uv, 0, tabChar.uv, 0, tabChar.uv.length);
-                tabChar.byteState[0] <<= 2;
-                tabChar.byteState[4] <<= 2;
-                this.fonts.put('\t', tabChar);
-                if (this.kerning != null) {
-                    spaceKerningMap = this.kerning.get(' ');
-                    if (spaceKerningMap != null) this.kerning.put('\t', spaceKerningMap);
-                    if (!kerningSpace.isEmpty()) {
-                        for (Character character : kerningSpace) {
-                            spaceKerningMap = this.kerning.get(character);
-                            spaceKerningMap.put('\t', spaceKerningMap.get(' '));
+            if (tabGlyph == null) {
+                tabGlyph = new BitMapGlyph('\t');
+                tabGlyph.copyFrom(spaceGlyph);
+                tabGlyph.width <<= 2;
+                tabGlyph.xOffset <<= 2;
+                tmpFonts.add(tabGlyph);
+                if (!kerningSpace.isEmpty()) {
+                    for (final Character character : kerningSpace) {
+                        final Byte kerningValue = tmpKerning.get(BUtil_GlyphKerningMap.fetchKey(character, ' '));
+                        if (kerningValue != null && kerningValue != 0) {
+                            tmpKerning.put(BUtil_GlyphKerningMap.fetchKey(character, '\t'), kerningValue);
                         }
                     }
                 }
             }
-            this.checkValidWhenChangedFontMap();
             Global.getLogger(FontMapData.class).info("'BoxUtil' loaded font at path: '" + fontPath + "'.");
         } catch (IOException e) {
             this.isValid = false;
             Global.getLogger(FontMapData.class).error("'BoxUtil' loading font file failed at path: '" + fontPath + "'. " + e.getMessage());
         } finally {
-            this.fonts.put(TextFieldEntity.RESERVED_SYMBOL, _RESERVED_FONT);
+            tmpFonts.add(_RESERVED_FONT);
+            this.glyphs = new BUtil_GlyphSet<>(tmpFonts, maxCharValue, (byte) 3);
+            this.kerning = new BUtil_GlyphKerningMap(tmpKerning, 0.8f);
             this.fontSize = stateInteger[0];
             this.stretchH = stateInteger[1];
             this.aaLevel = stateInteger[2];
@@ -243,11 +221,12 @@ public class FontMapData {
             this.baseHeight = stateInteger[6];
             this.mapWidth = mapSize[0];
             this.mapHeight = mapSize[1];
+            this.checkValidWhenChangedFontMap();
         }
     }
 
     protected void checkValidWhenChangedFontMap() {
-        this.isValid = this.fontMapID != 0 && this.fonts.size() > 3;
+        this.isValid = this.fontMapID != 0 && this.glyphs.size() > 3;
     }
 
     public boolean isValid() {
@@ -258,25 +237,45 @@ public class FontMapData {
         return this.name;
     }
 
+    public SpriteAPI getTexture() {
+        return this.fontMap;
+    }
+
+    @Deprecated
     public SpriteAPI getMap() {
         return this.fontMap;
     }
 
-    public void setMap(SpriteAPI fontMap) {
-        this.fontMap = fontMap;
+    public void setTexture(SpriteAPI texture) {
+        this.fontMap = texture;
         if (this.fontMap == null) {
             this.fontMapID = 0;
         } else this.fontMapID = this.fontMap.getTextureId();
         this.checkValidWhenChangedFontMap();
     }
 
-    public int getMapID() {
+    @Deprecated
+    public void setMap(SpriteAPI fontMap) {
+        this.setTexture(fontMap);
+    }
+
+    public int getTextureID() {
         return this.fontMapID;
     }
 
-    public void setMapID(int fontMapID) {
-        this.fontMapID = fontMapID;
+    @Deprecated
+    public int getMapID() {
+        return this.getTextureID();
+    }
+
+    public void setTexture(int texture) {
+        this.fontMapID = texture;
         this.checkValidWhenChangedFontMap();
+    }
+
+    @Deprecated
+    public void setMapID(int fontMapID) {
+        this.setTexture(fontMapID);
     }
 
     public byte getFontSize() {
@@ -334,43 +333,57 @@ public class FontMapData {
         return this.mapHeight;
     }
 
+    public int getGlyphNum() {
+        return this.glyphs.size();
+    }
+
+    @Deprecated
     public int getCharCount() {
-        return this.charCount;
+        return this.getGlyphNum();
     }
 
+    public boolean containsGlyph(char character) {
+        return this.glyphs.contains(character);
+    }
+
+    @Deprecated
     public boolean containsFont(char character) {
-        return this.fonts.containsKey(character);
+        return this.containsGlyph(character);
     }
 
+    public @Nullable BitMapGlyph getGlyph(char character) {
+        final BitMapGlyph result = new BitMapGlyph(character);
+        return this.glyphs.get(character, result) ? result : null;
+    }
+
+    public boolean loadGlyph(char character, final BitMapGlyph result) {
+        return this.glyphs.get(character, result);
+    }
+
+    @Deprecated
     public FontData getFont(char character) {
-        return this.fonts.get(character);
+        return null;
     }
 
     public boolean haveKerning() {
-        return this.kerning != null && !this.kerning.isEmpty();
+        return this.kerning.size() > 0;
     }
 
+    public byte getKerning(char first, char second) {
+        return this.kerning.get(first, second);
+    }
+
+    @Deprecated
     public boolean containsKerning(char character) {
-        return this.kerning.containsKey(character);
+        return false;
     }
 
+    @Deprecated
     public HashMap<Character, Byte> getKerningMap(char character) {
-        return this.kerning.get(character);
+        return null;
     }
 
-    protected void buildGlyphStruct(char codePoint, short rawX, short rawY, short x, short y, byte width, byte height, byte xOffset, byte yOffset, byte xAdvance, byte channel) {
-        final int uvXOffset = rawX / 2, uvYOffset = rawY / 2;
-        this._glyphData[codePoint] = Float.floatToRawIntBits((float) (x - uvXOffset) / (float) rawX) |
-                ((long) Float.floatToRawIntBits((float) (rawY - y - height - uvYOffset) / (float) rawY) << 32);
-        this._glyphData[codePoint + 1] = Float.floatToRawIntBits((float) (x + width - uvXOffset) / (float) rawX) |
-                ((long) Float.floatToRawIntBits((float) (rawY - y - uvYOffset) / (float) rawY) << 32);
-        this._glyphData[codePoint + 2] = width | (height << 8) | (xOffset << 16) | (yOffset << 24) | ((long) xAdvance << 32) | ((long) channel << 40);
-    }
-
-    protected boolean withoutGlyph(char codePoint) {
-        return this._glyphData[codePoint + 2] < 0;
-    }
-
+    @Deprecated
     public static class FontData {
         public final float[] uv = new float[]{0.0f, 0.0f, 1.0f, 1.0f}; // uvBLx, uvBLy, uvTRx, uvTRy
         public final byte[] byteState = new byte[6]; // vec2(size), xOffset, yOffset, xAdvance, page, channel
@@ -417,6 +430,102 @@ public class FontMapData {
          */
         public byte getChannel() {
             return this.byteState[5];
+        }
+    }
+
+    public static class BitMapGlyph implements BUtil_Glyph { // only single texture, so page always is 0
+        public byte width = 0;
+        public byte height = 0;
+        public byte xOffset = 0;
+        public byte yOffset = 0;
+        public byte xAdvance = 0;
+        public byte channel = 8;
+        private final char character;
+        public float uvBLx = 0.0f;
+        public float uvBLy = 0.0f;
+        public float uvTRx = 1.0f;
+        public float uvTRy = 1.0f;
+
+        private BitMapGlyph(char character, short rawX, short rawY, short x, short y, byte width, byte height, byte xOffset, byte yOffset, byte xAdvance, byte channel) {
+            final int uvXOffset = rawX / 2, uvYOffset = rawY / 2;
+            this.width = width;
+            this.height = height;
+            this.xOffset = xOffset;
+            this.yOffset = yOffset;
+            this.xAdvance = xAdvance;
+            this.channel = channel;
+            this.character = character;
+            this.uvBLx = (float) (x - uvXOffset) / (float) rawX;
+            this.uvBLy = (float) (rawY - y - height - uvYOffset) / (float) rawY;
+            this.uvTRx = (float) (x + width - uvXOffset) / (float) rawX;
+            this.uvTRy = (float) (rawY - y - uvYOffset) / (float) rawY;
+        }
+
+        private BitMapGlyph(char character) {
+            this.character = character;
+        }
+
+        public BitMapGlyph() {
+            this.character = TextFieldEntity.RESERVED_SYMBOL;
+            this.uvBLx = this.uvBLy = this.uvTRx = this.uvTRy = -512.0f;
+        }
+
+        public char character() {
+            return this.character;
+        }
+
+        public void fetch(int offset, final long[] raw) {
+            final long raw0 = raw[offset], raw1 = raw[offset + 1], raw2 = raw[offset + 2];
+
+            this.uvBLx = Float.intBitsToFloat((int) (raw0 & 0xffffffffL));
+            this.uvBLy = Float.intBitsToFloat((int) ((raw0 >> 32) & 0xffffffffL));
+
+            this.uvTRx = Float.intBitsToFloat((int) (raw1 & 0xffffffffL));
+            this.uvTRy = Float.intBitsToFloat((int) ((raw1 >> 32) & 0xffffffffL));
+
+            this.width = (byte) (raw2 & 0xffL);
+            this.height = (byte) ((raw2 >> 8) & 0xffL);
+            this.xOffset = (byte) ((raw2 >> 16) & 0xffL);
+            this.yOffset = (byte) ((raw2 >> 24) & 0xffL);
+            this.xAdvance = (byte) ((raw2 >> 32) & 0xffL);
+            this.channel = (byte) ((raw2 >> 40) & 0xffL);
+        }
+
+        public void store(int offset, final long[] raw) {
+            raw[offset] = Float.floatToRawIntBits(this.uvBLx) & 0xffffffffL |
+                    (long) Float.floatToRawIntBits(this.uvBLy) << 32 & 0xffffffff00000000L;
+
+            raw[offset + 1] = Float.floatToRawIntBits(this.uvTRx) & 0xffffffffL |
+                    (long) Float.floatToRawIntBits(this.uvTRy) << 32 & 0xffffffff00000000L;
+
+            raw[offset + 2] = this.width & 0xffL |
+                    this.height << 8 & 0xff_00L |
+                    this.xOffset << 16 & 0xff_00_00L |
+                    this.yOffset << 24 & 0xff_00_00_00L |
+                    (long) this.xAdvance << 32 & 0xff_00_00_00_00L |
+                    (long) this.channel << 40 & 0xff_00_00_00_00_00L;
+        }
+
+        public void copyFrom(final BitMapGlyph src) {
+            this.width = src.width;
+            this.height = src.height;
+            this.xOffset = src.xOffset;
+            this.yOffset = src.yOffset;
+            this.xAdvance = src.xAdvance;
+            this.channel = src.channel;
+            this.uvBLx = src.uvBLx;
+            this.uvBLy = src.uvBLy;
+            this.uvTRx = src.uvTRx;
+            this.uvTRy = src.uvTRy;
+        }
+
+        public int hashCode() {
+            return Character.hashCode(this.character);
+        }
+
+        public boolean equals(Object obj) {
+            if (obj instanceof BitMapGlyph cast) return cast.hashCode() == this.hashCode();
+            return false;
         }
     }
 }

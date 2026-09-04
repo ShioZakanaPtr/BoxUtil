@@ -1,6 +1,7 @@
 package org.boxutil.units.standard.entity;
 
 import com.fs.starfarer.api.Global;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.LayeredEntityType;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.base.BaseMIRenderData;
@@ -58,9 +59,10 @@ public class CommonEntity extends BaseMIRenderData {
     }
 
     public void glDraw() {
-        if (this._entity == null || !this._entity.isValid()) return;
-        GL30.glBindVertexArray(this._entity.getVAO());
-        GL31.glDrawArraysInstanced(GL11.GL_TRIANGLES, 0, this._entity.getPatchCount(), Math.max(Math.min(this.getValidInstanceDataCount(), this.getRenderingCount()), 1));
+        if (this._entity != null && this._entity.isValid() && GLWrapper.VAO.valid() && GLWrapper.Drawcall.valid_InstancedDraw()) {
+            GLWrapper.VAO.glBindVertexArray(this._entity.getVAO());
+            GLWrapper.Drawcall.glDrawArraysInstanced(GLWrapper.Drawcall.GL_TRIANGLES, 0, this._entity.getPatchCount(), Math.max(Math.min(this.getValidInstanceDataCount(), this.getRenderingCount()), 1));
+        }
     }
 
     protected void _resetExc() {

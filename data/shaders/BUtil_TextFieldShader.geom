@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 430
 
 layout (points) in;
 layout (triangle_strip, max_vertices = 16) out;

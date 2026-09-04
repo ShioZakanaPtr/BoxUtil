@@ -10,8 +10,6 @@ public interface MemoryBlock extends GPUMemory<InstanceType> {
     @Deprecated
     InstanceType type();
 
-    InstanceType meta();
-
     /**
      * The corresponding offset on SSBO memory as instance data.
      */

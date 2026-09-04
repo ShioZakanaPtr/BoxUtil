@@ -1,8 +1,5 @@
 #version 430
 
-precision OVERWRITE_PRECISION float;
-precision highp int;
-
 layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
 
 subroutine void t_formatPickerStore(in ivec2 coord, in float result);
@@ -10,10 +7,11 @@ subroutine uniform t_formatPickerStore f_formatPickerStoreState;
 
 layout(binding = 0) uniform sampler2D u_texSrc;
 layout(binding = 1) uniform sampler2D u_texIn;
-layout(binding = 0, r8) uniform writeonly image2D u_texOut;
-layout(binding = 1, r16) uniform writeonly image2D u_texOut16;
+layout(binding = 0, r8) restrict writeonly uniform image2D u_texOut;
+layout(binding = 1, r16) restrict writeonly uniform image2D u_texOut16;
 
 uniform ivec3 u_sizeStep;
+uniform ivec4 u_ioOffset;
 uniform int u_vertical;
 uniform vec2 u_gSigmaSRInv;
 
@@ -30,15 +28,17 @@ subroutine(t_formatPickerStore) void p_bit16Store(in ivec2 coord, in float resul
 }
 
 void main() {
+    bool isVertical = bool(u_vertical);
+    ivec4 pickOffset = isVertical ? ivec4(0, 0, u_ioOffset.zw) : ivec4(u_ioOffset.xy, 0, 0);
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
     if (any(greaterThanEqual(coord, u_sizeStep.xy))) return;
-    float center = texelFetch(u_texSrc, coord, 0).x;
-    bool isVertical = bool(u_vertical);
+    ivec2 samplingCoord = coord + pickOffset.xy;
+    float center = texelFetch(u_texSrc, samplingCoord, 0).x;
     ivec2 checkSize = ivec2(0, isVertical ? u_sizeStep.y : u_sizeStep.x);
     ivec2 coordCurr;
     float curr, diff, sum = 0.0, weightCurr, weight = 0.0;
     for (int i = -u_sizeStep.z; i <= u_sizeStep.z; ++i) {
-        coordCurr = coord + (isVertical ? ivec2(0, i) : ivec2(i, 0));
+        coordCurr = samplingCoord + (isVertical ? ivec2(0, i) : ivec2(i, 0));
         checkSize.x = isVertical ? coordCurr.y : coordCurr.x;
         if (checkSize.x < 0 || checkSize.x >= checkSize.y) continue;
         curr = texelFetch(u_texIn, coordCurr, 0).x;
@@ -47,5 +47,5 @@ void main() {
         sum += curr * weightCurr;
         weight += weightCurr;
     }
-    f_formatPickerStoreState(coord, sum / weight);
+    f_formatPickerStoreState(coord + pickOffset.zw, sum / weight);
 }

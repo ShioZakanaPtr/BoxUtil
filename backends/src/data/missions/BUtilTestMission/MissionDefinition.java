@@ -12,18 +12,17 @@ import com.fs.starfarer.api.mission.MissionDefinitionPlugin;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import org.boxutil.base.BaseBackgroundEveryFramePlugin;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.BaseTemporaryCleanupPlugin;
 import org.boxutil.base.SimpleParticleControlData;
 import org.boxutil.base.api.InstanceDataAPI;
 import org.boxutil.base.api.RenderDataAPI;
+import org.boxutil.base.api.everyframe.BackgroundEveryFramePlugin;
 import org.boxutil.base.api.resource.TemporaryCleanupPlugin;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxGeometry;
 import org.boxutil.define.InstanceType;
 import org.boxutil.manager.*;
-import org.boxutil.units.standard.GPUMemoryPool;
 import org.boxutil.units.standard.attribute.Instance2Data;
 import org.boxutil.units.standard.attribute.NodeData;
 import org.boxutil.define.struct.statictrail.StaticTrailData;
@@ -33,7 +32,6 @@ import org.boxutil.units.standard.misc.NumberObject;
 import org.boxutil.units.standard.misc.TextFieldObject;
 import org.boxutil.util.*;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.*;
@@ -80,6 +78,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
         private float time3 = 0.0f;
         private float time4 = 0.0f;
         private float time5 = 0.0f;
+        private float timeCutTrail = 0.0f;
 //        private float time6 = 0.0f;
         private float hanabiTogTimer = 0.0f;
         private boolean tog = false;
@@ -117,7 +116,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
             ship.getMutableStats().getDeceleration().modifyMult(id, 32.0f);
             ship.getMutableStats().getMaxTurnRate().modifyMult(id, 16.0f);
             ship.getMutableStats().getTurnAcceleration().modifyMult(id, 32.0f);
-            Vector2f mousePosScreenSpace = new Vector2f(Mouse.getX() / Global.getSettings().getScreenScaleMult(), Mouse.getY() / Global.getSettings().getScreenScaleMult());
+            Vector2f mousePosScreenSpace = new Vector2f(BUtil_GLImpl.getMouseX(), BUtil_GLImpl.getMouseY());
             Vector2f mousePos = new Vector2f(this.engine.getViewport().convertScreenXToWorldX(mousePosScreenSpace.x), this.engine.getViewport().convertScreenYToWorldY(mousePosScreenSpace.y));
 
             if (!this.engine.isPaused()) {
@@ -313,19 +312,19 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                 }
 
                 if (this.trailData == null) {
-                    this.trailData = new StaticTrailData("BUtil_TestTrail");
+                    this.trailData = new StaticTrailData("BUtil_TestTrail", (short) 1);
                     this.trailData.material.setDiffuse(Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"));
                     this.trailData.material.setEmissive(Global.getSettings().getSprite("graphics/fx/beam_rough2_fringe.png"));
                     this.trailData.material.setColor(Color.WHITE);
                     this.trailData.material.setEmissiveColor(Color.ORANGE);
-                    this.trailData.durFadeIn = 0.3f;
-                    this.trailData.durFull = 0.9f;
-                    this.trailData.durFadeOut = 3.0f;
-                    this.trailData.velocityOutRange = new Vector4f(-32.0f, -32.0f, 32.0f, 32.0f);
-                    this.trailData.angularOutRange = new Vector2f(-11.25f, 11.25f);
-                    this.trailData.colorOut = CommonUtil.colorNormalization4f(new Color(0xFF4640FF), 1.0f);
+                    this.trailData.setDurFadeIn(0.3f)
+                            .setDurFull(0.9f)
+                            .setDurFadeOut(3.0f)
+                            .setVelocityOutRange(new Vector4f(-64.0f, -64.0f, 64.0f, 64.0f))
+                            .setAngularOutRange(new Vector2f(-180.0f, 180.0f))
+                            .setColorOut(CommonUtil.colorNormalization4f(new Color(0xFF4640FF), 1.0f));
 
-                    CombatRenderingManager.addStaticTrailGenerator(this.trailData, null,
+                    CombatRenderingManager.addStaticTrail(this.trailData, ship,
                             CombatEngineLayers.ABOVE_PARTICLES,
                             (l_amount, l_elapsedTime, l_callback) -> {
                                 final CombatEngineAPI l_engine = Global.getCombatEngine();
@@ -333,16 +332,20 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                                 final ViewportAPI l_viewport = l_engine.getViewport();
 
                                 l_callback.setCurrentLocation(
-                                        l_viewport.convertScreenXToWorldX(BUtil_GLImpl.Operations.getMouseX() / Global.getSettings().getScreenScaleMult()),
-                                        l_viewport.convertScreenYToWorldY(BUtil_GLImpl.Operations.getMouseY() / Global.getSettings().getScreenScaleMult())
+                                        l_viewport.convertScreenXToWorldX(BUtil_GLImpl.getMouseX()),
+                                        l_viewport.convertScreenYToWorldY(BUtil_GLImpl.getMouseY())
                                 );
-//                                if (Float.isNaN(l_callback.getPreviousRecordsLocation().x)) l_callback.setCurrentFacing(1.0f, 0.0f);
-//                                else {
-//                                    Vector2f.sub(l_callback.getCurrentLocation(), l_callback.getPreviousRecordsLocation(), l_callback.getCurrentFacing());
-//                                    l_callback.getCurrentFacing().normalise(l_callback.getCurrentFacing());
-//                                }
+                                if (Float.isNaN(l_callback.getPreviousRecordsLocation().x)) l_callback.setCurrentFacing(1.0f, 0.0f);
+                                else {
+                                    Vector2f.sub(l_callback.getCurrentLocation(), l_callback.getPreviousRecordsLocation(), l_callback.getCurrentFacing());
+                                    l_callback.getCurrentFacing().normalise(l_callback.getCurrentFacing());
+                                }
                             });
                 }
+                if (timeCutTrail > 5.0f) {
+                    timeCutTrail = 0.0f;
+                    CombatRenderingManager.tryCutTrailOnEntity(ship);
+                } else timeCutTrail += amount;
             }
 
             if (this.flareEntity != null) {
@@ -648,7 +651,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
             this.locVec.glDraw(player.getVelocity().x, 96.0f, 30.0f);
             GL11.glPopMatrix();
 
-            RenderingUtil.debugText("Elapsed combat time = " + String.format("%.5f", this.time) + 's');
+//            RenderingUtil.debugText("Elapsed combat time = " + String.format("%.5f", this.time) + 's');
         }
     }
 
@@ -664,7 +667,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
         }
     }
 
-    private final static class LogicalCombatBackgroundThreadPluginExample extends BaseBackgroundEveryFramePlugin implements TemporaryCleanupPlugin {
+    private final static class LogicalCombatBackgroundThreadPluginExample implements BackgroundEveryFramePlugin, TemporaryCleanupPlugin {
         private final TextFieldEntity text = new TextFieldEntity("graphics/fonts/FiraCodeModified/Fira_Code_Regular_20.fnt");
         private final int charLength;
         private boolean toggle = false;
@@ -712,18 +715,16 @@ public class MissionDefinition implements MissionDefinitionPlugin {
             this.text.setAutoSubmitPrimeMatrix(false);
             this.text.submitEntityData();
             CombatRenderingManager.addEntity(this.text);
-            CombatRenderingManager.addBackgroundLogicalPlugin(this);
+            CombatRenderingManager.addBackgroundRenderingPlugin(this);
             CombatRenderingManager.addCleanupPlugin(this);
         }
 
-        public boolean isAdvanceExpired() {
+        public boolean isRenderingExpired() {
             return this._expired || this.text.hasDelete();
         }
 
-        // it was thread safety.
-        public void runBeginAdvance(float amount, boolean isPaused) {
-            Vector2f mousePosScreenSpace = new Vector2f(Mouse.getX() / Global.getSettings().getScreenScaleMult(), Mouse.getY() / Global.getSettings().getScreenScaleMult());
-            this.text.setLocation(mousePosScreenSpace.x - 320.0f, mousePosScreenSpace.y + 64.0f);
+        public void runAfterRendering(float amount, boolean isPaused) {
+            this.text.setLocation(BUtil_GLImpl.getMouseX() - 320.0f, BUtil_GLImpl.getMouseY() + 64.0f);
             if (this.timer > 0.5f) {
                 this.timer -= 0.5f;
                 this.toggle = !this.toggle;
@@ -735,9 +736,6 @@ public class MissionDefinition implements MissionDefinitionPlugin {
         public void cleanupCombatOnce() {
             this._expired = true;
         }
-
-        // ignored
-        public void cleanupCampaignOnce() {}
     }
 
     private final static class RenderingPlugin extends BaseCombatLayeredRenderingPlugin {

@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 430
 
 layout (location = 0) in vec4 a_uv; // uvBL, uvTR
 layout (location = 1) in vec2 a_position; // x, y

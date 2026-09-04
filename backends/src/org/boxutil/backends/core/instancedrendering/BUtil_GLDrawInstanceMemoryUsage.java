@@ -3,8 +3,10 @@ package org.boxutil.backends.core.instancedrendering;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
 import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
+import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.config.BoxConfigs;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.InstanceType;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.entity.TextFieldEntity;
@@ -36,17 +38,18 @@ public final class BUtil_GLDrawInstanceMemoryUsage implements BUtil_GLDrawInfo.D
     }
 
     private void initTitleText(final InstanceType type) {
+        final Color highLightColor = Misc.getHighlightColor();
         byte ordinal = (byte) type.ordinal();
         this.title[ordinal] = new TextFieldObject("graphics/fonts/FiraCodeModified/Fira_Code_SemiBold_14.fnt");
         final var text = this.title[ordinal];
         text.mallocTextData(50);
         text.addText(String.format("%-11s", type.name()), 0.0f, Misc.getNegativeHighlightColor(), true);
         text.addText("▼ ");
-        text.addText("    0 Byte", 0.0f, Misc.getHighlightColor());
+        text.addText("    0 Byte", 0.0f, highLightColor);
         text.addText(" / ");
-        text.addText("    0 Byte", 0.0f, Misc.getHighlightColor());
+        text.addText("    0 Byte", 0.0f, highLightColor);
         text.addText(" ≈ ");
-        text.addText("  - %", 0.0f, Misc.getHighlightColor());
+        text.addText("  - %", 0.0f, highLightColor);
         text.addText(" Usage");
         text.setFieldWidth(512.0f);
         text.setFieldHeight(32.0f);
@@ -76,14 +79,6 @@ public final class BUtil_GLDrawInstanceMemoryUsage implements BUtil_GLDrawInfo.D
         text.submitText();
     }
 
-    private static String getUsageP(double div) {
-        double result = div * 100.0d;
-        byte decimal = 2;
-        if (result > 1.0d) decimal = (byte) (2 - (byte) Math.log10(result));
-        String formatStr = "%4." + Math.max(decimal, 0) + 'f';
-        return String.format(formatStr, result) + '%';
-    }
-
     public boolean isShown() {
         return BoxConfigs.isShowInstanceMemoryUsage() && !BUtil_InstanceDataMemoryPool.isPoolInvalid();
     }
@@ -93,45 +88,45 @@ public final class BUtil_GLDrawInstanceMemoryUsage implements BUtil_GLDrawInfo.D
                 fixedTextHeight = this.title[0].getFontMap().getLineHeight(), hoverTextHeight = this.hoverText[0].getFontMap().getLineHeight(),
                 locX = ShaderCore.getScreenWidth(), locY = ShaderCore.getScreenHeight();
 
-        final Vector2f mousePos = new Vector2f(Mouse.getX(), Mouse.getY()), renderingPos = new Vector2f(0.0f, 0.0f);
+        final Vector2f mousePos = new Vector2f(BUtil_GLImpl.getMouseX(), BUtil_GLImpl.getMouseY()), renderingPos = new Vector2f(0.0f, 0.0f);
         final var aabb = new Vector2f[]{new Vector2f(), new Vector2f(locX - widgetSpace, locY - topPadding - totalYOffset)};
         aabb[0].x = aabb[1].x - barWidth;
         aabb[0].y = aabb[1].y - fixedTextHeight - barHeight;
         GL11.glPushMatrix();
         GL11.glTranslatef(aabb[0].x - locX, aabb[0].y - locY, 0.0f);
 
-        Pair<Long, Long> values;
         TextFieldObject text;
         TextFieldEntity.TextData textData;
         byte ordinal;
         long usageValue = 0;
         float drawOffset = -topPadding, totalDrawOffset = 0.0f;
         byte[] pickTextColor;
+        final long[] values = new long[2];
         boolean notShowHover = true, refreshText;
         for (final var type : this.types) {
             ordinal = (byte) type.ordinal();
             if (totalDrawOffset < -topPadding) GL11.glTranslatef(0.0f, drawOffset, 0.0f);
 
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GLWrapper.Operation.glDisable(GLWrapper.Texture.GL_TEXTURE_2D);
             GL11.glPushMatrix();
             GL11.glScalef(barWidth, barHeight, 1.0f);
-            values = BUtil_InstanceDataMemoryPool.getPool(type).glDrawMemoryUsage();
+            BUtil_InstanceDataMemoryPool.getPool(type).glDrawMemoryUsage(values);
             GL11.glPopMatrix();
 
             text = this.title[ordinal];
-            refreshText = values.one != this.last_state[ordinal][0] || values.two != this.last_state[ordinal][1];
+            refreshText = values[0] != this.last_state[ordinal][0] || values[1] != this.last_state[ordinal][1];
             if (refreshText) {
-                this.last_state[ordinal][0] = values.one;
-                this.last_state[ordinal][1] = values.two;
-                usageValue = values.two - values.one;
+                this.last_state[ordinal][0] = values[0];
+                this.last_state[ordinal][1] = values[1];
+                usageValue = values[1] - values[0];
                 
                 textData = text.getTextDataList().get(0);
                 textData.setText(String.format("%-11s", type.name()));
-                pickTextColor = values.two < 1 ? this.textColor[0] : this.textColor[1];
+                pickTextColor = values[1] < 1 ? this.textColor[0] : this.textColor[1];
                 textData.setColor(pickTextColor[0], pickTextColor[1], pickTextColor[2], pickTextColor[3]);
                 text.getTextDataList().get(2).setText(BUtil_MiscUtil.getMemoryNumStr(usageValue));
-                text.getTextDataList().get(4).setText(BUtil_MiscUtil.getMemoryNumStr(values.two));
-                text.getTextDataList().get(6).setText(getUsageP((double) usageValue / values.two));
+                text.getTextDataList().get(4).setText(BUtil_MiscUtil.getMemoryNumStr(values[1]));
+                text.getTextDataList().get(6).setText(BUtil_MiscUtil.getPercentageStr((double) usageValue / values[1]));
                 text.submitText();
             }
 
@@ -141,7 +136,7 @@ public final class BUtil_GLDrawInstanceMemoryUsage implements BUtil_GLDrawInfo.D
             text = this.hoverText[ordinal];
             if (refreshText) {
                 text.getTextDataList().get(0).setText(String.format(Locale.US, "%,d", usageValue));
-                text.getTextDataList().get(2).setText(String.format(Locale.US, "%,d", values.two));
+                text.getTextDataList().get(2).setText(String.format(Locale.US, "%,d", values[1]));
                 text.submitText();
             }
 

@@ -4,6 +4,7 @@ import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
 import org.boxutil.base.api.resource.TextSubmitFeedbackAPI;
 import org.boxutil.define.BoxEnum;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.FontDataManager;
 import org.boxutil.units.standard.attribute.FontMapData;
 import org.boxutil.units.standard.entity.TextFieldEntity;
@@ -109,8 +110,8 @@ public class TextFieldObject {
             GL11.glPushMatrix();
             GL11.glTranslatef(location.x, location.y, 0.0f);
             if (facing != 0.0f) GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+            GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
             if (!useVertexColor) Misc.setColor(globalColor);
             this.glDraw(useVertexColor);
             GL11.glPopMatrix();
@@ -123,8 +124,8 @@ public class TextFieldObject {
             GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
             GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
             if (useVertexColor) GL11.glEnableClientState(GL11.GL_COLOR_ARRAY); else GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.fontMap.getMapID());
+            GLWrapper.Operation.glEnable(GLWrapper.Texture.GL_TEXTURE_2D);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.fontMap.getTextureID());
             this._sync_lock.lock();
             this.vertexBuffer.position(0);
             this.vertexBuffer.limit(this.vertexBuffer.capacity());
@@ -137,7 +138,7 @@ public class TextFieldObject {
                 this.colorBuffer.limit(this.colorBuffer.capacity());
                 GL11.glColorPointer(4, true, 0, this.colorBuffer);
             }
-            GL11.glDrawArrays(GL11.GL_QUADS, 0, this.getValidCharLength() << 2);
+            GLWrapper.Drawcall.glDrawArrays(GLWrapper.Drawcall.GL_QUADS, 0, this.getValidCharLength() << 2);
             this._sync_lock.unlock();
             GL11.glPopClientAttrib();
         }
@@ -171,6 +172,10 @@ public class TextFieldObject {
 
     public TextFieldEntity.TextData addText(String text) {
         return this.addText(text, _DEFAULT_PAD, Misc.getTextColor());
+    }
+
+    public TextFieldEntity.TextData addText(String text, Color color) {
+        return this.addText(text, _DEFAULT_PAD, color);
     }
 
     public TextFieldEntity.TextData addText(String text, boolean italic) {
@@ -269,11 +274,9 @@ public class TextFieldObject {
         Pair<Integer, Float> lastLineAlignmentData = new Pair<Integer, Float>(0, 0.0f);
         List<Pair<Integer, Float>> currLineAlignmentData = new ArrayList<>(8); // lineCharCount, currWidth
         TextFieldEntity.TextData textData;
-        FontMapData.FontData fontData, notFoundSymbol;
-        HashMap<Character, Byte> kerningMap;
-        Byte kerningCharPackage;
+        final FontMapData.BitMapGlyph fontData = new FontMapData.BitMapGlyph(),
+                notFoundSymbol = new FontMapData.BitMapGlyph();
         final float[] currCharUV = new float[4];
-        byte[] currCharSize;
         float currYPos, currRightPos, currBottomPos, bottomItalicOffset, topItalicOffset;
         for (int i = textDataRefreshIndex; i < textDataRefreshLimit; i++) {
             textData = this._lastTextDataList.get(i);
@@ -282,8 +285,9 @@ public class TextFieldObject {
             final byte fontLineHeight = this.fontMap.getLineHeight(), fontBaseHeight = this.fontMap.getLineBase();
             lastCharacter = 0;
             char character;
-            notFoundSymbol = this.fontMap.getFont(TextFieldEntity.NOT_FOUND_SYMBOL);
-            boolean isLineFeed, currNotFound, haveNotFoundSymbol = notFoundSymbol != null;
+            boolean isLineFeed,
+                    currNotFound,
+                    haveNotFoundSymbol = this.fontMap.loadGlyph(TextFieldEntity.NOT_FOUND_SYMBOL, notFoundSymbol);
             if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
                 if (haveSubmitFeedback) this._submitFeedback.processBreak(BoxEnum.ZERO, i, true, '\0', 0, currentStep, currentLine);
                 break;
@@ -302,12 +306,11 @@ public class TextFieldObject {
             for (int j = 0; j < charArray.length; j++) {
                 character = charArray[j];
                 isLineFeed = character == TextFieldEntity.LINE_FEED_SYMBOL;
-                fontData = this.fontMap.getFont(character);
-                currNotFound = fontData == null;
+                currNotFound = !this.fontMap.loadGlyph(character, fontData);
                 if (currNotFound && haveNotFoundSymbol) {
                     currNotFound = false;
                     character = TextFieldEntity.NOT_FOUND_SYMBOL;
-                    fontData = notFoundSymbol;
+                    fontData.copyFrom(notFoundSymbol);
                 }
 
                 if (currNotFound || isLineFeed) {
@@ -331,26 +334,22 @@ public class TextFieldObject {
                     continue;
                 }
 
-                if (this.getFontMap().haveKerning()) {
-                    kerningMap = this.getFontMap().getKerningMap(lastCharacter);
-                    if (kerningMap != null) {
-                        kerningCharPackage = kerningMap.get(character);
-                        if (kerningCharPackage != null) currentStep += kerningCharPackage;
-                    }
+                if (this.fontMap.haveKerning()) {
+                    currentStep += this.fontMap.getKerning(lastCharacter, character);
                 }
 
-                currentDrawStep = currentStep + fontData.getXOffset();
-                isLineFeed = currentDrawStep + fontData.getSize()[0] > this.getTextFieldWidth();
+                currentDrawStep = currentStep + fontData.xOffset;
+                isLineFeed = currentDrawStep + fontData.width > this.getTextFieldWidth();
                 if (isLineFeed) {
                     currentStep = 0.0f;
-                    currentDrawStep = fontData.getXOffset();
+                    currentDrawStep = fontData.xOffset;
                     currentLine -= fontLineHeight + this.getFontHeightSpace();
 
                     putWidthDataCheck = false;
                     currLineAlignmentData.add(new Pair<>(lineValidChar, lastLineVisualWidth));
                     lineValidChar = 0;
                 }
-                lastLineVisualWidth = currentDrawStep + fontData.getSize()[0];
+                lastLineVisualWidth = currentDrawStep + fontData.width;
                 maxLineVisualWidth = Math.max(maxLineVisualWidth, lastLineVisualWidth);
 
                 if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
@@ -359,18 +358,17 @@ public class TextFieldObject {
                 }
                 if (haveSubmitFeedback) this._submitFeedback.processText(BoxEnum.ZERO, i, character, true, isLineFeed, j, currentStep, currentLine, textData.getPadding(), textData.byteState[1], textData.byteState[2], textData.byteState[3], textData.byteState[4], textData.byteState[5]);
 
-                currCharUV[0] = fontData.getUVs()[0] + 0.5f;
-                currCharUV[1] = fontData.getUVs()[1] + 0.5f;
-                currCharUV[2] = fontData.getUVs()[2] + 0.5f;
-                currCharUV[3] = fontData.getUVs()[3] + 0.5f;
-                currCharSize = fontData.getSize();
-                currYPos = currentLine - fontData.getYOffset(); // top
-                currRightPos = currentDrawStep + currCharSize[0];
-                currBottomPos = currYPos - currCharSize[1];
+                currCharUV[0] = fontData.uvBLx + 0.5f;
+                currCharUV[1] = fontData.uvBLy + 0.5f;
+                currCharUV[2] = fontData.uvTRx + 0.5f;
+                currCharUV[3] = fontData.uvTRy + 0.5f;
+                currYPos = currentLine - fontData.yOffset; // top
+                currRightPos = currentDrawStep + fontData.width;
+                currBottomPos = currYPos - fontData.height;
                 if (isItalic) {
-                    final byte bottomEdge = (byte) (Math.max(fontLineHeight - fontData.getYOffset() - currCharSize[1], 0) - fontBaseHeight);
+                    final byte bottomEdge = (byte) (Math.max(fontLineHeight - fontData.yOffset - fontData.height, 0) - fontBaseHeight);
                     bottomItalicOffset = this.getCurrentItalicFactor() * bottomEdge;
-                    topItalicOffset = this.getCurrentItalicFactor() * (currCharSize[1] + bottomEdge);
+                    topItalicOffset = this.getCurrentItalicFactor() * (fontData.height + bottomEdge);
                 } else bottomItalicOffset = topItalicOffset = 0.0f;
                 // bl
                 tmpVertexBuffer.put(currentDrawStep + bottomItalicOffset);
@@ -399,7 +397,7 @@ public class TextFieldObject {
                     lineValidChar++;
                 }
                 lastCharacter = character;
-                currentStep += fontData.getXAdvance() + this.getFontWidthSpace();
+                currentStep += fontData.xAdvance + this.getFontWidthSpace();
                 if (character == '\t') currentStep += this.getFontWidthSpace() * 3.0f;
                 if (!hasCharSubmit) {
                     hasCharSubmit = true;

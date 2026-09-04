@@ -1,7 +1,8 @@
-package org.boxutil.backends.core;
+package org.boxutil.backends.core.thread;
 
 import com.fs.starfarer.api.Global;
 import org.apache.log4j.Logger;
+import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.LWJGLException;
@@ -11,7 +12,7 @@ import java.util.concurrent.*;
 
 public final class BUtil_BoxUtilBackgroundThread {
     private final static ExecutorService __POOL = Executors.newFixedThreadPool(3, r -> {
-        Thread thread = new Thread(r);
+        final Thread thread = new Thread(r);
         thread.setDaemon(true);
         return thread;
     });
@@ -20,7 +21,7 @@ public final class BUtil_BoxUtilBackgroundThread {
     private final static byte _LOGICAL_THREAD = 1;
     private final static byte _LOGICAL_AUX_THREAD = 2;
     private final static byte _TOTAL_THREAD = 3;
-    private final static _ThreadTemplate[] _THREAD_RUNNABLE = new _ThreadTemplate[_TOTAL_THREAD];
+    private final static ThreadTemplate[] _THREAD_RUNNABLE = new ThreadTemplate[_TOTAL_THREAD];
     private final static Thread[] _THREAD = new Thread[_TOTAL_THREAD];
 
     private static boolean _INIT = false;
@@ -28,7 +29,7 @@ public final class BUtil_BoxUtilBackgroundThread {
 
     @FunctionalInterface
     private interface _ThreadInit {
-        _ThreadTemplate apply(Thread thread, Drawable drawable, Object args);
+        ThreadTemplate apply(Thread thread, Drawable drawable, Object args);
     }
 
     private static void setupThread(byte target, final _ThreadInit thread, final Object args, final String name) {
@@ -55,7 +56,7 @@ public final class BUtil_BoxUtilBackgroundThread {
         return _VALID;
     }
 
-    static abstract class _ThreadTemplate implements Runnable {
+    static abstract class ThreadTemplate implements Runnable {
         protected boolean _FAILED = true;
         protected CountDownLatch _INIT_SYNC = new CountDownLatch(1);
 
@@ -65,14 +66,22 @@ public final class BUtil_BoxUtilBackgroundThread {
 
         protected Thread _CURR_THREAD = null;
 
-        _ThreadTemplate(final Thread hostThread, final Drawable sharedDrawable, final Object args) {
+        ThreadTemplate(final Thread hostThread, final Drawable sharedDrawable, final Object args) {
             this._HOST_THREAD = hostThread;
             this._DRAWABLE = sharedDrawable;
             this._LOG = Global.getLogger(this.getClass());
         }
 
         void destroyDrawable() {
-            if (this._DRAWABLE != null) this._DRAWABLE.destroy();
+            if (this._DRAWABLE != null) {
+                try {
+                    this._DRAWABLE.releaseContext();
+                } catch (LWJGLException e) {
+                    CommonUtil.printThrowable(this._LOG, "'BoxUtil' additional thread gl-context release failed: ", e);
+                } finally {
+                    this._DRAWABLE.destroy();
+                }
+            }
         }
 
         void clearTmpSync() {
@@ -91,7 +100,6 @@ public final class BUtil_BoxUtilBackgroundThread {
                 final int _glError = GL11.glGetError();
                 this._FAILED = _glError != 0;
                 if (this._FAILED) {
-                    this.destroyDrawable();
                     CommonUtil.printThrowable(this._LOG, "'BoxUtil' additional thread gl-context failed: ", new OpenGLException(_glError));
                     this._INIT_SYNC.countDown();
                     return;
@@ -122,7 +130,7 @@ public final class BUtil_BoxUtilBackgroundThread {
                 this.destroyDrawable();
                 this.logicalDestroy();
                 this._LOG.info("'BoxUtil' additional thread destroy by exception.");
-                BUtil_ThreadResource.pushThreadException(e);
+                BUtil_ResourceStorage.sharedResource().pushThreadException(e);
                 return;
             }
             this.destroyDrawable();

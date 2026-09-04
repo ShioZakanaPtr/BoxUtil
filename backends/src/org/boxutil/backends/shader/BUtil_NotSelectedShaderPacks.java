@@ -9,6 +9,7 @@ import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.util.Misc;
 import org.boxutil.base.BaseShaderPacksContext;
+import org.boxutil.base.StandardShaderpacksPass;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
@@ -100,7 +101,7 @@ public class BUtil_NotSelectedShaderPacks extends BaseShaderPacksContext {
     }
 
     public void applyAAPass(ViewportAPI viewport, boolean isCampaign, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap) {
-        BUtil_GLImpl.StandardShaderPacks.applyFXAA(this._AA_ENABLED, this._AA_CONSOLE, this._DEPTH_AA, colorMap, worldDataMap);
+        StandardShaderpacksPass.applyFXAA(this._AA_ENABLED, this._AA_CONSOLE, this._DEPTH_AA, colorMap, worldDataMap);
     }
 
     public void applyBloomPass(ViewportAPI viewport, boolean isCampaign, boolean isMultiPassBloom, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap, int auxFBO, int auxEmissive) {

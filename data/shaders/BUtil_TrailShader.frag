@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 430
 
 #define EMISSIVE_SA 2
 #define FILL_DATA 4
@@ -64,21 +62,22 @@ vec3 encodePos(in vec3 posRaw) {
 }
 
 void main() {
-    vec2 uv = gfb_data.fragUVSeedFactor.xy;
-    uv.y = getJitter(uv.y, gfb_data.fragUVSeedFactor.z);
+    vec2 realFragUV = gfb_data.fragUVSeedFactor.xy;
+    realFragUV.x = fract(realFragUV.x);
+    realFragUV.y = getJitter(realFragUV.y, gfb_data.fragUVSeedFactor.z);
     vec2 fillMix = smoothstep(u_statePackage[FILL_DATA].zw, vec2(1.0), vec2(1.0 - gfb_data.fragUVSeedFactor.w, gfb_data.fragUVSeedFactor.w)) * (1.0 - u_statePackage[FILL_DATA].xy);
     fillMix = 1.0 - fillMix;
     float fillFactor = clamp(fillMix.x * fillMix.y, 0.0, 1.0);
 
-    vec4 diffuse = texture(u_diffuseMap, uv) * gfb_data.fragEntityColor;
-    vec4 emissive = texture(u_emissiveMap, uv) * gfb_data.fragMixEmissive;
+    vec4 diffuse = texture(u_diffuseMap, realFragUV) * gfb_data.fragEntityColor;
+    vec4 emissive = texture(u_emissiveMap, realFragUV) * gfb_data.fragMixEmissive;
     diffuse.w *= fillFactor;
     emissive.w *= fillFactor;
     if (diffuse.w + emissive.w <= ALPHA_THRESHOLD) discard;
     diffuse.w = min(diffuse.w, 1.0);
 
     bool ignoreIllum = (u_additionEmissive_DataBit.y & 2u) == 2u;
-    vec4 normalRaw = texture(u_normalMap, uv);
+    vec4 normalRaw = texture(u_normalMap, realFragUV);
     normalRaw.xyz = fma(normalRaw.xyz, vec3(2.0), vec3(-1.0));
     if (normalRaw.w <= 0.0) normalRaw.xyz = vec3(0.0, 0.0, 1.0); else normalRaw.xyz = gfb_data.fragTBN * normalRaw.xyz;
     normalRaw.w = diffuse.w;
@@ -87,11 +86,11 @@ void main() {
     if (!ignoreIllum) {
         resultTangent.w = diffuse.w;
         if (u_statePackage[EMISSIVE_SA].w != 0.0) {
-            resultTangent.xyz = gfb_data.fragTBN * fma(texture(u_tangentMap, uv).xyz, vec3(2.0), vec3(-1.0));
+            resultTangent.xyz = gfb_data.fragTBN * fma(texture(u_tangentMap, realFragUV).xyz, vec3(2.0), vec3(-1.0));
         }
     }
 
-    vec3 complexRaw = texture(u_complexMap, uv).xyz;
+    vec3 complexRaw = texture(u_complexMap, realFragUV).xyz;
     emissive.xyz += diffuse.xyz * complexRaw.x;
 
     o_fragColor = u_additionEmissive_DataBit.x > 0u ? (diffuse + emissive * emissive.w) : mix(diffuse, emissive, emissive.w);

@@ -1,5 +1,7 @@
 package org.boxutil.base.api;
 
+import org.boxutil.define.GLWrapper;
+
 public interface SimpleVAOAPI {
     void destroy();
 
@@ -13,7 +15,11 @@ public interface SimpleVAOAPI {
 
     int getVBO();
 
-    void glBind();
+    default void glBind() {
+        GLWrapper.VAO.glBindVertexArray(this.getVAO());
+    }
 
-    void glReleaseBind();
+    default void glReleaseBind() {
+        GLWrapper.VAO.glBindVertexArray(0);
+    }
 }

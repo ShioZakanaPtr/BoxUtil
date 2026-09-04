@@ -1,7 +1,5 @@
 #version 420
 
-precision highp float;
-
 layout (location = 0) in vec2 a_vertex;
 
 smooth out vec2 vf_fragUV;

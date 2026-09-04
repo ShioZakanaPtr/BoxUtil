@@ -3,7 +3,7 @@ package org.boxutil.base.api;
 import org.boxutil.define.BoxEnum;
 
 /**
- * <strong>Priority use this if renders more than one entity.</strong><p>
+ * <b>Priority use this if renders more than one entity.</b><p>
  * Timer value used 32bit-float in GL.<p>
  * Color used unsigned byte in GL.<p>
  * Other data is changeable by user.

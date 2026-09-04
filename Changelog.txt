@@ -3,23 +3,38 @@
 
 若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
 
-v1.5.6 / 2026.12.32
+v1.6.0 / 2026.09.05
     增加托管于内置系统进行自动生成与管理的多线程尾迹系统
+    于 org.boxutil.define 增加 GLWrapper 包装类，用于自动根据硬件所支持的OpenGL版本或特性，自动调用对应的OpenGL函数
     增加控制台指令 ShowStaticTrailMemoryUsage 用于获知尾迹系统当前的显存占用情况
     于 org.boxutil.base.api.resource 增加 StaticTrailTracker 接口，用于控制自定义尾迹的生成行为
     于 org.boxutil.manager 增加 StaticTrailManager 管理类，用于加载可被内置系统自动生成并管理的尾迹
     于 org.boxutil.define.struct.statictrail 增加 StaticTrailData 用于设定专用自定义尾迹的状态
     于 org.boxutil.units.standard 增加 GPUMemoryPool，用于创建一个供自定义渲染或计算使用的GPU内存池
     于 org.boxutil.define.struct.memorypool 增加 GPUMemory 接口与 GPUPoolBehavior 类供自定义GPU内存池使用，同时 MemoryBlock 继承 GPUMemory 接口
-    接口类 MemoryBlock 可能会于下一次游戏原版更新后重命名类名
-    工具类 TrigUtil 于下一次游戏原版更新后会更正部分拼写错误的方法名
     SpinLock 与 ReentrantSpinLock 现在皆实现了 java.util.concurrent.locks.Lock 接口
 
-    着色器文件转为本地文件加载
-    主线程绘制调度改进
+    ! 接口类 MemoryBlock 于下一次游戏原版更新后重命名类名
+    ! 工具类 TrigUtil 于下一次游戏原版更新后会更正部分拼写错误的方法名
+    ! 数据类 FontMapData 于下一次游戏原版更新后重命名类名
+
+    着色器文件转为本地文件加载，并清理了一些冗余定义，调整了部分实现细节
+    主线程绘制调度改进，并移除全部GLSync同步，改为 后台子线程调用glMemoryBarrier + glFlush，CPU线程间同步屏障维持不变
     实例化数据 submitInstance 阶段逻辑调整
     TransformUtil 中部分投影矩阵计算方式改为根据当前传入Viewport进行，而非使用预计算屏幕尺寸，同时部分方法的实现优化
-    改进了 FontMapData 保存字形信息的方式，现在拥有更高的缓存命中率，提升了用作显示动态信息时的性能
+    修复了 ShaderUtil 中 genNormalMapFromRGBCore 生成mipmap的相关问题
+    在 OpenGL 相关特性支持的情况下，BoxUtil渲染管线中绑定纹理的操作将拥有性能优化
+    改进了 FontMapData 保存字形与字距信息的方式，现在拥有更高的缓存命中率与更低开销
+    改进了 ShaderProgram 缓存着色器location信息的容器的性能
+
+    部分接口类现在拥有default实现，故以下类标记为弃用：
+        org.boxutil.base.BaseBackgroundEveryFramePlugin;
+        org.boxutil.base.BaseControlData;
+        org.boxutil.base.BaseLayeredRenderingPlugin;
+        org.boxutil.base.BaseTemporaryCleanupPlugin;
+        org.boxutil.base.BaseTextSubmitFeedbackAPI;
+
+    org.boxutil.units.standard.attribute.FontMapData.FontData 标记为弃用
 
     RenderDataAPI 新增方法：
         boolean isAutoSubmitEntityData();
@@ -33,6 +48,12 @@ v1.5.6 / 2026.12.32
         boolean isAutoSubmitModelMatrix();
         void setAutoSubmitModelMatrix(boolean);
         void submitModelMatrix();
+
+    TextFieldEntity 新增方法：
+        TextData addText(String, Color, int);
+
+    TextFieldObject 新增方法：
+        TextData addText(String, Color);
 
     TextFieldEntity.TextData 新增方法：
         void setText(String);
@@ -57,24 +78,36 @@ v1.5.6 / 2026.12.32
         FloatBuffer fillIdentityMatrix3x3f(int, FloatBuffer);
         FloatBuffer createIdentityMatrix4x4f();
         FloatBuffer fillIdentityMatrix4x4f(int, FloatBuffer);
+        float jFloat16ToFloat(short);
+        short jFloatToFloat16(float);
 
     ShaderUtil 新增方法：
-        Function<Integer, Boolean> makeShaderBindingLocation(BindingLocationStruct...);
-        int createShaderVF(String, Function<Integer, Boolean>, String, String);
-        int createShaderVFFormPath(String, Function<Integer, Boolean>, String, String);
-        int createShaderVGF(String, Function<Integer, Boolean>, String, String, String);
-        int createShaderVGFFromPath(String, Function<Integer, Boolean>, String, String, String);
+        LinkCondition makeShaderBindingLocation(BindingLocationStruct...);
+        int createShaderVF(String, LinkCondition, String, String);
+        int createShaderVFFormPath(String, LinkCondition, String, String);
+        int createShaderVGF(String, LinkCondition, String, String, String);
+        int createShaderVGFFromPath(String, LinkCondition, String, String, String);
         int createShaderVGFFromPath(String, String, String, String);
-        int createShaderVTF(String, Function<Integer, Boolean>, String, String, String, String);
-        int createShaderVTFFromPath(String, Function<Integer, Boolean>, String, String, String, String);
+        int createShaderVTF(String, LinkCondition, String, String, String, String);
+        int createShaderVTFFromPath(String, LinkCondition, String, String, String, String);
         int createShaderVTFFromPath(String,, String, String, String, String);
-        int createShaderVTGF(String, Function<Integer, Boolean>, String, String, String, String, String);
-        int createShaderVTGFFromPath(String, Function<Integer, Boolean>, String, String, String, String, String);
+        int createShaderVTGF(String, LinkCondition, String, String, String, String, String);
+        int createShaderVTGFFromPath(String, LinkCondition, String, String, String, String, String);
         int createShaderVTGFFromPath(String, String, String, String, String, String);
-        int createComputeShadersFormPath(String, Function<Integer, Boolean>, String...);
-        int createComputeShaders(String, Function<Integer, Boolean>, String...);
-        int createShaderProgramFromPath(String, Function<Integer, Boolean>, String...);
-        int createShaderProgram(String, Function<Integer, Boolean>, int[], String...);
+        int createComputeShadersFormPath(String, LinkCondition, String...);
+        int createComputeShaders(String, LinkCondition, String...);
+        int createShaderProgramFromPath(String, LinkCondition, String...);
+        int createShaderProgram(String, LinkCondition, int[], String...);
+        int[] genSDF(int, int, int, int, int, int, int, int, float, byte, float, float, int, int, int, boolean);
+        int[] genSDF(int, int, int, int, int, int, int, int, float, byte, float, float, boolean);
+        void applyImageGaussianBlur(int, int, int, boolean, byte, int, int, int, int, int, boolean);
+        void applyImageBilateralFilter(int, int, int, boolean, byte, float, float, int, int, int, int, int, boolean);
+        int imageDFT(int, int, int, boolean, int, int, int, int, int, boolean);
+        int imageDFT(int, int, int, boolean, int, int, boolean);
+        int imageIDFT(int, int, int, boolean, int, int, int, int, int, boolean, boolean);
+        int imageIDFT(int, int, int, boolean, int, int, boolean, boolean);
+        int genNormalMapFromRGB(int, int, int, int, int, NormalMapGenParam, int, int, int);
+        int genNormalMapFromRGB(int, int, int, int, int, NormalMapGenParam);
 
     TransformUtil 新增方法：
         FloatBuffer invertModelMatrix2D(Matrix4f, int, boolean, FloatBuffer);
@@ -137,21 +170,60 @@ v1.5.6 / 2026.12.32
     MaterialData 新增构造方法：
         MaterialData(MaterialData);
 
+    FontMapData 新增方法：
+        SpriteAPI getMap();
+        void setMap(SpriteAPI);
+        int getMapID();
+        void setMapID(int);
+        int getGlyphNum();
+        boolean containsGlyph(char);
+        BitMapGlyph getGlyph(char);
+        boolean loadGlyph(char, BitMapGlyph);
+        byte getKerning(char, char);
+
     CombatRenderingManager 新增方法：
-        boolean addStaticTrailGenerator(StaticTrailData, CombatEntityAPI, CombatEngineLayers, StaticTrailData);
+        boolean addStaticTrail(StaticTrailData, CombatEntityAPI, CombatEngineLayers, StaticTrailData);
         void submitTrailDataChanges(StaticTrailData);
         void tryCutTrailOnEntity(CombatEntityAPI);
-        boolean removeStaticTrialGenerator(StaticTrailData);
+        void tryRemoveTrailOnEntity(CombatEntityAPI, boolean);
+        boolean removeStaticTrial(StaticTrailData);
 
     CampaignRenderingManager 新增方法：
-        boolean addStaticTrailGenerator(StaticTrailData, SectorEntityToken, CampaignEngineLayers, StaticTrailData);
+        boolean addStaticTrail(StaticTrailData, SectorEntityToken, CampaignEngineLayers, StaticTrailData);
         void submitTrailDataChanges(StaticTrailData);
         void tryCutTrailOnEntity(SectorEntityToken);
-        boolean removeStaticTrialGenerator(StaticTrailData);
+        void tryRemoveTrailOnEntity(CombatEntityAPI, boolean);
+        boolean removeStaticTrial(StaticTrailData);
+
+    BoxThreadSync.Rendering 新增方法：
+        void offerBeforeRenderingDelayGLCmd(Runnable, boolean);
+        void offerMemoryBarrier(int, boolean);
+        void offerBeginIlluminationDelayGLCmd(Runnable, boolean);
+
+    BoxThreadSync.Logical 新增方法：
+        void offerBeginAdvanceDelayGLCmd(Runnable, boolean);
+
+    LegacyNormalMapHelper 新增方法：
+        boolean glPutSourceTexture(int, int, int, int);
+        int glGenerateMapRegion(int, int, int, int, int, int, int, int);
 
     TransformUtil 标记弃用方法：
-        Matrix3f createModelMatrixVanilla3f(Vector2f, float, Vector2f, Matrix3f);
-        Matrix3f createModelMatrixVanilla3f(Vector2f, float, Matrix3f);
+            Matrix3f createModelMatrixVanilla3f(Vector2f, float, Vector2f, Matrix3f);
+            Matrix3f createModelMatrixVanilla3f(Vector2f, float, Matrix3f);
+
+    MemoryBlock 标记弃用方法：
+        InstanceType type();
+
+    FontMapData 标记弃用方法：
+        SpriteAPI getMap();
+        void setMap(SpriteAPI);
+        int getMapID();
+        void setMapID(int);
+        int getCharCount();
+        boolean containsFont(char);
+        FontData getFont(char);
+        boolean containsKerning(char);
+        HashMap<Character, Byte> getKerningMap(char);
 
 v1.5.5 / 2026.05.03
     修复部分设备某些情况下，多通道输出阶段潜在的资源绑定问题

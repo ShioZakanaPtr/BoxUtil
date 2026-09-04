@@ -41,6 +41,6 @@
     },
 	"plugins": {
 		"BoxConfigGUI":"org.boxutil.config.BoxConfigGUI",
-		"BUtil_CombatEFS":"org.boxutil.backends.core.BUtil_CombatEFS"
+		"BUtil_CombatEFS":"org.boxutil.backends.core.gameloop.BUtil_CombatEFS"
 	}
 }

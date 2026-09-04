@@ -3,11 +3,13 @@ package org.boxutil.units.standard.misc;
 import org.boxutil.base.api.SimpleVAOAPI;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.opengl.*;
 
 /**
- * Vertices: vec2(-1.0, 0.0), vec2(1.0, 0.0)
+ * Vertices: vec2(-1.0, 0.0), vec2(1.0, 0.0)<p>
+ * Required <b>OpenGL 3.1</b> supported, required <b>OpenGL 3.1</b> for instanced draw.
  */
 public class LineObject implements SimpleVAOAPI {
     public final static byte VERTICES_COUNT = 2;
@@ -17,32 +19,32 @@ public class LineObject implements SimpleVAOAPI {
     protected boolean isValid = false;
 
     public LineObject() {
-        if (!BoxConfigs.isVAOSupported()) {
+        if (!GLWrapper.VAO.valid()) {
             this._lineID = 0;
             this._lineVBO = 0;
             return;
         }
 
-        this._lineID = GL30.glGenVertexArrays();
-        GL30.glBindVertexArray(this._lineID);
+        this._lineID = GLWrapper.VAO.glGenVertexArrays();
+        GLWrapper.VAO.glBindVertexArray(this._lineID);
 
-        this._lineVBO = GL15.glGenBuffers();
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this._lineVBO);
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, CommonUtil.createByteBuffer(VERTICES), GL15.GL_STATIC_DRAW);
+        this._lineVBO = GLWrapper.Buffer.VBO.glGenBuffers();
+        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this._lineVBO);
+        GLWrapper.Buffer.VBO.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, CommonUtil.createByteBuffer(VERTICES), GLWrapper.Buffer.VBO.GL_STATIC_DRAW);
 
-        GL20.glVertexAttribPointer(0, 2, GL11.GL_BYTE, true, BoxDatabase.BYTE_SIZE * 2, 0); // v
-        GL20.glEnableVertexAttribArray(0);
-        GL30.glBindVertexArray(0);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.VAO.glVertexAttribPointer(0, 2, GLWrapper.DataType.GL_BYTE, true, BoxDatabase.BYTE_SIZE * 2, 0); // v
+        GLWrapper.VAO.glEnableVertexAttribArray(0);
+        GLWrapper.VAO.glBindVertexArray(0);
+        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         if (this._lineID > 0 && this._lineVBO > 0) this.isValid = true;
     }
 
     public void destroy() {
-        if (BoxConfigs.isVAOSupported()) {
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-            GL30.glBindVertexArray(0);
-            if (this._lineVBO != 0) GL15.glDeleteBuffers(this._lineVBO);
-            if (this._lineID != 0) GL30.glDeleteVertexArrays(this._lineID);
+        if (GLWrapper.VAO.valid()) {
+            GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            GLWrapper.VAO.glBindVertexArray(0);
+            if (this._lineVBO != 0) GLWrapper.Buffer.VBO.glDeleteBuffers(this._lineVBO);
+            if (this._lineID != 0) GLWrapper.VAO.glDeleteVertexArrays(this._lineID);
             this.isValid = false;
         }
     }
@@ -53,12 +55,12 @@ public class LineObject implements SimpleVAOAPI {
 
     public void glDraw() {
         if (!this.isValid) return;
-        GL11.glDrawArrays(GL11.GL_LINES, 0, VERTICES_COUNT);
+        GLWrapper.Drawcall.glDrawArrays(GLWrapper.Drawcall.GL_LINES, 0, VERTICES_COUNT);
     }
 
     public void glDraw(int primCount) {
         if (!this.isValid) return;
-        GL31.glDrawArraysInstanced(GL11.GL_LINES, 0, VERTICES_COUNT, Math.max(primCount, 1));
+        GLWrapper.Drawcall.glDrawArraysInstanced(GLWrapper.Drawcall.GL_LINES, 0, VERTICES_COUNT, Math.max(primCount, 1));
     }
 
     public int getVAO() {
@@ -67,13 +69,5 @@ public class LineObject implements SimpleVAOAPI {
 
     public int getVBO() {
         return this._lineVBO;
-    }
-
-    public void glBind() {
-        GL30.glBindVertexArray(this._lineID);
-    }
-
-    public void glReleaseBind() {
-        GL30.glBindVertexArray(0);
     }
 }

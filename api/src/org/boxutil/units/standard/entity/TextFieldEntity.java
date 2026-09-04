@@ -3,6 +3,7 @@ package org.boxutil.units.standard.entity;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
 import org.boxutil.base.api.resource.TextSubmitFeedbackAPI;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.LayeredEntityType;
 import org.boxutil.manager.*;
 import org.boxutil.backends.shader.BUtil_GLImpl;
@@ -14,14 +15,13 @@ import org.boxutil.define.BoxEnum;
 import org.boxutil.units.standard.attribute.FontMapData;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -49,6 +49,7 @@ public class TextFieldEntity extends BaseRenderData {
     public final static char NOT_FOUND_SYMBOL = '?';
     protected final static byte _DEFAULT_PAD = 0;
     protected final static byte _VBO_SHORT_COUNT = 13;
+    protected final static byte _MAX_FONT_MAP = 4;
     protected final int _textFieldID;
     // for each char: vec4(uvBL, uvTR), vec4(x, y, topStyleUV, bottomStyleUV), float(handelIndex + (invert + channel) + italic + underline + strikeout)), vec4(color), vec4(size, edge)
     protected final int _textFieldVBO;
@@ -62,6 +63,7 @@ public class TextFieldEntity extends BaseRenderData {
     protected final float[] state = new float[]{0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.2f}; // widthSpace, HeightSpace, fieldWidth, fieldHeight, vec4(globalColor), vec4(bloomColor), italicValue
     protected final boolean[] stateB = new boolean[]{true, true, false, true}; // isBlendBloomColor, refreshRenderingLengthWhenSubmit, synchronousSubmit, mappingMode
     protected Alignment alignment = Alignment.LEFT;
+    protected final IntBuffer bindTextureBuf = GLWrapper.Texture.valid_MultiBind() ? BufferUtils.createIntBuffer(5).clear() : null;
 
     protected int _StatePackageStack() {
         return 2;
@@ -78,33 +80,33 @@ public class TextFieldEntity extends BaseRenderData {
 
     protected void initResourceLayout() {
         final int sizeH = BoxDatabase.HALF_FLOAT_SIZE * _VBO_SHORT_COUNT;
-        GL30.glBindVertexArray(this.getFontFieldID());
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getFontFieldVBO());
-        GL20.glVertexAttribPointer(0, 4, GL30.GL_HALF_FLOAT, false, sizeH, 0);
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(1, 2, GL30.GL_HALF_FLOAT, false, sizeH, 4 * BoxDatabase.HALF_FLOAT_SIZE);
-        GL20.glEnableVertexAttribArray(1);
-        GL20.glVertexAttribPointer(2, 2, GL11.GL_UNSIGNED_BYTE, false, sizeH, 6 * BoxDatabase.HALF_FLOAT_SIZE);
-        GL20.glEnableVertexAttribArray(2);
-        GL30.glVertexAttribIPointer(3, 1, GL11.GL_UNSIGNED_SHORT, sizeH, 7 * BoxDatabase.SHORT_SIZE);
-        GL20.glEnableVertexAttribArray(3);
-        GL20.glVertexAttribPointer(4, 4, GL11.GL_UNSIGNED_BYTE, true, sizeH, 8 * BoxDatabase.HALF_FLOAT_SIZE);
-        GL20.glEnableVertexAttribArray(4);
-        GL20.glVertexAttribPointer(5, 2, GL11.GL_UNSIGNED_BYTE, false, sizeH, 10 * BoxDatabase.HALF_FLOAT_SIZE);
-        GL20.glEnableVertexAttribArray(5);
-        GL20.glVertexAttribPointer(6, 2, GL11.GL_BYTE, false, sizeH, 11 * BoxDatabase.HALF_FLOAT_SIZE);
-        GL20.glEnableVertexAttribArray(6);
-        GL20.glVertexAttribPointer(7, 1, GL30.GL_HALF_FLOAT, false, sizeH, 12 * BoxDatabase.HALF_FLOAT_SIZE);
-        GL20.glEnableVertexAttribArray(7);
-        GL30.glBindVertexArray(0);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.VAO.glBindVertexArray(this.getFontFieldID());
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getFontFieldVBO());
+        GLWrapper.VAO.glVertexAttribPointer(0, 4, GLWrapper.DataType.GL_HALF_FLOAT, false, sizeH, 0);
+        GLWrapper.VAO.glEnableVertexAttribArray(0);
+        GLWrapper.VAO.glVertexAttribPointer(1, 2, GLWrapper.DataType.GL_HALF_FLOAT, false, sizeH, 4 * BoxDatabase.HALF_FLOAT_SIZE);
+        GLWrapper.VAO.glEnableVertexAttribArray(1);
+        GLWrapper.VAO.glVertexAttribPointer(2, 2, GLWrapper.DataType.GL_UNSIGNED_BYTE, false, sizeH, 6 * BoxDatabase.HALF_FLOAT_SIZE);
+        GLWrapper.VAO.glEnableVertexAttribArray(2);
+        GLWrapper.VAO.glVertexAttribIPointer(3, 1, GLWrapper.DataType.GL_UNSIGNED_SHORT, sizeH, 7 * BoxDatabase.SHORT_SIZE);
+        GLWrapper.VAO.glEnableVertexAttribArray(3);
+        GLWrapper.VAO.glVertexAttribPointer(4, 4, GLWrapper.DataType.GL_UNSIGNED_BYTE, true, sizeH, 8 * BoxDatabase.HALF_FLOAT_SIZE);
+        GLWrapper.VAO.glEnableVertexAttribArray(4);
+        GLWrapper.VAO.glVertexAttribPointer(5, 2, GLWrapper.DataType.GL_UNSIGNED_BYTE, false, sizeH, 10 * BoxDatabase.HALF_FLOAT_SIZE);
+        GLWrapper.VAO.glEnableVertexAttribArray(5);
+        GLWrapper.VAO.glVertexAttribPointer(6, 2, GLWrapper.DataType.GL_BYTE, false, sizeH, 11 * BoxDatabase.HALF_FLOAT_SIZE);
+        GLWrapper.VAO.glEnableVertexAttribArray(6);
+        GLWrapper.VAO.glVertexAttribPointer(7, 1, GLWrapper.DataType.GL_HALF_FLOAT, false, sizeH, 12 * BoxDatabase.HALF_FLOAT_SIZE);
+        GLWrapper.VAO.glEnableVertexAttribArray(7);
+        GLWrapper.VAO.glBindVertexArray(0);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
     }
 
     public TextFieldEntity(boolean dynamicRefresh) {
-        this._textFieldID = BoxConfigs.isVAOSupported() ? GL30.glGenVertexArrays() : 0;
-        this._textFieldVBO = BoxConfigs.isVAOSupported() ? GL15.glGenBuffers() : 0;
-        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getFontFieldID() > 0 && this.getFontFieldVBO() > 0;
-        this.textDataRefreshState[3] = dynamicRefresh ? GL15.GL_DYNAMIC_DRAW : GL15.GL_STATIC_DRAW;
+        this._textFieldID = GLWrapper.VAO.valid() ? GLWrapper.VAO.glGenVertexArrays() : 0;
+        this._textFieldVBO = GLWrapper.Buffer.VBO.valid() ? GLWrapper.Buffer.glGenBuffers() : 0;
+        this._isValid = BoxDatabase.getGLState().GL_GL43 && ShaderCore.getTextProgram() != null && ShaderCore.getTextProgram().isValid() && BoxConfigs.isBackgroundThreadGLValid() && this.getFontFieldID() > 0 && this.getFontFieldVBO() > 0;
+        this.textDataRefreshState[3] = dynamicRefresh ? GLWrapper.Buffer.GL_DYNAMIC_DRAW : GLWrapper.Buffer.GL_STATIC_DRAW;
 
         if (this.isValid()) this.initResourceLayout();
     }
@@ -152,7 +154,7 @@ public class TextFieldEntity extends BaseRenderData {
      */
     public void setFontMap(@NotNull FontMapData map) {
         this.sync_lock.lock();
-        if (this.fontMapList == null) this.fontMapList = new FontMapData[4];
+        if (this.fontMapList == null) this.fontMapList = new FontMapData[_MAX_FONT_MAP];
         this.fontMapList[0] = map;
         this.sync_lock.unlock();
     }
@@ -164,7 +166,7 @@ public class TextFieldEntity extends BaseRenderData {
     public void setFontMap(@NotNull FontMapData map, byte index) {
         if (index > 3) return;
         this.sync_lock.lock();
-        if (this.fontMapList == null) this.fontMapList = new FontMapData[4];
+        if (this.fontMapList == null) this.fontMapList = new FontMapData[_MAX_FONT_MAP];
         this.fontMapList[index] = map;
         this.sync_lock.unlock();
     }
@@ -188,19 +190,35 @@ public class TextFieldEntity extends BaseRenderData {
         this._submitFeedback = null;
         this.fontMapList = null;
         if (this.getFontFieldID() > 0) {
-            GL30.glBindVertexArray(0);
-            GL30.glDeleteVertexArrays(this.getFontFieldID());
+            GLWrapper.VAO.glBindVertexArray(0);
+            GLWrapper.VAO.glDeleteVertexArrays(this.getFontFieldID());
         }
         if (this.getFontFieldVBO() > 0) {
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-            GL15.glDeleteBuffers(this.getFontFieldVBO());
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            GLWrapper.Buffer.glDeleteBuffers(this.getFontFieldVBO());
         }
     }
 
+    public void putShaderTextures() {
+        int texID;
+        FontMapData font;
+        for (byte i = 0; i < _MAX_FONT_MAP; i++) {
+            font = this.fontMapList[i];
+            texID = (font != null && font.isValid()) ? font.getTextureID() : 0;
+
+            if (GLWrapper.Texture.valid_MultiBind()) this.bindTextureBuf.put(i, texID);
+            else if (GLWrapper.Drawcall.MultiTex.valid()) {
+                GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0 + i);
+                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, texID);
+            }
+        }
+        if (GLWrapper.Texture.valid_MultiBind()) GLWrapper.Texture.glBindTextures(0, 4, this.bindTextureBuf);
+    }
+
     public void glDraw() {
-        if (this.isValidRenderingTextField()) {
-            GL30.glBindVertexArray(this.getFontFieldID());
-            GL11.glDrawArrays(GL11.GL_POINTS, 0, this.getValidCharLength());
+        if (this.isValidRenderingTextField() && this.isValid()) {
+            GLWrapper.VAO.glBindVertexArray(this.getFontFieldID());
+            GLWrapper.Drawcall.glDrawArrays(GLWrapper.Drawcall.GL_POINTS, 0, this.getValidCharLength());
         }
     }
 
@@ -211,32 +229,30 @@ public class TextFieldEntity extends BaseRenderData {
     public void directDraw() {
         final var program = ShaderCore.getTextProgram();
         if (!this.isValidRenderingTextField() || program == null || !program.isValid()) return;
-        int fboNow = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
-        GL11.glDisable(GL11.GL_STENCIL_TEST);
-        GL11.glDisable(GL13.GL_MULTISAMPLE);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-        GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
+        final int fboNow = GLWrapper.Operation.Get.glGetInteger(GLWrapper.FBO.GL_FRAMEBUFFER_BINDING);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
+        GLWrapper.Operation.glPushAttrib(GLWrapper.Operation.GL_ENABLE_BIT);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_ALPHA_TEST);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_SCISSOR_TEST);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_STENCIL_TEST);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_MULTISAMPLE);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_CULL_FACE);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_DEPTH_TEST);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFuncSeparatei(0, GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA, GLWrapper.Operation.GL_ZERO, GLWrapper.Operation.GL_ONE);
+        GLWrapper.Operation.glBlendEquationi(0, GLWrapper.Operation.GL_FUNC_ADD);
         program.active();
-        GL20.glUniformMatrix4(program.location[0], false, this.pickModelMatrixPackage_mat4());
-        GL20.glUniform1f(program.location[5], this.getCurrentItalicFactor());
-        GL20.glUniform4(program.location[6], this.pickDataPackage_vec4());
-        GL20.glUniform2f(program.location[8], this.isBlendBloomColor() ? 1.0f : 0.0f, this.getGlobalTimerAlpha());
-        for (int i = 0; i < this.fontMapList.length; i++) {
-            if (this.fontMapList[i] != null && this.fontMapList[i].isValid()) program.bindTexture2D(i, this.fontMapList[i].getMapID());
-        }
-        BUtil_GLImpl.Operations.glEntityDraw(this);
-        GL30.glBindVertexArray(0);
+        GLWrapper.Shader.glUniformMatrix4(program.location[0], false, this.pickModelMatrixPackage_mat4());
+        GLWrapper.Shader.glUniform1f(program.location[5], this.getCurrentItalicFactor());
+        GLWrapper.Shader.glUniform4(program.location[6], this.pickDataPackage_vec4());
+        GLWrapper.Shader.glUniform2f(program.location[8], this.isBlendBloomColor() ? 1.0f : 0.0f, this.getGlobalTimerAlpha());
+        this.putShaderTextures();
+        BUtil_GLImpl.glEntityDraw(this);
+        GLWrapper.VAO.glBindVertexArray(0);
         program.close();
-        GL11.glPopAttrib();
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fboNow);
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        GLWrapper.Operation.glPopAttrib();
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, fboNow);
+        GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0);
     }
 
     /**
@@ -248,18 +264,18 @@ public class TextFieldEntity extends BaseRenderData {
         final var program = ShaderCore.getTextProgram();
         int fboNow = 0;
         if (program != null && program.isValid()) {
-            fboNow = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-            GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-            GL11.glDisable(GL11.GL_ALPHA_TEST);
-            GL11.glDisable(GL11.GL_SCISSOR_TEST);
-            GL11.glDisable(GL11.GL_STENCIL_TEST);
-            GL11.glDisable(GL13.GL_MULTISAMPLE);
-            GL11.glDisable(GL11.GL_CULL_FACE);
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL40.glBlendFuncSeparatei(0, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ZERO, GL11.GL_ONE);
-            GL40.glBlendEquationi(0, GL14.GL_FUNC_ADD);
+            fboNow = GLWrapper.Operation.Get.glGetInteger(GLWrapper.FBO.GL_FRAMEBUFFER_BINDING);
+            GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
+            GLWrapper.Operation.glPushAttrib(GLWrapper.Operation.GL_ENABLE_BIT);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_ALPHA_TEST);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_SCISSOR_TEST);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_STENCIL_TEST);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_MULTISAMPLE);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_CULL_FACE);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_DEPTH_TEST);
+            GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+            GLWrapper.Operation.glBlendFuncSeparatei(0, GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA, GLWrapper.Operation.GL_ZERO, GLWrapper.Operation.GL_ONE);
+            GLWrapper.Operation.glBlendEquationi(0, GLWrapper.Operation.GL_FUNC_ADD);
             program.active();
         }
         return fboNow;
@@ -268,25 +284,23 @@ public class TextFieldEntity extends BaseRenderData {
     public void directDrawDetachedProcess() {
         final var program = ShaderCore.getTextProgram();
         if (program != null && program.isValid() && this.isValidRenderingTextField()) {
-            GL20.glUniformMatrix4(program.location[0], false, this.pickModelMatrixPackage_mat4());
-            GL20.glUniform1f(program.location[5], this.getCurrentItalicFactor());
-            GL20.glUniform4(program.location[6], this.pickDataPackage_vec4());
-            GL20.glUniform2f(program.location[8], this.isBlendBloomColor() ? 1.0f : 0.0f, this.getGlobalTimerAlpha());
-            for (int i = 0; i < this.fontMapList.length; i++) {
-                if (this.fontMapList[i] != null && this.fontMapList[i].isValid()) program.bindTexture2D(i, this.fontMapList[i].getMapID());
-            }
-            BUtil_GLImpl.Operations.glEntityDraw(this);
+            GLWrapper.Shader.glUniformMatrix4(program.location[0], false, this.pickModelMatrixPackage_mat4());
+            GLWrapper.Shader.glUniform1f(program.location[5], this.getCurrentItalicFactor());
+            GLWrapper.Shader.glUniform4(program.location[6], this.pickDataPackage_vec4());
+            GLWrapper.Shader.glUniform2f(program.location[8], this.isBlendBloomColor() ? 1.0f : 0.0f, this.getGlobalTimerAlpha());
+            this.putShaderTextures();
+            BUtil_GLImpl.glEntityDraw(this);
         }
     }
 
     public static void directDrawDetachedEnd(int valueFromBeginReturns) {
         final var program = ShaderCore.getTextProgram();
         if (program != null && program.isValid()) {
-            GL30.glBindVertexArray(0);
+            GLWrapper.VAO.glBindVertexArray(0);
             program.close();
-            GL11.glPopAttrib();
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, valueFromBeginReturns);
-            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GLWrapper.Operation.glPopAttrib();
+            GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, valueFromBeginReturns);
+            if (!GLWrapper.Texture.valid_MultiBind()) GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0);
         }
     }
 
@@ -370,6 +384,10 @@ public class TextFieldEntity extends BaseRenderData {
      */
     public TextData addText(String text, float padding, int fontMapIndex) {
         return this.addText(text, padding, Misc.getTextColor(), false, false, false, false, fontMapIndex);
+    }
+
+    public TextData addText(String text, Color color, int fontMapIndex) {
+        return this.addText(text, _DEFAULT_PAD, color, false, false, false, false, fontMapIndex);
     }
 
     public TextData addText(String text, int fontMapIndex) {
@@ -548,9 +566,8 @@ public class TextFieldEntity extends BaseRenderData {
         List<Float> lineStepData = new ArrayList<>(32);
         List<Pair<List<Float>, Float>> currLineAlignmentData = new ArrayList<>(8); // lineCharCount, currWidth
         TextData textData;
-        FontMapData.FontData fontData, notFoundSymbol;
-        HashMap<Character, Byte> kerningMap;
-        Byte kerningCharPackage;
+        final FontMapData.BitMapGlyph fontData = new FontMapData.BitMapGlyph(),
+                notFoundSymbol = new FontMapData.BitMapGlyph();
         for (int i = textDataRefreshIndex; i < textDataRefreshLimit; i++) {
             textData = this._lastTextDataList.get(i);
             if (textData == null) continue;
@@ -562,9 +579,7 @@ public class TextFieldEntity extends BaseRenderData {
             final byte fontLineHeight = currentFontMapData.getLineHeight(), fontBaseHeight = currentFontMapData.getLineBase();
             lastCharacter = 0;
             char character;
-            byte kerningValue;
-            notFoundSymbol = currentFontMapData.getFont(NOT_FOUND_SYMBOL);
-            boolean isLineFeed, currNotFound, haveNotFoundSymbol = notFoundSymbol != null;
+            boolean isLineFeed, currNotFound, haveNotFoundSymbol = currentFontMapData.loadGlyph(TextFieldEntity.NOT_FOUND_SYMBOL, notFoundSymbol);
             if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
                 if (haveSubmitFeedback) this._submitFeedback.processBreak(mapIndex, i, true, '\0', 0, currentStep, currentLine);
                 break;
@@ -579,12 +594,11 @@ public class TextFieldEntity extends BaseRenderData {
             for (int j = 0; j < charArray.length; j++) {
                 character = charArray[j];
                 isLineFeed = character == LINE_FEED_SYMBOL;
-                fontData = currentFontMapData.getFont(character);
-                currNotFound = fontData == null;
+                currNotFound = !currentFontMapData.loadGlyph(character, fontData);
                 if (currNotFound && haveNotFoundSymbol) {
                     currNotFound = false;
                     character = NOT_FOUND_SYMBOL;
-                    fontData = notFoundSymbol;
+                    fontData.copyFrom(notFoundSymbol);
                 }
 
                 if (currNotFound || isLineFeed) {
@@ -611,22 +625,16 @@ public class TextFieldEntity extends BaseRenderData {
                 }
 
                 if (currentFontMapData.haveKerning()) {
-                    kerningMap = currentFontMapData.getKerningMap(lastCharacter);
-                    if (kerningMap != null) {
-                        kerningCharPackage = kerningMap.get(character);
-                        if (kerningCharPackage != null) {
-                            kerningValue = kerningCharPackage;
-                            currentStep += kerningValue;
-                            currCharFill += Math.max(kerningValue, 0);
-                        }
-                    }
+                    final byte kerningValue = currentFontMapData.getKerning(lastCharacter, character);
+                    currentStep += kerningValue;
+                    currCharFill += Math.max(kerningValue, 0);
                 }
 
-                currentDrawStep = currentStep + fontData.getXOffset();
-                isLineFeed = currentDrawStep + fontData.getSize()[0] > this.getTextFieldWidth();
+                currentDrawStep = currentStep + fontData.xOffset;
+                isLineFeed = currentDrawStep + fontData.width > this.getTextFieldWidth();
                 if (isLineFeed) {
                     currentStep = 0.0f;
-                    currentDrawStep = fontData.getXOffset();
+                    currentDrawStep = fontData.xOffset;
                     currentLine -= fontLineHeight + this.getFontHeightSpace();
                     currCharFill = 0.0f;
 
@@ -635,25 +643,28 @@ public class TextFieldEntity extends BaseRenderData {
                     lineStepData = new ArrayList<>(32);
                     lineValidChar = 0;
                 }
-                lastLineVisualWidth = currentDrawStep + fontData.getSize()[0];
+                lastLineVisualWidth = currentDrawStep + fontData.width;
                 maxLineVisualWidth = Math.max(maxLineVisualWidth, lastLineVisualWidth);
 
                 if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
                     if (haveSubmitFeedback) this._submitFeedback.processBreak(mapIndex, i, false, character, j, currentStep, currentLine);
                     break;
                 }
-                currCharFill = Math.max(currCharFill + fontData.getXOffset(), 0.0f);
+                currCharFill = Math.max(currCharFill + fontData.xOffset, 0.0f);
                 if (haveSubmitFeedback) this._submitFeedback.processText(mapIndex, i, character, true, isLineFeed, j, currentStep, currentLine, textData.getPadding(), textData.byteState[1], textData.byteState[2], textData.byteState[3], textData.byteState[4], textData.byteState[5]);
 
-                CommonUtil.putFloat16(tmpBuffer, fontData.getUVs());
+                CommonUtil.putFloat16(tmpBuffer, fontData.uvBLx);
+                CommonUtil.putFloat16(tmpBuffer, fontData.uvBLy);
+                CommonUtil.putFloat16(tmpBuffer, fontData.uvTRx);
+                CommonUtil.putFloat16(tmpBuffer, fontData.uvTRy);
                 CommonUtil.putFloat16(tmpBuffer, currentDrawStep);
-                CommonUtil.putFloat16(tmpBuffer, currentLine - fontData.getYOffset());
+                CommonUtil.putFloat16(tmpBuffer, currentLine - fontData.yOffset);
                 CommonUtil.putPackingBytes(tmpBuffer, fontBaseHeight, fontLineHeight);
-                tmpBuffer.put((short) (style | fontData.getChannel()));
-                textDataArray[1][2] = fontData.getSize()[0];
-                textDataArray[0][2] = fontData.getSize()[1];
-                textDataArray[1][3] = fontData.getYOffset();
-                textDataArray[0][3] = (byte) Math.max(fontLineHeight - fontData.getYOffset() - fontData.getSize()[1], 0);
+                tmpBuffer.put((short) (style | fontData.channel));
+                textDataArray[1][2] = fontData.width;
+                textDataArray[0][2] = fontData.height;
+                textDataArray[1][3] = fontData.yOffset;
+                textDataArray[0][3] = (byte) Math.max(fontLineHeight - fontData.yOffset - fontData.height, 0);
                 CommonUtil.putPackingBytes(tmpBuffer, textDataArray[0], textDataArray[1]);
                 CommonUtil.putFloat16(tmpBuffer, currCharFill);
 
@@ -663,8 +674,8 @@ public class TextFieldEntity extends BaseRenderData {
                     lineValidChar++;
                 }
                 lastCharacter = character;
-                currentStep += fontData.getXAdvance() + this.getFontWidthSpace();
-                currCharFill = fontData.getXAdvance() - fontData.getSize()[0] + this.getFontWidthSpace() + Math.max(-fontData.getXOffset(), 0.0f);
+                currentStep += fontData.xAdvance + this.getFontWidthSpace();
+                currCharFill = fontData.xAdvance - fontData.width + this.getFontWidthSpace() + Math.max(-fontData.xOffset, 0.0f);
                 if (character == '\t') {
                     float spacingM3 = this.getFontWidthSpace() * 3.0f;
                     currentStep += spacingM3;
@@ -697,10 +708,10 @@ public class TextFieldEntity extends BaseRenderData {
             return BoxEnum.STATE_FAILED;
         }
 
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getFontFieldVBO());
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getFontFieldVBO());
         final int newCharLength = charLength + lastCharLength;
         if (newCharLength > this.textDataRefreshState[0]) {
-            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, ((long) newCharLength * _VBO_SHORT_COUNT) << 1, this.textDataRefreshState[3]);
+            GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, ((long) newCharLength * _VBO_SHORT_COUNT) << 1, this.textDataRefreshState[3]);
             this.textDataRefreshState[0] = newCharLength;
         }
 
@@ -708,11 +719,11 @@ public class TextFieldEntity extends BaseRenderData {
         final boolean useMapping = this.isMappingModeSubmitData();
         ByteBuffer buffer;
         if (useMapping) {
-            final int _access = this.isSynchronousSubmit() ? GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT : GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
-            buffer = GL30.glMapBufferRange(GL15.GL_ARRAY_BUFFER, subBufferIndex, subBufferSize, _access, null);
+            final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+            buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, subBufferIndex, subBufferSize, _access, null);
             if (buffer == null || buffer.capacity() < 1) {
-                GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
                 if (this.isRefreshRenderingLengthWhenSubmit()) this.textDataRefreshState[4] = 0;
                 this.sync_lock.unlock();
                 return BoxEnum.STATE_FAILED_OTHER;
@@ -743,9 +754,9 @@ public class TextFieldEntity extends BaseRenderData {
 
         buffer.position(0);
         buffer.limit(buffer.capacity());
-        if (useMapping) GL15.glUnmapBuffer(GL15.GL_ARRAY_BUFFER);
-        else GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, subBufferIndex, buffer);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+        else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, subBufferIndex, buffer);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         this.sync_lock.unlock();
         return BoxEnum.STATE_SUCCESS;
     }
@@ -769,9 +780,9 @@ public class TextFieldEntity extends BaseRenderData {
             return BoxEnum.STATE_FAILED;
         }
 
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getFontFieldVBO());
-        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, (long) charNum * _VBO_SHORT_COUNT << 1, this.textDataRefreshState[3]);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getFontFieldVBO());
+        GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, (long) charNum * _VBO_SHORT_COUNT << 1, this.textDataRefreshState[3]);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         this.textDataRefreshState[0] = charNum;
         this.textDataRefreshState[4] = 0;
         this.sync_lock.unlock();

@@ -1,7 +1,8 @@
 package org.boxutil.base;
 
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
-import org.boxutil.backends.core.BUtil_ThreadResource;
+import org.boxutil.backends.core.BUtil_ResourceStorage;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.instance.MemoryBlock;
 import org.boxutil.manager.InstanceDataMemoryPool;
@@ -14,7 +15,6 @@ import org.boxutil.define.BoxEnum;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 
 import java.nio.*;
 import java.util.ArrayList;
@@ -164,6 +164,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      *
      * @return returns {@link BoxEnum#STATE_SUCCESS} when success, return {@link BoxEnum#STATE_FAILED} when over limit, return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
+    @Deprecated
     public byte submitInstanceData() {
         if (this.instanceData == null || this.instanceData.isEmpty()) return BoxEnum.STATE_FAILED;
         final boolean newBuf = this.memory == null;
@@ -185,13 +186,14 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      *
      * @return returns {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
+    @Deprecated
     public byte mallocInstanceData(int dataNum) {
         if (dataNum < 1) return BoxEnum.STATE_FAILED;
         this.mallocInstance(this.isInstanceData2D() ? InstanceType.DYNAMIC_2D : InstanceType.DYNAMIC_3D, dataNum);
         return BoxEnum.STATE_SUCCESS;
     }
 
-    private void _packingInstanceData(final ByteBuffer rawBuffer, int offset, final InstanceType type, int index, int limit, boolean isFixed) {
+    protected void _packingInstanceData(final ByteBuffer rawBuffer, int offset, final InstanceType type, int index, int limit, boolean isFixed) {
         final FloatBuffer buffer = rawBuffer.asFloatBuffer();
         InstanceDataAPI data;
         float[] ptr;
@@ -219,53 +221,66 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         final boolean mappingBuffer = this.mappingSubmit;
         this.sync_lock.unlock();
 
-        BUtil_ThreadResource.Logical.offerSubmitInstance(unused -> {
-            if (this.memory == null) return;
-            final boolean isFixed = this.memory.is_type_fixed();
-            final var type = this.memory.meta();
-            final var pool = BUtil_InstanceDataMemoryPool.getPool(type);
-            final var lock = pool.getGPULock();
-
-            final boolean persistentMapping = pool.isPersistentMapping() && pool.getMappingBuffer() != null;
-            final int refreshLimit = refreshIndex + refreshSize, uploadOffset = pool.getPoolBehavior().reservedSize;
-            final long refreshByteSize = (long) type.getSize() * refreshSize;
-
-            ByteBuffer rawBuffer = null;
-            if (!mappingBuffer && !persistentMapping) {
-                rawBuffer = BufferUtils.createByteBuffer((int) refreshByteSize);
-                this._packingInstanceData(rawBuffer, 0, type, refreshIndex, refreshLimit, isFixed);
-            }
-
-            lock.lock();
-            final int ssbo = InstanceDataMemoryPool.getBufferID(type);
-            if (this.memory.is_free() || ssbo < 1) {
-                lock.unlock();
-                return;
-            }
-            final long refreshByteOffset = this.memory.address() + (long) type.getSize() * refreshOffset + uploadOffset;
-
-            if (persistentMapping) {
-                this._packingInstanceData(pool.getMappingBuffer(), (int) (refreshByteOffset >> 2), type, refreshIndex, refreshLimit, isFixed);
+        BUtil_ResourceStorage.sharedResource().offerSubmitInstance(() -> {
+            if (this.hasDelete()) return;
+            this.sync_lock.lock();
+            if (this.memory == null || this.memory.is_free()) {
+                this.sync_lock.unlock();
                 return;
             }
 
-            GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
+            final boolean l_isFixed = this.memory.is_type_fixed();
+            final var l_type = this.memory.meta();
+            final var l_pool = BUtil_InstanceDataMemoryPool.getPool(l_type);
+            final var l_lock = l_pool.getGPULock();
+
+            l_lock.lock();
+            final boolean l_persistentMapping = l_pool.isPersistentMapping() && l_pool.getMappingBuffer() != null;
+            final int l_bufferTarget = l_pool.getPoolBehavior().glTarget,
+                    l_refreshLimit = refreshIndex + refreshSize,
+                    l_uploadOffset = l_pool.getPoolBehavior().reservedSize;
+            final long l_refreshByteSize = (long) l_type.getSize() * refreshSize;
+
+            ByteBuffer l_rawBuffer = null;
+            if (!mappingBuffer && !l_persistentMapping) {
+                l_rawBuffer = BufferUtils.createByteBuffer((int) l_refreshByteSize);
+                this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
+            }
+
+            final int l_ssbo = InstanceDataMemoryPool.getBufferID(l_type);
+            if (l_ssbo < 1) {
+                l_lock.unlock();
+                this.sync_lock.unlock();
+                return;
+            }
+            final long l_refreshByteOffset = this.memory.address() + (long) l_type.getSize() * refreshOffset + l_uploadOffset;
+
+            if (l_persistentMapping) {
+                this._packingInstanceData(l_pool.getMappingBuffer(), (int) (l_refreshByteOffset >> 2), l_type, refreshIndex, l_refreshLimit, l_isFixed);
+                l_lock.unlock();
+                this.sync_lock.unlock();
+                return;
+            }
+
+            GLWrapper.Buffer.glBindBuffer(l_bufferTarget, l_ssbo);
             if (mappingBuffer) {
-                final int _access = GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
-                rawBuffer = GL30.glMapBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, refreshByteOffset, refreshByteSize, _access, null);
-                if (rawBuffer == null || rawBuffer.capacity() < refreshByteSize) {
-                    GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
-                    lock.unlock();
+                final int l_access = GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+                l_rawBuffer = GLWrapper.Buffer.glMapBufferRange(l_bufferTarget, l_refreshByteOffset, l_refreshByteSize, l_access, null);
+                if (l_rawBuffer == null || l_rawBuffer.capacity() < l_refreshByteSize) {
+                    GLWrapper.Buffer.glUnmapBuffer(l_bufferTarget);
+                    l_lock.unlock();
+                    this.sync_lock.unlock();
                     return;
                 }
 
-                this._packingInstanceData(rawBuffer, 0, type, refreshIndex, refreshLimit, isFixed);
+                this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
             }
 
-            rawBuffer.position(0).limit(rawBuffer.capacity()); // assert not null
-            if (mappingBuffer) GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
-            else GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, refreshByteOffset, rawBuffer);
-            lock.unlock();
+            l_rawBuffer.position(0).limit(l_rawBuffer.capacity()); // assert not null
+            if (mappingBuffer) GLWrapper.Buffer.glUnmapBuffer(l_bufferTarget);
+            else GLWrapper.Buffer.glBufferSubData(l_bufferTarget, l_refreshByteOffset, l_rawBuffer);
+            l_lock.unlock();
+            this.sync_lock.unlock();
         });
     }
 
@@ -279,6 +294,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      *
      * @return returns {@link BoxEnum#STATE_SUCCESS} when success, return {@link BoxEnum#STATE_FAILED} when over limit, return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
+    @Deprecated
     public byte submitFixedInstanceData() {
         if (this.instanceData == null || this.instanceData.isEmpty()) return BoxEnum.STATE_FAILED;
         final boolean newBuf = this.memory == null;
@@ -300,6 +316,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
      *
      * @return returns {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
+    @Deprecated
     public byte mallocFixedInstanceData(int dataNum) {
         if (dataNum < 1) return BoxEnum.STATE_FAILED;
         this.mallocInstance(this.isInstanceData2D() ? InstanceType.FIXED_2D : InstanceType.FIXED_3D, dataNum);
@@ -314,6 +331,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     }
 
     /**
+     * <b>NOTE:</b> Ineffective if device was <b>OpenGL 4.4+</b> supported, will force updating to persistent mapping buffer.<p>
      * For some very slight data, use <code>glBufferSubData()</code> may faster.<p>
      * Besides, some devices(some ARM SoC) may slower with <code>glMapBufferRange()</code>, decided by the drive how implements it.
      *

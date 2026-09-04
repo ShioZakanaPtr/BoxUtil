@@ -7,7 +7,7 @@ import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.define.DirectEntityType;
 import de.unkrig.commons.nullanalysis.Nullable;
-import org.lwjgl.opengl.GL11;
+import org.boxutil.define.GLWrapper;
 
 /**
  * Highest performance cost in all illuminates.<p>
@@ -30,8 +30,8 @@ public class AreaLight extends BaseIlluminantData {
     protected void _deleteExc() {
         super._deleteExc();
         if (this.texturedLightingState[1] > 0) {
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            GL11.glDeleteTextures(this.texturedLightingState[1]);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+            GLWrapper.Texture.glDeleteTextures(this.texturedLightingState[1]);
             this.texturedLightingState[1] = 0;
         }
     }
@@ -81,8 +81,8 @@ public class AreaLight extends BaseIlluminantData {
      * Must call it after changed light texture if with different texture size.
      */
     public void resetLightTexture() {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-        GL11.glDeleteTextures(this.texturedLightingState[1]);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+        GLWrapper.Texture.glDeleteTextures(this.texturedLightingState[1]);
         this.stateB[0] = false;
         this.stateB[1] = false;
         this.lightTex = null;
@@ -142,23 +142,23 @@ public class AreaLight extends BaseIlluminantData {
     public byte submitLightTexture(boolean refreshCurrFilteringTex) {
         if (this.isDirectAllocatePreFilteringTexture()) return BoxEnum.STATE_FAILED_OTHER;
         final boolean haveFilteringTex = this.texturedLightingState[1] > 0;
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
         if (this.texturedLightingState[0] == 0 && haveFilteringTex) {
-            GL11.glDeleteTextures(this.texturedLightingState[1]);
+            GLWrapper.Texture.glDeleteTextures(this.texturedLightingState[1]);
             this.texturedLightingState[1] = 0;
             return BoxEnum.STATE_SUCCESS;
         }
         if (haveFilteringTex && refreshCurrFilteringTex) {
-            GL11.glDeleteTextures(this.texturedLightingState[1]);
-            this.texturedLightingState[1] = GL11.glGenTextures();
-        } else if (!haveFilteringTex) this.texturedLightingState[1] = GL11.glGenTextures();
+            GLWrapper.Texture.glDeleteTextures(this.texturedLightingState[1]);
+            this.texturedLightingState[1] = GLWrapper.Texture.glGenTextures();
+        } else if (!haveFilteringTex) this.texturedLightingState[1] = GLWrapper.Texture.glGenTextures();
         BaseShaderPacksContext context = BoxConfigs.getCurrShaderPacksContext();
         if (!context.isTexturedAreaLightSupported()) return BoxEnum.STATE_FAILED;
         byte[] state = context.applyTexturedAreaLightPreFiltering(this.texturedLightingState[0], this.texturedLightingState[1], !haveFilteringTex || refreshCurrFilteringTex);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
         this.textureMaxLevel = state[1];
         if (state[0] != BoxEnum.STATE_SUCCESS) {
-            GL11.glDeleteTextures(this.texturedLightingState[1]);
+            GLWrapper.Texture.glDeleteTextures(this.texturedLightingState[1]);
             this.texturedLightingState[1] = 0;
             this.textureMaxLevel = 0;
         }

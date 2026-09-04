@@ -11,6 +11,7 @@ import com.fs.starfarer.api.util.Pair;
 import org.boxutil.base.SimpleParticleControlData;
 import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.InstanceType;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.entity.*;
@@ -188,7 +189,8 @@ public final class RenderingUtil {
         dataList.add(data);
         ends.setInstanceData(dataList, 0.0f, full, fadeOut);
         ends.setInstanceDataRefreshAllFromCurrentIndex();
-        ends.submitInstanceData();
+        ends.mallocInstance(InstanceType.FIXED_2D, 2);
+        ends.submitInstance();
         ends.setRenderingCount(2);
         ends.setAlwaysRefreshInstanceData(true);
         ends.setSmooth();
@@ -494,10 +496,10 @@ public final class RenderingUtil {
         GL11.glTranslatef(location.x, location.y, 0.0f);
         GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, additive ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, sprite.getTextureId());
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, additive ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Texture.GL_TEXTURE_2D);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, sprite.getTextureId());
 
         Misc.setColor(color, alphaMulti);
         float[] currVertices = new float[4];
@@ -540,7 +542,7 @@ public final class RenderingUtil {
 
         GL11.glVertexPointer(2, 0, vertexBuffer);
         GL11.glTexCoordPointer(2, 0, uvBuffer);
-        GL11.glDrawArrays(GL11.GL_QUADS, 0, num * 4);
+        GLWrapper.Drawcall.glDrawArrays(GLWrapper.Drawcall.GL_QUADS, 0, num * 4);
 
         GL11.glPopMatrix();
         GL11.glPopClientAttrib();
@@ -568,19 +570,19 @@ public final class RenderingUtil {
         if (!textField.isValidRenderingTextField()) return;
 
         FloatBuffer projMat = CommonUtil.createFloatBuffer(TransformUtil.createWindowOrthoMatrix(new Matrix4f()));
-        GL11.glPushAttrib(GL11.GL_VIEWPORT_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_ENABLE_BIT | GL11.GL_TRANSFORM_BIT | GL11.GL_POLYGON_BIT);
-        GL11.glViewport(0, 0, ShaderCore.getScreenScaleWidth(), ShaderCore.getScreenScaleHeight());
+        GLWrapper.Operation.glPushAttrib(GLWrapper.Operation.GL_VIEWPORT_BIT | GLWrapper.Operation.GL_COLOR_BUFFER_BIT | GLWrapper.Operation.GL_ENABLE_BIT | GLWrapper.Operation.GL_TRANSFORM_BIT | GLWrapper.Operation.GL_POLYGON_BIT);
+        GLWrapper.Operation.glViewport(0, 0, ShaderCore.getScreenScaleWidth(), ShaderCore.getScreenScaleHeight());
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPushMatrix();
         GL11.glLoadMatrix(projMat);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
-        GL11.glDisable(GL11.GL_POLYGON_SMOOTH);
-        GL11.glDisable(GL11.GL_STENCIL_TEST);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_POLYGON_SMOOTH);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_STENCIL_TEST);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_ALPHA_TEST);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_DEPTH_TEST);
+        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_SCISSOR_TEST);
         textField.render(screenPos, 0.0f, additive, textColor);
         GL11.glPopMatrix();
         GL11.glMatrixMode(GL11.GL_PROJECTION);
@@ -671,10 +673,10 @@ public final class RenderingUtil {
                     } else if (withDiffuse) {
                         sprite.getMaterialData().setNormal(_AUTO_PARTICLE_NORMAL.computeIfAbsent(diffuseSprite.getTextureId(), tex -> {
                             if (tex < 1) return 0;
-                            GL11.glBindTexture(GL11.GL_TEXTURE_2D, tex);
-                            final int texWidth = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH),
-                                    texHeight = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
-                            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+                            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, tex);
+                            final int texWidth = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH),
+                                    texHeight = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
+                            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
                             if (texWidth < 1 || texHeight < 1) return 0;
                             return ShaderUtil.genNormalMapFromRGB(tex, texWidth, texHeight, _AUTO_PARTICLE_NORMAL_PARAM);
                         }));

@@ -6,6 +6,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.backends.reflect.BUtil_RefMethod;
+import org.boxutil.define.GLWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
@@ -309,9 +310,7 @@ public final class CommonUtil {
         FloatBuffer buffer = BufferUtils.createFloatBuffer(2);
         buffer.put(0, vector.x);
         buffer.put(1, vector.y);
-        buffer.position(0);
-        buffer.limit(2);
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Vector2f... vectors) {
@@ -321,9 +320,7 @@ public final class CommonUtil {
             buffer.put(ptr, vectors[i].x);
             buffer.put(ptr + 1, vectors[i].y);
         }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Vector3f vector) {
@@ -331,9 +328,7 @@ public final class CommonUtil {
         buffer.put(0, vector.x);
         buffer.put(1, vector.y);
         buffer.put(2, vector.z);
-        buffer.position(0);
-        buffer.limit(3);
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Vector3f... vectors) {
@@ -344,9 +339,7 @@ public final class CommonUtil {
             buffer.put(ptr + 1, vectors[i].y);
             buffer.put(ptr + 2, vectors[i].z);
         }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Vector4f vector) {
@@ -355,9 +348,7 @@ public final class CommonUtil {
         buffer.put(1, vector.y);
         buffer.put(2, vector.z);
         buffer.put(3, vector.w);
-        buffer.position(0);
-        buffer.limit(4);
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Vector4f... vectors) {
@@ -369,17 +360,13 @@ public final class CommonUtil {
             buffer.put(ptr + 2, vectors[i].z);
             buffer.put(ptr + 3, vectors[i].w);
         }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Matrix2f matrix) {
         FloatBuffer buffer = BufferUtils.createFloatBuffer(4);
         buffer.put(0, getMatrix2fArray(matrix), 0, 4);
-        buffer.position(0);
-        buffer.limit(4);
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Matrix2f... matrices) {
@@ -391,17 +378,13 @@ public final class CommonUtil {
             buffer.put(ptr + 2, matrices[i].m10);
             buffer.put(ptr + 3, matrices[i].m11);
         }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Matrix3f matrix) {
         FloatBuffer buffer = BufferUtils.createFloatBuffer(9);
         buffer.put(0, getMatrix3fArray(matrix), 0, 9);
-        buffer.position(0);
-        buffer.limit(9);
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Matrix3f... matrices) {
@@ -418,17 +401,13 @@ public final class CommonUtil {
             buffer.put(ptr + 7, matrices[i].m21);
             buffer.put(ptr + 8, matrices[i].m22);
         }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Matrix4f matrix) {
         FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
         buffer.put(0, getMatrix4fArray(matrix), 0, 16);
-        buffer.position(0);
-        buffer.limit(16);
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(Matrix4f... matrices) {
@@ -452,81 +431,63 @@ public final class CommonUtil {
             buffer.put(ptr + 14, matrices[i].m32);
             buffer.put(ptr + 15, matrices[i].m33);
         }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-        return buffer;
+        return buffer.clear();
     }
 
     public static PointerBuffer createPointerBuffer(long... array) {
         final int length = array.length;
         PointerBuffer buffer = BufferUtils.createPointerBuffer(length);
         buffer.put(array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     public static DoubleBuffer createFloatBuffer(double... array) {
         final int length = array.length;
         DoubleBuffer buffer = BufferUtils.createDoubleBuffer(length);
         buffer.put(0, array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     public static FloatBuffer createFloatBuffer(float... array) {
         final int length = array.length;
         FloatBuffer buffer = BufferUtils.createFloatBuffer(length);
         buffer.put(0, array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     public static LongBuffer createLongBuffer(long... array) {
         final int length = array.length;
         LongBuffer buffer = BufferUtils.createLongBuffer(length);
         buffer.put(0, array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     public static IntBuffer createIntBuffer(int... array) {
         final int length = array.length;
         IntBuffer buffer = BufferUtils.createIntBuffer(length);
         buffer.put(0, array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     public static ShortBuffer createShortBuffer(short... array) {
         final int length = array.length;
         ShortBuffer buffer = BufferUtils.createShortBuffer(length);
         buffer.put(0, array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     public static CharBuffer createShortBuffer(char... array) {
         final int length = array.length;
         CharBuffer buffer = BufferUtils.createCharBuffer(length);
         buffer.put(0, array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     public static ByteBuffer createByteBuffer(byte... array) {
         final int length = array.length;
         ByteBuffer buffer = BufferUtils.createByteBuffer(length);
         buffer.put(0, array, 0, length);
-        buffer.position(0);
-        buffer.limit(length);
-        return buffer;
+        return buffer.clear();
     }
 
     /**
@@ -605,6 +566,137 @@ public final class CommonUtil {
     public static short float16ToShort(float src) {
         int bits = Float.floatToRawIntBits(src) >>> 13;
         return (short) ((bits & 0b1100000000000000000) >>> 3 | (bits & 0b11111111111111));
+    }
+
+    /**
+     * Move from java 21
+     */
+    public static float jFloat16ToFloat(short floatBinary16) {
+        /*
+         * The binary16 format has 1 sign bit, 5 exponent bits, and 10
+         * significand bits. The exponent bias is 15.
+         */
+        int bin16arg = (int)floatBinary16;
+        int bin16SignBit     = 0x8000 & bin16arg;
+        int bin16ExpBits     = 0x7c00 & bin16arg;
+        int bin16SignifBits  = 0x03FF & bin16arg;
+
+        // Shift left difference in the number of significand bits in
+        // the float and binary16 formats
+        final int SIGNIF_SHIFT = 13;
+
+        float sign = (bin16SignBit != 0) ? -1.0f : 1.0f;
+
+        // Extract binary16 exponent, remove its bias, add in the bias
+        // of a float exponent and shift to correct bit location
+        // (significand width includes the implicit bit so shift one
+        // less).
+        int bin16Exp = (bin16ExpBits >> 10) - 15;
+        if (bin16Exp == -15) {
+            // For subnormal binary16 values and 0, the numerical
+            // value is 2^24 * the significand as an integer (no
+            // implicit bit).
+            return sign * (0x1p-24f * bin16SignifBits);
+        } else if (bin16Exp == 16) {
+            return (bin16SignifBits == 0) ?
+                    sign * Float.POSITIVE_INFINITY :
+                    Float.intBitsToFloat((bin16SignBit << 16) |
+                            0x7f80_0000 |
+                            // Preserve NaN signif bits
+                            ( bin16SignifBits << SIGNIF_SHIFT ));
+        }
+
+//        assert -15 < bin16Exp  && bin16Exp < 16;
+
+        int floatExpBits = (bin16Exp + 127) << 23;
+
+        // Compute and combine result sign, exponent, and significand bits.
+        return Float.intBitsToFloat((bin16SignBit << 16) |
+                floatExpBits |
+                (bin16SignifBits << SIGNIF_SHIFT));
+    }
+
+    /**
+     * Move from java 21
+     */
+    public static short jFloatToFloat16(float f) {
+        int doppel = Float.floatToRawIntBits(f);
+        short sign_bit = (short)((doppel & 0x8000_0000) >> 16);
+
+        if (Float.isNaN(f)) {
+            // Preserve sign and attempt to preserve significand bits
+            return (short)(sign_bit
+                    | 0x7c00 // max exponent + 1
+                    // Preserve high order bit of float NaN in the
+                    // binary16 result NaN (tenth bit); OR in remaining
+                    // bits into lower 9 bits of binary 16 significand.
+                    | (doppel & 0x007f_e000) >> 13 // 10 bits
+                    | (doppel & 0x0000_1ff0) >> 4  //  9 bits
+                    | (doppel & 0x0000_000f));     //  4 bits
+        }
+
+        float abs_f = Math.abs(f);
+
+        // The overflow threshold is binary16 MAX_VALUE + 1/2 ulp
+        if (abs_f >= (0x1.ffcp15f + 0x0.002p15f) ) {
+            return (short)(sign_bit | 0x7c00); // Positive or negative infinity
+        }
+
+        // Smallest magnitude nonzero representable binary16 value
+        // is equal to 0x1.0p-24; half-way and smaller rounds to zero.
+        if (abs_f <= 0x1.0p-24f * 0.5f) { // Covers float zeros and subnormals.
+            return sign_bit; // Positive or negative zero
+        }
+
+        // Dealing with finite values in exponent range of binary16
+        // (when rounding is done, could still round up)
+        int exp = Math.getExponent(f);
+        assert -25 <= exp && exp <= 15;
+
+        // For binary16 subnormals, beside forcing exp to -15, retain
+        // the difference expdelta = E_min - exp.  This is the excess
+        // shift value, in addition to 13, to be used in the
+        // computations below.  Further the (hidden) msb with value 1
+        // in f must be involved as well.
+        int expdelta = 0;
+        int msb = 0x0000_0000;
+        if (exp < -14) {
+            expdelta = -14 - exp;
+            exp = -15;
+            msb = 0x0080_0000;
+        }
+        int f_signif_bits = doppel & 0x007f_ffff | msb;
+
+        // Significand bits as if using rounding to zero (truncation).
+        short signif_bits = (short)(f_signif_bits >> (13 + expdelta));
+
+        // For round to nearest even, determining whether or not to
+        // round up (in magnitude) is a function of the least
+        // significant bit (LSB), the next bit position (the round
+        // position), and the sticky bit (whether there are any
+        // nonzero bits in the exact result to the right of the round
+        // digit). An increment occurs in three cases:
+        //
+        // LSB  Round Sticky
+        // 0    1     1
+        // 1    1     0
+        // 1    1     1
+        // See "Computer Arithmetic Algorithms," Koren, Table 4.9
+
+        int lsb    = f_signif_bits & (1 << 13 + expdelta);
+        int round  = f_signif_bits & (1 << 12 + expdelta);
+        int sticky = f_signif_bits & ((1 << 12 + expdelta) - 1);
+
+        if (round != 0 && ((lsb | sticky) != 0 )) {
+            signif_bits++;
+        }
+
+        // No bits set in significand beyond the *first* exponent bit,
+        // not just the significand; quantity is added to the exponent
+        // to implement a carry out from rounding the significand.
+//        assert (0xf800 & signif_bits) == 0x0;
+
+        return (short)(sign_bit | ( ((exp + 15) << 10) + signif_bits ) );
     }
 
     /**
@@ -838,32 +930,32 @@ public final class CommonUtil {
      *     channelNum returns 0 if failed or format not support or failed.
      */
     public static Pair<int[], ByteBuffer> getGLTexture(int target, int texture, byte channelNum) {
-        final int[] format = new int[]{GL11.GL_RED, GL30.GL_RG, GL11.GL_RGB, GL11.GL_RGBA};
+        final int[] format = new int[]{GLWrapper.Texture.GL_RED, GLWrapper.Texture.GL_RG, GLWrapper.Texture.GL_RGB, GLWrapper.Texture.GL_RGBA};
         final byte[] alignment = new byte[]{1, 2, 1, 4};
         final byte picker = (byte) Math.min(channelNum - 1, 3);
         Pair<int[], ByteBuffer> result = new Pair<>(new int[3], null);
-        if (!BoxDatabase.getGLState().GL_FBO) return result;
+        if (!GLWrapper.FBO.valid()) return result;
         Integer _fbo = _GL_TRANSFER_FBO.get();
         if (_fbo == null) {
-            _fbo = GL30.glGenFramebuffers();
+            _fbo = GLWrapper.FBO.glGenFramebuffers();
             _GL_TRANSFER_FBO.set(_fbo);
             if (_fbo > 0) {
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, _fbo);
-                GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
-                GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+                GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, _fbo);
+                GLWrapper.FBO.glReadBuffer(GLWrapper.FBO.GL_COLOR_ATTACHMENT0);
+                GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
             }
         }
         if (_fbo < 0 || texture == 0 || channelNum < 1) return result;
-        GL11.glBindTexture(target, texture);
-        result.one[0] = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_WIDTH);
-        result.one[1] = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_HEIGHT);
-        result.one[2] = GL11.glGetTexLevelParameteri(target, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
+        GLWrapper.Texture.glBindTexture(target, texture);
+        result.one[0] = GLWrapper.Texture.glGetTexLevelParameteri(target, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);
+        result.one[1] = GLWrapper.Texture.glGetTexLevelParameteri(target, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
+        result.one[2] = GLWrapper.Texture.glGetTexLevelParameteri(target, 0, GLWrapper.Texture.GL_TEXTURE_INTERNAL_FORMAT);
         result.two = BufferUtils.createByteBuffer(result.one[0] * result.one[1] * channelNum);
         GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, alignment[picker]);
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, _fbo);
-        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, target, texture, 0);
-        GL11.glReadPixels(0, 0, result.one[0], result.one[1], format[picker], GL11.GL_UNSIGNED_BYTE, result.two);
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, _fbo);
+        GLWrapper.FBO.glFramebufferTexture2D(GLWrapper.FBO.GL_FRAMEBUFFER, GLWrapper.FBO.GL_COLOR_ATTACHMENT0, target, texture, 0);
+        GL11.glReadPixels(0, 0, result.one[0], result.one[1], format[picker], GLWrapper.DataType.GL_UNSIGNED_BYTE, result.two);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
         GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4);
         return result;
     }
@@ -960,7 +1052,7 @@ public final class CommonUtil {
 
     public static void glDebug(String tags, Object info) throws OpenGLException {
         _LOG.info(tags + info);
-        _LOG.info(GLU.gluErrorString(GL11.glGetError()));
+        _LOG.info(GLWrapper.Operation.Get.glGetErrorStr());
         Util.checkGLError();
     }
 

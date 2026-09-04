@@ -1,6 +1,7 @@
 package org.boxutil.units.standard.misc;
 
 import org.boxutil.base.BaseShaderData;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -14,7 +15,7 @@ import java.nio.FloatBuffer;
 
 /**
  * Easy way for display number value anywhere.<p>
- * Required <code>OpenGL 2.0</code> supported.
+ * Required <b>OpenGL 2.0</b> supported.
  */
 public class NumberObject {
     // vec2(length)
@@ -32,8 +33,8 @@ public class NumberObject {
         GL11.glPushMatrix();
         GL11.glTranslatef(location.x, location.y, 0.0f);
         GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw(value, width, height);
         GL11.glPopMatrix();
     }
@@ -47,8 +48,8 @@ public class NumberObject {
         GL11.glPushMatrix();
         GL11.glTranslatef(location.x - width * 0.5f, location.y - width * 0.5f, 0.0f);
         if (facing != 0.0f) GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         this.glDraw(value, width, height);
         GL11.glPopMatrix();
     }
@@ -71,7 +72,7 @@ public class NumberObject {
         float charLength = this.state[0] + this.state[1] + 1.0f;
         if (this.state[0] != 0.0f && this.state[1] != 0.0f) charLength++;
         GL20.glUniform1f(program.location[1], charLength);
-        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glBegin(GLWrapper.Drawcall.GL_TRIANGLE_STRIP);
         GL11.glVertex2f(0.0f, 0.0f);
         GL11.glVertex2f(width, 0.0f);
         GL11.glVertex2f(0.0f, height);

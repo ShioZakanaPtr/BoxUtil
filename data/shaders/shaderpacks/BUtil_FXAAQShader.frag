@@ -1,7 +1,5 @@
 #version 420
 
-precision highp float;
-
 #define SCREENSTEPX OVERWRITE_SCREEN_X
 #define SCREENSTEPY OVERWRITE_SCREEN_Y
 #define FXAA_SHARPNESS 0.5

@@ -538,6 +538,7 @@ public final class EntityShadingDataManager {
                 objData = objDataArray.getJSONObject(i);
                 texKey = objData.optString("id");
                 texType = objData.optString("type");
+                if (BUtil_MiscUtil.csvSkipAnnotationID(texKey)) continue;
                 if (texKey.isBlank() || texType.isBlank()) {
                     _LOG.warn("'BoxUtil' shading texture csv data have empty id/type at lines '" + i + "' in: '" + path + "'.");
                     continue;
@@ -613,6 +614,7 @@ public final class EntityShadingDataManager {
                 texKey = objData.optString("id");
                 texType = objData.optString("type");
                 texPath = objData.optString("path");
+                if (BUtil_MiscUtil.csvSkipAnnotationID(texKey)) continue;
                 if (texKey.isBlank() || texType.isBlank() || texPath.isBlank()) {
                     _LOG.warn("'BoxUtil' shading texture csv data have empty id/type/path at lines '" + i + "' in: '" + path + "'.");
                     continue;

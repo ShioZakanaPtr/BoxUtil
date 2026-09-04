@@ -1,56 +1,106 @@
 package org.boxutil.config;
 
+import org.boxutil.backends.core.BUtil_ResourceStorage;
+import org.lwjgl.opengl.GL42;
+import org.lwjgl.opengl.GL43;
+import org.lwjgl.opengl.GL44;
+
 import java.util.concurrent.Phaser;
 
 /**
- * <strong>make sure you are understand what you want to do.</strong>
+ * <strong>Make sure you are understand what you want to do.</strong>
  */
 public final class BoxThreadSync {
-    private final static Phaser _LOCK_BEFORE_RENDERING = new Phaser(1);
-    private final static Phaser _LOCK_BEGIN_RENDERING = new Phaser(1);
-    private final static Phaser _LOCK_BEGIN_ILLUMINATION = new Phaser(1);
-    private final static Phaser _LOCK_AFTER_RENDERING = new Phaser(1);
-
-    private final static Phaser _LOCK_BEGIN_ADVANCE = new Phaser(1);
-    private final static Phaser _LOCK_BEGIN_POOL_COMPACT = new Phaser(0);
-    private final static Phaser _LOCK_BEGIN_INSTANCE_COMPUTE = new Phaser(0);
-    private final static Phaser _LOCK_FINISH_ADVANCE = new Phaser(1);
-
+    /**
+     * In rendering loop: beforeRendering => runBeforeRenderingDelayGLCmd => applyMemoryBarrier => beginRendering => beginIllumination => runBeginIlluminationDelayGLCmd => afterRendering => logical...
+     */
     public final static class Rendering {
         public static Phaser beforeRendering() {
-            return _LOCK_BEFORE_RENDERING;
+            return BUtil_ResourceStorage.syncResource().getBeforeRendering();
+        }
+
+        /**
+         * Submits OpenGL command packets to the deferred execution queue associated with the specified barrier point.<p>
+         * These packets are executed on the main thread during the relevant phase.<p>
+         * The execution order of the packets in the queue should not be assumed to be the same as the order in which they were enqueued.
+         *
+         * @param inCampaign <code>true</code> if in campaign, otherwise <code>false</code> if in combat.
+         */
+        public static void offerBeforeRenderingDelayGLCmd(final Runnable cmd, boolean inCampaign) {
+            if (inCampaign) BUtil_ResourceStorage.campaignLayered().offerGLCmdBeforeRendering(cmd);
+            else BUtil_ResourceStorage.combatLayered().offerGLCmdBeforeRendering(cmd);
+        }
+
+        /**
+         * Submits OpenGL memory barrier to the collector.<p>
+         * These barriers are apply on the main thread at just before the <code>beginRendering</code> sync.<p>
+         * Has default barriers in each frame: {@link GL42#GL_BUFFER_UPDATE_BARRIER_BIT}, {@link GL43#GL_SHADER_STORAGE_BARRIER_BIT}, {@link GL44#GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT}<p>
+         *
+         * @param barriers Same as {@link GL42#glMemoryBarrier(int)}, the provided barrier bits are combined internally using a bitwise OR,
+         *                 and are executed uniformly after the barrier point, thereby avoiding multiple repeated barrier calls.
+         */
+        public static void offerMemoryBarrier(int barriers, boolean inCampaign) {
+            if (inCampaign) BUtil_ResourceStorage.campaignLayered().offerMemoryBarrier(barriers);
+            else BUtil_ResourceStorage.combatLayered().offerMemoryBarrier(barriers);
         }
 
         public static Phaser beginRendering() {
-            return _LOCK_BEGIN_RENDERING;
+            return BUtil_ResourceStorage.syncResource().getBeginRendering();
         }
 
         public static Phaser beginIllumination() {
-            return _LOCK_BEGIN_ILLUMINATION;
+            return BUtil_ResourceStorage.syncResource().getBeginIllumination();
+        }
+
+        /**
+         * Submits OpenGL command packets to the deferred execution queue associated with the specified barrier point.<p>
+         * These packets are executed on the main thread during the relevant phase.<p>
+         * The execution order of the packets in the queue should not be assumed to be the same as the order in which they were enqueued.
+         *
+         * @param inCampaign <code>true</code> if in campaign, otherwise <code>false</code> if in combat.
+         */
+        public static void offerBeginIlluminationDelayGLCmd(final Runnable cmd, boolean inCampaign) {
+            if (inCampaign) BUtil_ResourceStorage.campaignLayered().offerGLCmdBeginIllumination(cmd);
+            else BUtil_ResourceStorage.combatLayered().offerGLCmdBeginIllumination(cmd);
         }
 
         public static Phaser afterRendering() {
-            return _LOCK_AFTER_RENDERING;
+            return BUtil_ResourceStorage.syncResource().getAfterRendering();
         }
 
         private Rendering() {}
     }
 
+    /**
+     * In rendering loop: rendering... => beginAdvance => [next frame] => finishAdvance => next frame rendering...
+     */
     public final static class Logical {
         public static Phaser beginAdvance() {
-            return _LOCK_BEGIN_ADVANCE;
+            return BUtil_ResourceStorage.syncResource().getBeginAdvance();
+        }
+
+        /**
+         * Submits OpenGL command packets to the deferred execution queue associated with the specified barrier point.<p>
+         * These packets are executed on the main thread during the relevant phase.<p>
+         * The execution order of the packets in the queue should not be assumed to be the same as the order in which they were enqueued.
+         *
+         * @param inCampaign <code>true</code> if in campaign, otherwise <code>false</code> if in combat.
+         */
+        public static void offerBeginAdvanceDelayGLCmd(final Runnable cmd, boolean inCampaign) {
+            if (inCampaign) BUtil_ResourceStorage.campaignLayered().offerGLCmdBeginAdvance(cmd);
+            else BUtil_ResourceStorage.combatLayered().offerGLCmdBeginAdvance(cmd);
         }
 
         public static Phaser beginPoolCompact() {
-            return _LOCK_BEGIN_POOL_COMPACT;
+            return BUtil_ResourceStorage.syncResource().getBeginPoolCompact();
         }
 
         public static Phaser beginInstanceCompute() {
-            return _LOCK_BEGIN_INSTANCE_COMPUTE;
+            return BUtil_ResourceStorage.syncResource().getBeginInstanceCompute();
         }
 
         public static Phaser finishAdvance() {
-            return _LOCK_FINISH_ADVANCE;
+            return BUtil_ResourceStorage.syncResource().getFinishAdvance();
         }
 
         private Logical() {}

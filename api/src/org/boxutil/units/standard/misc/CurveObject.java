@@ -4,6 +4,7 @@ import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.units.standard.attribute.NodeData;
 import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
@@ -12,7 +13,6 @@ import org.boxutil.util.concurrent.SpinLock;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
@@ -21,7 +21,7 @@ import java.nio.FloatBuffer;
 /**
  * Easy way for rendering cubic bezier with width and texture anywhere.<p>
  * Emissive color of nodes is not supported.<p>
- * Required <code>OpenGL 1.5</code> supported.
+ * Required {@link GLWrapper.Buffer.VBO#valid()}.
  */
 public class CurveObject {
     public final static byte STRIDE = 5 * BoxDatabase.FLOAT_SIZE;
@@ -49,7 +49,7 @@ public class CurveObject {
     }
 
     public CurveObject(NodeData start, NodeData end, byte interpolation, int usage) {
-        this._curveID = BoxDatabase.getGLState().GL_VBO ? GL15.glGenBuffers() : 0;
+        this._curveID = GLWrapper.Buffer.VBO.valid() ? GLWrapper.Buffer.VBO.glGenBuffers() : 0;
         this.isValid = this.getCurveID() > 0;
         this.nodes[0] = start;
         this.nodes[1] = end;
@@ -60,14 +60,14 @@ public class CurveObject {
         this.bufferSize = vertexSize * BoxDatabase.FLOAT_SIZE;
         if (!this.isValid()) {
             this.buffer = BufferUtils.createFloatBuffer(vertexSize);
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getCurveID());
-            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, this.bufferSize, usage);
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+            GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getCurveID());
+            GLWrapper.Buffer.VBO.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.bufferSize, usage);
+            GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         }
     }
 
     public CurveObject(NodeData start, NodeData end, byte interpolation) {
-        this(start, end, interpolation, GL15.GL_DYNAMIC_DRAW);
+        this(start, end, interpolation, GLWrapper.Buffer.VBO.GL_DYNAMIC_DRAW);
     }
 
     public CurveObject(NodeData start, NodeData end) {
@@ -89,8 +89,8 @@ public class CurveObject {
         this.isValid = false;
         this._sync_lock.lock();
         if (this.getCurveID() > 0) {
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-            GL15.glDeleteBuffers(this.getCurveID());
+            GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            GLWrapper.Buffer.VBO.glDeleteBuffers(this.getCurveID());
         }
         this._sync_lock.unlock();
     }
@@ -103,14 +103,14 @@ public class CurveObject {
         GL11.glPushMatrix();
         GL11.glTranslatef(offset.x, offset.y, 0.0f);
         if (facing != 0.0f) GL11.glRotatef(facing, 0.0f, 0.0f, 1.0f);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, isAdditiveBlend ? GL11.GL_ONE : GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendFunc(GLWrapper.Operation.GL_SRC_ALPHA, isAdditiveBlend ? GLWrapper.Operation.GL_ONE : GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
         if (withTexture) {
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.glTex);
-        } else GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GLWrapper.Operation.glEnable(GLWrapper.Texture.GL_TEXTURE_2D);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.glTex);
+        } else GLWrapper.Operation.glDisable(GLWrapper.Texture.GL_TEXTURE_2D);
         this.glDraw();
-        if (withTexture) GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        if (withTexture) GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
         GL11.glPopMatrix();
     }
 
@@ -120,14 +120,14 @@ public class CurveObject {
         GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
         GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
         GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getCurveID());
-        GL11.glVertexPointer(2, GL11.GL_FLOAT, STRIDE, 0);
-        GL11.glTexCoordPointer(2, GL11.GL_FLOAT, STRIDE, UV_OFFSET);
-        GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, STRIDE, COLOR_OFFSET);
+        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getCurveID());
+        GL11.glVertexPointer(2, GLWrapper.DataType.GL_FLOAT, STRIDE, 0);
+        GL11.glTexCoordPointer(2, GLWrapper.DataType.GL_FLOAT, STRIDE, UV_OFFSET);
+        GL11.glColorPointer(4, GLWrapper.DataType.GL_UNSIGNED_BYTE, STRIDE, COLOR_OFFSET);
         this._sync_lock.lock();
-        GL11.glDrawArrays(GL11.GL_TRIANGLE_STRIP, 0, this.vertexCount);
+        GLWrapper.Drawcall.glDrawArrays(GLWrapper.Drawcall.GL_TRIANGLE_STRIP, 0, this.vertexCount);
         this._sync_lock.unlock();
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         GL11.glPopClientAttrib();
     }
 
@@ -187,9 +187,9 @@ public class CurveObject {
 
         this.buffer.position(0);
         this.buffer.limit(this.buffer.capacity());
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.getCurveID());
-        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, this.buffer);
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getCurveID());
+        GLWrapper.Buffer.VBO.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0, this.buffer);
+        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
         this._sync_lock.unlock();
     }
 

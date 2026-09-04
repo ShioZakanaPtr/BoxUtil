@@ -1,9 +1,9 @@
 package org.boxutil.base;
 
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -22,50 +22,50 @@ public abstract class BaseShaderData {
     }
 
     public int getUniformIndex(String name) {
-        return GL20.glGetUniformLocation(this.id, name);
+        return GLWrapper.Shader.glGetUniformLocation(this.id, name);
     }
 
     public int getStructUniformIndex(String name) {
-        return GL31.glGetUniformBlockIndex(this.id, name);
+        return GLWrapper.Buffer.UBO.glGetUniformBlockIndex(this.id, name);
     }
 
     public int getUBOIndex(String name, int bindingIndex) {
         final int index = this.getStructUniformIndex(name);;
-        GL31.glUniformBlockBinding(this.id, index, bindingIndex);
+        GLWrapper.Buffer.UBO.glUniformBlockBinding(this.id, index, bindingIndex);
         return index;
     }
 
     public int getSubroutineIndex(int shaderType, String name) {
-        return GL40.glGetSubroutineIndex(this.id, shaderType, name);
+        return GLWrapper.Shader.glGetSubroutineIndex(this.id, shaderType, name);
     }
 
     /**
      * Unneeded for usual.
      */
     public int getSubroutineUniformLocation(int shaderType, String name) {
-        return GL40.glGetSubroutineUniformLocation(this.id, shaderType, name);
+        return GLWrapper.Shader.glGetSubroutineUniformLocation(this.id, shaderType, name);
     }
 
     public void active() {
-        GL20.glUseProgram(this.id);
+        GLWrapper.Shader.glUseProgram(this.id);
     }
 
     public void close() {
-        GL20.glUseProgram(0);
+        GLWrapper.Shader.glUseProgram(0);
     }
 
     public void delete() {
         if (this.id < 1) return;
         this.close();
         IntBuffer shadersBuffer = BufferUtils.createIntBuffer(16);
-        GL20.glGetAttachedShaders(this.id, null, shadersBuffer);
+        GLWrapper.Shader.glGetAttachedShaders(this.id, null, shadersBuffer);
         if (shadersBuffer.hasArray()) {
             for (int shaderID : shadersBuffer.array()) {
-                GL20.glDetachShader(this.id, shaderID);
-                GL20.glDeleteShader(shaderID);
+                GLWrapper.Shader.glDetachShader(this.id, shaderID);
+                GLWrapper.Shader.glDeleteShader(shaderID);
             }
         }
-        GL20.glDeleteProgram(this.id);
+        GLWrapper.Shader.glDeleteProgram(this.id);
     }
 
     public boolean isValid() {
@@ -77,28 +77,28 @@ public abstract class BaseShaderData {
     }
 
     public void putDefaultTextureUnit(int location, int unit) {
-        GL41.glProgramUniform1i(this.getId(), location, unit);
+        GLWrapper.Shader.glProgramUniform1i(this.getId(), location, unit);
     }
 
     public void putBindingImageTexture(int binding, int textureID, int format) {
-        GL42.glBindImageTexture(binding, textureID, 0, false, 0, GL15.GL_READ_WRITE, format);
+        GLWrapper.Texture.glBindImageTexture(binding, textureID, 0, false, 0, GLWrapper.Texture.GL_READ_WRITE, format);
     }
 
     public void putBindingImageTextureReadOnly(int binding, int textureID, int format) {
-        GL42.glBindImageTexture(binding, textureID, 0, false, 0, GL15.GL_READ_ONLY, format);
+        GLWrapper.Texture.glBindImageTexture(binding, textureID, 0, false, 0, GLWrapper.Texture.GL_READ_ONLY, format);
     }
 
     public void putBindingImageTextureWriteOnly(int binding, int textureID, int format) {
-        GL42.glBindImageTexture(binding, textureID, 0, false, 0, GL15.GL_WRITE_ONLY, format);
+        GLWrapper.Texture.glBindImageTexture(binding, textureID, 0, false, 0, GLWrapper.Texture.GL_WRITE_ONLY, format);
     }
 
     public void bindTextureBuffer(int textureID) {
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, textureID);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, textureID);
     }
 
     public void putUniformTextureBuffer(int uniformIndex, int textureID) {
         this.bindTextureBuffer(textureID);
-        GL20.glUniform1i(uniformIndex, 0);
+        GLWrapper.Shader.glUniform1i(uniformIndex, 0);
     }
 
     /**
@@ -106,8 +106,8 @@ public abstract class BaseShaderData {
      */
     public void bindTextureBuffer(int textureUnit, int textureID) {
         if (textureUnit >= BoxDatabase.getGLState().MAX_TEXTURE_UNITS) return;
-        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureUnit);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, textureID);
+        GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0 + textureUnit);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, textureID);
     }
 
     /**
@@ -115,16 +115,16 @@ public abstract class BaseShaderData {
      */
     public void putUniformTextureBuffer(int uniformIndex, int textureUnit, int textureID) {
         this.bindTextureBuffer(textureUnit, textureID);
-        GL20.glUniform1i(uniformIndex, textureUnit);
+        GLWrapper.Shader.glUniform1i(uniformIndex, textureUnit);
     }
 
     public void bindTexture1D(int textureID) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_1D, textureID);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_1D, textureID);
     }
 
     public void putUniformTexture1D(int uniformIndex, int textureID) {
         this.bindTexture1D(textureID);
-        GL20.glUniform1i(uniformIndex, 0);
+        GLWrapper.Shader.glUniform1i(uniformIndex, 0);
     }
 
     /**
@@ -132,8 +132,8 @@ public abstract class BaseShaderData {
      */
     public void bindTexture1D(int textureUnit, int textureID) {
         if (textureUnit >= BoxDatabase.getGLState().MAX_TEXTURE_UNITS) return;
-        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureUnit);
-        GL11.glBindTexture(GL11.GL_TEXTURE_1D, textureID);
+        GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0 + textureUnit);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_1D, textureID);
     }
 
     /**
@@ -141,16 +141,16 @@ public abstract class BaseShaderData {
      */
     public void putUniformTexture1D(int uniformIndex, int textureUnit, int textureID) {
         this.bindTexture1D(textureUnit, textureID);
-        GL20.glUniform1i(uniformIndex, textureUnit);
+        GLWrapper.Shader.glUniform1i(uniformIndex, textureUnit);
     }
 
     public void bindTexture2D(int textureID) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, textureID);
     }
 
     public void putUniformTexture2D(int uniformIndex, int textureID) {
         this.bindTexture2D(textureID);
-        GL20.glUniform1i(uniformIndex, 0);
+        GLWrapper.Shader.glUniform1i(uniformIndex, 0);
     }
 
     /**
@@ -158,8 +158,8 @@ public abstract class BaseShaderData {
      */
     public void bindTexture2D(int textureUnit, int textureID) {
         if (textureUnit >= BoxDatabase.getGLState().MAX_TEXTURE_UNITS) return;
-        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureUnit);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
+        GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0 + textureUnit);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, textureID);
     }
 
     /**
@@ -167,16 +167,16 @@ public abstract class BaseShaderData {
      */
     public void putUniformTexture2D(int uniformIndex, int textureUnit, int textureID) {
         this.bindTexture2D(textureUnit, textureID);
-        GL20.glUniform1i(uniformIndex, textureUnit);
+        GLWrapper.Shader.glUniform1i(uniformIndex, textureUnit);
     }
 
     public void bindTexture3D(int textureID) {
-        GL11.glBindTexture(GL12.GL_TEXTURE_3D, textureID);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_3D, textureID);
     }
 
     public void putUniformTexture3D(int uniformIndex, int textureID) {
         this.bindTexture3D(textureID);
-        GL20.glUniform1i(uniformIndex, 0);
+        GLWrapper.Shader.glUniform1i(uniformIndex, 0);
     }
 
     /**
@@ -184,8 +184,8 @@ public abstract class BaseShaderData {
      */
     public void bindTexture3D(int textureUnit, int textureID) {
         if (textureUnit >= BoxDatabase.getGLState().MAX_TEXTURE_UNITS) return;
-        GL13.glActiveTexture(GL13.GL_TEXTURE0 + textureUnit);
-        GL11.glBindTexture(GL12.GL_TEXTURE_3D, textureID);
+        GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0 + textureUnit);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_3D, textureID);
     }
 
     /**
@@ -193,35 +193,23 @@ public abstract class BaseShaderData {
      */
     public void putUniformTexture3D(int uniformIndex, int textureUnit, int textureID) {
         this.bindTexture3D(textureUnit, textureID);
-        GL20.glUniform1i(uniformIndex, textureUnit);
+        GLWrapper.Shader.glUniform1i(uniformIndex, textureUnit);
     }
 
     public void putBindless(int uniformIndex, LongBuffer handles) {
-        if (BoxDatabase.getGLState().GL_BINDLESS_TEXTURE) {
-            if (BoxDatabase.getGLState().NV_BINDLESS_TEXTURE) {
-                NVBindlessTexture.glProgramUniformHandleuNV(this.id, uniformIndex, handles);
-            } else {
-                ARBBindlessTexture.glProgramUniformHandleuARB(this.id, uniformIndex, handles);
-            }
-        }
+        GLWrapper.Texture.Bindless.glProgramUniformHandleu(this.id, uniformIndex, handles);
     }
 
-    public void putBindless(int uniformIndex, long handles) {
-        if (BoxDatabase.getGLState().GL_BINDLESS_TEXTURE) {
-            if (BoxDatabase.getGLState().NV_BINDLESS_TEXTURE) {
-                NVBindlessTexture.glProgramUniformHandleui64NV(this.id, uniformIndex, handles);
-            } else {
-                ARBBindlessTexture.glProgramUniformHandleui64ARB(this.id, uniformIndex, handles);
-            }
-        }
+    public void putBindless(int uniformIndex, long handle) {
+        GLWrapper.Texture.Bindless.glProgramUniformHandleui64(this.id, uniformIndex, handle);
     }
 
     public void putUniformSubroutine(int shaderType, int shaderTypeIndex, int subroutineIndex) {
-        GL40.glUniformSubroutinesu(shaderType, this.getSubroutineBuffer(shaderTypeIndex, subroutineIndex));
+        GLWrapper.Shader.glUniformSubroutinesu(shaderType, this.getSubroutineBuffer(shaderTypeIndex, subroutineIndex));
     }
 
     public void putUniformSubroutines(int shaderType, int... subroutines) {
-        GL40.glUniformSubroutinesu(shaderType, CommonUtil.createIntBuffer(subroutines));
+        GLWrapper.Shader.glUniformSubroutinesu(shaderType, CommonUtil.createIntBuffer(subroutines));
     }
 
     public void putUniformSubroutines(int shaderType, int shaderTypeIndex, int... subroutines) {
@@ -231,7 +219,7 @@ public abstract class BaseShaderData {
         }
         buffer.position(0);
         buffer.limit(buffer.capacity());
-        GL40.glUniformSubroutinesu(shaderType, buffer);
+        GLWrapper.Shader.glUniformSubroutinesu(shaderType, buffer);
     }
 
     public IntBuffer getSubroutineBuffer(int shaderTypeIndex, int subroutineIndex) {

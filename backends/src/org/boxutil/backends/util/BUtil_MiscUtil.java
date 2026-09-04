@@ -35,6 +35,19 @@ public final class BUtil_MiscUtil {
         return resultStr + unit[pick];
     }
 
+    public static String getPercentageStr(double div) {
+        if (Double.isNaN(div)) return " - %";
+        double result = div * 100.0d;
+        byte decimal = 2;
+        if (result > 1.0d) decimal = (byte) (2 - (byte) Math.log10(result));
+        final String formatStr = "%4." + Math.max(decimal, 0) + 'f';
+        return String.format(formatStr, result) + '%';
+    }
+
+    public static boolean csvSkipAnnotationID(final String str) {
+        return str.startsWith("#");
+    }
+
     public static void getColorArray(final String colorArray, byte[] array) {
         if (colorArray.length() < 9) return;
         byte index = 0;

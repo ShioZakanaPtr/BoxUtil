@@ -75,30 +75,35 @@ import java.util.EnumSet;
  * @see org.boxutil.manager.CombatRenderingManager#addRenderingPlugin(LayeredRenderingPlugin)
  * @see org.boxutil.manager.CampaignRenderingManager#addRenderingPlugin(LayeredRenderingPlugin)
  */
+@Deprecated
 public class BaseLayeredRenderingPlugin implements LayeredRenderingPlugin {
     public boolean isExpired() {
-        return false;
+        return LayeredRenderingPlugin.super.isExpired();
     }
 
     /**
      * @param layer can be {@link CombatEngineLayers} or {@link CampaignEngineLayers}.
      * @param layerBit (layer.ordinal() << 4) | 0b1.
      */
-    public void render(Object layer, int layerBit, boolean framebufferValid, ViewportAPI viewport, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap) {}
+    public void render(Object layer, int layerBit, boolean framebufferValid, ViewportAPI viewport, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap) {
+        LayeredRenderingPlugin.super.render(layer, layerBit, framebufferValid, viewport, fbo, colorMap, emissiveMap, worldPosMap, worldNormalMap, worldTangentMap, worldMaterialMap, worldDataMap);
+    }
 
-    public void cleanup() {}
+    public void cleanup() {
+        LayeredRenderingPlugin.super.cleanup();
+    }
 
     /**
      * @return const set, donot changing it when rendering.
      */
     public EnumSet<CombatEngineLayers> getCombatActiveLayers() {
-        return EnumSet.of(CombatEngineLayers.ABOVE_PARTICLES_LOWER);
+        return LayeredRenderingPlugin.super.getCombatActiveLayers();
     }
 
     /**
      * @return const set, donot changing it when rendering.
      */
     public EnumSet<CampaignEngineLayers> getCampaignActiveLayers() {
-        return EnumSet.of(CampaignEngineLayers.FLEETS);
+        return LayeredRenderingPlugin.super.getCampaignActiveLayers();
     }
 }

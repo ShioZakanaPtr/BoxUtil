@@ -110,6 +110,7 @@ public interface InstanceRenderAPI {
     boolean isMappingInstanceSubmit();
 
     /**
+     * <b>NOTE:</b> Ineffective if device was <b>OpenGL 4.4+</b> supported, will force updating to persistent mapping buffer.<p>
      * For some very slight data, use <code>glBufferSubData()</code> may faster.<p>
      * Besides, some devices(some ARM SoC) may slower with <code>glMapBufferRange()</code>, decided by the drive how implements it.
      *

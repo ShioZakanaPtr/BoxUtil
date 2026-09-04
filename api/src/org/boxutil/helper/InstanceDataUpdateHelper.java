@@ -2,13 +2,11 @@ package org.boxutil.helper;
 
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.define.BoxDatabase;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.instance.*;
 import org.boxutil.manager.InstanceDataMemoryPool;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL43;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -46,7 +44,7 @@ public class InstanceDataUpdateHelper {
      */
     public boolean glInitUpdate(InstanceType type) {
         int ssbo = InstanceDataMemoryPool.getBufferID(type);
-        if (ssbo > 0) GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
+        if (ssbo > 0) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER, ssbo);
         return ssbo > 0;
     }
 
@@ -72,13 +70,13 @@ public class InstanceDataUpdateHelper {
         }
 
         if (this.mapMode) {
-            final int _access = syncUpdate ? GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT : GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
+            final int _access = syncUpdate ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
             this.lock.lock();
             this.shouldUnlockAfter = true;
-            this.updateBuffer = GL30.glMapBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, this.realMemAddress, memory.size(), _access, null);
+            this.updateBuffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER, this.realMemAddress, memory.size(), _access, null);
             if (this.updateBuffer == null) {
                 this.shouldUnlockAfter = false;
-                GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
+                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER);
                 this.lock.unlock();
                 return false;
             }
@@ -122,12 +120,12 @@ public class InstanceDataUpdateHelper {
         if (this.mapMode) {
             this.updateBuffer.position(0);
             this.updateBuffer.limit(this.updateBuffer.capacity());
-            GL15.glUnmapBuffer(GL43.GL_SHADER_STORAGE_BUFFER);
+            GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER);
             this.lock.unlock();
         } else {
             this.mappingBuffer.position(0);
             this.mappingBuffer.limit(this.mappingBuffer.capacity());
-            GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, this.realMemAddress, this.mappingBuffer);
+            GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER, this.realMemAddress, this.mappingBuffer);
         }
     }
 
@@ -143,6 +141,6 @@ public class InstanceDataUpdateHelper {
         this.mappingBuffer = null;
         this.mapMode = true;
         this.realMemAddress = this.putOffset = this.putOffsetReal = 0;
-        if (BoxDatabase.getGLState().GL_SSBO) GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+        if (BoxDatabase.getGLState().GL_SSBO) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER, 0);
     }
 }

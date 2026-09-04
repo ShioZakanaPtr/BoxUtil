@@ -1,7 +1,5 @@
 #version 430
 
-precision OVERWRITE_PRECISION float;
-
 #define WORKGROUP_SIZE WORKGROUP_SIZE_VALUE
 
 layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 4) in;

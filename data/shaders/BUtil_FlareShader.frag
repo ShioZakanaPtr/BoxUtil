@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 430
 
 #define SHARP_EDGE_SMOOTH 0.42
 #define DISC_THICKNESS_SCALE 2.0

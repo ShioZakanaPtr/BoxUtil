@@ -7,7 +7,7 @@ uniform vec4 u_stepUV_srcUVDiv;
 uniform bool u_vertical;
 uniform sampler2D u_srcTex;
 
-varying vec2 vf_fragUV;
+varying vec4 vf_fragUV_samplingUV;
 
 float smoothStep(float edgeL, float edgeR, float value) {
     float result = clamp((value - edgeL) / (edgeR - edgeL), 0.0, 1.0);
@@ -57,19 +57,19 @@ void main() {
             gaussian = getGaussian(fi);
             fix += gaussian;
             offset = u_vertical ? vec2(0.0, fi * u_stepUV_srcUVDiv.y) : vec2(fi * u_stepUV_srcUVDiv.x, 0.0);
-            result = texture2D(u_srcTex, vf_fragUV + offset);
+            result = texture2D(u_srcTex, vf_fragUV_samplingUV.zw + offset);
             resultTmp += result.xyz * gaussian;
             if (i == 0) alpha = result.w;
         }
         result.xyz = resultTmp / fix;
         result.w = alpha;
     } else {
-        result = texture2D(u_srcTex, vf_fragUV);
+        result = texture2D(u_srcTex, vf_fragUV_samplingUV.zw);
     }
 
     if (u_vertical) {
         result.x = getGray(result.xyz) * result.w;
-        if (u_state[0].x > 0.0 || u_state[0].y > 0.0) result.x = fi(result.x, getRamp(vf_fragUV * u_stepUV_srcUVDiv.zw));
+        if (u_state[0].x > 0.0 || u_state[0].y > 0.0) result.x = fi(result.x, getRamp(vf_fragUV_samplingUV.xy * u_stepUV_srcUVDiv.zw));
     }
 
     gl_FragColor = result;

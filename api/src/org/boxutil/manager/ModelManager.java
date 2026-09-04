@@ -189,20 +189,19 @@ public final class ModelManager {
             objData = objDataArray.getJSONObject(i);
             objID = objData.optString("obj_id");
             objPath = objData.optString("obj_path");
-            if (!objID.isBlank() && !objPath.isBlank()) {
-                typeString = objData.optString("type").toUpperCase();
-                boolean isAngleMap = objData.optBoolean("isTangentAngleMap", true);
-                int type = GL30.GL_HALF_FLOAT;
-                if (!typeString.isBlank()) type = typeString.contentEquals("F8") ? GL11.GL_BYTE : typeString.contentEquals("F32") ? GL11.GL_FLOAT : GL30.GL_HALF_FLOAT;
-                ModelData obj = addModelData(objID, objPath,
-                        objData.optString("diffuse_path", null),
-                        objData.optString("normal_path", null),
-                        objData.optString("complex_path", null),
-                        objData.optString("emissive_path", null),
-                        objData.optString("tangent_path", null),
-                        isAngleMap, type);
-                if (obj != null) map.put(objID, obj);
-            }
+            if (BUtil_MiscUtil.csvSkipAnnotationID(objID) || objID.isBlank() || objPath.isBlank()) continue;
+            typeString = objData.optString("type").toUpperCase();
+            boolean isAngleMap = objData.optBoolean("isTangentAngleMap", true);
+            int type = GL30.GL_HALF_FLOAT;
+            if (!typeString.isBlank()) type = typeString.contentEquals("F8") ? GL11.GL_BYTE : typeString.contentEquals("F32") ? GL11.GL_FLOAT : GL30.GL_HALF_FLOAT;
+            ModelData obj = addModelData(objID, objPath,
+                    objData.optString("diffuse_path", null),
+                    objData.optString("normal_path", null),
+                    objData.optString("complex_path", null),
+                    objData.optString("emissive_path", null),
+                    objData.optString("tangent_path", null),
+                    isAngleMap, type);
+            if (obj != null) map.put(objID, obj);
         }
         return map;
     }

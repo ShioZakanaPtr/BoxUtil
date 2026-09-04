@@ -3,6 +3,7 @@ package org.boxutil.base;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.combat.CombatEntityAPI;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.util.CommonUtil;
 import org.boxutil.util.concurrent.SpinLock;
 import de.unkrig.commons.nullanalysis.NotNull;
@@ -13,8 +14,6 @@ import org.boxutil.define.BoxEnum;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.TransformUtil;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.vector.Matrix2f;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
@@ -39,7 +38,7 @@ public abstract class BaseRenderData implements RenderDataAPI {
     protected Matrix4f primeMatrix = new Matrix4f();
     protected Matrix4f modelMatrix = new Matrix4f();
 
-    protected final int[] blendConfig = new int[]{GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL14.GL_FUNC_ADD};
+    protected final int[] blendConfig = new int[]{GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA, GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA, GLWrapper.Operation.GL_FUNC_ADD};
     protected final float[] globalTimer = new float[]{-512.0f, -512.0f, -512.0f, -512.0f}; // time, fade in, full, fade out.
 
     protected ControlDataAPI controlData = null;
@@ -104,11 +103,11 @@ public abstract class BaseRenderData implements RenderDataAPI {
         Matrix4f.setIdentity(this.primeMatrix);
         this.primeMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
         Matrix4f.setIdentity(this.modelMatrix);
-        this.blendConfig[0] = GL11.GL_SRC_ALPHA;
-        this.blendConfig[1] = GL11.GL_SRC_ALPHA;
-        this.blendConfig[2] = GL11.GL_ONE_MINUS_SRC_ALPHA;
-        this.blendConfig[3] = GL11.GL_ONE_MINUS_SRC_ALPHA;
-        this.blendConfig[4] = GL14.GL_FUNC_ADD;
+        this.blendConfig[0] = GLWrapper.Operation.GL_SRC_ALPHA;
+        this.blendConfig[1] = GLWrapper.Operation.GL_SRC_ALPHA;
+        this.blendConfig[2] = GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA;
+        this.blendConfig[3] = GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA;
+        this.blendConfig[4] = GLWrapper.Operation.GL_FUNC_ADD;
         this.blendState = BoxEnum.ENTITY_NORMAL_BLEND;
         this.layer = null;
     }
@@ -485,8 +484,8 @@ public abstract class BaseRenderData implements RenderDataAPI {
     public void setBlendFunc(int srcFactor, int dstFactor) {
         this.blendConfig[0] = srcFactor;
         this.blendConfig[1] = dstFactor;
-        this.blendConfig[2] = GL11.GL_ZERO;
-        this.blendConfig[3] = GL11.GL_ONE;
+        this.blendConfig[2] = GLWrapper.Operation.GL_ZERO;
+        this.blendConfig[3] = GLWrapper.Operation.GL_ONE;
         this.blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 
@@ -510,11 +509,11 @@ public abstract class BaseRenderData implements RenderDataAPI {
     }
 
     public void setAdditiveBlend() {
-        this.blendConfig[0] = GL11.GL_SRC_ALPHA;
-        this.blendConfig[1] = GL11.GL_ONE;
-        this.blendConfig[2] = GL11.GL_ZERO;
-        this.blendConfig[3] = GL11.GL_ONE;
-        this.blendConfig[4] = GL14.GL_FUNC_ADD;
+        this.blendConfig[0] = GLWrapper.Operation.GL_SRC_ALPHA;
+        this.blendConfig[1] = GLWrapper.Operation.GL_ONE;
+        this.blendConfig[2] = GLWrapper.Operation.GL_ZERO;
+        this.blendConfig[3] = GLWrapper.Operation.GL_ONE;
+        this.blendConfig[4] = GLWrapper.Operation.GL_FUNC_ADD;
         this.blendState = BoxEnum.ENTITY_ADDITIVE_BLEND;
     }
 
@@ -522,11 +521,11 @@ public abstract class BaseRenderData implements RenderDataAPI {
      * Default blend mode.
      */
     public void setNormalBlend() {
-        this.blendConfig[0] = GL11.GL_SRC_ALPHA;
-        this.blendConfig[1] = GL11.GL_ONE_MINUS_SRC_ALPHA;
-        this.blendConfig[2] = GL11.GL_ZERO;
-        this.blendConfig[3] = GL11.GL_ONE;
-        this.blendConfig[4] = GL14.GL_FUNC_ADD;
+        this.blendConfig[0] = GLWrapper.Operation.GL_SRC_ALPHA;
+        this.blendConfig[1] = GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA;
+        this.blendConfig[2] = GLWrapper.Operation.GL_ZERO;
+        this.blendConfig[3] = GLWrapper.Operation.GL_ONE;
+        this.blendConfig[4] = GLWrapper.Operation.GL_FUNC_ADD;
         this.blendState = BoxEnum.ENTITY_NORMAL_BLEND;
     }
 
@@ -534,11 +533,11 @@ public abstract class BaseRenderData implements RenderDataAPI {
      * As custom blend mode.
      */
     public void setNegativeBlend() {
-        this.blendConfig[0] = GL11.GL_SRC_ALPHA;
-        this.blendConfig[1] = GL11.GL_ONE;
-        this.blendConfig[2] = GL11.GL_ZERO;
-        this.blendConfig[3] = GL11.GL_ONE;
-        this.blendConfig[4] = GL14.GL_FUNC_REVERSE_SUBTRACT;
+        this.blendConfig[0] = GLWrapper.Operation.GL_SRC_ALPHA;
+        this.blendConfig[1] = GLWrapper.Operation.GL_ONE;
+        this.blendConfig[2] = GLWrapper.Operation.GL_ZERO;
+        this.blendConfig[3] = GLWrapper.Operation.GL_ONE;
+        this.blendConfig[4] = GLWrapper.Operation.GL_FUNC_REVERSE_SUBTRACT;
         this.blendState = BoxEnum.ENTITY_OTHER_BLEND;
     }
 

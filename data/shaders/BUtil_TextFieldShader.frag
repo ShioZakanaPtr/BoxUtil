@@ -1,6 +1,4 @@
-#version OVERWRITE_VERSION
-
-precision OVERWRITE_PRECISION float;
+#version 430
 
 uniform sampler2D u_fontMap[4];
 uniform vec4 u_globalColor[2];

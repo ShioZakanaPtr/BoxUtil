@@ -1,8 +1,5 @@
 #version 430
 
-precision OVERWRITE_PRECISION float;
-precision highp int;
-
 layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
 
 subroutine vec2 t_texInput(in float luminance, in float alpha, in ivec2 coord);
@@ -11,7 +8,7 @@ subroutine uniform t_texInput f_texInputState;
 layout(binding = 0) uniform sampler2D u_texIn;
 layout(binding = 1) uniform sampler2D u_volumeMap;
 layout(binding = 2) uniform sampler2D u_detailsMap;
-layout(binding = 0, rgba16) uniform writeonly image2D u_texOut;
+layout(binding = 0, rgba16) restrict writeonly uniform image2D u_texOut;
 
 uniform ivec2 u_size;
 uniform vec4 u_state[2]; // vec4(srcStrength, srcPowFactor, violumeApply, DetailsApply), vec4(srcBrightness, srcContrast, srcSmoothstepMix, volumeSmoothMix)

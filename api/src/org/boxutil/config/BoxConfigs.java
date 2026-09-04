@@ -3,8 +3,8 @@ package org.boxutil.config;
 import com.fs.starfarer.api.GameState;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.Pair;
-import org.boxutil.backends.core.BUtil_BoxUtilBackgroundThread;
-import org.boxutil.backends.core.BUtil_ThreadResource;
+import org.boxutil.backends.core.thread.BUtil_BoxUtilBackgroundThread;
+import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.base.BaseShaderPacksContext;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
@@ -448,9 +448,9 @@ public final class BoxConfigs {
     }
 
     public synchronized static void sysCheck() {
-        BUtil_EnableShader &= ShaderCore.isValid() && !BUtil_InstanceDataMemoryPool.isPoolInvalid();
+        BUtil_EnableShader &= ShaderCore.isValid() && ShaderCore.isGlobalDataUBOValid() && !BUtil_InstanceDataMemoryPool.isPoolInvalid();
         BUtil_EnableCL &= KernelCore.isValid();
-        BUtil_EnableTrailSystem &= BoxDatabase.getGLState().GL_GL32 && ShaderCore.isStaticTrailSystemValid();
+        BUtil_EnableTrailSystem &= ShaderCore.isGlobalDataUBOValid() && ShaderCore.isStaticTrailShaderValid();
     }
 
     /**
@@ -719,11 +719,11 @@ public final class BoxConfigs {
 
     public synchronized static boolean setShaderPacksContext(BaseShaderPacksContext context) {
         if (BUtil_ShaderPacksContext == context || !_SHADER_PACKS_CONTEXTS.contains(context) || !context.isUsable(GLContext.getCapabilities())) return true;
-        BUtil_ThreadResource.Rendering.Combat._cleanupIlluminant();
-        BUtil_ThreadResource.Rendering.Campaign._cleanupIlluminant();
+        BUtil_ResourceStorage.combatLayered().cleanupIlluminant();
+        BUtil_ResourceStorage.campaignLayered().cleanupIlluminant();
         BUtil_ShaderPacksContext.destroy();
         loadShaderPacksConfig(context);
-        BUtil_GLImpl.Operations.callIlluminantCleanupForShaderPacks(BUtil_ShaderPacksContext, context);
+        BUtil_GLImpl.callIlluminantCleanupForShaderPacks(BUtil_ShaderPacksContext, context);
         final boolean success = context.init();
         if (success) {
             BUtil_ShaderPacksContext = context;

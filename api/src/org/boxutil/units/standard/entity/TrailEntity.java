@@ -3,13 +3,15 @@ package org.boxutil.units.standard.entity;
 import org.boxutil.base.BaseRenderData;
 import org.boxutil.base.api.MaterialRenderAPI;
 import org.boxutil.config.BoxConfigs;
+import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
+import org.boxutil.define.GLWrapper;
 import org.boxutil.define.LayeredEntityType;
+import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.util.CommonUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -40,17 +42,19 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
     protected final float[] state = new float[]{1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 4.0f, Math.abs(this.hashCode()) * 0.00066667f, 0.0f};
     protected final boolean[] stateB = new boolean[]{false, false, false, true, true, false, true}; // flowWhenPaused, flickWhenPaused, flickToggle, syncFlick, stripLineMode, synchronousSubmit, mappingMode
     protected MaterialData material = new MaterialData();
+    protected final IntBuffer multiBind = GLWrapper.Texture.valid_MultiBind() ? BufferUtils.createIntBuffer(1).clear() : null;
 
     protected int _StatePackageStack() {
         return 10;
     }
 
     public TrailEntity() {
-        this._TBO = BoxConfigs.isTBOSupported() ? GL15.glGenBuffers() : 0;
-        this._TBOTex = BoxConfigs.isTBOSupported() ? GL11.glGenTextures() : 0;
-        this._isValid = BoxConfigs.isBackgroundThreadGLValid() && this.getNodesTBO() > 0 && this.getNodesTBOTex() > 0;
+        this._TBO = GLWrapper.Buffer.TBO.valid() ? GLWrapper.Buffer.glGenBuffers() : 0;
+        this._TBOTex = GLWrapper.Buffer.TBO.valid() ? GLWrapper.Texture.glGenTextures() : 0;
+        this._isValid = BoxDatabase.getGLState().GL_GL43 && ShaderCore.getTrailProgram() != null && ShaderCore.getTrailProgram().isValid() && BoxConfigs.isBackgroundThreadGLValid() && this.getNodesTBO() > 0 && this.getNodesTBOTex() > 0;
         this.getMaterialData().setDisableCullFace();
         this.getMaterialData().setIgnoreIllumination(true);
+        if (GLWrapper.Texture.valid_MultiBind()) this.multiBind.put(0, this._TBOTex);
     }
 
     public int getNodesTBO() {
@@ -75,18 +79,17 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         if (this._distance != null) this._distance.clear();
         this._distance = null;
         if (this.getNodesTBOTex() > 0) {
-            GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
-            GL11.glDeleteTextures(this.getNodesTBOTex());
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            GLWrapper.Texture.glDeleteTextures(this.getNodesTBOTex());
         }
         if (this.getNodesTBO() > 0) {
-            GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
-            GL15.glDeleteBuffers(this.getNodesTBO());
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            GLWrapper.Buffer.glDeleteBuffers(this.getNodesTBO());
         }
     }
 
     public void glDraw() {
-        if (!this.isHaveValidNodeCount()) return;
-        GL31.glDrawArraysInstanced(GL11.GL_LINES, 0, 2, this.glPrimCount());
+        if (this.isHaveValidNodeCount() && this.isValid()) GLWrapper.Drawcall.glDrawArraysInstanced(GLWrapper.Drawcall.GL_LINES, 0, 2, this.glPrimCount());
     }
 
     protected void _resetExc() {
@@ -163,17 +166,17 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         final long bufferSize = (long) bufferSizeLoc << 2;
         final long bufferIndex = (long) refreshIndex * _BUFFER_DATA_SIZE << 2;
 
-        GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, this.getNodesTBO());
-        if (newBuffer) GL15.glBufferData(GL31.GL_TEXTURE_BUFFER, bufferSize, GL15.GL_DYNAMIC_DRAW);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBO());
+        if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
 
         ByteBuffer buffer;
         final boolean useMapping = this.isMappingModeSubmitData();
         if (useMapping) {
-            final int _access = this.isSynchronousSubmit() ? GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT : GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_INVALIDATE_RANGE_BIT;
-            buffer = GL30.glMapBufferRange(GL31.GL_TEXTURE_BUFFER, bufferIndex, bufferSize, _access, null);
+            final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+            buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferIndex, bufferSize, _access, null);
             if (buffer == null || buffer.capacity() < 1) {
-                GL15.glUnmapBuffer(GL31.GL_TEXTURE_BUFFER);
-                GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
+                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
                 this.shouldRenderingCount = 0;
                 this.sync_lock.unlock();
                 return BoxEnum.STATE_FAILED_OTHER;
@@ -211,13 +214,13 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         buffer.position(0);
         buffer.limit(buffer.capacity());
 
-        if (useMapping) GL15.glUnmapBuffer(GL31.GL_TEXTURE_BUFFER);
-        else GL15.glBufferSubData(GL31.GL_TEXTURE_BUFFER, bufferIndex, buffer);
+        if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER);
+        else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferIndex, buffer);
 
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
-        GL31.glTexBuffer(GL31.GL_TEXTURE_BUFFER, GL30.GL_RGB32F, this.getNodesTBO()); // damn it where my RGB16F is
-        GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
+        GLWrapper.Buffer.TBO.glTexBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, GLWrapper.Texture.GL_RGB32F, this.getNodesTBO()); // damn it where my RGB16F is
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
         if (newBuffer) this._lastNodeLength = nodeSize;
         this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
         this.sync_lock.unlock();
@@ -244,12 +247,12 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         }
 
         final long bufferSize = (long) nodeNum * _BUFFER_DATA_SIZE << 2;
-        GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, this.getNodesTBO());
-        GL15.glBufferData(GL31.GL_TEXTURE_BUFFER, bufferSize, GL15.GL_DYNAMIC_DRAW);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
-        GL31.glTexBuffer(GL31.GL_TEXTURE_BUFFER, GL30.GL_RGB32F, this.getNodesTBO());
-        GL15.glBindBuffer(GL31.GL_TEXTURE_BUFFER, 0);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, 0);
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBO());
+        GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
+        GLWrapper.Buffer.TBO.glTexBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, GLWrapper.Texture.GL_RGB32F, this.getNodesTBO());
+        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
         this._lastNodeLength = nodeNum;
         this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
         this.sync_lock.unlock();
@@ -385,8 +388,12 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
     }
 
     public void putShaderTrailData() {
-        GL13.glActiveTexture(GL13.GL_TEXTURE10);
-        GL11.glBindTexture(GL31.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
+        if (GLWrapper.Texture.valid_MultiBind()) {
+            GLWrapper.Texture.glBindTextures(10, 1, this.multiBind);
+        } else if (GLWrapper.Drawcall.MultiTex.valid()) {
+            GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE10);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
+        }
     }
 
     public float[] getColorState() {
@@ -723,7 +730,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
     }
 
     /**
-     * @param isStripLine <code>false</code> that draw dotted line as {@link GL11#GL_LINES} style, else {@link GL11#GL_LINE_STRIP} style.
+     * @param isStripLine <code>false</code> that draw dotted line as <code>GL_LINES</code> style, else <code>GL_LINE_STRIP</code> style.
      */
     public void setStripLineMode(boolean isStripLine) {
         this.stateB[4] = isStripLine;
