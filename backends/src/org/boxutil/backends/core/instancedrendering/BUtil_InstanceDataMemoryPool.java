@@ -1,7 +1,6 @@
 package org.boxutil.backends.core.instancedrendering;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.util.Pair;
 import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
@@ -9,6 +8,7 @@ import org.boxutil.define.GLWrapper;
 import org.boxutil.define.InstanceType;
 import org.boxutil.define.struct.memorypool.GPUPoolBehavior;
 import org.boxutil.manager.InstanceDataMemoryPool;
+import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.GPUMemoryPool;
 import org.lwjgl.opengl.*;
 
@@ -27,7 +27,8 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
     }
 
     private static boolean poolReq(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> ignore) {
-        return BoxDatabase.getGLState().BOXUTIL_VALID && BoxConfigs.isBackgroundThreadGLValid() && BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS > 7L;
+        return BoxDatabase.getGLState().BOXUTIL_VALID && BoxConfigs.isBackgroundThreadGLValid() &&
+                BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS > 7L && ShaderCore.isCoreProgramValid();
     }
 
     private static void poolRebind(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> pool) {
@@ -49,6 +50,7 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
     public static void initPool() {
         final var poolSize = (byte) POOL.length;
 
+        boolean check = false;
         final InstanceType[] target = InstanceType.values();
         for (byte i = 0; i < poolSize; i++) {
             final var behavior = new GPUPoolBehavior<>(GLWrapper.Buffer.SSBO.GL_SHADER_STORAGE_BUFFER, BUtil_InstanceDataMemoryPool::makeEmptyMem, BUtil_InstanceDataMemoryPool::makeNotEmptyMem)
@@ -59,8 +61,9 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
 
             POOL[i] = new BUtil_InstanceDataMemoryPool(behavior, target[i], i);
             POOL[i].init();
-            INVALID &= POOL[i].isInvalid();
+            check |= POOL[i].isInvalid();
         }
+        INVALID = check;
     }
 
     public static boolean isPoolInvalid() {
@@ -117,7 +120,7 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
                 if (block.is_free()) {
                     rgb[0] = rgb[1] = rgb[2] = BoxEnum.ZERO;
                 } else {
-                    colorSeed = Long.hashCode(block.address()) ^ Long.hashCode(block.size());
+                    colorSeed = Long.hashCode((block.address() + 1L) * block.size());
                     colorSeed ^= colorSeed >> 16;
                     colorSeed *= 0x85ebca6b;
                     colorSeed ^= colorSeed >> 13;
