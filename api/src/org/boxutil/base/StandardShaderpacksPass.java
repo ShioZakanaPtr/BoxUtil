@@ -80,49 +80,47 @@ public final class StandardShaderpacksPass {
     }
 
     public static void applyFXAA(boolean enabled, boolean console, boolean useDepthBasedAA, int colorMap, int worldDataMap) {
-        if (enabled) {
-            BaseShaderData program = console ? ShaderCore.getFXAAConsoleProgram() : ShaderCore.getFXAAQualityProgram();
-            if (program == null || !program.isValid()) return;
-            int[] subroutines = new int[]{
-                    program.subroutineLocation[0][useDepthBasedAA ? 1 : 0],
-                    program.subroutineLocation[0][BoxConfigs.isAAShowEdge() ? 3 : 2]
-            };
-            BUtil_GLImpl.glScreenBlit();
-            ShaderCore.getDefaultQuadObject().glBind();
-            program.active();
-            program.putUniformSubroutines(GLWrapper.Shader.Frag.GL_FRAGMENT_SHADER, 0, subroutines);
-            program.bindTexture2D(0, colorMap);
-            program.bindTexture2D(1, worldDataMap);
-            ShaderCore.getDefaultQuadObject().glDraw();
-            program.bindTexture2D(0, 0);
-            program.close();
-            ShaderCore.getDefaultQuadObject().glReleaseBind();
-        }
+        if (!enabled || !ShaderCore.isRenderingFramebufferValid() || !ShaderCore.isDefaultVAOValid() || !ShaderCore.isFXAAValid()) return;
+        BaseShaderData program = console ? ShaderCore.getFXAAConsoleProgram() : ShaderCore.getFXAAQualityProgram();
+        int[] subroutines = new int[]{
+                program.subroutineLocation[0][useDepthBasedAA ? 1 : 0],
+                program.subroutineLocation[0][BoxConfigs.isAAShowEdge() ? 3 : 2]
+        };
+        BUtil_GLImpl.glScreenBlit();
+        ShaderCore.getDefaultQuadObject().glBind();
+        program.active();
+        program.putUniformSubroutines(GLWrapper.Shader.Frag.GL_FRAGMENT_SHADER, 0, subroutines);
+        program.bindTexture2D(0, colorMap);
+        program.bindTexture2D(1, worldDataMap);
+        ShaderCore.getDefaultQuadObject().glDraw();
+        program.bindTexture2D(0, 0);
+        program.close();
+        ShaderCore.getDefaultQuadObject().glReleaseBind();
     }
 
     public static void applyBloom(boolean isMultiPassBloom, int emissiveMap, boolean withHighlightAdd, int highlightMap) {
-        if (!_DO_BLOOM) return;
-        final var program = ShaderCore.getBloomProgram();
-        if (program == null || !program.isValid() || !BoxConfigs.isBaseGL43Supported() || !BoxConfigs.isShaderEnable()) return;
+        final BaseShaderData bloomProgram = ShaderCore.getBloomProgram(),
+                resultProgram = ShaderCore.getDirectDrawProgram();
         final var renderingBuffer = ShaderCore.getRenderingBuffer();
-        if (renderingBuffer.getLayerCount() < 2) return;
+        if (!_DO_BLOOM || !ShaderCore.isRenderingFramebufferValid() || !ShaderCore.isDefaultVAOValid() || !ShaderCore.isBloomValid() || renderingBuffer.getLayerCount() < 2) return;
+
         final float divA = 1.0f / (BoxDatabase.isGLDeviceAMD() ? 8.0f : 4.0f), divB = 1.0f / 8.0f;
         int itemDimX, itemDimY,
                 resultTex = emissiveMap,
                 widthCurr, heightCurr, widthNext, heightNext;
 
-        program.active();
+        bloomProgram.active();
         if (withHighlightAdd) {
-            GLWrapper.Shader.glUniform1i(program.location[2], 1);
-            program.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 0);
-            program.bindTexture2D(0, emissiveMap);
-            program.bindTexture2D(1, highlightMap);
-            program.putBindingImageTextureWriteOnly(1, emissiveMap, GLWrapper.Texture.GL_RGB8);
+            GLWrapper.Shader.glUniform1i(bloomProgram.location[2], 1);
+            bloomProgram.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 0);
+            bloomProgram.bindTexture2D(0, emissiveMap);
+            bloomProgram.bindTexture2D(1, highlightMap);
+            bloomProgram.putBindingImageTextureWriteOnly(1, emissiveMap, GLWrapper.Texture.GL_RGB8);
             widthCurr = renderingBuffer.getScaleSize(0)[0];
             heightCurr = renderingBuffer.getScaleSize(0)[1];
             itemDimX = (int) Math.ceil(widthCurr * divA);
             itemDimY = (int) Math.ceil(heightCurr * divB);
-            GLWrapper.Shader.glUniform2i(program.location[0], widthCurr, heightCurr);
+            GLWrapper.Shader.glUniform2i(bloomProgram.location[0], widthCurr, heightCurr);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
             GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
@@ -130,8 +128,8 @@ public final class StandardShaderpacksPass {
         // down
         byte nextI;
         boolean notAvg = true;
-        GLWrapper.Shader.glUniform1i(program.location[2], 0);
-        program.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 1);
+        GLWrapper.Shader.glUniform1i(bloomProgram.location[2], 0);
+        bloomProgram.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 1);
         for (byte i = 0; i < renderingBuffer.getLayerCount() - 1; ++i) {
             nextI = i;
             ++nextI;
@@ -141,20 +139,20 @@ public final class StandardShaderpacksPass {
             heightNext = renderingBuffer.getScaleSize(nextI)[1];
             itemDimX = (int) Math.ceil(widthNext * divA);
             itemDimY = (int) Math.ceil(heightNext * divB);
-            GLWrapper.Shader.glUniform2i(program.location[0], widthNext, heightNext);
-            GLWrapper.Shader.glUniform4f(program.location[1], 1.0f / (widthCurr - 1), 1.0f / (heightCurr - 1), 1.0f / (widthNext - 1), 1.0f / (heightNext - 1));
-            program.bindTexture2D(0, i == 0 ? emissiveMap : renderingBuffer.getBloomPingPongTex(i));
-            program.putBindingImageTextureWriteOnly(0, renderingBuffer.getBloomPingPongTex(nextI), GLWrapper.Texture.GL_RGB10_A2);
+            GLWrapper.Shader.glUniform2i(bloomProgram.location[0], widthNext, heightNext);
+            GLWrapper.Shader.glUniform4f(bloomProgram.location[1], 1.0f / (widthCurr - 1), 1.0f / (heightCurr - 1), 1.0f / (widthNext - 1), 1.0f / (heightNext - 1));
+            bloomProgram.bindTexture2D(0, i == 0 ? emissiveMap : renderingBuffer.getBloomPingPongTex(i));
+            bloomProgram.putBindingImageTextureWriteOnly(0, renderingBuffer.getBloomPingPongTex(nextI), GLWrapper.Texture.GL_RGB10_A2);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
             GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
             if (notAvg) {
                 notAvg = false;
-                program.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 2);
+                bloomProgram.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 2);
             }
         }
 
         // up
-        program.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 3);
+        bloomProgram.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 3);
         for (byte i = (byte) (renderingBuffer.getLayerCount() - 1); i > 1; --i) {
             nextI = i;
             --nextI;
@@ -165,16 +163,15 @@ public final class StandardShaderpacksPass {
             itemDimX = (int) Math.ceil(widthNext * divA);
             itemDimY = (int) Math.ceil(heightNext * divB);
             resultTex = renderingBuffer.getBloomPingPongTex(nextI);
-            program.bindTexture2D(0, renderingBuffer.getBloomPingPongTex(i));
-            program.bindTexture2D(1, resultTex);
-            GLWrapper.Shader.glUniform2i(program.location[0], widthNext, heightNext);
-            GLWrapper.Shader.glUniform4f(program.location[1], 1.0f / (widthCurr - 1), 1.0f / (heightCurr - 1), 1.0f / (widthNext - 1), 1.0f / (heightNext - 1));
-            program.putBindingImageTextureWriteOnly(0, resultTex, GLWrapper.Texture.GL_RGB10_A2);
+            bloomProgram.bindTexture2D(0, renderingBuffer.getBloomPingPongTex(i));
+            bloomProgram.bindTexture2D(1, resultTex);
+            GLWrapper.Shader.glUniform2i(bloomProgram.location[0], widthNext, heightNext);
+            GLWrapper.Shader.glUniform4f(bloomProgram.location[1], 1.0f / (widthCurr - 1), 1.0f / (heightCurr - 1), 1.0f / (widthNext - 1), 1.0f / (heightNext - 1));
+            bloomProgram.putBindingImageTextureWriteOnly(0, resultTex, GLWrapper.Texture.GL_RGB10_A2);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
             GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
-        final var resultProgram = ShaderCore.getDirectDrawProgram();
         ShaderCore.getDefaultQuadObject().glBind();
         resultProgram.active();
         resultProgram.bindTexture2D(0, resultTex);

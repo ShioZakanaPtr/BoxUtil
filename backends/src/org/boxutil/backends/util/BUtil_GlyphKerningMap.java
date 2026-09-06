@@ -7,14 +7,14 @@ import java.util.Arrays;
 import java.util.Map;
 
 public class BUtil_GlyphKerningMap {
-    private final byte fixedValue;
-    private final int capacity;
-    private final int size;
-    private final int posMask;
-    private final int fixedKey;
-    private final byte[] state; // -1 => empty, (x > -1) => psl
-    private final byte[] values;
-    private final int[] keys;
+    protected final byte fixedValue;
+    protected final int capacity;
+    protected final int size;
+    protected final int posMask;
+    protected final int fixedKey;
+    protected final byte[] state; // -1 => empty, (x > -1) => psl
+    protected final byte[] values;
+    protected final int[] keys;
 
     /**
      * @param loadFactor 0.7~0.8

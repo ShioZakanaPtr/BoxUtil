@@ -64,6 +64,10 @@ public final class ShaderCore {
 
     public static void initCore() {
         _LOG.info("'BoxUtil' OpenGL context running on: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_NAME + "' with drive version: '" + BoxDatabase.getGLState().GL_CURRENT_DEVICE_VERSION + "'.");
+        PROGRAM_MANAGER.initCore();
+        refreshRenderingBuffer();
+        refreshDefaultVAO();
+
         if (!BUtil_BoxUtilBackgroundThread.initWithFailedCheck()) {
             _LOG.warn("'BoxUtil' logical thread gl context failed.");
             closeShader();
@@ -80,9 +84,6 @@ public final class ShaderCore {
             return;
         }
 
-        PROGRAM_MANAGER.initCore();
-        refreshRenderingBuffer();
-        refreshDefaultVAO();
         if (!PROGRAM_MANAGER.isCoreValid() || !isRenderingFramebufferValid() || !isDefaultVAOValid()) {
             closeShader();
             _LOG.error("'BoxUtil' base shader resource init failed, core program: " + PROGRAM_MANAGER.isCoreValid() + ", rendering framebuffer: " + isRenderingFramebufferValid() + ", default VAO: " + isDefaultVAOValid() + ".");
@@ -136,8 +137,9 @@ public final class ShaderCore {
         GLWrapper.Operation.glDepthRange(-1.0d, 1.0d);
         GLWrapper.Operation.glDepthMask(true);
         GLWrapper.Operation.glColorMask(true, true, true, true);
-        GLWrapper.Operation.glBlendFuncSeparate(GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA, GLWrapper.Operation.GL_ZERO, GLWrapper.Operation.GL_ONE); // but changes color attachment 0 and 1
+        if (GLWrapper.Operation.valid_BlendFuncSeparate()) GLWrapper.Operation.glBlendFuncSeparate(GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA, GLWrapper.Operation.GL_ZERO, GLWrapper.Operation.GL_ONE); // but changes color attachment 0 and 1
         if (GLWrapper.Operation.valid_BlendEquation()) GLWrapper.Operation.glBlendEquation(GLWrapper.Operation.GL_FUNC_ADD);
+        if (BoxConfigs.isShaderEnable()) BUtil_GLImpl.resetGLAttrib();
     }
 
     public static void glEndDraw() {
@@ -588,10 +590,6 @@ public final class ShaderCore {
         return glGlobalDataUBOValid;
     }
 
-    public static boolean isDistortionValid() {
-        return PROGRAM_MANAGER.isDistortionValid();
-    }
-
     public static boolean isBloomValid() {
         return PROGRAM_MANAGER.isBloomValid();
     }
@@ -609,7 +607,7 @@ public final class ShaderCore {
     }
 
     public static boolean isFXAAValid() {
-        return PROGRAM_MANAGER.isFXAACValid() || PROGRAM_MANAGER.isFXAAQValid();
+        return PROGRAM_MANAGER.isFXAABothValid();
     }
 
     public static boolean isSDFGenValid() {

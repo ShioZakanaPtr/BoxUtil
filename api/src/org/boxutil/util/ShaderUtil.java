@@ -9,6 +9,7 @@ import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
@@ -16,6 +17,7 @@ import org.lwjgl.util.vector.Vector3f;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * For all result texture, recommend to use storage texture for performance.<p>
@@ -76,26 +78,30 @@ public final class ShaderUtil {
      */
     public record BindingLocationStruct(byte target, int location, String name) {}
 
+    @FunctionalInterface
     public interface LinkCondition {
-        boolean runAndCheck(int program);
+        /**
+         * @return <code>true</code> when some error has occurred.
+         */
+        boolean runAndCheck(int programID);
 
         /**
-         * Always run and check each condition.
+         * Always run and check <code>this</code> condition and <code>other</code> condition.
          */
         default LinkCondition next(@NotNull final LinkCondition other) {
-            return l_program -> runAndCheck(l_program) | other.runAndCheck(l_program);
+            return l_programID -> runAndCheck(l_programID) | other.runAndCheck(l_programID);
         }
 
         /**
          * Break the <code>other</code> check if this condition has returns <code>true</code>;
          */
         default LinkCondition nextOptional(@NotNull final LinkCondition other) {
-            return l_program -> runAndCheck(l_program) || other.runAndCheck(l_program);
+            return l_programID -> runAndCheck(l_programID) || other.runAndCheck(l_programID);
         }
     }
 
     public static LinkCondition makeShaderBindingLocation(final BindingLocationStruct... bindingLocations) {
-        return (programID) -> {
+        return programID -> {
             for (BindingLocationStruct bindingLocation : bindingLocations) {
                 switch (bindingLocation.target) {
                     case BIND_VERTEX_ATTRIB: GLWrapper.Shader.Vert.glBindAttribLocation(programID, bindingLocation.location, bindingLocation.name); break;
@@ -123,7 +129,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVF(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vert, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -144,7 +150,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVFFormPath(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vertPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -162,7 +168,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVGF(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vert, final String geom, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -183,7 +189,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVGFFromPath(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vertPath, final String geomPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -201,7 +207,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVTF(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vert, final String tessC, final String tessE, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -222,7 +228,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVTFFromPath(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vertPath, final String tessCPath, final String tessEPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -240,7 +246,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVTGF(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vert, final String tessC, final String tessE, final String geom, final String frag) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -261,7 +267,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderVTGFFromPath(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String vertPath, final String tessCPath, final String tessEPath, final String geomPath, final String fragPath) {
         String tag = loggerTag == null ? "None marked" : loggerTag;
@@ -279,7 +285,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      * @param source may only have one shader source normally.
      */
     public static int createComputeShaders(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String... source) {
@@ -304,7 +310,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      * @param shadersPath may only have one shader source normally.
      */
     public static int createComputeShadersFormPath(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final String... shadersPath) {
@@ -360,7 +366,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      */
     public static int createShaderProgram(@Nullable final String loggerTag, @Nullable final LinkCondition beforeLinkExc, final int[] types, final String... shaders) {
         if (!GLWrapper.Shader.valid()) {
@@ -412,7 +418,7 @@ public final class ShaderUtil {
 
     /**
      * @param loggerTag for locating in log when created or failed.
-     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls, returns <code>true</code> when some error has occurred.
+     * @param beforeLinkExc accept a <code>int</code> type program id, executing something after all of the <code>glAttachShader</code> calls but before <code>glLinkProgram</code> calls.
      * @param shadersPath must be under the format:<table border = "1">
      *                    <tr><th>Shader Type</th><th>Legal Format</th></tr>
      *                    <tr><th>Vertex</th><th>*.vert *.vsh</th></tr>
@@ -551,55 +557,251 @@ public final class ShaderUtil {
         initGLStorageTex(tex, 1, internalFormat, width, height);
     }
 
-    private static int[] genSDFCore(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int finalWidth, int finalHeight, int[] border, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, int resultTex, int resultOffsetX, int resultOffsetY, boolean genResultTex, boolean bit16OutMode) {
-        int[] result = new int[3];
-        result[0] = resultTex;
-        if (localWidth < 1 || localHeight < 1) return result;
+    private static int[] genLegacySDFCore(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int finalWidth, int finalHeight, int borderWidth, int borderHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, int resultTex, int resultOffsetX, int resultOffsetY, boolean genResultTex) {
+        final int[] result = new int[5];
+        result[0] = genResultTex ? GLWrapper.Texture.glGenTextures() : resultTex;
         result[1] = finalWidth;
         result[2] = finalHeight;
-        if (!ShaderCore.isSDFGenValid() || source < 1 || (resultTex < 1 && !genResultTex)) return result;
+        if (source < 1 || result[0] < 1 || localWidth < 1 || localHeight < 1) return result;
+
+        final int resultWidth, resultHeight;
+        if (genResultTex) {
+            resultWidth = result[1];
+            resultHeight = result[2];
+            result[3] = CalculateUtil.getPOTMax(resultWidth);
+            result[4] = CalculateUtil.getPOTMax(resultHeight);
+            initGLTex(result[0], GLWrapper.Texture.GL_INTENSITY8, result[3], result[4], GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE);
+
+            final int in_fillNewTexTopDiff = result[4] - finalHeight,
+                    in_fillNewTexTopSize = result[3] * in_fillNewTexTopDiff,
+                    in_fillNewTexRightDiff = result[3] - finalWidth,
+                    in_fillNewTexRightSize = in_fillNewTexRightDiff * result[4],
+                    in_maxFillNewTexSize = Math.max(in_fillNewTexTopSize, in_fillNewTexRightSize);
+            if (in_maxFillNewTexSize > 0) {
+                final ByteBuffer in_fillNewTexBuf = BufferUtils.createByteBuffer(in_maxFillNewTexSize).clear();
+                IntStream.range(0, in_maxFillNewTexSize).parallel().unordered().forEach(i -> in_fillNewTexBuf.put(i, BoxEnum.ONE_COLOR));
+                if (in_fillNewTexTopSize > 0) {
+                    in_fillNewTexBuf.limit(in_fillNewTexTopSize);
+                    GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, finalHeight, result[3], in_fillNewTexTopDiff, GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE, in_fillNewTexBuf);
+                }
+                if (in_fillNewTexRightSize > 0) {
+                    in_fillNewTexBuf.limit(in_fillNewTexRightSize);
+                    GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, finalWidth, 0, in_fillNewTexRightDiff, result[4], GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE, in_fillNewTexBuf);
+                }
+            }
+        } else {
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result[0]);
+            resultWidth = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);
+            resultHeight = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+            result[3] = resultWidth;
+            result[4] = resultHeight;
+        }
+
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, source);
+        final int srcGLWidth = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH),
+                srcGLHeight = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT),
+                srcSize = srcGLWidth * srcGLHeight, resultSize = finalWidth * finalHeight;
+        final ByteBuffer srcBuf = BufferUtils.createByteBuffer(srcSize << 2).clear(),
+                resultBuf = BufferUtils.createByteBuffer(resultSize).clear();
+        GLWrapper.Texture.glGetTexImage(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, srcBuf);
+
+        final int channelPick = switch (checkChannel) {
+            case GLWrapper.Texture.GL_RED -> 0;
+            case GLWrapper.Texture.GL_GREEN -> 1;
+            case GLWrapper.Texture.GL_BLUE -> 2;
+//            case GLWrapper.Texture.GL_ALPHA -> 3;
+            case GLWrapper.Texture.GL_RGB -> 4;
+            default -> 3;
+        };
+        final int tmpTexArrLen = resultSize << 2;
+        final int[] tmpTex = new int[tmpTexArrLen];
+
+        final int l_thInt = Math.max(Math.min(Math.round(outsideThreshold * 255.0f), 255), 0);
+        IntStream.range(0, resultSize).parallel().unordered().forEach(i -> {
+            final int l_currPixelIdx = i << 2,
+                    l_y = i / finalWidth, l_yCheck = l_y - borderHeight,
+                    l_x = i - l_y * finalWidth, l_xCheck = l_x - borderWidth;
+
+            if (l_x >= borderWidth && l_y >= borderHeight && l_xCheck < localWidth && l_yCheck < localHeight) {
+                final int l_currLum,
+                        l_srcIdx = ((l_yCheck + sourceOffsetY) * srcGLWidth + l_xCheck + sourceOffsetX) << 2;
+                if (channelPick == 4) {
+                    l_currLum = (int) Math.round((srcBuf.get(l_srcIdx) & 0xff) * 0.2126729d +
+                            (srcBuf.get(l_srcIdx + 1) & 0xff) * 0.7151522d +
+                            (srcBuf.get(l_srcIdx + 2) & 0xff) * 0.0721750d);
+                } else l_currLum = srcBuf.get(l_srcIdx + channelPick) & 0xff;
+
+                if (l_currLum >= l_thInt) {
+                    tmpTex[l_currPixelIdx] = l_x;
+                    tmpTex[l_currPixelIdx + 1] = l_y;
+                    tmpTex[l_currPixelIdx + 2] = tmpTex[l_currPixelIdx + 3] = -1;
+                } else {
+                    tmpTex[l_currPixelIdx] = tmpTex[l_currPixelIdx + 1] = -1;
+                    tmpTex[l_currPixelIdx + 2] = l_x;
+                    tmpTex[l_currPixelIdx + 3] = l_y;
+                }
+            } else {
+                tmpTex[l_currPixelIdx] = tmpTex[l_currPixelIdx + 1] = -1;
+                tmpTex[l_currPixelIdx + 2] = l_x;
+                tmpTex[l_currPixelIdx + 3] = l_y;
+            }
+        });
+
+        final int[] tmpWriteTex = new int[tmpTexArrLen];
+        for (int j = 1 << Math.min(Math.max(step, 0), 30); j > 0; j = j >>> 1) {
+            final int l_step = j;
+            IntStream.range(0, resultSize).parallel().unordered().forEach(i -> {
+                final int l_currPixelIdx = i << 2,
+                        l_y = i / finalWidth,
+                        l_x = i - l_y * finalWidth;
+
+                int l_resultX = -1, l_resultY = -1, l_resultZ = -1, l_resultW = -1,
+                        l_currX, l_currY;
+                float l_distSQX = Float.MAX_VALUE, l_distSQY = Float.MAX_VALUE;
+                for (int l_yIdx = -1; l_yIdx <= 1; l_yIdx++) {
+                    l_currY = l_yIdx * l_step + l_y;
+                    for (int l_xIdx = -1; l_xIdx <= 1; l_xIdx++) {
+                        l_currX = l_xIdx * l_step + l_x;
+                        if (l_currX < 1 || l_currY < 1 || l_currX >= finalWidth || l_currY >= finalHeight) continue;
+
+                        final int l_pickIdx = (l_currY * finalWidth + l_currX) << 2,
+                                l_currPosX = tmpTex[l_pickIdx],
+                                l_currPosY = tmpTex[l_pickIdx + 1],
+                                l_currPosZ = tmpTex[l_pickIdx + 2],
+                                l_currPosW = tmpTex[l_pickIdx + 3];
+
+                        if (l_currPosX > -1) {
+                            final float l_diffX = l_x - l_currPosX, l_diffY = l_y - l_currPosY,
+                                    l_currDistSQ = l_diffX * l_diffX + l_diffY * l_diffY;
+                            if (l_currDistSQ < l_distSQX) {
+                                l_distSQX = l_currDistSQ;
+                                l_resultX = l_currPosX;
+                                l_resultY = l_currPosY;
+                            }
+                        }
+                        if (l_currPosZ > -1) {
+                            final float l_diffX = l_x - l_currPosZ, l_diffY = l_y - l_currPosW,
+                                    l_currDistSQ = l_diffX * l_diffX + l_diffY * l_diffY;
+                            if (l_currDistSQ < l_distSQY) {
+                                l_distSQY = l_currDistSQ;
+                                l_resultZ = l_currPosZ;
+                                l_resultW = l_currPosW;
+                            }
+                        }
+                    }
+                }
+
+                tmpWriteTex[l_currPixelIdx] = l_resultX;
+                tmpWriteTex[l_currPixelIdx + 1] = l_resultY;
+                tmpWriteTex[l_currPixelIdx + 2] = l_resultZ;
+                tmpWriteTex[l_currPixelIdx + 3] = l_resultW;
+            });
+            System.arraycopy(tmpWriteTex, 0, tmpTex, 0, tmpTexArrLen);
+        }
+
+        IntStream.range(0, resultSize).parallel().unordered().forEach(i -> {
+            final int l_currPixelIdx = i << 2,
+                    l_y = i / finalWidth,
+                    l_x = i - l_y * finalWidth;
+            final float currPosX = Math.max(tmpTex[l_currPixelIdx], 0) - l_x,
+                    currPosY = Math.max(tmpTex[l_currPixelIdx + 1], 0) - l_y,
+                    currPosZ = Math.max(tmpTex[l_currPixelIdx + 2], 0) - l_x,
+                    currPosW = Math.max(tmpTex[l_currPixelIdx + 3], 0) - l_y,
+                    sdf = Math.max(Math.min((float) Math.sqrt(currPosX * currPosX + currPosY * currPosY) * resultOutsidePreMultiply, 1.0f), 0.0f) -
+                            Math.max(Math.min((float) Math.sqrt(currPosZ * currPosZ + currPosW * currPosW) * resultInsidePreMultiply, 1.0f), 0.0f);
+            resultBuf.put(i, (byte) Math.max(Math.min((int) ((sdf * 0.5f + 0.5f) * 255.0f), 255), 0));
+        });
+
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result[0]);
+        GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, resultOffsetX, resultOffsetY, finalWidth, finalHeight, GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE, resultBuf);
+        GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+        return result;
+    }
+
+    /**
+     * CPU multi-thread parallel SDF generation method.<p>
+     * Vanilla supported.
+     *
+     * @param source must be RGBA8 texture.
+     * @param checkChannel valid value: {@link GL11#GL_RED}, {@link GL11#GL_GREEN}, {@link GL11#GL_BLUE}, {@link GL11#GL_ALPHA}, {@link GL11#GL_RGB}; default is {@link GL11#GL_ALPHA}.
+     * @param sourceOffsetX the source texture region left-bottom origin x-position.
+     * @param sourceOffsetY the source texture region left-bottom origin y-position.
+     * @param extraWidth border width for sdf texture, positive integer value required.
+     * @param extraHeight border height for sdf texture, positive integer value required.
+     * @param outsideThreshold when pixel check value less than or equal the value, it will be considered as outside.
+     * @param step 8 or 9 for general usage, range from 0 to 30; also you can use <code>CalculateUtil.getExponentPOTMin(Math.max(localWidth, localHeight))</code> for automatic step calculation.
+     * @param resultInsidePreMultiply 0.01 or (1.0f / required thickness) for general usage.
+     * @param resultOutsidePreMultiply 0.01 or (1.0f / max(extraWidth, extraHeight)) for general usage.
+     * @param resultTex texture to store result, must be {@link GL11#GL_INTENSITY8} texture and size must be greater than or equal to the final size.
+     * @param resultOffsetX the result texture region left-bottom origin x-position.
+     * @param resultOffsetY the result texture region left-bottom origin x-position.
+     * @return generated sdf texture with {@link GL11#GL_INTENSITY8} POT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, validWidth, validHeight, glRealWidth, glRealHeight}
+     */
+    public static int[] genLegacySDF(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int extraWidth, int extraHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, int resultTex, int resultOffsetX, int resultOffsetY) {
+        final int borderWidth = Math.abs(extraWidth), borderHeight = Math.abs(extraHeight);
+        return genLegacySDFCore(source, checkChannel, sourceOffsetX, sourceOffsetY, localWidth, localHeight, localWidth + borderWidth + borderWidth, localHeight + borderHeight + borderHeight, borderWidth, borderHeight, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, resultTex, resultOffsetX, resultOffsetY, false);
+    }
+
+    /**
+     * CPU multi-thread parallel SDF generation method.<p>
+     * Vanilla supported.
+     *
+     * @param source must be RGBA8 texture.
+     * @param checkChannel valid value: {@link GL11#GL_RED}, {@link GL11#GL_GREEN}, {@link GL11#GL_BLUE}, {@link GL11#GL_ALPHA}, {@link GL11#GL_RGB}; default is {@link GL11#GL_ALPHA}.
+     * @param sourceOffsetX the source texture region left-bottom origin x-position.
+     * @param sourceOffsetY the source texture region left-bottom origin y-position.
+     * @param extraWidth border width for sdf texture, positive integer value required.
+     * @param extraHeight border height for sdf texture, positive integer value required.
+     * @param outsideThreshold when pixel check value less than or equal the value, it will be considered as outside.
+     * @param step 8 or 9 for general usage, range from 0 to 30; also you can use <code>CalculateUtil.getExponentPOTMin(Math.max(localWidth, localHeight))</code> for automatic step calculation.
+     * @param resultInsidePreMultiply 0.01 or (1.0f / required thickness) for general usage.
+     * @param resultOutsidePreMultiply 0.01 or (1.0f / max(extraWidth, extraHeight)) for general usage.
+     * @return generated sdf texture with {@link GL11#GL_INTENSITY8} POT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, validWidth, validHeight, glRealWidth, glRealHeight}
+     */
+    public static int[] genLegacySDF(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int extraWidth, int extraHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply) {
+        final int borderWidth = Math.abs(extraWidth), borderHeight = Math.abs(extraHeight);
+        return genLegacySDFCore(source, checkChannel, sourceOffsetX, sourceOffsetY, localWidth, localHeight, localWidth + borderWidth + borderWidth, localHeight + borderHeight + borderHeight, borderWidth, borderHeight, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, 0, 0, 0, true);
+    }
+
+    private static int[] genSDFCore(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int finalWidth, int finalHeight, int borderWidth, int borderHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, int resultTex, int resultOffsetX, int resultOffsetY, boolean genResultTex, boolean bit16OutMode) {
+        final int[] result = new int[3];
+        result[0] = genResultTex ? GLWrapper.Texture.glGenTextures() : resultTex;
+        result[1] = finalWidth;
+        result[2] = finalHeight;
+        if (!ShaderCore.isSDFGenValid() || source < 1 || result[0] < 1 || localWidth < 1 || localHeight < 1) return result;
 
         int tmpTex = GLWrapper.Texture.glGenTextures();
         initGLStorageTex(tmpTex, GLWrapper.Texture.GL_RGBA16UI, result[1], result[2]);
         if (genResultTex) {
-            result[0] = GLWrapper.Texture.glGenTextures();
             initGLStorageTex(result[0], bit16OutMode ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8, result[1], result[2]);
         }
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
 
         final int itemDimX = (int) Math.ceil(result[1] / (BoxDatabase.isGLDeviceAMD() ? 8.0f : 4.0f));
         final int itemDimY = (int) Math.ceil(result[2] / 8.0f);
-        int channelPick = 3;
-        switch (checkChannel) {
-            case GLWrapper.Texture.GL_RED:
-                channelPick = 0;
-                break;
-            case GLWrapper.Texture.GL_GREEN:
-                channelPick = 1;
-                break;
-            case GLWrapper.Texture.GL_BLUE:
-                channelPick = 2;
-                break;
-            case GLWrapper.Texture.GL_ALPHA:
-                break;
-            case GLWrapper.Texture.GL_RGB:
-                channelPick = 4;
-                break;
-        }
+        final int channelPick = switch (checkChannel) {
+            case GLWrapper.Texture.GL_RED -> 0;
+            case GLWrapper.Texture.GL_GREEN -> 1;
+            case GLWrapper.Texture.GL_BLUE -> 2;
+//            case GLWrapper.Texture.GL_ALPHA -> 3;
+            case GLWrapper.Texture.GL_RGB -> 4;
+            default -> 3;
+        };
         BaseShaderData program = ShaderCore.getSDFInitProgram();
         program.active();
         program.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, channelPick);
         program.bindTexture2D(0, source);
-        program.putBindingImageTextureWriteOnly(0, tmpTex, GLWrapper.Texture.GL_RGBA16I);
+        program.putBindingImageTextureWriteOnly(0, tmpTex, GLWrapper.Texture.GL_RGBA16UI);
         GLWrapper.Shader.glUniform4i(program.location[0], localWidth, localHeight, result[1], result[2]);
-        GLWrapper.Shader.glUniform4i(program.location[1], border[0], border[1], sourceOffsetX, sourceOffsetY);
+        GLWrapper.Shader.glUniform4i(program.location[1], borderWidth, borderHeight, sourceOffsetX, sourceOffsetY);
         GLWrapper.Shader.glUniform1f(program.location[2], outsideThreshold);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
         GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         program = ShaderCore.getSDFProcessProgram();
         program.active();
         program.bindTexture2D(0, tmpTex);
-        program.putBindingImageTextureWriteOnly(0, tmpTex, GLWrapper.Texture.GL_RGBA16I);
+        program.putBindingImageTextureWriteOnly(0, tmpTex, GLWrapper.Texture.GL_RGBA16UI);
         GLWrapper.Shader.glUniform2i(program.location[0], result[1], result[2]);
         for (int i = 1 << Math.min(Math.max(step, 0), 30); i > 0; i = i >>> 1) {
             GLWrapper.Shader.glUniform1i(program.location[1], i);
@@ -621,7 +823,7 @@ public final class ShaderUtil {
 
     /**
      * Fast GPU SDF generation method.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 texture.
      * @param checkChannel valid value: {@link GL11#GL_RED}, {@link GL11#GL_GREEN}, {@link GL11#GL_BLUE}, {@link GL11#GL_ALPHA}, {@link GL11#GL_RGB}; default is {@link GL11#GL_ALPHA}.
@@ -640,13 +842,13 @@ public final class ShaderUtil {
      * @return generated sdf texture with R8/R16 NPOT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, width, height}
      */
     public static int[] genSDF(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int extraWidth, int extraHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, int resultTex, int resultOffsetX, int resultOffsetY, boolean bit16OutMode) {
-        int[] border = new int[]{Math.abs(extraWidth), Math.abs(extraHeight)};
-        return genSDFCore(source, checkChannel, sourceOffsetX, sourceOffsetY, localWidth, localHeight, localWidth + border[0] + border[0], localHeight + border[1] + border[1], border, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, resultTex, resultOffsetX, resultOffsetY, false, bit16OutMode);
+        final int borderWidth = Math.abs(extraWidth), borderHeight = Math.abs(extraHeight);
+        return genSDFCore(source, checkChannel, sourceOffsetX, sourceOffsetY, localWidth, localHeight, localWidth + borderWidth + borderWidth, localHeight + borderHeight + borderHeight, borderWidth, borderHeight, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, resultTex, resultOffsetX, resultOffsetY, false, bit16OutMode);
     }
 
     /**
      * Fast GPU SDF generation method.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 texture.
      * @param checkChannel valid value: {@link GL11#GL_RED}, {@link GL11#GL_GREEN}, {@link GL11#GL_BLUE}, {@link GL11#GL_ALPHA}, {@link GL11#GL_RGB}; default is {@link GL11#GL_ALPHA}.
@@ -666,7 +868,7 @@ public final class ShaderUtil {
 
     /**
      * Fast GPU SDF generation method.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 texture.
      * @param checkChannel valid value: {@link GL11#GL_RED}, {@link GL11#GL_GREEN}, {@link GL11#GL_BLUE}, {@link GL11#GL_ALPHA}, {@link GL11#GL_RGB}; default is {@link GL11#GL_ALPHA}.
@@ -685,7 +887,7 @@ public final class ShaderUtil {
 
     /**
      * Fast GPU SDF generation method.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 texture.
      * @param sourceOffsetX the source texture region left-bottom origin x-position.
@@ -701,13 +903,13 @@ public final class ShaderUtil {
      * @return generated sdf texture with R8/R16 NPOT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, width, height}
      */
     public static int[] genSDF(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int extraWidth, int extraHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, boolean bit16OutMode) {
-        int[] border = new int[]{Math.abs(extraWidth), Math.abs(extraHeight)};
-        return genSDFCore(source, checkChannel, sourceOffsetX, sourceOffsetY, localWidth, localHeight, localWidth + border[0] + border[0], localHeight + border[1] + border[1], border, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, 0, 0, 0, true, bit16OutMode);
+        final int borderWidth = Math.abs(extraWidth), borderHeight = Math.abs(extraHeight);
+        return genSDFCore(source, checkChannel, sourceOffsetX, sourceOffsetY, localWidth, localHeight, localWidth + borderWidth + borderWidth, localHeight + borderHeight + borderHeight, borderWidth, borderHeight, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, 0, 0, 0, true, bit16OutMode);
     }
 
     /**
      * Fast GPU SDF generation method.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 texture.
      * @param checkChannel valid value: {@link GL11#GL_RED}, {@link GL11#GL_GREEN}, {@link GL11#GL_BLUE}, {@link GL11#GL_ALPHA}, {@link GL11#GL_RGB}; default is {@link GL11#GL_ALPHA}.
@@ -721,13 +923,13 @@ public final class ShaderUtil {
      * @return generated sdf texture with R8/R16 NPOT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, width, height}
      */
     public static int[] genSDF(int source, int checkChannel, int localWidth, int localHeight, int extraWidth, int extraHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, boolean bit16OutMode) {
-        int[] border = new int[]{Math.abs(extraWidth), Math.abs(extraHeight)};
-        return genSDFCore(source, checkChannel, 0, 0, localWidth, localHeight, localWidth + border[0] + border[0], localHeight + border[1] + border[1], border, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, 0, 0, 0, true, bit16OutMode);
+        final int borderWidth = Math.abs(extraWidth), borderHeight = Math.abs(extraHeight);
+        return genSDFCore(source, checkChannel, 0, 0, localWidth, localHeight, localWidth + borderWidth + borderWidth, localHeight + borderHeight + borderHeight, borderWidth, borderHeight, outsideThreshold, step, resultInsidePreMultiply, resultOutsidePreMultiply, 0, 0, 0, true, bit16OutMode);
     }
 
     /**
      * Fast GPU SDF generation method.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 texture.
      * @param checkChannel valid value: {@link GL11#GL_RED}, {@link GL11#GL_GREEN}, {@link GL11#GL_BLUE}, {@link GL11#GL_ALPHA}, {@link GL11#GL_RGB}; default is {@link GL11#GL_ALPHA}.
@@ -746,7 +948,7 @@ public final class ShaderUtil {
     /**
      * Classical radial blur effect.<p>
      * Draw blur effect form source to attachment of current framebuffer, source texture size should be consistent with attachment of current framebuffer size.<p>
-     * <strong>OpenGL 2.0 required.</strong>
+     * {@link GLWrapper.Shader#valid()} required.
      *
      * @param center center of blur effect, mapping range from 0.0 to 1.0.
      * @param samples blur iteration, minimum value is 1 (No any effect), general value is 32, larger is better but slower.
@@ -776,7 +978,7 @@ public final class ShaderUtil {
     /**
      * Classical radial blur effect.<p>
      * Draw blur effect form source to attachment of current framebuffer, source texture size should be consistent with attachment of current framebuffer size.<p>
-     * <strong>OpenGL 2.0 required.</strong>
+     * {@link GLWrapper.Shader#valid()} required.
      *
      * @param center center of blur effect, mapping range from 0.0 to 1.0.
      * @param samples blur iteration, minimum value is 1 (No any effect), general value is 32, larger is better but slower.
@@ -1029,7 +1231,7 @@ public final class ShaderUtil {
      * @param sourceOffsetX the source texture region left-bottom origin x-position.
      * @param sourceOffsetY the source texture region left-bottom origin y-position.
      * @param useRed true for Red texture, false for RGBA texture.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param resultOffsetX the result texture region left-bottom origin x-position.
      * @param resultOffsetY the result texture region left-bottom origin x-position.
      * @param f16OutMode true for f16 per channel texture, false for f32 per channel texture.
@@ -1047,7 +1249,7 @@ public final class ShaderUtil {
      * GPU DFT(Discrete Fourier Transform), slow but still faster more than CPU computing.
      *
      * @param useRed true for Red texture, false for RGBA texture.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param f16OutMode true for f16 per channel texture, false for f32 per channel texture.
      *
      * @return generated centered f16/f32 complex spectrum texture;<p>
@@ -1070,7 +1272,7 @@ public final class ShaderUtil {
      * @param sourceOffsetX the source texture region left-bottom origin x-position.
      * @param sourceOffsetY the source texture region left-bottom origin y-position.
      * @param useRed true for Red texture, false for RGBA texture.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param f16OutMode true for f16 per channel texture, false for f32 per channel texture.
      *
      * @return generated centered f16/f32 complex spectrum texture;<p>
@@ -1086,7 +1288,7 @@ public final class ShaderUtil {
      * GPU DFT(Discrete Fourier Transform), slow but still faster more than CPU computing.
      *
      * @param useRed true for Red texture, false for RGBA texture.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param f16OutMode true for f16 per channel texture, false for f32 per channel texture.
      *
      * @return generated centered f16/f32 complex spectrum texture;<p>
@@ -1109,7 +1311,7 @@ public final class ShaderUtil {
      * @param sourceOffsetX the source texture region left-bottom origin x-position.
      * @param sourceOffsetY the source texture region left-bottom origin y-position.
      * @param useRed true for double size Red complex, false for double size RGBA complex.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param resultOffsetX the result texture region left-bottom origin x-position.
      * @param resultOffsetY the result texture region left-bottom origin x-position.
      * @param f16InMode true for f16 per channel texture, false for f32 per channel texture.
@@ -1125,7 +1327,7 @@ public final class ShaderUtil {
      * GPU IDFT(Inverse Discrete Fourier Transform), slow but still faster more than CPU computing.
      *
      * @param useRed true for double size Red complex, false for double size RGBA complex.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param f16InMode true for f16 per channel texture, false for f32 per channel texture.
      * @param f16OutMode true for f16 per channel texture, false for 8bit per channel texture.
      *
@@ -1141,7 +1343,7 @@ public final class ShaderUtil {
      * @param sourceOffsetX the source texture region left-bottom origin x-position.
      * @param sourceOffsetY the source texture region left-bottom origin y-position.
      * @param useRed true for double size Red complex, false for double size RGBA complex.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param f16InMode true for f16 per channel texture, false for f32 per channel texture.
      * @param f16OutMode true for f16 per channel texture, false for 8bit per channel texture.
      *
@@ -1155,7 +1357,7 @@ public final class ShaderUtil {
      * GPU IDFT(Inverse Discrete Fourier Transform), slow but still faster more than CPU computing.
      *
      * @param useRed true for double size Red complex, false for double size RGBA complex.
-     * @param texWidth spatial domain texture width, <strong>NOT</strong> frequency domain texture width.
+     * @param texWidth spatial domain texture width, <b>NOT</b> frequency domain texture width.
      * @param f16InMode true for f16 per channel texture, false for f32 per channel texture.
      * @param f16OutMode true for f16 per channel texture, false for 8bit per channel texture.
      *
@@ -1203,7 +1405,7 @@ public final class ShaderUtil {
          */
         public float applyVerticalRamp = 0.25f;
         /**
-         * <strong>Nullable</strong>, <code>{scale, blurStep(integer), applyStrength}</code>, set <code>null</code> that disabled; the scale general value is <code>0.01~0.02</code> for generate.
+         * <b>Nullable</b>, <code>{scale, blurStep(integer), applyStrength}</code>, set <code>null</code> that disabled; the scale general value is <code>0.01~0.02</code> for generate.
          */
         public Vector3f volume = new Vector3f(0.01f, 7.0f, 0.25f);
         /**
@@ -1211,7 +1413,7 @@ public final class ShaderUtil {
          */
         public boolean volumeSmoothMix = true;
         /**
-         * <strong>Nullable</strong>, <code>{blurStep(integer), applyMix}</code>, set <code>null</code> that disabled; general <code>12</code> step for chunk surface.
+         * <b>Nullable</b>, <code>{blurStep(integer), applyMix}</code>, set <code>null</code> that disabled; general <code>12</code> step for chunk surface.
          */
         public Vector2f details = new Vector2f(7.0f, 0.7f);
         /**
@@ -1340,7 +1542,7 @@ public final class ShaderUtil {
 
     /**
      * GPU normal map generation from RGB texture for sprites.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 2D-texture.
      * @param sourceOffsetX the source texture region left-bottom origin x-position.
@@ -1356,7 +1558,7 @@ public final class ShaderUtil {
 
     /**
      * GPU normal map generation from RGB texture for sprites.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 2D-texture.
      *
@@ -1368,7 +1570,7 @@ public final class ShaderUtil {
 
     /**
      * GPU normal map generation from RGB texture for sprites.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 2D-texture.
      * @param sourceOffsetX the source texture region left-bottom origin x-position.
@@ -1382,7 +1584,7 @@ public final class ShaderUtil {
 
     /**
      * GPU normal map generation from RGB texture for sprites.<p>
-     * <strong>OpenGL 4.3 required, compute shader supported required.</strong>
+     * <b>OpenGL 4.3 required, compute shader supported required.</b>
      *
      * @param source must be RGBA8 2D-texture.
      *

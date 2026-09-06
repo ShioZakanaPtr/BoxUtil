@@ -22,8 +22,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * memory blocks are always allocated in a compact layout from free space, without padding for misaligned byte offsets,
  * during defragmentation, larger blocks are moved to higher addresses.<p>
  * <b>REQUIRES:</b><p>
- * Only <strong>OpenGL 1.5</strong> as the minimum supported version.<p>
- * For optimal performance, it is recommended that the implementation requires at least <strong>OpenGL 3.1</strong> or the <code>ARB_copy_buffer</code> extension.<p>
+ * Only <b>OpenGL 1.5</b> or {@link GLWrapper.Buffer#valid()} as the minimum supported version.<p>
+ * For optimal performance, it is recommended that the implementation requires at least <b>OpenGL 3.1</b> or {@link GLWrapper.Buffer#valid_CopyBuffer()}<p>
  * <b>CAUTION:</b><p>
  * The thread to which this memory pool belongs <b>MUST</b> have an active OpenGL context, and that context <b>MUST</b> be shared with the main thread.<p>
  * Any exceptions thrown by some methods of this pool <b>MUST</b> not be caught and ignored or left unhandled; otherwise, fatal error may occur, so such defects <b>MUST</b> be resolved during modding.

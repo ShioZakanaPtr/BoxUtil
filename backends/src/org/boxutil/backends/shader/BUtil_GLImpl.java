@@ -184,23 +184,21 @@ public final class BUtil_GLImpl {
         }
     }
 
-    public static void refreshCurrFrameState(ViewportAPI viewport, BaseShaderPacksContext context, final byte isCampaign) {
+    public static void refreshCurrFrameState(boolean shaderEnable, ViewportAPI viewport, BaseShaderPacksContext context, final byte isCampaign) {
         INST.mousePos[0] = Global.getSettings().getMouseX();
         INST.mousePos[1] = Global.getSettings().getMouseY();
         INST.mousePos[2] = Mouse.getX();
         INST.mousePos[3] = Mouse.getY();
         TransformUtil.createGameOrthoMatrix(viewport, INST.vanillaMat[isCampaign]);
         TransformUtil.createGamePerspectiveMatrix(40.0f, viewport, INST.perspectiveMat[isCampaign]);
-        INST.vanillaMatBuf.put(0, CommonUtil.getMatrix4fArray(INST.vanillaMat[isCampaign]), 0, 16);
-        INST.perspectiveMatBuf.put(0, CommonUtil.getMatrix4fArray(INST.perspectiveMat[isCampaign]), 0, 16);
-        INST.vanillaMatBuf.position(0);
-        INST.vanillaMatBuf.limit(INST.vanillaMatBuf.capacity());
-        INST.perspectiveMatBuf.position(0);
-        INST.perspectiveMatBuf.limit(INST.perspectiveMatBuf.capacity());
-        if (BoxConfigs.isShaderEnable() || BoxConfigs.isTrailSystemEnable()) {
+        INST.vanillaMat[isCampaign].store(INST.vanillaMatBuf);
+        INST.perspectiveMat[isCampaign].store(INST.perspectiveMatBuf);
+        INST.vanillaMatBuf.clear();
+        INST.perspectiveMatBuf.clear();
+        if (shaderEnable || BoxConfigs.isTrailSystemEnable()) {
             ShaderCore.refreshGameVanillaViewportUBOAll(INST.vanillaMatBuf, viewport);
         }
-        if (BoxConfigs.isShaderEnable()) {
+        if (shaderEnable) {
             GLWrapper.FBO.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             GLWrapper.FBO.glClearDepth(1.0d);
             GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, ShaderCore.getRenderingBuffer().getFBO(1));
@@ -374,10 +372,7 @@ public final class BUtil_GLImpl {
     }
 
     public static void resetGLAttrib() {
-        if (INST.lastMatrixState != BoxEnum.ENTITY_VANILLA_PRIME_MATRIX) {
-            ShaderCore.refreshGameViewportMatrix(INST.vanillaMatBuf);
-            INST.lastMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
-        }
+        INST.lastMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
         if (INST.lastBlendState != BoxEnum.ENTITY_NORMAL_BLEND) {
             if (INST.lastBlendState == BoxEnum.ENTITY_DISABLED_BLEND) GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
             if (INST.lastBlendState == BoxEnum.ENTITY_OTHER_BLEND) {
@@ -467,11 +462,13 @@ public final class BUtil_GLImpl {
         return result;
     }
 
-    public static void processShaderpacksResultPass(ViewportAPI viewport, final boolean isCampaign, BaseShaderPacksContext context) {
-        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_DEPTH_TEST);
-        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_CULL_FACE);
-        GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_BLEND);
-        ShaderCore.glMultiPass();
+    public static void processShaderpacksResultPass(boolean shaderEnable, ViewportAPI viewport, boolean isCampaign, BaseShaderPacksContext context) {
+        if (shaderEnable) {
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_DEPTH_TEST);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_CULL_FACE);
+            GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_BLEND);
+            ShaderCore.glMultiPass();
+        }
         if (BoxConfigs.isMultiPassBeauty() && context.isAASupported()) {
             context.applyAAPass(viewport, isCampaign,
                     INST.fboResource[0],

@@ -30,6 +30,7 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.Result {
     }
 
     public float getPreviousRecordsDistanceSq(final Vector2f targetLocation) {
+        if (targetLocation == null) return Float.NaN;
         return this.getPreviousRecordsDistanceSq(targetLocation.x, targetLocation.y);
     }
 
@@ -42,8 +43,9 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.Result {
         return !Float.isNaN(preDist) && preDist < StaticTrailTracker.MINIMAL_VALID_LENGTH_SQ;
     }
 
-    public boolean isNotRecommendedRecordsCurrent(Vector2f targetLocation) {
-        return false;
+    public boolean isNotRecommendedRecordsCurrent(final Vector2f targetLocation) {
+        if (targetLocation == null) return true;
+        return this.isNotRecommendedRecordsCurrent(targetLocation.x, targetLocation.y);
     }
 
     public boolean isNotRecommendedRecordsCurrent() {
@@ -59,7 +61,7 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.Result {
     }
 
     public void setCurrentLocation(final Vector2f location) {
-        this.setCurrentLocation(location.x, location.y);
+        if (location != null) this.setCurrentLocation(location.x, location.y);
     }
 
     public Vector2f getCurrentFacing() {
@@ -71,7 +73,7 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.Result {
     }
 
     public void setCurrentFacing(final Vector2f facingVector) {
-        this.setCurrentFacing(facingVector.x, facingVector.y);
+        if (facingVector != null) this.setCurrentFacing(facingVector.x, facingVector.y);
     }
 
     public byte[] getCurrentColor() {

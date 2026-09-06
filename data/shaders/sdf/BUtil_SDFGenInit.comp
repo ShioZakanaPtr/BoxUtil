@@ -6,7 +6,7 @@ subroutine float t_sampleMethod(in ivec2 sampleCoord);
 subroutine uniform t_sampleMethod f_sampleMethodState;
 
 layout(binding = 0) uniform sampler2D u_checkMap;
-layout(binding = 0, rgba16i) restrict writeonly uniform iimage2D u_resultMap;
+layout(binding = 0, rgba16ui) restrict writeonly uniform uimage2D u_resultMap;
 
 uniform ivec4 u_sizeState; // ivec2(checkMapSize), ivec2(resultMapSize)
 uniform ivec4 u_border_offset;
@@ -35,11 +35,8 @@ subroutine(t_sampleMethod) float p_fromRGB(in ivec2 sampleCoord) {
 void main() {
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
     if (any(greaterThanEqual(coord, u_sizeState.zw))) return;
-    ivec2 coordStore = ivec2(coord + 1);
+    uvec2 coordStore = uvec2(coord + 1);
     ivec2 checkCoord = coord - u_border_offset.xy;
-    ivec4 result;
-    if (all(bvec4(greaterThanEqual(coord, u_border_offset.xy), lessThan(checkCoord, u_sizeState.xy)))) {
-        result = (f_sampleMethodState(checkCoord + u_border_offset.zw) >= u_threshold) ? ivec4(coordStore, 0, 0) : ivec4(0, 0, coordStore);
-    } else result = ivec4(0, 0, coordStore);
-    imageStore(u_resultMap, coord, result);
+    bool within = all(bvec4(greaterThanEqual(coord, u_border_offset.xy), lessThan(checkCoord, u_sizeState.xy))) && (f_sampleMethodState(checkCoord + u_border_offset.zw) >= u_threshold);
+    imageStore(u_resultMap, coord, within ? uvec4(coordStore, 0, 0) : uvec4(0, 0, coordStore));
 }

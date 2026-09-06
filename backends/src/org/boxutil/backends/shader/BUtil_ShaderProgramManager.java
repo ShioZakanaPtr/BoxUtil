@@ -2,6 +2,7 @@ package org.boxutil.backends.shader;
 
 import com.fs.starfarer.api.Global;
 import org.boxutil.base.BaseShaderData;
+import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
@@ -52,7 +53,7 @@ public final class BUtil_ShaderProgramManager {
     private final ShaderProgram[] program = new ShaderProgram[_SHADER_COUNT];
     
     private boolean glCoreProgramValid = true;
-    private boolean glDistortionValid = true;
+    private boolean glDirectDrawValid = true;
     private boolean glSDFGenValid = true;
     private boolean glCompGaussianBlurValid = true;
     private boolean glCompBilateralFilterValid = true;
@@ -62,17 +63,18 @@ public final class BUtil_ShaderProgramManager {
     private boolean glLegacyNormalMapGenValid = true;
     private boolean glFXAACValid = true;
     private boolean glFXAAQValid = true;
+    private boolean glFXAABothValid = true;
     private boolean glBloomValid = true;
     private boolean glAreaLightTexValid = true;
     private boolean glStaticTrailShaderValid = true;
 
     public void initCore() {
         this.loadCoreProgram();
+        this.initDirectDrawProgram();
         this.initCoreProgram();
     }
 
     public void initOptional() {
-        this.initDistortionProgram();
         this.initToolProgram();
         this.initFXAAProgram();
         this.initBloomProgram();
@@ -183,20 +185,23 @@ public final class BUtil_ShaderProgramManager {
         fragFXAAQ = _loadLocalFile("shaderpacks/BUtil_FXAAQShader.frag").replace("OVERWRITE_SCREEN_X", gl_screenXStep).replace("OVERWRITE_SCREEN_Y", gl_screenYStep);
         compBloom = _loadLocalFile("shaderpacks/BUtil_BloomShader.comp").replace(gl_computeDimTitle, gl_localWorkDimSDF).replace("OVERWRITE_RADIUS_SCALE", gl_bloomRadius);
         compAreaTex = _loadLocalFile("shaderpacks/BUtil_AreaLightPreFilteringShader.comp").replace(gl_computeDimTitle, gl_localWorkDimSDF);
-        this.program[COMMON] = new ShaderProgram("BoxUtil-CommonShader", vertCommon, fragCommon);
-        this.program[SPRITE] = new ShaderProgram("BoxUtil-SpriteShader", vertSprite, fragSprite);
-        this.program[CURVE] = new ShaderProgram("BoxUtil-CurveShader", vertCurve, tescCurve, teseCurve, geomCurve, fragCurve);
-        this.program[SEGMENT] = new ShaderProgram("BoxUtil-SegmentShader", vertSeg, tescSeg, teseSeg, geomCurve, fragCurve);
-        this.program[TRAIL] = new ShaderProgram("BoxUtil-TrailShader", vertTrail, geomTrail, fragTrail);
-        this.program[FLARE] = new ShaderProgram("BoxUtil-FlareShader", vertFlare, fragFlare);
-        this.program[TEXT] = new ShaderProgram("BoxUtil-TextShader", vertText, geomText, fragText);
-        this.program[DIST] = new ShaderProgram("BoxUtil-DistortionShader", vertDist, fragDist);
+        if (glCoreProgramValid &= BoxConfigs.isShaderEnable()) {
+            this.program[COMMON] = new ShaderProgram("BoxUtil-CommonShader", vertCommon, fragCommon);
+            this.program[SPRITE] = new ShaderProgram("BoxUtil-SpriteShader", vertSprite, fragSprite);
+            this.program[CURVE] = new ShaderProgram("BoxUtil-CurveShader", vertCurve, tescCurve, teseCurve, geomCurve, fragCurve);
+            this.program[SEGMENT] = new ShaderProgram("BoxUtil-SegmentShader", vertSeg, tescSeg, teseSeg, geomCurve, fragCurve);
+            this.program[TRAIL] = new ShaderProgram("BoxUtil-TrailShader", vertTrail, geomTrail, fragTrail);
+            this.program[FLARE] = new ShaderProgram("BoxUtil-FlareShader", vertFlare, fragFlare);
+            this.program[TEXT] = new ShaderProgram("BoxUtil-TextShader", vertText, geomText, fragText);
+            this.program[DIST] = new ShaderProgram("BoxUtil-DistortionShader", vertDist, fragDist);
+            this.program[MATRIX_2D] = new ShaderProgram("BoxUtil-MatrixComputeShader-2D", compMatrix2D);
+            this.program[MATRIX_3D] = new ShaderProgram("BoxUtil-MatrixComputeShader-3D", compMatrix3D);
+        }
+
         this.program[DIRECT] = new ShaderProgram("BoxUtil-DirectShader", vertPost, fragDirect);
         this.program[FXAA_C] = new ShaderProgram("BoxUtil-FXAA-ConsoleShader", vertPostSimple, fragFXAAC);
         this.program[FXAA_Q] = new ShaderProgram("BoxUtil-FXAA-QualityShader", vertPostSimple, fragFXAAQ);
 
-        this.program[MATRIX_2D] = new ShaderProgram("BoxUtil-MatrixComputeShader-2D", compMatrix2D);
-        this.program[MATRIX_3D] = new ShaderProgram("BoxUtil-MatrixComputeShader-3D", compMatrix3D);
         this.program[SDF_INIT] = new ShaderProgram("BoxUtil-SDFGenInitShader", compSDFInit);
         this.program[SDF_PROCESS] = new ShaderProgram("BoxUtil-SDFGenProcessShader", compSDFProcess);
         this.program[SDF_RESULT] = new ShaderProgram("BoxUtil-SDFGenResultShader", compSDFResult);
@@ -213,8 +218,24 @@ public final class BUtil_ShaderProgramManager {
         this.program[BLOOM] = new ShaderProgram("BoxUtil-BloomShader", compBloom);
         this.program[AREA_LIGHT_PRE_FILTERING] = new ShaderProgram("BoxUtil-AreaLightTexPreFiltering", compAreaTex);
     }
+
+    private void initDirectDrawProgram() {
+        if (this.glDirectDrawValid &= this.program[DIRECT].isValid()) {
+            this.program[DIRECT].initUniformSize(4)
+                    .beginUniform()
+                    .loadUniformIndex("u_alphaFix")
+                    .loadUniformIndex("u_level")
+                    .loadUniformIndex("u_uvStart")
+                    .loadUniformIndex("u_uvEnd");
+            GLWrapper.Shader.glProgramUniform1f(this.program[DIRECT].getId(), this.program[DIRECT].location[1], 0.0f);
+            GLWrapper.Shader.glProgramUniform2f(this.program[DIRECT].getId(), this.program[DIRECT].location[2], 0.0f, 0.0f);
+            GLWrapper.Shader.glProgramUniform2f(this.program[DIRECT].getId(), this.program[DIRECT].location[3], 1.0f, 1.0f);
+        }
+    }
     
     private void initCoreProgram() {
+        if (!BoxConfigs.isShaderEnable()) return;
+        this.glCoreProgramValid &= this.glDirectDrawValid;
         if (this.glCoreProgramValid &= this.program[COMMON].isValid()) {
             this.program[COMMON].initUniformSize(4)
                     .beginUniform()
@@ -395,33 +416,7 @@ public final class BUtil_ShaderProgramManager {
             this.program[TEXT].putDefaultTextureUnit(this.program[TEXT].location[4], 3);
         }
 
-        if (this.glCoreProgramValid &= this.program[DIRECT].isValid()) {
-            this.program[DIRECT].initUniformSize(4)
-                    .beginUniform()
-                    .loadUniformIndex("u_alphaFix")
-                    .loadUniformIndex("u_level")
-                    .loadUniformIndex("u_uvStart")
-                    .loadUniformIndex("u_uvEnd");
-            GLWrapper.Shader.glProgramUniform1f(this.program[DIRECT].getId(), this.program[DIRECT].location[1], 0.0f);
-            GLWrapper.Shader.glProgramUniform2f(this.program[DIRECT].getId(), this.program[DIRECT].location[2], 0.0f, 0.0f);
-            GLWrapper.Shader.glProgramUniform2f(this.program[DIRECT].getId(), this.program[DIRECT].location[3], 1.0f, 1.0f);
-        }
-
-        if (this.glCoreProgramValid &= (this.program[MATRIX_2D].isValid() && this.program[MATRIX_3D].isValid())) {
-            this.program[MATRIX_2D].initUniformSize(2)
-                    .beginUniform()
-                    .loadUniformIndex("u_amount")
-                    .loadUniformIndex("u_instanceRange");
-
-            this.program[MATRIX_3D].initUniformSize(2)
-                    .beginUniform()
-                    .loadUniformIndex("u_amount")
-                    .loadUniformIndex("u_instanceRange");
-        }
-    }
-
-    private void initDistortionProgram() {
-        if (this.glDistortionValid &= this.program[DIST].isValid()) {
+        if (this.glCoreProgramValid &= this.program[DIST].isValid()) {
             this.program[DIST].initUniformSize(3)
                     .beginUniform()
                     .loadUniformIndex("u_modelMatrix")
@@ -445,11 +440,23 @@ public final class BUtil_ShaderProgramManager {
                     .loadSubroutineUniformIndex("f_instanceState")
                     .computeSubroutineUniformRoute();
         }
+
+        if (this.glCoreProgramValid &= (this.program[MATRIX_2D].isValid() && this.program[MATRIX_3D].isValid())) {
+            this.program[MATRIX_2D].initUniformSize(2)
+                    .beginUniform()
+                    .loadUniformIndex("u_amount")
+                    .loadUniformIndex("u_instanceRange");
+
+            this.program[MATRIX_3D].initUniformSize(2)
+                    .beginUniform()
+                    .loadUniformIndex("u_amount")
+                    .loadUniformIndex("u_instanceRange");
+        }
     }
 
     private void initToolProgram() {
         if (this.glSDFGenValid &= (this.program[SDF_INIT].isValid() && this.program[SDF_PROCESS].isValid() && this.program[SDF_RESULT].isValid())) {
-            this.glSDFGenValid = GLWrapper.Shader.valid_Subroutine() && GLWrapper.Texture.valid_TexInt() && GLWrapper.Operation.Sync.valid_Barrier() && GLWrapper.Texture.valid_TexStorage();
+            this.glSDFGenValid = GLWrapper.Shader.valid_Subroutine() && GLWrapper.Texture.valid_TexInt() && GLWrapper.Operation.Sync.valid_Barrier() && GLWrapper.Texture.valid_TexStorage() && GLWrapper.Texture.valid_NPOT();
             this.program[SDF_INIT].initUniformSize(3)
                     .beginUniform()
                     .loadUniformIndex("u_sizeState")
@@ -665,7 +672,7 @@ public final class BUtil_ShaderProgramManager {
 
     private void initFXAAProgram() {
         if (this.glFXAACValid &= this.program[FXAA_C].isValid()) {
-            this.glFXAACValid = GLWrapper.FBO.valid() && GLWrapper.FBO.valid_Blit() && GLWrapper.Shader.valid_Subroutine();
+            this.glFXAACValid = this.glDirectDrawValid && GLWrapper.FBO.valid() && GLWrapper.FBO.valid_Blit() && GLWrapper.Shader.valid_Subroutine();
             this.program[FXAA_C].initSubroutineSize(4)
                     .beginSubroutine(0, GLWrapper.Shader.Frag.GL_FRAGMENT_SHADER)
                     .loadSubroutineIndex("p_fromRaw")
@@ -681,7 +688,7 @@ public final class BUtil_ShaderProgramManager {
         }
 
         if (this.glFXAAQValid &= this.program[FXAA_Q].isValid()) {
-            this.glFXAAQValid = GLWrapper.FBO.valid() && GLWrapper.FBO.valid_Blit() && GLWrapper.Shader.valid_Subroutine();
+            this.glFXAAQValid = this.glDirectDrawValid && GLWrapper.FBO.valid() && GLWrapper.FBO.valid_Blit() && GLWrapper.Shader.valid_Subroutine();
             this.program[FXAA_Q].initSubroutineSize(4)
                     .beginSubroutine(0, GLWrapper.Shader.Frag.GL_FRAGMENT_SHADER)
                     .loadSubroutineIndex("p_fromRaw")
@@ -695,11 +702,12 @@ public final class BUtil_ShaderProgramManager {
                     .loadSubroutineUniformIndex("f_displayMethodState")
                     .computeSubroutineUniformRoute();
         }
+        this.glFXAABothValid = this.glFXAACValid && this.isFXAAQValid();
     }
 
     private void initBloomProgram() {
         if (this.glBloomValid &= (this.program[BLOOM] != null && this.program[BLOOM].isValid())) {
-            this.glBloomValid = GLWrapper.Operation.valid_BlendIndexed() && GLWrapper.Operation.Sync.valid_Barrier() && GLWrapper.Texture.valid_ImageLoadStore();
+            this.glBloomValid = this.glDirectDrawValid && GLWrapper.Operation.valid_BlendIndexed() && GLWrapper.Operation.Sync.valid_Barrier() && GLWrapper.Texture.valid_ImageLoadStore();
             this.program[BLOOM].initUniformSize(3)
                     .beginUniform()
                     .loadUniformIndex("u_size")
@@ -875,10 +883,6 @@ public final class BUtil_ShaderProgramManager {
         return this.glCoreProgramValid;
     }
 
-    public boolean isDistortionValid() {
-        return glDistortionValid;
-    }
-
     public boolean isSDFGenValid() {
         return glSDFGenValid;
     }
@@ -913,6 +917,10 @@ public final class BUtil_ShaderProgramManager {
 
     public boolean isFXAAQValid() {
         return glFXAAQValid;
+    }
+
+    public boolean isFXAABothValid() {
+        return glFXAABothValid;
     }
 
     public boolean isBloomValid() {

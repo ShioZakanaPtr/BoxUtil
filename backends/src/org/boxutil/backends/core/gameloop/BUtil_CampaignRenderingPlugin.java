@@ -48,17 +48,16 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
         if (this.isExpired) return;
         if (Global.getSector() == null || !BoxConfigGUI.isGlobalInitialized() || layer != this.layer) return;
         final var playerFleet = Global.getSector().getPlayerFleet();
-        final LocationAPI playerLocation;
-        if (playerFleet == null || this.entity == null || (playerLocation = playerFleet.getContainingLocation()) != this.entity.getContainingLocation()) return;
+        if (playerFleet == null || this.entity == null || playerFleet.getContainingLocation() != this.entity.getContainingLocation()) return;
         final boolean shaderEnable = BoxConfigs.isShaderEnable();
         final var context = BoxConfigs.getCurrShaderPacksContext();
         if (this._lowestLayer) {
-            BUtil_SharedRenderingPass.layerInit(viewport, context, true);
+            BUtil_SharedRenderingPass.layerInit(shaderEnable, viewport, context, true);
         }
 
-        boolean notMultiPass = shaderEnable;
+        boolean notMultiPass = true;
         if (this._highestLayer) {
-            notMultiPass &= BUtil_SharedRenderingPass.highestLayer(viewport, context, shaderEnable, notMultiPass, true);
+            notMultiPass = BUtil_SharedRenderingPass.highestLayer(viewport, context, shaderEnable, true);
         }
 
         final int staticTrailLayerLoc = BUtil_StaticTrailMemoryPool.toLayerLoc(layer);

@@ -6,9 +6,9 @@ import java.util.Arrays;
 import java.util.Set;
 
 public class BUtil_GlyphSet<G extends BUtil_Glyph> {
-    private final int totalGlyph;
-    private final int[] glyphIdx;
-    private final long[] glyphStorage;
+    protected final int totalGlyph;
+    protected final int[] glyphIdx;
+    protected final long[] glyphStorage;
 
     public BUtil_GlyphSet(@NotNull final Set<G> src, final int maxCharValue, final byte dataLongStride) {
         this.totalGlyph = src.size();

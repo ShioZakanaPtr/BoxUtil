@@ -29,7 +29,6 @@ public final class CommonUtil {
     private final static double[] _LINEAR = new double[]{0.2126729d, 0.7151522d, 0.0721750d};
     private final static int[] _IMAGE_SAVE_MASK = new int[]{0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000};
     private final static byte[] _IMAGE_SAVE_MOVE = new byte[]{16, 8, 0, 24};
-    private final static ThreadLocal<Integer> _GL_TRANSFER_FBO = new ThreadLocal<>();
     
     private final static Logger _LOG = Global.getLogger(CommonUtil.class);
 
@@ -903,8 +902,7 @@ public final class CommonUtil {
                 }
             }
 
-            result.two.position(0);
-            result.two.limit(result.two.capacity());
+            result.two.clear();
             for (int i = 0; i < Math.min(avc.length, 3); ++i) {
                 avc[i] = Math.round(avc[i] / result.one[3]);
                 double gray = Math.round(avc[i] * _LINEAR[i]);
@@ -919,44 +917,26 @@ public final class CommonUtil {
     }
 
     /**
-     * Requires OpenGL 3.0 or higher and Framebuffer support.<p>
      * Get the level 0 texture object bytes data.
      *
      * @param target {@link GL11#GL_TEXTURE_1D} and {@link GL11#GL_TEXTURE_2D} only.
      * @param texture only support the 8bit per channel ubyte texture, and format must be {@link GL11#GL_RED}, {@link GL30#GL_RG}, {@link GL11#GL_RGB}, {@link GL11#GL_RGBA}.
+     * @param channelNum the channel of OpenGL texture object.
      *
      * @return int[] = {width, height, internalFormat};<p>
      *     ByteBuffer = pixels value, null if format not support or failed;<p>
-     *     channelNum returns 0 if failed or format not support or failed.
+     *     internalFormat returns 0 if failed or format not support or failed.
      */
     public static Pair<int[], ByteBuffer> getGLTexture(int target, int texture, byte channelNum) {
-        final int[] format = new int[]{GLWrapper.Texture.GL_RED, GLWrapper.Texture.GL_RG, GLWrapper.Texture.GL_RGB, GLWrapper.Texture.GL_RGBA};
-        final byte[] alignment = new byte[]{1, 2, 1, 4};
-        final byte picker = (byte) Math.min(channelNum - 1, 3);
         Pair<int[], ByteBuffer> result = new Pair<>(new int[3], null);
-        if (!GLWrapper.FBO.valid()) return result;
-        Integer _fbo = _GL_TRANSFER_FBO.get();
-        if (_fbo == null) {
-            _fbo = GLWrapper.FBO.glGenFramebuffers();
-            _GL_TRANSFER_FBO.set(_fbo);
-            if (_fbo > 0) {
-                GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, _fbo);
-                GLWrapper.FBO.glReadBuffer(GLWrapper.FBO.GL_COLOR_ATTACHMENT0);
-                GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
-            }
-        }
-        if (_fbo < 0 || texture == 0 || channelNum < 1) return result;
+        if (texture == 0 || channelNum < 1) return result;
         GLWrapper.Texture.glBindTexture(target, texture);
         result.one[0] = GLWrapper.Texture.glGetTexLevelParameteri(target, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);
         result.one[1] = GLWrapper.Texture.glGetTexLevelParameteri(target, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
         result.one[2] = GLWrapper.Texture.glGetTexLevelParameteri(target, 0, GLWrapper.Texture.GL_TEXTURE_INTERNAL_FORMAT);
-        result.two = BufferUtils.createByteBuffer(result.one[0] * result.one[1] * channelNum);
-        GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, alignment[picker]);
-        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, _fbo);
-        GLWrapper.FBO.glFramebufferTexture2D(GLWrapper.FBO.GL_FRAMEBUFFER, GLWrapper.FBO.GL_COLOR_ATTACHMENT0, target, texture, 0);
-        GL11.glReadPixels(0, 0, result.one[0], result.one[1], format[picker], GLWrapper.DataType.GL_UNSIGNED_BYTE, result.two);
-        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
-        GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4);
+        result.two = BufferUtils.createByteBuffer(result.one[0] * result.one[1] * channelNum).clear();
+        GLWrapper.Texture.glGetTexImage(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, result.two);
+        GLWrapper.Texture.glBindTexture(target, 0);
         return result;
     }
 

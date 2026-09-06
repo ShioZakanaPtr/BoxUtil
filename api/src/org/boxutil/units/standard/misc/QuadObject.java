@@ -9,7 +9,7 @@ import org.lwjgl.opengl.*;
 
 /**
  * Vertices: vec2(-1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0)<p>
- * Required <b>OpenGL 3.0</b> supported, required <b>OpenGL 3.1</b> for instanced draw.
+ * Required {@link GLWrapper.VAO#valid()}, required <{@link GLWrapper.Drawcall#valid_InstancedDraw()} for instanced draw.
  */
 public class QuadObject implements SimpleVAOAPI {
     public final static byte VERTICES_COUNT = 4;

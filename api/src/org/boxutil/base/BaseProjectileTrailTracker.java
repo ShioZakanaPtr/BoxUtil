@@ -24,23 +24,23 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
 
     public void advance(float amount, float elapsedTime, Result callback) {
         if (callback.isExpired()) return;
-        if (projectile.wasRemoved() || projectile.isExpired()) {
+        if (this.projectile.wasRemoved() || this.projectile.isExpired()) {
             callback.destroy();
             return;
         }
 
-        final Vector2f loc = projectile.getLocation();
+        final Vector2f loc = this.projectile.getLocation();
         if (callback.isNotRecommendedRecordsCurrent(loc)) {
             callback.pauseOnce();
             return;
         }
         callback.setCurrentLocation(loc);
 
-        boolean velForForward = trailData.velocityForForward;
+        boolean velForForward = this.trailData.velocityForForward;
         float offsetRotateC = 1.0f, offsetRotateS = 0.0f;
         if (velForForward) {
-            final Vector2f velocity = projectile.getVelocity();
-            final float velLength = velocity.length();
+            final Vector2f velocity = this.projectile.getVelocity();
+            final float velLength = velocity == null ? 0.0f : velocity.length();
             velForForward = velLength != 0.0f;
             if (velForForward) {
                 offsetRotateC = velocity.x / velLength;
@@ -49,13 +49,13 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
             }
         }
         if (!velForForward) {
-            final float a = (float) Math.toRadians(projectile.getFacing());
+            final float a = (float) Math.toRadians(this.projectile.getFacing());
             offsetRotateC = (float) Math.cos(a);
             offsetRotateS = TrigUtil.sinFormCosRadiansF(offsetRotateC, a);
             callback.setCurrentFacing(offsetRotateC, offsetRotateS);
         }
 
-        final Vector4f spawnOffsetRange = trailData.fixedSpawnOffsetRange;
+        final Vector4f spawnOffsetRange = this.trailData.fixedSpawnOffsetRange;
         if (spawnOffsetRange != null) {
             final float rnd = (float) Math.random(),
                     offsetX = CalculateUtil.mix(spawnOffsetRange.x, spawnOffsetRange.z, rnd),

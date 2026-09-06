@@ -7,7 +7,7 @@ import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import org.boxutil.backends.util.BUtil_SpinBarrier;
+import org.boxutil.util.concurrent.SpinBarrier;
 import org.boxutil.base.BaseIlluminantData;
 import org.boxutil.base.BaseProjectileTrailTracker;
 import org.boxutil.base.api.ControlDataAPI;
@@ -31,9 +31,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemplate {
     private final static class ComputeNum {
@@ -52,7 +50,7 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
 
     @SuppressWarnings("unchecked")
     private final static Deque<ComputeNum>[] _SKIP_MEMORY = new Deque[]{new ConcurrentLinkedDeque<ComputeNum>(), new ConcurrentLinkedDeque<ComputeNum>()};
-    private final static BUtil_SpinBarrier _PROJ_SNAPSHOT_BARRIER = new BUtil_SpinBarrier(2);
+    private final static SpinBarrier _PROJ_SNAPSHOT_BARRIER = new SpinBarrier(2);
     private final static AtomicInteger _PROJ_SNAPSHOT_IDX = new AtomicInteger(0);
     private final static List<DamagingProjectileAPI> _PROJ_SNAPSHOT = new ArrayList<>(1024);
     private static volatile int _CURR_PROJ_SNAPSHOT_SIZE = 0;
@@ -208,10 +206,9 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
         skipBlocks.clear();
 
         if (processQueue.isEmpty()) return;
-        GLWrapper.Operation.Sync.glMemoryBarrier(
-                GLWrapper.Buffer.valid_BufferStorage() ?
-                        GLWrapper.Operation.Sync.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT : GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT
-        );
+        int barriers = GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT;
+        if (GLWrapper.Buffer.valid_BufferStorage()) barriers |= GLWrapper.Operation.Sync.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT;
+        GLWrapper.Operation.Sync.glMemoryBarrier(barriers);
         final var program = this._isAux ? ShaderCore.getInstanceMatrix3DProgram() : ShaderCore.getInstanceMatrix2DProgram();
         final float dimAMD = BoxDatabase.isGLDeviceAMD() ? 64.0f : 32.0f;
         BUtil_InstanceDataMemoryPool.getPool(instanceType).rebindBase();
@@ -282,9 +279,9 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
         }
         if (!this._FAILED) {
             if (GLWrapper.Operation.Sync.valid_Barrier()) {
-                GLWrapper.Operation.Sync.glMemoryBarrier(
-                        GLWrapper.Buffer.valid_BufferStorage() ?
-                                GLWrapper.Operation.Sync.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT : GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT);
+                int barriers = GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT;
+                if (GLWrapper.Buffer.valid_BufferStorage()) barriers |= GLWrapper.Operation.Sync.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT;
+                GLWrapper.Operation.Sync.glMemoryBarrier(barriers);
             }
             GLWrapper.Operation.Sync.glFlush();
         }

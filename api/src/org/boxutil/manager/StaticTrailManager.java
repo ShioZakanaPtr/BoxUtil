@@ -201,6 +201,7 @@ public final class StaticTrailManager {
                 if (!complexPath.isBlank()) material.setComplex(BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3));
                 material.setEmissive(emissivePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(emissivePath, TextureManager::tryTexture));
                 if (!tangentPath.isBlank()) material.setTangent(BUtil_MiscUtil.tryTangentTexture(tangentPath, objData.optBoolean("is_tangent_angle_map", true), true, false));
+                material.setGlowPower((float) objData.optDouble("glow_power", 1.0d));
 
                 PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
                 TRAILS.put(trailID, data);
@@ -322,7 +323,8 @@ public final class StaticTrailManager {
 
     /**
      * Will overwrite all the data or add ones with (new or existed)id, but never clear them.<p>
-     * Must be only call it by game dev mode F8 reload, do not use it in mod.
+     * Must be only call it by game dev mode F8 reload, do not use it in mod.<p>
+     * Normally, only effective after scene switched, for example end the mission back to title.
      */
     public static void _devModeReload() {
         for (String path : _CACHED_PATH) loadTrailData(path);

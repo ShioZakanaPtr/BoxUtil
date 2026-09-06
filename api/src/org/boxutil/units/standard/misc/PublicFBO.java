@@ -12,7 +12,7 @@ import java.nio.IntBuffer;
 
 /**
  * Above <strong>55.37MB</strong> cost in vRAM at <strong>1920x1080</strong>.<p>
- * Will not be created at default, call {@link ShaderCore#refreshPublicFBO()} and check it is valid.<p>
+ * Will not be created at default, call {@link ShaderCore#tryPublicFBO()} and check it is valid.<p>
  * BoxUtil will not use this FBO, you can use it for your own purpose.
  */
 public class PublicFBO {

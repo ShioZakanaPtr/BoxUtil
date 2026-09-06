@@ -4,9 +4,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class BUtil_AtomicEnumSet32<E extends Enum<E>> {
-    private final byte maxElements;
-    private final AtomicInteger elements = new AtomicInteger();
-    private final E[] elementsArray;
+    protected final byte maxElements;
+    protected final AtomicInteger elements = new AtomicInteger();
+    protected final E[] elementsArray;
 
     /**
      * max 32 enum.

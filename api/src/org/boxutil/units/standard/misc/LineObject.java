@@ -9,7 +9,7 @@ import org.lwjgl.opengl.*;
 
 /**
  * Vertices: vec2(-1.0, 0.0), vec2(1.0, 0.0)<p>
- * Required <b>OpenGL 3.1</b> supported, required <b>OpenGL 3.1</b> for instanced draw.
+ * Required {@link GLWrapper.VAO#valid()}, required <{@link GLWrapper.Drawcall#valid_InstancedDraw()} for instanced draw.
  */
 public class LineObject implements SimpleVAOAPI {
     public final static byte VERTICES_COUNT = 2;

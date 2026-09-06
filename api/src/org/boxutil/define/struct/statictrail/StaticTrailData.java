@@ -77,6 +77,8 @@ public class StaticTrailData {
         this.id = id;
         this.initCapacity = initCapacity;
         this.material = new MaterialData();
+        this.material.setDisableCullFace();
+        this.material.setIgnoreIllumination(true);
     }
 
     /**

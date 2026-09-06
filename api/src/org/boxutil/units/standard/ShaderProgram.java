@@ -31,11 +31,11 @@ import java.util.function.Supplier;
  *             // if have subroutine
  *             .initSubroutineSize(5, 2)
  *             .beginSubroutine(0, GL20.GL_VERTEX_SHADER)
- *             .loadSubroutineIndex("p_funA_v00") // of "funA_vu"
- *             .loadSubroutineIndex("p_funA_v01") // of "funA_vu"
- *             .loadSubroutineIndex("p_funA_v02") // of "funA_vu"
- *             .loadSubroutineIndex("p_funB_v00") // of "funB_vu"
- *             .loadSubroutineIndex("p_funB_v01") // of "funB_vu"
+ *             .loadSubroutineIndex("p_funA_v00") // of "f_funA_vu"
+ *             .loadSubroutineIndex("p_funA_v01") // of "f_funA_vu"
+ *             .loadSubroutineIndex("p_funA_v02") // of "f_funA_vu"
+ *             .loadSubroutineIndex("p_funB_v00") // of "f_funB_vu"
+ *             .loadSubroutineIndex("p_funB_v01") // of "f_funB_vu"
  *             .beginSubroutine(1, GL20.GL_FRAGMENT_SHADER)
  *             .loadSubroutineIndex("p_fun_f00")
  *             .loadSubroutineIndex("p_fun_f01")

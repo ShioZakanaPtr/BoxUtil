@@ -5842,6 +5842,13 @@ public final class GLWrapper {
         public static final int GL_TEXTURE_INTERNAL_FORMAT = GL11.GL_TEXTURE_INTERNAL_FORMAT;
         public static final int GL_TEXTURE_COMPONENTS = GL11.GL_TEXTURE_COMPONENTS;
 
+        public static final int GL_LUMINANCE = GL11.GL_LUMINANCE;
+        public static final int GL_LUMINANCE8 = GL11.GL_LUMINANCE8;
+        public static final int GL_LUMINANCE_ALPHA = GL11.GL_LUMINANCE_ALPHA;
+        public static final int GL_LUMINANCE16_ALPHA16 = GL11.GL_LUMINANCE16_ALPHA16;
+        public static final int GL_INTENSITY = GL11.GL_INTENSITY;
+        public static final int GL_INTENSITY8 = GL11.GL_INTENSITY8;
+        public static final int GL_INTENSITY16 = GL11.GL_INTENSITY16;
         public static final int GL_RED = GL11.GL_RED;
         public static final int GL_GREEN = GL11.GL_GREEN;
         public static final int GL_BLUE = GL11.GL_BLUE;

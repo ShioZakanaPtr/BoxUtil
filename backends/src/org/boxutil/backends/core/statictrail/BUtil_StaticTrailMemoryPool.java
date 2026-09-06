@@ -3,7 +3,7 @@ package org.boxutil.backends.core.statictrail;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import org.boxutil.backends.shader.BUtil_GLImpl;
-import org.boxutil.backends.util.BUtil_SpinBarrier;
+import org.boxutil.util.concurrent.SpinBarrier;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.config.BoxConfigs;
@@ -68,7 +68,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
         private final Deque<RemoveEntityTrailPair> removeTrailProcess = new ConcurrentLinkedDeque<>();
         private final Deque<Runnable> deferredDeletePool = new ConcurrentLinkedDeque<>();
 
-        private final BUtil_SpinBarrier computeBarrier = new BUtil_SpinBarrier(2);
+        private final SpinBarrier computeBarrier = new SpinBarrier(2);
         private final AtomicInteger[] layerTrailCount = new AtomicInteger[MAX_LAYERS];
         private final Lock initLayerLock = new SpinLock();
 
@@ -301,8 +301,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
             );
 
             if (linkedEntity != null) {
-                RES.entityLinkedTrailMap.computeIfAbsent(linkedEntity, (k) -> ConcurrentHashMap.newKeySet(64))
-                        .add(l_trailMem);
+                RES.entityLinkedTrailMap.computeIfAbsent(linkedEntity, k -> ConcurrentHashMap.newKeySet(64)).add(l_trailMem);
                 RES.trailLinkedEntityMap.put(l_trailMem, linkedEntity);
             }
             if (pool.drawPi[layerLoc] == null) {

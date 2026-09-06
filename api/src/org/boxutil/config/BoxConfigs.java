@@ -241,7 +241,7 @@ public final class BoxConfigs {
                     case 3: {
                         result = BUtil_EnableDistortionDisplay ? _BUTTON_ENABLED : _BUTTON_DISABLED;
 
-                        valid = ShaderCore.isDistortionValid();
+                        valid = isShaderEnable();
                     }
                 }
                 break;
@@ -458,14 +458,11 @@ public final class BoxConfigs {
      * After all.
      */
     public synchronized static void check() {
-        if (!ShaderCore.isDistortionValid()) {
-            BUtil_EnableDistortion = false;
-            BUtil_EnableDistortionDisplay = false;
-        }
-        if (!isGLDebugOutputSupported()) {
-            BUtil_EnableDebug = false;
-            BUtil_EnableDebugDisplay = false;
-        }
+        BUtil_EnableDistortionDisplay &= isShaderEnable();
+        BUtil_EnableDistortion = BUtil_EnableDistortionDisplay;
+
+        BUtil_EnableDebugDisplay &= isGLDebugOutputSupported();
+        BUtil_EnableDebug = BUtil_EnableDebugDisplay;
     }
 
     public synchronized static void setDefault() {
@@ -601,7 +598,7 @@ public final class BoxConfigs {
     }
 
     public static boolean isCompatibleSync() {
-        return BUtil_CompatibleSync;
+        return BUtil_CompatibleSync; // may be no need now
     }
 
     public static boolean isTrailSystemEnable() {

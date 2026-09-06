@@ -536,9 +536,10 @@ public final class BUtil_EntityImpl {
             program.close();
         }
 
-        public static void processMeshCurrentLayout(int layerBits, Object layer, int layerLoc, boolean canRendering, ViewportAPI viewport, EnumMap<LayeredEntityType, List<RenderDataAPI>> meshMap, Set<LayeredRenderingPlugin> renderingPlugins) {
+        public static void processMeshCurrentLayout(boolean shaderEnable, int layerBits, Object layer, int layerLoc, boolean notMultiPass, ViewportAPI viewport, EnumMap<LayeredEntityType, List<RenderDataAPI>> meshMap, Set<LayeredRenderingPlugin> renderingPlugins) {
+            final boolean coreRendering = shaderEnable && notMultiPass;
             if (meshMap != null) {
-                if (canRendering) {
+                if (coreRendering) {
                     processCommonEntity(meshMap.get(LayeredEntityType.COMMON), layerBits);
                     processSpriteEntity(meshMap.get(LayeredEntityType.SPRITE), layerBits);
                     processCurveEntity(meshMap.get(LayeredEntityType.CURVE), layerBits);
@@ -548,8 +549,8 @@ public final class BUtil_EntityImpl {
                     processTextFieldEntity(meshMap.get(LayeredEntityType.TEXT), layerBits);
                 } else for (List<RenderDataAPI> entity : meshMap.values()) BUtil_GLImpl.glDisabledIterator(entity);
             }
-            forRenderingPlugins(renderingPlugins, layer, layerBits, canRendering, viewport);
-            if (canRendering && BoxConfigs.isTrailSystemEnable()) processStaticTrail(layerBits, layerLoc); // must be after all
+            forRenderingPlugins(renderingPlugins, layer, layerBits, notMultiPass, viewport);
+            if (notMultiPass && BoxConfigs.isTrailSystemEnable()) processStaticTrail(layerBits, layerLoc); // must be after all
         }
 
         private Mesh() {}

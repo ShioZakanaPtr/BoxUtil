@@ -4,50 +4,47 @@
 
 layout(local_size_x = RESET_VALUE, local_size_y = 8, local_size_z = 1) in;
 
-layout(binding = 0) uniform isampler2D u_coordMapIn;
-layout(binding = 0, rgba16i) restrict writeonly uniform iimage2D u_coordMapOut;
+layout(binding = 0) uniform usampler2D u_coordMapIn;
+layout(binding = 0, rgba16ui) restrict writeonly uniform uimage2D u_coordMapOut;
 
 uniform ivec2 u_size;
 uniform int u_step;
 
-ivec4 advanceJFA(in ivec2 coord, ivec2 maxIndex) {
+uvec4 advanceJFA(in ivec2 coord) {
     ivec4 result = ivec4(0);
 
     ivec2 currCoord = ivec2(0);
-    ivec4 targetCoord;
-    vec4 diffCoord = vec4(0.0);
-    vec2 currDistSQ = vec2(0.0), distSQ = vec2(MAX_DISTANCE);
+    vec2 distSQ = vec2(MAX_DISTANCE);
     for (int y = -1; y <= 1; ++y) {
         currCoord.y = y * u_step + coord.y;
         for (int x = -1; x <= 1; ++x) {
             currCoord.x = x * u_step + coord.x;
-            if (any(bvec4(lessThan(currCoord, ivec2(0)), greaterThanEqual(currCoord, maxIndex)))) continue;
-            targetCoord = texelFetch(u_coordMapIn, currCoord, 0) - 1;
+            if (any(bvec4(lessThan(currCoord, ivec2(0)), greaterThanEqual(currCoord, u_size)))) continue;
+            ivec4 targetCoord = ivec4(texelFetch(u_coordMapIn, currCoord, 0)) - 1;
 
             if (targetCoord.x > -1) {
-                diffCoord.xy = vec2(coord - targetCoord.xy);
-                currDistSQ.x = dot(diffCoord.xy, diffCoord.xy);
-                if (currDistSQ.x < distSQ.x) {
-                    distSQ.x = currDistSQ.x;
+                vec2 currDiff = vec2(coord - targetCoord.xy);
+                float currDistSQ = dot(currDiff, currDiff);
+                if (currDistSQ < distSQ.x) {
+                    distSQ.x = currDistSQ;
                     result.xy = targetCoord.xy + 1;
                 }
             }
             if (targetCoord.z > -1) {
-                diffCoord.zw = vec2(coord - targetCoord.zw);
-                currDistSQ.y = dot(diffCoord.zw, diffCoord.zw);
-                if (currDistSQ.y < distSQ.y) {
-                    distSQ.y = currDistSQ.y;
+                vec2 currDiff = vec2(coord - targetCoord.zw);
+                float currDistSQ = dot(currDiff, currDiff);
+                if (currDistSQ < distSQ.y) {
+                    distSQ.y = currDistSQ;
                     result.zw = targetCoord.zw + 1;
                 }
             }
         }
     }
-    return result;
+    return uvec4(result);
 }
 
 void main() {
     ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
     if (any(greaterThanEqual(coord, u_size))) return;
-    ivec2 maxIndex = u_size - 1;
-    imageStore(u_coordMapOut, coord, advanceJFA(coord, maxIndex));
+    imageStore(u_coordMapOut, coord, advanceJFA(coord));
 }

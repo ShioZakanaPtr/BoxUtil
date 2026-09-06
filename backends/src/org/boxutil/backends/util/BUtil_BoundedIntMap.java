@@ -6,14 +6,14 @@ import java.util.Arrays;
 
 @SuppressWarnings("unchecked")
 public class BUtil_BoundedIntMap<K> {
-    private final int capacity;
-    private final int posMask;
-    private int size = 0;
-    private int fixedValue;
-    private K fixedKey;
-    private final int[] state; // -1 => empty, (x > -1) => psl
-    private final int[] values;
-    private final K[] keys;
+    protected final int capacity;
+    protected final int posMask;
+    protected int size = 0;
+    protected int fixedValue;
+    protected K fixedKey;
+    protected final int[] state; // -1 => empty, (x > -1) => psl
+    protected final int[] values;
+    protected final K[] keys;
 
     /**
      * @param loadFactor 0.7~0.8

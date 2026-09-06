@@ -145,7 +145,7 @@ public abstract class BaseShaderPacksContext {
      * @param isMultiPassBloom if ture, draw to black screen.
      */
     public void applyBloomPass(ViewportAPI viewport, boolean isCampaign, boolean isMultiPassBloom, int fbo, int colorMap, int emissiveMap, int worldPosMap, int worldNormalMap, int worldTangentMap, int worldMaterialMap, int worldDataMap, int auxFBO, int auxEmissive) {
-        StandardShaderpacksPass.applyBloom(isMultiPassBloom, emissiveMap, false, 0);
+        if (BoxConfigs.isShaderEnable()) StandardShaderpacksPass.applyBloom(isMultiPassBloom, emissiveMap, false, 0);
     }
 
     public void applyPostEffectPass(ViewportAPI viewport, boolean isCampaign) {}

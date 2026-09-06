@@ -97,12 +97,12 @@ public final class BUtil_CombatEFS extends BaseEveryFrameCombatPlugin {
             final boolean shaderEnable = BoxConfigs.isShaderEnable();
             final var context = BoxConfigs.getCurrShaderPacksContext();
             if (this._lowestLayer) {
-                BUtil_SharedRenderingPass.layerInit(viewport, context, false);
+                BUtil_SharedRenderingPass.layerInit(shaderEnable, viewport, context, false);
             }
 
-            boolean notMultiPass = shaderEnable;
+            boolean notMultiPass = true;
             if (this._highestLayer) {
-                notMultiPass &= BUtil_SharedRenderingPass.highestLayer(viewport, context, shaderEnable, notMultiPass, false);
+                notMultiPass = BUtil_SharedRenderingPass.highestLayer(viewport, context, shaderEnable, false);
             }
 
             final int staticTrailLayerLoc = BUtil_StaticTrailMemoryPool.toLayerLoc(layer);
