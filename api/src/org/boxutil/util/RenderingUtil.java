@@ -2,6 +2,7 @@ package org.boxutil.util;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
+import com.fs.starfarer.api.campaign.SectorAPI;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.combat.ViewportAPI;
@@ -794,7 +795,16 @@ public final class RenderingUtil {
 
         private static boolean ignoreSpawn(final boolean isCampaign, final Vector2f loc, final float size) {
             if (size <= 0.0f) return true;
-            ViewportAPI viewport = isCampaign ? Global.getSector().getViewport() : Global.getCombatEngine().getViewport();
+            final var campaignSector = Global.getSector();
+            final var combatEngine = Global.getCombatEngine();
+            final ViewportAPI viewport;
+            if (isCampaign) {
+                if (campaignSector == null) return true;
+                viewport = campaignSector.getViewport();
+            } else {
+                if (combatEngine == null) return true;
+                viewport = combatEngine.getViewport();
+            }
             return !viewport.isNearViewport(loc, size * 4.0f);
         }
 
