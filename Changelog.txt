@@ -3,6 +3,9 @@
 
 若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
 
+v1.6.1 / 2026.09.06
+    修复后台线程自动为 DamagingProjectileAPI 生成尾迹时的NPE问题
+
 v1.6.0 / 2026.09.06
     增加托管于内置系统进行自动生成与管理的多线程尾迹系统
     于 org.boxutil.define 增加 GLWrapper 包装类，用于自动根据硬件所支持的OpenGL版本或特性，自动调用对应的OpenGL函数

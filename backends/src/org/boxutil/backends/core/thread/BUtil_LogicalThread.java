@@ -1,6 +1,7 @@
 package org.boxutil.backends.core.thread;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.combat.DamagingProjectileAPI;
 import org.boxutil.backends.core.BUtil_ResourceStorage;
@@ -225,9 +226,21 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
     private void markAndGenProjectiles() {
         if (this._isAux) { // just get all and quickly check, do not modify, ignore changes from another threads
             _PROJ_SNAPSHOT.clear();
-            _PROJ_SNAPSHOT.addAll(Global.getCombatEngine().getProjectiles());
-            _PROJ_SNAPSHOT_IDX.set(0);
+            final var engine = Global.getCombatEngine();
+            if (engine == null) {
+                _CURR_PROJ_SNAPSHOT_SIZE = 0;
+                _PROJ_SNAPSHOT_BARRIER.barrier();
+                return;
+            }
+            final var projectiles = engine.getProjectiles();
+            if (projectiles == null || projectiles.isEmpty()) {
+                _CURR_PROJ_SNAPSHOT_SIZE = 0;
+                _PROJ_SNAPSHOT_BARRIER.barrier();
+                return;
+            }
+            _PROJ_SNAPSHOT.addAll(projectiles);
             _CURR_PROJ_SNAPSHOT_SIZE = _PROJ_SNAPSHOT.size();
+            _PROJ_SNAPSHOT_IDX.set(0);
         }
         _PROJ_SNAPSHOT_BARRIER.barrier();
 
