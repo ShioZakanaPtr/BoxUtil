@@ -530,8 +530,10 @@ public final class BUtil_EntityImpl {
 
             final var program = ShaderCore.getStaticTrailProgram();
             program.active();
-            BUtil_GLImpl.cullCheck(BoxEnum.MATERIAL_CULL_DISABLED);
-            BUtil_GLImpl.matrixCheck(BoxEnum.ENTITY_VANILLA_PRIME_MATRIX, null);
+            if (BoxConfigs.isShaderEnable()) {
+                BUtil_GLImpl.cullCheck(BoxEnum.MATERIAL_CULL_DISABLED);
+                BUtil_GLImpl.matrixCheck(BoxEnum.ENTITY_VANILLA_PRIME_MATRIX, null);
+            } else GLWrapper.Operation.glDisable(GLWrapper.Operation.GL_CULL_FACE);
             BUtil_StaticTrailMemoryPool.drawEachTrail(program, layerLoc, layerBits);
             program.close();
         }

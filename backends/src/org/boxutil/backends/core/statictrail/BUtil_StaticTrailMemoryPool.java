@@ -1,5 +1,7 @@
 package org.boxutil.backends.core.statictrail;
 
+import com.fs.starfarer.api.GameState;
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
 import com.fs.starfarer.api.combat.CombatEngineLayers;
 import org.boxutil.backends.shader.BUtil_GLImpl;
@@ -362,7 +364,8 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
 
     public static void computeTrailNode(boolean auxThread) {
         final float amount = BUtil_GLImpl.getStaticTrailFrameAmount(), elapsedTime = BUtil_GLImpl.getElapsedTimeWithoutPaused();
-        final boolean inCampaign = BUtil_GLImpl.isInCampaignSector();
+        final boolean inCampaignSim = Global.getCombatEngine() != null && Global.getCombatEngine().isInCampaignSim(),
+                inCampaign = BUtil_GLImpl.isInCampaignSector() && (Global.getCurrentState() == GameState.COMBAT || inCampaignSim);
 
         for (var pool : RES.trailPoolMap.values()) {
             if (pool == null || pool.isInvalid() || pool.getBufferReference() < 1) continue;

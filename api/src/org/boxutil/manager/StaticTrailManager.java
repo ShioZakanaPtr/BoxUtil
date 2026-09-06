@@ -1,8 +1,10 @@
 package org.boxutil.manager;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.combat.DamagingProjectileAPI;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.util.BUtil_MiscUtil;
+import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.define.struct.statictrail.StaticTrailData;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.util.CommonUtil;
@@ -20,12 +22,29 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * For how to simply add your trail on projectile or missile:
+ * <pre>
+ * {@code
+ * public final class YourModPlugin extends BaseModPlugin {
+ *     public void onApplicationLoad() {
+ *         BoxUtilModPlugin.initPre();
+ *         // StaticTrailManager.putCustomTracker("ABCD_your_custom_tracker", ABCD_SomeTracker::new); // if you hava any custom tracker
+ *         StaticTrailManager.loadTrailData("data/config/modFiles/ABCD_your_trails.csv"); // also the path can be anywhere
+ *     }
+ * }
+ * }
+ * </pre>
+ */
 @SuppressWarnings("UnusedReturnValue")
 public final class StaticTrailManager {
     private final static Map<String, HashSet<String>> PROJ_TRAIL = new HashMap<>(128);
     private final static Map<String, StaticTrailData> TRAILS = new HashMap<>(128);
+    private final static Map<String, BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker>> CUSTOM_TRACKER = new HashMap<>(128);
     private final static Set<String> _CACHED_PATH = new HashSet<>(32);
     private final static Set<String> _CACHED_MAGIC_LIB_LAYOUT_PATH = new HashSet<>(32);
 
@@ -90,6 +109,29 @@ public final class StaticTrailManager {
      */
     public static StaticTrailData removeTrailData(final String id) {
         return TRAILS.remove(id);
+    }
+
+    public static boolean haveCustomTracker(final String id) {
+        return CUSTOM_TRACKER.containsKey(id);
+    }
+
+    public static BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> getCustomTracker(final String id) {
+        return CUSTOM_TRACKER.get(id);
+    }
+
+    /**
+     * @param trackerID the unique tracker ID for your mod's
+     * @param customTracker a standard trail tracker for all the projectiles that BoxUtil built-in autogen static trail system using {@link org.boxutil.base.BaseProjectileTrailTracker}.
+     *
+     * @return see {@link Map#put(Object, Object)}
+     */
+    public static BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> putCustomTracker(final String trackerID, @NotNull final BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> customTracker) {
+        if (trackerID.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        return CUSTOM_TRACKER.put(trackerID, customTracker);
+    }
+
+    public static BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> removeCustomTracker(final String id) {
+        return CUSTOM_TRACKER.remove(id);
     }
 
     private static boolean _invalidDuration(float fadeIn, float full, float fadeOut) {
@@ -174,6 +216,7 @@ public final class StaticTrailManager {
                         spawnOffset = writeVec(objData, "spawn_offset_range", BUtil_MiscUtil::getVec4, Vector4f::new);
                 final Vector2f angularIn = writeVec(objData, "angular_in_range", BUtil_MiscUtil::getVec2, Vector2f::new),
                         angularOut = writeVec(objData, "angular_out_range", BUtil_MiscUtil::getVec2, Vector2f::new);
+                final String customTrackerID = objData.optString("custom_tracker_id", null);
 
                 final StaticTrailData data = new StaticTrailData(trailID, initCapacity)
                         .setDurFadeIn(fadeIn)
@@ -194,7 +237,9 @@ public final class StaticTrailManager {
                         .setAdditiveBlend(additiveBlend)
                         .setFixedSpawnOffsetRange(spawnOffset)
                         .setVelocityForForward(velocityForward)
-                        .setRenderBelowExplosions(renderBelowExplosions);
+                        .setRenderBelowExplosions(renderBelowExplosions)
+                        .setCustomTrackerID(customTrackerID);
+                final boolean rotateTex = objData.optBoolean("is_vertical_tex", false);
                 final MaterialData material = data.material;
                 material.setDiffuse(diffusePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(diffusePath, TextureManager::tryTexture));
                 if (!normalPath.isBlank()) material.setNormal(BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3));

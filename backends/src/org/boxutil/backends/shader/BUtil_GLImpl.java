@@ -316,7 +316,7 @@ public final class BUtil_GLImpl {
      */
     public static void blendCheck(byte state, int srcColor, int dstColor, int srcAlpha, int dstAlpha, int equation) {
         if (state == INST.lastBlendState && state != BoxEnum.ENTITY_OTHER_BLEND) return;
-        if (INST.lastBlendState == BoxEnum.ENTITY_DISABLED_BLEND) GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        if (INST.lastBlendState != BoxEnum.ENTITY_DISABLED_BLEND) GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
         if (INST.lastBlendState == BoxEnum.ENTITY_OTHER_BLEND) {
             GLWrapper.Operation.glBlendEquationi(0, GLWrapper.Operation.GL_FUNC_ADD);
             GLWrapper.Operation.glBlendEquationi(1, GLWrapper.Operation.GL_FUNC_ADD);
@@ -348,7 +348,7 @@ public final class BUtil_GLImpl {
 
     public static void cullCheck(byte state) {
         if (state == INST.lastCullState) return;
-        if (INST.lastCullState == BoxEnum.MATERIAL_CULL_DISABLED) GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_CULL_FACE);
+        if (INST.lastCullState != BoxEnum.MATERIAL_CULL_DISABLED) GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_CULL_FACE);
         switch (state) {
             case BoxEnum.MATERIAL_CULL_BACK: {
                 GLWrapper.Operation.glCullFace(GLWrapper.Operation.GL_BACK);

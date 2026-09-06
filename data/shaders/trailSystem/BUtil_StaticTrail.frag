@@ -70,7 +70,6 @@ void main() {
     vec4 in_entityColor = gfb_data.fragEntityColor,
         in_emissiveColor = gfb_data.fragMixEmissive;
 #endif
-    realFragUV.x = fract(realFragUV.x);
     vec4 diffuse = texture(u_diffuseMap, realFragUV) * in_entityColor;
     vec4 emissive = texture(u_emissiveMap, realFragUV) * in_emissiveColor;
     if (in_EndsAlpha < 1.0) {

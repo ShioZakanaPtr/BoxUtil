@@ -48,8 +48,8 @@ out VERT_GEOM_BLOCK {
 } vgb_data;
 #endif
 
-float hash31(in vec2 a, in float b) {
-    vec3 p3 = fract(vec3(a, b) * 0.1031);
+float hash31(in float a, in float b, in float c) {
+    vec3 p3 = fract(vec3(a, b, c) * 0.1031);
     p3 += dot(p3, p3.zyx + 33.33);
     return fract((p3.x + p3.y) * p3.z);
 }
@@ -61,12 +61,13 @@ void decodeTimeStamp(out float rndValue, out float timeStamp) {
 }
 
 vec2 currPositionOffset(in float rndSeed, in float elapsedTime, in float life) {
-    float rndPos = hash31(a_position, rndSeed);
+    float rndPos = hash31(a_position.x, a_position.y, rndSeed), rndPosSub = hash31(a_position.y, a_uv, a_position.x);
     vec2 angluarRange = mix(u_statePackage[9].xy, u_statePackage[9].zw, life);
     float currSpin = radians(mix(angluarRange.x, angluarRange.y, rndPos) * elapsedTime), spinC = cos(currSpin), spinS = sin(currSpin);
     vec4 velRange = mix(u_statePackage[7], u_statePackage[8], life);
     vec2 normFacingVec = normalize(a_facingVector);
-    return mat2(spinC, -spinS, spinS, spinC) * mat2(normFacingVec.x, -normFacingVec.y, normFacingVec.yx) * mix(velRange.xy, velRange.zw, rndPos);
+    vec2 currOffset = mix(velRange.xy, velRange.zw, vec2(rndPos, rndPosSub));
+    return mat2(spinC, spinS, -spinS, spinC) * mat2(normFacingVec, -normFacingVec.y, normFacingVec.x) * currOffset;
 }
 
 void main() {

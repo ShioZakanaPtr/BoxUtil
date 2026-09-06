@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
+import java.util.function.BiFunction;
+
 /**
  * Recommended to use const field for all.<p>
  * For each trail object, a fixed amount of vRAM is pre‑allocated for storing its rendering data,
@@ -64,6 +66,7 @@ public class StaticTrailData {
     public @Nullable Vector4f velocityInRange = null;
     public @Nullable Vector4f velocityOutRange = null;
     public @Nullable Vector4f fixedSpawnOffsetRange = null;
+    public @Nullable String customTrackerID = null;
 
     /**
      * @param id <b>IMPORTANT</b>, the unique ID in game, to define the unique trail style type and memory pool.<p>
@@ -115,6 +118,7 @@ public class StaticTrailData {
         if (src.velocityInRange != null) this.velocityInRange = new Vector4f(src.velocityInRange);
         if (src.velocityOutRange != null) this.velocityOutRange = new Vector4f(src.velocityOutRange);
         if (src.fixedSpawnOffsetRange != null) this.fixedSpawnOffsetRange = new Vector4f(src.fixedSpawnOffsetRange);
+        this.customTrackerID = src.customTrackerID;
     }
 
     /**
@@ -286,6 +290,16 @@ public class StaticTrailData {
      */
     public StaticTrailData setFixedSpawnOffsetRange(@Nullable Vector4f fixedSpawnOffsetRange) {
         this.fixedSpawnOffsetRange = fixedSpawnOffsetRange;
+        return this;
+    }
+
+    /**
+     * <b>Only for system-gen trail, invalid for custom trail, not required.</b><p>
+     * The trail will try to use specific tracker by ID, call {@link org.boxutil.manager.StaticTrailManager#putCustomTracker(String, BiFunction)} for register one.<p>
+     * <code>null</code> or {@linkplain Character#isWhitespace(int) white space}, or not find the tracker constructor with the ID, then the trail will use default built-in tracker.
+     */
+    public StaticTrailData setCustomTrackerID(@Nullable String trackerID) {
+        this.customTrackerID = trackerID;
         return this;
     }
 

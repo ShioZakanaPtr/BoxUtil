@@ -41,7 +41,6 @@ vec3 encodePos(in vec3 posRaw) {
 
 void main() {
     vec2 realFragUV = gfb_data.fragUV;
-    realFragUV.x = fract(realFragUV.x);
     vec4 diffuse = texture(u_diffuseMap, realFragUV) * gfb_data.fragEntityColor;
     vec4 emissive = texture(u_emissiveMap, realFragUV) * gfb_data.fragMixEmissive;
     if (diffuse.w + emissive.w <= ALPHA_THRESHOLD) discard;

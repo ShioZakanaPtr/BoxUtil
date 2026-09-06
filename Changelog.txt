@@ -3,6 +3,24 @@
 
 若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
 
+v1.6.2 / 2026.09.07
+    对自动尾迹生成系统提供数据的表格增加 boolean 类型 is_vertical_tex 抬头，与 String 类型 custom_tracker_id 抬头:
+        is_vertical_tex: 用于适配如MagicLib形式的等非常规朝向的尾迹纹理，且通过 StaticTrailManager.loadMagicLibLayoutTrailData 加载尾迹数据时会自动旋转纹理
+        custom_tracker_id: 用于在创建对应trail时，使用指定的自定义tracker控制trail的生成，可通过该次更新后 StaticTrailManager 的新方法设置
+    提高内置尾迹系统计算时应用的随机性
+    修复生涯中战斗内，后台线程判断状态错误的问题
+    于 org.boxutil.util.container 加入 UnorderedMap 容器类
+    资源Manager的储存换用更适合单线程下高频读取情景的实现
+
+    StaticTrailManager 新增方法：
+        boolean haveCustomTracker(String);
+        BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> getCustomTracker(String);
+        BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> putCustomTracker(String, BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker>);
+        BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> removeCustomTracker(String);
+
+    StaticTrailData 新增方法与相应字段：
+        StaticTrailData setCustomTrackerID(String);
+
 v1.6.1 / 2026.09.06
     修复后台线程自动为 DamagingProjectileAPI 生成尾迹时的NPE问题
 

@@ -29,12 +29,14 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
             return;
         }
 
+        final float brightness = this.projectile.getBrightness();
         final Vector2f loc = this.projectile.getLocation();
-        if (callback.isNotRecommendedRecordsCurrent(loc)) {
+        if (callback.isNotRecommendedRecordsCurrent(loc) || !Float.isFinite(brightness)) {
             callback.pauseOnce();
             return;
         }
         callback.setCurrentLocation(loc);
+        callback.setCurrentAlpha((byte) Math.max(Math.min((int) (brightness * 255.0f), 255), 0));
 
         boolean velForForward = this.trailData.velocityForForward;
         float offsetRotateC = 1.0f, offsetRotateS = 0.0f;

@@ -63,7 +63,6 @@ vec3 encodePos(in vec3 posRaw) {
 
 void main() {
     vec2 realFragUV = gfb_data.fragUVSeedFactor.xy;
-    realFragUV.x = fract(realFragUV.x);
     realFragUV.y = getJitter(realFragUV.y, gfb_data.fragUVSeedFactor.z);
     vec2 fillMix = smoothstep(u_statePackage[FILL_DATA].zw, vec2(1.0), vec2(1.0 - gfb_data.fragUVSeedFactor.w, gfb_data.fragUVSeedFactor.w)) * (1.0 - u_statePackage[FILL_DATA].xy);
     fillMix = 1.0 - fillMix;
