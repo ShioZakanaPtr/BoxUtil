@@ -5,9 +5,6 @@ import org.boxutil.base.BaseShaderData;
 import org.boxutil.util.ShaderUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.function.Supplier;
-
 /**
  * For example how use it:
  * <pre>

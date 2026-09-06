@@ -14,11 +14,9 @@ import org.boxutil.define.*;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.backends.buffer.BUtil_RenderingBuffer;
 import org.boxutil.units.standard.attribute.MaterialData;
-import org.boxutil.util.CommonUtil;
 import org.boxutil.util.TransformUtil;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Matrix4f;
 
 import java.nio.FloatBuffer;

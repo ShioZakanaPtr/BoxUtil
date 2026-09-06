@@ -1,6 +1,5 @@
 package org.boxutil.util.concurrent;
 
-import com.fs.starfarer.api.Global;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;

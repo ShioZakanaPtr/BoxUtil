@@ -1,7 +1,6 @@
 package org.boxutil.backends.core.instancedrendering;
 
 import com.fs.starfarer.api.util.Misc;
-import com.fs.starfarer.api.util.Pair;
 import org.boxutil.backends.core.dev.BUtil_GLDrawInfo;
 import org.boxutil.backends.shader.BUtil_GLImpl;
 import org.boxutil.backends.util.BUtil_MiscUtil;
@@ -13,7 +12,6 @@ import org.boxutil.units.standard.entity.TextFieldEntity;
 import org.boxutil.units.standard.misc.TextFieldObject;
 import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
 

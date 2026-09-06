@@ -6,7 +6,6 @@ import org.apache.log4j.Logger;
 import org.boxutil.manager.KernelCore;
 import org.boxutil.util.CommonUtil;
 import de.unkrig.commons.nullanalysis.Nullable;
-import org.lazywizard.console.Console;
 import org.lwjgl.opencl.CL10;
 import org.lwjgl.opencl.CLCapabilities;
 import org.lwjgl.opencl.CLDevice;

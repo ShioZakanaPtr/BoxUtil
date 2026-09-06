@@ -5,7 +5,6 @@ import com.fs.starfarer.api.graphics.SpriteAPI;
 import org.boxutil.backends.util.BUtil_GlyphKerningMap;
 import org.boxutil.backends.util.BUtil_GlyphSet;
 import org.boxutil.backends.util.BUtil_Glyph;
-import org.boxutil.define.BoxEnum;
 import org.boxutil.manager.FontDataManager;
 import org.boxutil.manager.TextureManager;
 import org.boxutil.units.standard.entity.TextFieldEntity;

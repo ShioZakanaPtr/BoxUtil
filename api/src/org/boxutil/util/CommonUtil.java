@@ -4,7 +4,6 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.Pair;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.boxutil.define.BoxDatabase;
 import org.boxutil.backends.reflect.BUtil_RefMethod;
 import org.boxutil.define.GLWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.opengl.*;
-import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.*;
 
 import javax.imageio.ImageIO;

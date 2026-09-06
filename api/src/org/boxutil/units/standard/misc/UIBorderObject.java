@@ -74,9 +74,7 @@ public class UIBorderObject {
      * @param sprites total 9 sprites: BL, B, BR, L, R, TL, T, TR, Center.
      */
     public UIBorderObject(SpriteAPI[] sprites) {
-        for (int i = 0; i < this._sprites.length; i++) {
-            this._sprites[i] = sprites[i];
-        }
+        System.arraycopy(sprites, 0, this._sprites, 0, this._sprites.length);
         if (this._sprites[_S_BL].getTextureId() != 0 && this._sprites[_S_CENTER].getTextureId() != 0) {
             GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this._sprites[_S_BL].getTextureId());
             this._sizeStyle = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);

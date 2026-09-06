@@ -6,10 +6,8 @@ import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
-import org.boxutil.units.standard.GPUMemoryPool;
 import org.boxutil.units.standard.ShaderProgram;
 import org.boxutil.util.ShaderUtil;
-import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GLContext;
 
 import java.io.IOException;

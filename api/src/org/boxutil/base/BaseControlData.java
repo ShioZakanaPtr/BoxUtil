@@ -2,7 +2,6 @@ package org.boxutil.base;
 
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.base.api.ControlDataAPI;
-import org.boxutil.base.api.InstanceRenderAPI;
 import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.config.BoxConfigs;
 

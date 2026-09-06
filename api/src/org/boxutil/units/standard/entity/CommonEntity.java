@@ -9,9 +9,6 @@ import org.boxutil.define.BoxGeometry;
 import org.boxutil.manager.ModelManager;
 import org.boxutil.units.standard.attribute.ModelData;
 import org.boxutil.util.CommonUtil;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL31;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 

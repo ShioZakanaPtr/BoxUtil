@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.util.vector.*;
 
 import java.awt.*;
-import java.io.PrintStream;
 import java.util.*;
 
 @SuppressWarnings("UnusedReturnValue")

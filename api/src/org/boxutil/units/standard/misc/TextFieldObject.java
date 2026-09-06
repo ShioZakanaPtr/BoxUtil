@@ -8,7 +8,6 @@ import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.FontDataManager;
 import org.boxutil.units.standard.attribute.FontMapData;
 import org.boxutil.units.standard.entity.TextFieldEntity;
-import org.boxutil.util.CommonUtil;
 import org.boxutil.util.concurrent.SpinLock;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
@@ -21,7 +20,6 @@ import java.awt.*;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**

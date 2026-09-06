@@ -1,11 +1,7 @@
 package org.boxutil.base.api.shaderpacks;
 
 import org.boxutil.base.BaseIlluminantData;
-import org.boxutil.base.api.InstanceDataAPI;
 import org.boxutil.define.InstanceType;
-import org.boxutil.define.struct.instance.MemoryBlock;
-
-import java.util.List;
 
 public interface IlluminantInstanceDataLayoutAPI {
     /**

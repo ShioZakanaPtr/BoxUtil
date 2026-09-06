@@ -1,11 +1,9 @@
 package org.boxutil.units.standard.misc;
 
 import org.boxutil.base.api.SimpleVAOAPI;
-import org.boxutil.config.BoxConfigs;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.GLWrapper;
 import org.boxutil.util.CommonUtil;
-import org.lwjgl.opengl.*;
 
 /**
  * Vertices: vec2(-1.0, 0.0), vec2(1.0, 0.0)<p>

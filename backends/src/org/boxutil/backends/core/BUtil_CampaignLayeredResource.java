@@ -2,7 +2,6 @@ package org.boxutil.backends.core;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignEngineLayers;
-import com.fs.starfarer.api.combat.CombatEngineLayers;
 import com.fs.starfarer.api.impl.campaign.ids.Factions;
 import org.boxutil.backends.core.gameloop.BUtil_CampaignRenderingPlugin;
 import org.boxutil.define.BoxDatabase;

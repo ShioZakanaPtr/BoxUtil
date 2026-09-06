@@ -1,8 +1,5 @@
 package org.boxutil.units.standard.attribute;
 
-import org.boxutil.base.api.InstanceRenderAPI;
-import org.boxutil.define.InstanceType;
-import org.boxutil.define.struct.instance.Dynamic2DStruct;
 import org.boxutil.util.CommonUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.base.api.InstanceDataAPI;
@@ -11,7 +8,6 @@ import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.awt.*;
-import java.util.Arrays;
 
 /**
  * <strong>Priority use this if renders more than one entity.</strong>

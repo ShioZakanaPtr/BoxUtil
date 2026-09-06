@@ -1,6 +1,5 @@
 package org.boxutil.base;
 
-import com.fs.starfarer.api.Global;
 import org.boxutil.base.api.ControlDataAPI;
 import org.boxutil.base.api.InstanceDataAPI;
 import org.boxutil.base.api.InstanceRenderAPI;
@@ -10,14 +9,12 @@ import org.boxutil.units.standard.attribute.Instance2Data;
 import org.boxutil.units.standard.attribute.Instance3Data;
 import org.boxutil.util.TrigUtil;
 import org.boxutil.util.concurrent.ReentrantSpinLock;
-import org.boxutil.util.concurrent.SpinLock;
 import de.unkrig.commons.nullanalysis.NotNull;
 import de.unkrig.commons.nullanalysis.Nullable;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * <strong>Very^32</strong> simple particle dynamic resource manager.<p>

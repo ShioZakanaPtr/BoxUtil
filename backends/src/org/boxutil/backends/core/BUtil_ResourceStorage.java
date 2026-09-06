@@ -1,10 +1,5 @@
 package org.boxutil.backends.core;
 
-import org.boxutil.define.*;
-import org.lwjgl.opengl.*;
-
-import java.util.*;
-
 public final class BUtil_ResourceStorage {
     private final static BUtil_ResourceStorage INST = new BUtil_ResourceStorage();
 

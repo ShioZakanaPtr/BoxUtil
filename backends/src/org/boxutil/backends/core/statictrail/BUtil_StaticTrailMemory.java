@@ -5,12 +5,9 @@ import org.boxutil.define.GLWrapper;
 import org.boxutil.units.standard.GPUMemoryPool;
 import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.nio.IntBuffer;
-import java.util.List;
 
 public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_StaticTrailTrackerObject> {
     private boolean shouldLoopWrite = false;

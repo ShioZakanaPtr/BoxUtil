@@ -12,7 +12,6 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL42;
-import org.lwjgl.opengl.GLContext;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;

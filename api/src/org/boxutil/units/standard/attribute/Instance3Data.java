@@ -1,10 +1,8 @@
 package org.boxutil.units.standard.attribute;
 
-import org.boxutil.base.api.InstanceRenderAPI;
 import org.boxutil.util.CommonUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
 import org.boxutil.base.api.InstanceDataAPI;
-import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
