@@ -36,6 +36,7 @@ import java.awt.*;
 import java.nio.FloatBuffer;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class RenderingUtil {
@@ -145,6 +146,7 @@ public final class RenderingUtil {
     }
 
     public static Pair<TrailEntity, FlareEntity> spawnEmpArcVisual(@Nullable Vector2f offset, float width, Vector2f start, Vector2f end, Color fringe, @Nullable Color core, float jitterPower, float full, float fadeOut) {
+        final var rnd = ThreadLocalRandom.current();
         TrailEntity arc = new TrailEntity();
         arc.getMaterialData().setDiffuse(Global.getSettings().getSprite("graphics/fx/beamcoreb.png"));
         arc.getMaterialData().setEmissive(Global.getSettings().getSprite("graphics/fx/beamfringeb.png"));
@@ -160,11 +162,11 @@ public final class RenderingUtil {
         minFactor = 0.8f / maxJitterNode;
         for (int i = maxJitterNode - 1; i > 0; --i) {
             factor = (float) i / (float) maxJitterNode;
-            factor += ((float) Math.random() - 0.5f) * minFactor;
+            factor += rnd.nextFloat(-0.5f, 0.5f) * minFactor;
             curr = CalculateUtil.mix(start, end, new Vector2f(), factor);
             curr.x += normal.x * jitterLength;
             curr.y += normal.y * jitterLength;
-            if ((float) Math.random() >= 0.5f) curr.set(-curr.x, -curr.y);
+            if (rnd.nextFloat() >= 0.5f) curr.set(-curr.x, -curr.y);
             arc.addNode(curr);
         }
         arc.addNode(start);
@@ -220,7 +222,7 @@ public final class RenderingUtil {
     }
 
     public static Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCombatEmpArcVisual(Vector2f start, Vector2f end, float width, Color fringe, @Nullable Color core) {
-        return spawnCombatEmpArcVisual(start, end, width, fringe, core, 1.0f, (float) Math.random() * 2.0f + 0.5f, 0.5f);
+        return spawnCombatEmpArcVisual(start, end, width, fringe, core, 1.0f, ThreadLocalRandom.current().nextFloat(0.5f, 2.5f), 0.5f);
     }
 
     public static Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCampaignEmpArcVisual(Vector2f start, Vector2f end, float width, Color fringe, @Nullable Color core, float jitterPower, float full, float fadeOut) {
@@ -234,7 +236,7 @@ public final class RenderingUtil {
     }
 
     public static Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCampaignEmpArcVisual(Vector2f start, Vector2f end, float width, Color fringe, @Nullable Color core) {
-        return spawnCampaignEmpArcVisual(start, end, width, fringe, core, 1.0f, (float) Math.random() * 2.0f + 0.5f, 0.5f);
+        return spawnCampaignEmpArcVisual(start, end, width, fringe, core, 1.0f, ThreadLocalRandom.current().nextFloat(0.5f, 2.5f), 0.5f);
     }
 
     public static SpriteEntity createParticleField(Vector2f location, int count, float facing, float arc, @Nullable Vector2f baseSpreadRange, @Nullable Vector2f velocityRange, @Nullable Vector2f facingRange, @Nullable Vector2f turnRateRange, Vector4f sizeRangeXY, @Nullable Vector4f sizeGrowScaleRangeXY, @Nullable Color baseColor, @Nullable Color baseColorShift, @Nullable Color baseEmissiveColor, @Nullable Color baseEmissiveColorShift, SpriteAPI diffuse, @Nullable SpriteAPI emissive, float fadeIn, float full, float fadeOut, float timerOffsetRange, boolean isAdditiveBlend) {
@@ -252,10 +254,11 @@ public final class RenderingUtil {
         final boolean haveEmissiveColorShift = baseEmissiveColorShift != null;
         final boolean haveSpreadRange = baseSpreadRange != null;
         final boolean haveVelocityRange = velocityRange != null;
+        final var rnd = ThreadLocalRandom.current();
         List<InstanceDataAPI> dataList = new ArrayList<>();
         for (int i = 0; i < finalCount; i++) {
-            float factor = (float) Math.random();
-            float factor2 = (float) Math.random();
+            float factor = rnd.nextFloat();
+            float factor2 = rnd.nextFloat();
             float timerOffset = timerOffsetRange * factor;
             Instance2Data data = new Instance2Data();
             float angle = facing + finalArc * (factor2 * 2.0f - 1.0f);
@@ -339,10 +342,11 @@ public final class RenderingUtil {
         final boolean haveFringeColorShift = baseFringeColorShift != null;
         final boolean haveCoreColorShift = baseCoreColorShift != null;
         final boolean haveSpreadRange = baseSpreadRange != null;
+        final var rnd = ThreadLocalRandom.current();
         List<InstanceDataAPI> dataList = new ArrayList<>();
         for (int i = 0; i < finalCount; i++) {
-            float factor = (float) Math.random();
-            float factor2 = (float) Math.random();
+            float factor = rnd.nextFloat();
+            float factor2 = rnd.nextFloat();
             float timerOffset = timerOffsetRange * factor;
             Instance2Data data = new Instance2Data();
             float angle = facing + finalArc * (factor2 * 2.0f - 1.0f);
@@ -897,12 +901,13 @@ public final class RenderingUtil {
         public static boolean addSmokeParticle(boolean isCampaign, Vector2f loc, Vector2f vel, float size, float opacity, float duration, Color color) {
             if (!BoxConfigs.isShaderEnable()) return false;
             if (ignoreSpawn(isCampaign, loc, size) || duration <= 0.0f || color.getAlpha() < 1) return true;
-            final float fadeIn = duration * (float) Math.random() * 0.5f, fadeOut = duration - fadeIn, scaleRate = size * 0.25f / duration;
+            final var rnd = ThreadLocalRandom.current();
+            final float fadeIn = rnd.nextFloat(duration), fadeOut = duration - fadeIn, scaleRate = size * 0.25f / duration;
 
             final var controller = Controllers.getSmokeParticle(isCampaign);
             return setParticle(
                     controller,
-                    loc, vel, scaleRate, size, (float) Math.random() * 360.0f, (float) Math.random() * 140.0f - 70.0f, color, 1.0f, fadeIn, 0.0f, fadeOut);
+                    loc, vel, scaleRate, size, rnd.nextFloat(360.0f), rnd.nextFloat(-70.0f, 70.0f), color, 1.0f, fadeIn, 0.0f, fadeOut);
         }
 
         private static boolean _nebulaParticleCommon(boolean isCampaign, Vector2f loc, Vector2f vel, float size, float endSizeMult, float rampUpFraction, float fullBrightnessFraction, float totalDuration, Color color, final SimpleParticleControlData controller) {
@@ -917,7 +922,7 @@ public final class RenderingUtil {
 
             return setParticle(
                     controller,
-                    loc, vel, scaleRate, size, (float) Math.random() * 360.0f, 0.0f, color, brightness, fadeIn, full, fadeOut);
+                    loc, vel, scaleRate, size, ThreadLocalRandom.current().nextFloat(360.0f), 0.0f, color, brightness, fadeIn, full, fadeOut);
         }
 
         public static boolean addNebulaParticle(boolean isCampaign, Vector2f loc, Vector2f vel, float size, float endSizeMult, float rampUpFraction, float fullBrightnessFraction, float totalDuration, Color color) {
@@ -954,6 +959,7 @@ public final class RenderingUtil {
             if (!BoxConfigs.isShaderEnable()) return false;
             if (ignoreSpawn(isCampaign, loc, size) || maxDuration <= 0.0f || color.getAlpha() < 1) return true;
 
+            final var rnd = ThreadLocalRandom.current();
             final SimpleParticleControlData[] controller = Controllers.getExplosion(isCampaign);
             final boolean[] withoutSetter = new boolean[]{true, true, true};
 
@@ -967,12 +973,17 @@ public final class RenderingUtil {
             boolean pickRing, pickRound;
 
             for (int i = 0; i < count; ++i) {
-                roll = (int) (Math.random() * 4.0f); // almost none 4 wtf
-                if (roll == 3) roll = (int) (Math.random() * 4.0f);
+                roll = rnd.nextInt(1048576);
+                if (roll > 786432 && roll != 1048575) roll = rnd.nextInt(1048576);
+                if (roll < 262143) roll = 0;
+                else if (roll < 524287) roll = 1;
+                else if (roll < 786431) roll = 2;
+                else if (roll < 1048575) roll = 3;
+                else roll = 4;
                 pickRound = roll == 4;
                 pickRing = roll == 3;
 
-                finalSize = baseSize + baseSize * (float) Math.random();
+                finalSize = rnd.nextFloat(baseSize, baseSize + baseSize);
                 finalSizeEnd = finalSize * 1.25f;
                 if (pickRing) {
                     finalSizeEnd = finalSize * 3.0f;
@@ -982,11 +993,11 @@ public final class RenderingUtil {
                     finalSizeEnd = finalSize;
                 }
 
-                rndRad = clampRad(360.0f * (float) Math.random()); // wtf
+                rndRad = rnd.nextFloat(TrigUtil.PI2_F); // wtf
                 vecX = (float) Math.cos(rndRad);
                 vecY = TrigUtil.sinFormCosRadiansF(vecX, rndRad);
 
-                if (!pickRing && i > 4) posOffsetLength = size * 0.25f * (float) Math.random();
+                if (!pickRing && i > 4) posOffsetLength = rnd.nextFloat(size * 0.25f);
                 else posOffsetLength = 0.0f;
 
                 roll = Math.max(roll - 2, 0);
@@ -996,10 +1007,10 @@ public final class RenderingUtil {
                     if (pickRing) {
                         particle.setVelocity(vel.x, vel.y);
                     } else {
-                        velOffsetLength = 10.0f + (float) Math.random() * extraVel;
+                        velOffsetLength = rnd.nextFloat(10.0f, 10.0f + extraVel);
                         particle.setVelocity(vecX * velOffsetLength + vel.x, vecY * velOffsetLength + vel.y);
                     }
-                    particle.setFacing((float) (Math.random() * 360.0f));
+                    particle.setFacing(rnd.nextFloat(360.0f));
                     particle.setScaleAll(finalSize);
                     particle.setScaleRateAll((finalSizeEnd - finalSize) / maxDuration);
                     particle.setEmissiveColor(color.getRed(), color.getGreen(), color.getBlue(), 255);
@@ -1049,21 +1060,22 @@ public final class RenderingUtil {
         }
 
         private static boolean setDebrisParticle(SimpleParticleControlData controller, final _DebrisType type, final boolean isGlowDebris, final Vector2f loc, final Vector2f vel, final float facing, final float spread, final float minVel, final float velRange, final float maxRotation) {
+            final var rnd = ThreadLocalRandom.current();
             Instance2Data particle = controller.addParticle();
             if (particle != null) {
-                final float size = type.size * (float) (Math.random() + 1.0f) * 0.5f,
-                        currFacing = clampAngleRad((float) Math.random() * spread + facing - spread * 0.5f),
+                final float size = type.size * rnd.nextFloat(0.5f, 1.0f),
+                        currFacing = clampAngleRad(rnd.nextFloat(spread) + facing - spread * 0.5f),
                         vecX = (float) Math.cos(currFacing),
-                        vecY = TrigUtil.sinFormCosRadiansF(vecX, currFacing), vecLength = minVel + (float) Math.random() * velRange,
-                        spawnFacing = clampAngleRad(facing + 90.0f + (float) Math.random() * 180.0f),
+                        vecY = TrigUtil.sinFormCosRadiansF(vecX, currFacing), vecLength = minVel + rnd.nextFloat(velRange),
+                        spawnFacing = clampAngleRad(facing + rnd.nextFloat(90.0f, 270.0f)),
                         posX = (float) Math.cos(spawnFacing),
                         posY = TrigUtil.sinFormCosRadiansF(posX, spawnFacing);
 
                 particle.setLocation(size * posX + loc.x, size * posY + loc.y);
                 particle.setVelocity(vecLength * vecX + vel.x, vecLength * vecY + vel.y);
                 particle.setScaleAll(size);
-                particle.setTurnRate(((float) Math.random() - 0.5f) * maxRotation * 2.0f);
-                if (isGlowDebris) particle.setEmissiveColor(255, (int) (155.0f + 100.0f * (float) Math.random()), 100, 255);
+                particle.setTurnRate(rnd.nextFloat(-0.5f, 0.5f) * maxRotation * 2.0f);
+                if (isGlowDebris) particle.setEmissiveColor(255, rnd.nextInt(155, 256), 100, 255);
                 particle.setTimer(type.fadeIn, type.full, type.fadeOut);
                 return false;
             }
@@ -1078,7 +1090,7 @@ public final class RenderingUtil {
             byte picker;
             boolean spawnGlowDebris;
             for (int i = 0; i < num; i++) {
-                spawnGlowDebris = Math.random() > 0.33f;
+                spawnGlowDebris = ThreadLocalRandom.current().nextFloat() > 0.33f;
                 picker = spawnGlowDebris ? BoxEnum.ONE : BoxEnum.ZERO;
                 if (setDebrisParticle(controller[picker], type, spawnGlowDebris, loc, vel, facing, spread, minVel, velRange, maxRotation)) {
                     for (byte c = 0; c < 2; ++c) if (!withoutSetter[c]) controller[c].refreshRemainingTimeToReset(type.totalDur);

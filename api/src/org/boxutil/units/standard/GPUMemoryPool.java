@@ -302,7 +302,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             GLWrapper.Buffer.glBufferStorage(this.behavior.glTarget, realSize, access_buffer);
             if (this.persistentMapping) {
                 this.clientMapping = GLWrapper.Buffer.glMapBufferRange(this.behavior.glTarget, 0, realSize, access_mapping, null);
-                this.clientMapping.clear();
+                if (this.clientMapping != null) this.clientMapping.clear();
             }
         } else GLWrapper.Buffer.glBufferData(this.behavior.glTarget, realSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
     }

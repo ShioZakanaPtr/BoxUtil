@@ -1,6 +1,7 @@
 package org.boxutil.backends.util;
 
 import org.boxutil.util.CalculateUtil;
+import org.boxutil.util.container.ContainerHasher;
 
 import java.util.Arrays;
 
@@ -11,19 +12,18 @@ public class BUtil_BoundedIntMap<K> {
     protected int size = 0;
     protected int fixedValue;
     protected K fixedKey;
-    protected final int[] state; // -1 => empty, (x > -1) => psl
-    protected final int[] values;
+    protected final int[] svs; // i = {iState, iValue}, state = {-1 => empty, (x > -1) => psl}
     protected final K[] keys;
 
     /**
      * @param loadFactor 0.7~0.8
      */
     public BUtil_BoundedIntMap(int storageSize, float loadFactor) {
+        if (storageSize > (1 << 29)) throw new IllegalArgumentException("The capacity of map overflow");
         if (storageSize < 2) {
             this.capacity = storageSize;
             this.posMask = 1;
-            this.state = null;
-            this.values = null;
+            this.svs = null;
             this.keys = null;
         } else {
             this.fixedValue = 0;
@@ -32,10 +32,9 @@ public class BUtil_BoundedIntMap<K> {
             this.capacity = ((float) storageSize / (float) potCap > loadFactor) ? (potCap << 1) : potCap;
             this.posMask = this.capacity - 1;
 
-            this.state = new int[this.capacity];
-            this.values = new int[this.capacity];
+            this.svs = new int[this.capacity << 1];
             this.keys = (K[]) new Object[this.capacity];
-            Arrays.fill(this.state, (byte) -1);
+            Arrays.fill(this.svs, (byte) -1);
         }
     }
 
@@ -53,37 +52,39 @@ public class BUtil_BoundedIntMap<K> {
             return true;
         }
 
-        int pos = key.hashCode() & this.posMask,
+        int pos = ContainerHasher.hashing_Directly(key.hashCode()) & this.posMask,
+                realPos = pos << 1,
                 currPsl = 0,
                 currState;
 
         final int startPos = pos;
-        while ((currState = this.state[pos]) > -1) {
+        while ((currState = this.svs[realPos]) > -1) {
             if (key.equals(this.keys[pos])) {
-                this.values[pos] = value;
+                this.svs[realPos + 1] = value;
                 return true;
             }
             if (currPsl > currState) {
-                final int tmpState = this.state[pos],
-                        tmpValue = this.values[pos];
+                final int realValPos = realPos + 1,
+                        tmpState = this.svs[realPos],
+                        tmpValue = this.svs[realValPos];
                 final K tmpKey = this.keys[pos];
 
                 this.keys[pos] = key;
                 key = tmpKey;
-                this.values[pos] = value;
+                this.svs[realPos] = value;
                 value = tmpValue;
-                this.state[pos] = currPsl;
+                this.svs[realValPos] = currPsl;
                 currPsl = tmpState;
             }
-            pos++;
-            pos &= this.posMask;
+            pos = ++pos & this.posMask;
+            realPos = pos << 1;
             currPsl++;
             if (currPsl < -1 || pos == startPos) return false;
         }
 
-        this.state[pos] = currPsl;
+        this.svs[realPos] = currPsl;
         this.keys[pos] = key;
-        this.values[pos] = value;
+        this.svs[realPos + 1] = value;
         this.size++;
         return true;
     }
@@ -92,20 +93,38 @@ public class BUtil_BoundedIntMap<K> {
         if (key == null || this.isEmpty()) return defaultValue;
         if (this.capacity < 2) return key.equals(this.fixedKey) ? this.fixedValue : defaultValue;
 
-        int pos = key.hashCode() & this.posMask,
+        int pos = ContainerHasher.hashing_Directly(key.hashCode()) & this.posMask,
+                realPos = pos << 1,
                 currPsl = 0,
                 currState;
 
         final int startPos = pos;
-        while ((currState = this.state[pos]) > -1) {
-            if (key.equals(this.keys[pos])) return this.values[pos];
+        while ((currState = this.svs[realPos]) > -1) {
+            if (key.equals(this.keys[pos])) return this.svs[realPos + 1];
             if (currState < currPsl) return defaultValue;
-            pos++;
-            pos &= this.posMask;
+            pos = ++pos & this.posMask;
+            realPos = pos << 1;
             currPsl++;
             if (currPsl < -1 || pos == startPos) return defaultValue;
         }
         return defaultValue;
+    }
+
+    protected void removeAndShift(int currPos, int currRealPos) {
+        this.size--;
+        this.svs[currRealPos] = -1;
+        this.keys[currPos] = null;
+        for (int i = (currPos + 1) & this.posMask; i != currPos; i = ++i & this.posMask) {
+            final int realPos = i << 1;
+            if (this.svs[realPos] < 1) return;
+            final int prePos = (i - 1) & this.posMask,
+                    preRealPos = prePos << 1;
+            this.svs[preRealPos] = --this.svs[realPos];
+            this.keys[prePos] = this.keys[i];
+            this.svs[preRealPos + 1] = this.svs[realPos + 1];
+            this.svs[i] = -1;
+            this.keys[realPos] = null;
+        }
     }
 
     public boolean remove(K key) {
@@ -118,21 +137,20 @@ public class BUtil_BoundedIntMap<K> {
             } else return false;
         }
 
-        int pos = key.hashCode() & this.posMask,
+        int pos = ContainerHasher.hashing_Directly(key.hashCode()) & this.posMask,
+                realPos = pos << 1,
                 currPsl = 0,
                 currState;
 
         final int startPos = pos;
-        while ((currState = this.state[pos]) > -1) {
+        while ((currState = this.svs[realPos]) > -1) {
             if (key.equals(this.keys[pos])) {
-                this.state[pos] = -1;
-                this.keys[pos] = null;
-                this.size--;
+                this.removeAndShift(pos, realPos);
                 return true;
             }
             if (currState < currPsl) return false;
-            pos++;
-            pos &= this.posMask;
+            pos = ++pos & this.posMask;
+            realPos = pos << 1;
             currPsl++;
             if (currPsl < -1 || pos == startPos) return false;
         }
@@ -143,7 +161,7 @@ public class BUtil_BoundedIntMap<K> {
         if (this.capacity < 2) {
             this.fixedKey = null;
         } else {
-            Arrays.fill(this.state, (byte) -1);
+            Arrays.fill(this.svs, (byte) -1);
             Arrays.fill(this.keys, null);
         }
         this.size = 0;

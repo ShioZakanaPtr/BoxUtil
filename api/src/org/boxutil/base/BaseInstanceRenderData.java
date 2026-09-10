@@ -235,14 +235,15 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
             final var l_lock = l_pool.getGPULock();
 
             l_lock.lock();
-            final boolean l_persistentMapping = l_pool.isPersistentMapping() && l_pool.getMappingBuffer() != null;
+            ByteBuffer l_rawBuffer = l_pool.getMappingBuffer();
+            final boolean l_persistentMapping = l_pool.isPersistentMapping() && l_rawBuffer != null;
             final int l_bufferTarget = l_pool.getPoolBehavior().glTarget,
                     l_refreshLimit = refreshIndex + refreshSize,
                     l_uploadOffset = l_pool.getPoolBehavior().reservedSize;
             final long l_refreshByteSize = (long) l_type.getSize() * refreshSize;
 
-            ByteBuffer l_rawBuffer = null;
-            if (!mappingBuffer && !l_persistentMapping) {
+
+            if (!(mappingBuffer || l_persistentMapping)) {
                 l_rawBuffer = BufferUtils.createByteBuffer((int) l_refreshByteSize);
                 this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
             }
@@ -256,7 +257,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
             final long l_refreshByteOffset = this.memory.address() + (long) l_type.getSize() * refreshOffset + l_uploadOffset;
 
             if (l_persistentMapping) {
-                this._packingInstanceData(l_pool.getMappingBuffer(), (int) (l_refreshByteOffset >> 2), l_type, refreshIndex, l_refreshLimit, l_isFixed);
+                this._packingInstanceData(l_rawBuffer, (int) (l_refreshByteOffset >> 2), l_type, refreshIndex, l_refreshLimit, l_isFixed);
                 l_lock.unlock();
                 this.sync_lock.unlock();
                 return;
@@ -276,7 +277,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
                 this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
             }
 
-            l_rawBuffer.position(0).limit(l_rawBuffer.capacity()); // assert not null
+            l_rawBuffer.clear(); // assert not null
             if (mappingBuffer) GLWrapper.Buffer.glUnmapBuffer(l_bufferTarget);
             else GLWrapper.Buffer.glBufferSubData(l_bufferTarget, l_refreshByteOffset, l_rawBuffer);
             l_lock.unlock();

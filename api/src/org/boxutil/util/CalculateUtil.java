@@ -9,6 +9,7 @@ import org.lwjgl.util.vector.*;
 
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class CalculateUtil {
@@ -174,7 +175,8 @@ public final class CalculateUtil {
     }
 
     public static Vector3f getRandomPointOnSphere(@Nullable Vector3f center, float radius) {
-        return getPointOnSphere(center, radius, new Vector3f((float) (Math.random() * 360.0d), (float) (Math.random() * 360.0d), (float) (Math.random() * 360.0d)));
+        final var rnd = ThreadLocalRandom.current();
+        return getPointOnSphere(center, radius, new Vector3f(rnd.nextFloat(360.0f), rnd.nextFloat(360.0f), rnd.nextFloat(360.0f)));
     }
 
     public static Vector3f scaleFormCenter(@Nullable Vector3f center, float factor, @NotNull Vector3f target, @Nullable Vector3f out) {

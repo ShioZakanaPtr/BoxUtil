@@ -371,21 +371,17 @@ public final class BUtil_GLImpl {
 
     public static void resetGLAttrib() {
         INST.lastMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
-        if (INST.lastBlendState != BoxEnum.ENTITY_NORMAL_BLEND) {
-            if (INST.lastBlendState == BoxEnum.ENTITY_DISABLED_BLEND) GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
-            if (INST.lastBlendState == BoxEnum.ENTITY_OTHER_BLEND) {
-                GLWrapper.Operation.glBlendEquationi(0, GLWrapper.Operation.GL_FUNC_ADD);
-                GLWrapper.Operation.glBlendEquationi(1, GLWrapper.Operation.GL_FUNC_ADD);
-            }
-            GLWrapper.Operation.glBlendFunci(0, GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
-            GLWrapper.Operation.glBlendFunci(1, GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
-            INST.lastBlendState = BoxEnum.ENTITY_NORMAL_BLEND;
-        }
-        if (INST.lastCullState != BoxEnum.MATERIAL_CULL_BACK) {
-            if (INST.lastCullState == BoxEnum.MATERIAL_CULL_DISABLED) GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_CULL_FACE);
-            GLWrapper.Operation.glCullFace(GLWrapper.Operation.GL_BACK);
-            INST.lastCullState = BoxEnum.MATERIAL_CULL_BACK;
-        }
+
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_BLEND);
+        GLWrapper.Operation.glBlendEquationi(0, GLWrapper.Operation.GL_FUNC_ADD);
+        GLWrapper.Operation.glBlendEquationi(1, GLWrapper.Operation.GL_FUNC_ADD);
+        GLWrapper.Operation.glBlendFunci(0, GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
+        GLWrapper.Operation.glBlendFunci(1, GLWrapper.Operation.GL_SRC_ALPHA, GLWrapper.Operation.GL_ONE_MINUS_SRC_ALPHA);
+        INST.lastBlendState = BoxEnum.ENTITY_NORMAL_BLEND;
+
+        GLWrapper.Operation.glEnable(GLWrapper.Operation.GL_CULL_FACE);
+        GLWrapper.Operation.glCullFace(GLWrapper.Operation.GL_BACK);
+        INST.lastCullState = BoxEnum.MATERIAL_CULL_BACK;
     }
 
     public static void removeCheck(Iterator<RenderDataAPI> iterator, ControlDataAPI data, RenderDataAPI entity) {

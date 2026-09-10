@@ -1,6 +1,7 @@
 package org.boxutil.backends.util;
 
 import org.boxutil.util.CalculateUtil;
+import org.boxutil.util.container.ContainerHasher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -54,7 +55,7 @@ public class BUtil_GlyphKerningMap {
     }
 
     private void init_put(int key, byte value) {
-        int pos = hasher(key) & this.posMask;
+        int pos = ContainerHasher.hashing_MurmurHash3FMix(key) & this.posMask;
         byte currPsl = 0, currState;
 
         final int startPos = pos;
@@ -86,7 +87,7 @@ public class BUtil_GlyphKerningMap {
         final int key = fetchKey(first, second);
         if (this.size < 2) return key == this.fixedKey ? this.fixedValue : 0;
 
-        int pos = hasher(fetchKey(first, second)) & this.posMask;
+        int pos = ContainerHasher.hashing_MurmurHash3FMix(fetchKey(first, second)) & this.posMask;
         byte currPsl = 0, currState;
 
         final int startPos = pos;
@@ -111,15 +112,5 @@ public class BUtil_GlyphKerningMap {
 
     public static int fetchKey(char first, char second) {
         return (first & 0xffff) << 16 | (second & 0xffff);
-    }
-
-    public static int hasher(int key) {
-        int h = key;
-        h ^= h >>> 16;
-        h *= 0x85ebca6b;
-        h ^= h >>> 13;
-        h *= 0xc2b2ae35;
-        h ^= h >>> 16;
-        return h;
     }
 }

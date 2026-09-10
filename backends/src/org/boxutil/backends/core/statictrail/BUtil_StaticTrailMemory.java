@@ -65,10 +65,6 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
         this.currPiFirstBufPos = currPiFirstBufPos;
     }
 
-    private static float calculateMix(final float a, final float b) {
-        return (a != b) ? CalculateUtil.mix(a, b, (float) Math.random()) : a;
-    }
-
     // may be something wrong in the first/second frame under very high fps(alien-tech computer), but no matter
     private int encodeTimestamp(final float elapsedTime) {
         return (this.rndID << 29) | (Float.floatToRawIntBits(elapsedTime) & 0x1fffffff);

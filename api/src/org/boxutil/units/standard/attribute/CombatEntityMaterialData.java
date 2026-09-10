@@ -50,16 +50,4 @@ public class CombatEntityMaterialData {
     public String toString() {
         return "CombatEntityMaterialData: Normal = '" + this.normalMap + "', Complex = '" + this.complexMap + "', Emissive = '" + this.emissiveMap + "', PassShading = '" + this.passShading + '\'';
     }
-
-    public int hashCode() {
-        int result = 31 + this.normalMap;
-        result = 31 * result + this.complexMap;
-        result = 31 * result + this.emissiveMap;
-        return 31 * result + Boolean.hashCode(this.passShading);
-    }
-
-    public boolean equals(Object obj) {
-        if (obj instanceof CombatEntityMaterialData) return this.hashCode() == obj.hashCode();
-        else return false;
-    }
 }

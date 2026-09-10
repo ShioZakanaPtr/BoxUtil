@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * The standard trail tracker for all the projectiles that BoxUtil built-in autogen static trail system will use it.
  */
@@ -59,7 +61,7 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
 
         final Vector4f spawnOffsetRange = this.trailData.fixedSpawnOffsetRange;
         if (spawnOffsetRange != null) {
-            final float rnd = (float) Math.random(),
+            final float rnd = ThreadLocalRandom.current().nextFloat(),
                     offsetX = CalculateUtil.mix(spawnOffsetRange.x, spawnOffsetRange.z, rnd),
                     offsetY = CalculateUtil.mix(spawnOffsetRange.y, spawnOffsetRange.w, rnd);
             callback.getCurrentLocation().x += offsetX * offsetRotateC - offsetY * offsetRotateS;

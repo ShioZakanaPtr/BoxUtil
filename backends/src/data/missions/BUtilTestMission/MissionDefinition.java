@@ -39,6 +39,7 @@ import org.lwjgl.util.vector.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class MissionDefinition implements MissionDefinitionPlugin {
     public void defineMission(MissionDefinitionAPI api) {
@@ -119,6 +120,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
             Vector2f mousePosScreenSpace = new Vector2f(BUtil_GLImpl.getMouseX(), BUtil_GLImpl.getMouseY());
             Vector2f mousePos = new Vector2f(this.engine.getViewport().convertScreenXToWorldX(mousePosScreenSpace.x), this.engine.getViewport().convertScreenYToWorldY(mousePosScreenSpace.y));
 
+            final var rnd = ThreadLocalRandom.current();
             if (!this.engine.isPaused()) {
                 if (this.time2 < 0.5f) this.time2 += amount;
                 if (this.time2 >= 0.5f && Keyboard.isKeyDown(Keyboard.KEY_B)) {
@@ -127,7 +129,7 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     NodeData end = new NodeData();
                     start.setTangentRight(200.0f, 0.0f);
                     end.setLocation(1200.0f, 0.0f);
-                    float a = (float) Math.random() * TrigUtil.PI2_F, c, s, length = (float) (Math.random() * 420.0f);
+                    float a = rnd.nextFloat(TrigUtil.PI2_F), c, s, length = rnd.nextFloat(420.0f);
                     c = (float) Math.cos(a);
                     s = TrigUtil.sinFormCosRadiansF(c, a);
                     end.setTangentLeft(c * length, s * length);
@@ -204,19 +206,19 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                         float a, c, s, length;
                         for (short i = 0; i < count; i++) {
                             instance = new Instance2Data();
-                            a = (float) Math.random() * TrigUtil.PI2_F;
+                            a = rnd.nextFloat(TrigUtil.PI2_F);
                             c = (float) Math.cos(a);
                             s = TrigUtil.sinFormCosRadiansF(c, a);
-                            length = (float) Math.random() * 128.0f;
+                            length = rnd.nextFloat(128.0f);
                             instance.setLocation(c * length, s * length);
-                            length = (float) Math.random() * 150.0f + 200.0f;
+                            length = rnd.nextFloat(200.0f, 350.0f);
                             instance.setVelocity(c * length, s * length);
-                            instance.setFacing((float) Math.random() * 360.0f);
-                            instance.setTurnRate((float) Math.random() * 45.0f - 22.5f);
-                            length = (float) Math.random() + 0.6f;
+                            instance.setFacing(rnd.nextFloat(360.0f));
+                            instance.setTurnRate(rnd.nextFloat(-22.5f, 22.5f));
+                            length = rnd.nextFloat(0.6f, 1.6f);
                             instance.setScale(length, length);
                             instance.setScaleRate(1.0f, 1.0f);
-                            instance.setTimer(0.05f, 0.2f, (float) Math.random() + 0.5f);
+                            instance.setTimer(0.05f, 0.2f, rnd.nextFloat(0.5f, 1.5f));
                             particleList.add(instance);
                         }
 
@@ -281,11 +283,11 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                                 Instance2Data addedParticle = this.particle.addParticle();
                                 if (addedParticle != null) {
                                     addedParticle.setLocation(mousePos);
-                                    addedParticle.setScaleAll(1.0f + (float) Math.random() * 2.0f);
+                                    addedParticle.setScaleAll(rnd.nextFloat(1.0f, 3.0f));
                                     addedParticle.setScaleRateAll(2.0f);
                                     addedParticle.setLowColor(Misc.getNegativeHighlightColor());
-                                    addedParticle.setAlpha((float) Math.random() * 0.4f + 0.4f);
-                                    addedParticle.setVelocity((float) Math.random() * 256.0f - 128.0f, (float) Math.random() * 256.0f - 128.0f);
+                                    addedParticle.setAlpha(rnd.nextFloat(0.4f, 0.8f));
+                                    addedParticle.setVelocity(rnd.nextFloat(-128.0f, 128.0f), rnd.nextFloat(-128.0f, 128.0f));
                                     addedParticle.setTimer(0.1f, 0.8f, 1.1f);
                                 }
                             }

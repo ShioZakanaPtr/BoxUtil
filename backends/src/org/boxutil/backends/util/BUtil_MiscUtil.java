@@ -6,9 +6,20 @@ import org.boxutil.manager.TextureManager;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class BUtil_MiscUtil {
+    public static String fetchFilePostfix(final String file, final String suffix) {
+        if (file.isBlank()) throw new IllegalArgumentException("Illegal file path: a white space");
+        if (suffix == null) return file;
+
+        final int dotIdx = file.lastIndexOf('.');
+        if (dotIdx == -1) throw new IllegalArgumentException("Illegal file path: format error");
+
+        return file.substring(0, dotIdx) + suffix + file.substring(dotIdx);
+    }
+
     public static String getMemoryNumStr(long size) {
         if (size < 1) return "    0 Byte";
         final boolean isByte = size < 1024;
@@ -88,6 +99,12 @@ public final class BUtil_MiscUtil {
         }
         vec.x = vecC[0];
         vec.y = vecC[1];
+    }
+
+    public static int tryTexture(final String path, boolean alignForward, final BiFunction<String, Boolean, Integer> customLoad) {
+        if (alignForward) return customLoad.apply(path, true);
+        final SpriteAPI vanillaSprite = Global.getSettings().getSprite(path);
+        return (vanillaSprite != null && vanillaSprite.getTextureId() > 0) ? vanillaSprite.getTextureId() : customLoad.apply(path, false);
     }
 
     public static int tryTexture(final String path, final Function<String, Integer> customLoad) {

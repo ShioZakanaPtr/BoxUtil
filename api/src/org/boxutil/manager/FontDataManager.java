@@ -1,13 +1,14 @@
 package org.boxutil.manager;
 
 import org.boxutil.units.standard.attribute.FontMapData;
+import org.boxutil.util.container.Obj2ObjRHMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class FontDataManager {
-    private final static HashMap<String, FontMapData> _PATH_FONT = new HashMap<>(8);
+    private final static Map<String, FontMapData> _PATH_FONT = new Obj2ObjRHMap<>(8);
 
     public static boolean haveFont(final String file) {
         return _PATH_FONT.containsKey(file);

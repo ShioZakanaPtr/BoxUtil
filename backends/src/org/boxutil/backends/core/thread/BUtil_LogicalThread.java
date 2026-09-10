@@ -8,6 +8,7 @@ import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.backends.core.instancedrendering.BUtil_InstanceDataMemoryPool;
 import org.boxutil.backends.core.statictrail.BUtil_StaticTrailMemoryPool;
 import org.boxutil.backends.shader.BUtil_GLImpl;
+import org.boxutil.units.standard.GPUMemoryPool;
 import org.boxutil.util.concurrent.SpinBarrier;
 import org.boxutil.base.BaseIlluminantData;
 import org.boxutil.base.BaseProjectileTrailTracker;
@@ -261,13 +262,15 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
             if (BUtil_ResourceStorage.combatLayered().checkAndMarkAutogenProjectile(proj)) {
                 for (String trailID : trailConfig) {
                     if (trailID == null || trailID.isBlank()) continue;
-
                     final StaticTrailData trail = StaticTrailManager.getTrailData(trailID);
                     if (trail == null) continue;
+                    final String trackerID = trail.customTrackerID;
                     CombatRenderingManager.addStaticTrail(
                             trail, proj,
                             trail.renderBelowExplosions ? CombatEngineLayers.ABOVE_SHIPS_LAYER : CombatEngineLayers.BELOW_INDICATORS_LAYER,
-                            new BaseProjectileTrailTracker(proj, trail)
+                            trackerID == null || trackerID.isBlank() ?
+                                    new BaseProjectileTrailTracker(proj, trail) :
+                                    StaticTrailManager.getCustomTracker(trackerID).apply(proj, trail)
                     );
                 }
             }

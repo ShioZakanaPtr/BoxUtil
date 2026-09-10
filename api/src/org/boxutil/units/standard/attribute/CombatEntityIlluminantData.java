@@ -95,27 +95,4 @@ public class CombatEntityIlluminantData {
      * The value less than or equals <code>0.0f</code> for no illuminant spawn when the projectile did damage.
      */
     public float PROJ_hitDuration = 0.0f;
-
-    public int hashCode() {
-        int result = 31 + Boolean.hashCode(this.noneIlluminant);
-        result = 31 * result + (this.SHIP_engineColor == null ? 0 : this.SHIP_engineColor.hashCode());
-        result = 31 * result + Boolean.hashCode(this.SHIP_MUL_MODE);
-        result = 31 * result + Float.hashCode(this.SHIP_engineRadius);
-
-        result = 31 * result + (this.PROJ_spawnColor == null ? 0 : this.PROJ_spawnColor.hashCode());
-        result = 31 * result + Float.hashCode(this.PROJ_spawnRadius);
-        result = 31 * result + Float.hashCode(this.PROJ_spawnDuration);
-
-        result = 31 * result + (this.PROJ_bodyColor == null ? 0 : this.PROJ_bodyColor.hashCode());
-        result = 31 * result + Float.hashCode(this.PROJ_bodyRadius);
-
-        result = 31 * result + (this.PROJ_hitColor == null ? 0 : this.PROJ_hitColor.hashCode());
-        result = 31 * result + Float.hashCode(this.PROJ_hitRadius);
-        return 31 * result + Float.hashCode(this.PROJ_hitDuration);
-    }
-
-    public boolean equals(Object obj) {
-        if (obj instanceof CombatEntityIlluminantData) return this.hashCode() == obj.hashCode();
-        else return false;
-    }
 }

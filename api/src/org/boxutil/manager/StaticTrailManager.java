@@ -2,12 +2,15 @@ package org.boxutil.manager;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.DamagingProjectileAPI;
+import com.fs.starfarer.api.graphics.SpriteAPI;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.define.struct.statictrail.StaticTrailData;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.util.CommonUtil;
+import org.boxutil.util.container.Obj2ObjRHMap;
+import org.boxutil.util.container.ObjRHSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
@@ -18,12 +21,9 @@ import org.lwjgl.util.vector.Vector4f;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -33,8 +33,8 @@ import java.util.function.Supplier;
  * public final class YourModPlugin extends BaseModPlugin {
  *     public void onApplicationLoad() {
  *         BoxUtilModPlugin.initPre();
- *         // StaticTrailManager.putCustomTracker("ABCD_your_custom_tracker", ABCD_SomeTracker::new); // if you hava any custom tracker
- *         StaticTrailManager.loadTrailData("data/config/modFiles/ABCD_your_trails.csv"); // also the path can be anywhere
+ *         // StaticTrailManager.putCustomTracker("ABCD_efgh_tracker", ABCD_SomeTracker::new); // if you hava any custom tracker
+ *         StaticTrailManager.loadTrailData("data/config/modFiles/ABCD_trail_data.csv"); // also the path can be anywhere
  *     }
  * }
  * }
@@ -42,41 +42,41 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings("UnusedReturnValue")
 public final class StaticTrailManager {
-    private final static Map<String, HashSet<String>> PROJ_TRAIL = new HashMap<>(128);
-    private final static Map<String, StaticTrailData> TRAILS = new HashMap<>(128);
-    private final static Map<String, BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker>> CUSTOM_TRACKER = new HashMap<>(128);
-    private final static Set<String> _CACHED_PATH = new HashSet<>(32);
-    private final static Set<String> _CACHED_MAGIC_LIB_LAYOUT_PATH = new HashSet<>(32);
+    private final static Map<String, Set<String>> PROJ_TRAIL = new Obj2ObjRHMap<>(128);
+    private final static Map<String, StaticTrailData> TRAILS = new Obj2ObjRHMap<>(128);
+    private final static Map<String, BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker>> CUSTOM_TRACKER = new Obj2ObjRHMap<>(128);
+    private final static Set<String> _CACHED_PATH = new ObjRHSet<>(32);
+    private final static Set<String> _CACHED_MAGIC_LIB_LAYOUT_PATH = new ObjRHSet<>(32);
 
     private final static Logger _LOG = Global.getLogger(StaticTrailManager.class);
 
     /**
-     * @param id the id of <strong>projectile spec</strong>.
+     * @param id the id of <b>projectile spec</b>.
      */
     public static boolean haveTrailDataConfig(final String id) {
         return PROJ_TRAIL.containsKey(id);
     }
 
     /**
-     * @param id the id of <strong>projectile spec</strong>.
+     * @param id the id of <b>projectile spec</b>.
      */
     public static Set<String> getTrailDataConfig(final String id) {
         return PROJ_TRAIL.get(id);
     }
 
     /**
-     * @param projID the id of <strong>projectile spec</strong>.
+     * @param projID the id of <b>projectile spec</b>.
      * @param trailID same as {@link StaticTrailData#id}.
      *
      * @return <code>true</code> if not contain this trail data.
      */
     public static boolean putTrailDataConfig(@NotNull final String projID, final String trailID) {
         if (projID.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
-        return PROJ_TRAIL.computeIfAbsent(projID, k -> new HashSet<>(2)).add(trailID);
+        return PROJ_TRAIL.computeIfAbsent(projID, k -> new ObjRHSet<>(2)).add(trailID);
     }
 
     /**
-     * @param id the id of <strong>projectile spec</strong>.
+     * @param id the id of <b>projectile spec</b>.
      */
     public static Set<String> removeTrailDataConfig(final String id) {
         return PROJ_TRAIL.remove(id);
@@ -111,17 +111,18 @@ public final class StaticTrailManager {
         return TRAILS.remove(id);
     }
 
-    public static boolean haveCustomTracker(final String id) {
-        return CUSTOM_TRACKER.containsKey(id);
+    public static boolean haveCustomTracker(final String trackerID) {
+        return CUSTOM_TRACKER.containsKey(trackerID);
     }
 
-    public static BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> getCustomTracker(final String id) {
-        return CUSTOM_TRACKER.get(id);
+    public static BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> getCustomTracker(final String trackerID) {
+        return CUSTOM_TRACKER.get(trackerID);
     }
 
     /**
-     * @param trackerID the unique tracker ID for your mod's
-     * @param customTracker a standard trail tracker for all the projectiles that BoxUtil built-in autogen static trail system using {@link org.boxutil.base.BaseProjectileTrailTracker}.
+     * @param trackerID the unique tracker ID for your mod's, for example <code>ABCD_efgh_tracker</code>;
+     * @param customTracker a standard trail tracker for all the projectiles that BoxUtil built-in autogen static trail system using {@link org.boxutil.base.BaseProjectileTrailTracker}.<p>
+     *                      must be returned a <code>NotNull</code> tracker, for example <code>BaseProjectileTrailTracker::new</code>
      *
      * @return see {@link Map#put(Object, Object)}
      */
@@ -130,8 +131,8 @@ public final class StaticTrailManager {
         return CUSTOM_TRACKER.put(trackerID, customTracker);
     }
 
-    public static BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> removeCustomTracker(final String id) {
-        return CUSTOM_TRACKER.remove(id);
+    public static BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> removeCustomTracker(final String trackerID) {
+        return CUSTOM_TRACKER.remove(trackerID);
     }
 
     private static boolean _invalidDuration(float fadeIn, float full, float fadeOut) {
@@ -173,7 +174,7 @@ public final class StaticTrailManager {
 
                 final boolean isExistingTrail = objData.optBoolean("use_existing_trail", false);
                 if (isExistingTrail) {
-                    PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
+                    PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailID);
                     continue;
                 }
 
@@ -241,14 +242,14 @@ public final class StaticTrailManager {
                         .setCustomTrackerID(customTrackerID);
                 final boolean rotateTex = objData.optBoolean("is_vertical_tex", false);
                 final MaterialData material = data.material;
-                material.setDiffuse(diffusePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(diffusePath, TextureManager::tryTexture));
+                material.setDiffuse(diffusePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(diffusePath, rotateTex, TextureManager::tryTexture));
                 if (!normalPath.isBlank()) material.setNormal(BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3));
                 if (!complexPath.isBlank()) material.setComplex(BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3));
-                material.setEmissive(emissivePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(emissivePath, TextureManager::tryTexture));
+                material.setEmissive(emissivePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(emissivePath, rotateTex, TextureManager::tryTexture));
                 if (!tangentPath.isBlank()) material.setTangent(BUtil_MiscUtil.tryTangentTexture(tangentPath, objData.optBoolean("is_tangent_angle_map", true), true, false));
                 material.setGlowPower((float) objData.optDouble("glow_power", 1.0d));
 
-                PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
+                PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailID);
                 TRAILS.put(trailID, data);
             }
         } catch (JSONException | IOException e) {
@@ -356,14 +357,34 @@ public final class StaticTrailManager {
                         .setVelocityForForward(velocityForward)
                         .setRenderBelowExplosions(renderBelowExplosions);
                 final MaterialData material = data.material;
-                material.setDiffuse(Global.getSettings().getSprite("fx", diffuseKey));
+                final String sprite = Global.getSettings().getSpriteName("fx", diffuseKey);
+                material.setDiffuse((sprite == null || sprite.isBlank()) ? 0 : BUtil_MiscUtil.tryTexture(sprite, true, TextureManager::tryTexture));
 
-                PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
+                PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailID);
                 TRAILS.put(trailID, data);
             }
         } catch (JSONException | IOException e) {
             CommonUtil.printThrowable(EntityShadingDataManager.class, "'BoxUtil' static trail csv data loading failed at: '" + path + "': ", e);
         }
+    }
+
+    /**
+     * @param projID the id of <b>projectile spec</b>.
+     */
+    public static void registerTrail(final String projID, final StaticTrailData trailData) {
+        if (projID.isBlank()) throw new IllegalArgumentException("Illegal projID: a white space");
+        PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailData.id);
+        TRAILS.put(trailData.id, trailData);
+    }
+
+    /**
+     * @param trackerID the unique tracker ID for your mod's, for example <code>ABCD_efgh_tracker</code>;
+     * @param customTracker a standard trail tracker for all the projectiles that BoxUtil built-in autogen static trail system using {@link org.boxutil.base.BaseProjectileTrailTracker}.<p>
+     *                      must be returned a <code>NotNull</code> tracker, for example <code>BaseProjectileTrailTracker::new</code>
+     */
+    public static void registerCustomTracker(final String trackerID, @NotNull final BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker> customTracker) {
+        if (trackerID.isBlank()) throw new IllegalArgumentException("Illegal trackerID: a white space");
+        CUSTOM_TRACKER.put(trackerID, customTracker);
     }
 
     /**

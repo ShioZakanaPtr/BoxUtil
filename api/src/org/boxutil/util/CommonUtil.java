@@ -21,6 +21,8 @@ import java.io.*;
 import java.nio.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class CommonUtil {
@@ -857,13 +859,16 @@ public final class CommonUtil {
     }
 
     /**
+     * @param alignForward <code>true</code> rotate the image from facing upward to facing right, i.e. rotate it in -90 angle,
+     *                     that force it point to positive x-axis rather than positive y-axis.
+     *
      * @return int[] = {sizeX, sizeY, channelNum, pixelPreImage, ivec3(averageColor), ivec3(averageBrightColor)};<p>
      *     ByteBuffer = pixels value;
      */
-    public static Pair<int[], ByteBuffer> getRawPixels(String file, int channelNum) {
+    public static Pair<int[], ByteBuffer> getRawPixels(String file, int channelNum, boolean alignForward) {
         final byte channel = (byte) Math.max(Math.min(channelNum, 4), 1);
         Pair<int[], ByteBuffer> result = new Pair<>(new int[10], null);
-        double[] avc = new double[channel];
+
         if (file == null || file.isBlank()) return result;
         try (InputStream inputStream = Global.getSettings().openStream(file)) {
             BufferedImage imageBuffer = ImageIO.read(new BufferedInputStream(inputStream));
@@ -878,33 +883,49 @@ public final class CommonUtil {
                 _LOG.error("'BoxUtil' cannot loading file: '" + file + "', only support to reading 'bmp/jpg/jpeg/png'");
                 return result;
             }
-            result.one[0] = data.getWidth();
-            result.one[1] = data.getHeight();
+
+            final int realWidth = data.getWidth(), realHeight = data.getHeight();
+            result.one[0] = alignForward ? realHeight : realWidth;
+            result.one[1] = alignForward ? realWidth : realHeight;
             result.one[2] = channel;
             result.one[3] = result.one[0] * result.one[1];
-            result.two = BufferUtils.createByteBuffer(result.one[3] * channel);
+            result.two = BufferUtils.createByteBuffer(result.one[3] * channel).clear();
 
             _LOG.info("'BoxUtil' loading sprite file: '" + file + "', with width " + result.one[0] + " and height " + result.one[1] + ", pixel have " + channel + " channels.");
 
-            int[] pixels = new int[4];
-            for (int y = result.one[1] - 1; y >= 0; --y) {
-                for (int x = 0; x < result.one[0]; ++x) {
-                    data.getPixel(x, y, pixels);
-                    if (pixels[3] == 0) {
-                        if (isPNG) pixels[0] = pixels[1] = pixels[2] = 0; else pixels[3] = 255;
-                    }
-                    for (int c = 0; c < channel; ++c) {
-                        avc[c] += pixels[c];
-                        result.two.put((byte) pixels[c]);
-                    }
-                }
+            final ThreadLocal<int[]> pixelBuffer = ThreadLocal.withInitial(() -> new int[4]);
+            final AtomicLong[] avc = new AtomicLong[channel];
+            for (byte i = 0; i < channel; i++) {
+                avc[i] = new AtomicLong(0);
             }
+            IntStream.range(0, result.one[3]).parallel().unordered().forEach(i -> {
+                final int l_currPixelIdx = i * channel;
+                int l_y , l_x;
+                if (alignForward) {
+                    l_x = i / realHeight;
+                    l_y = i - l_x * realHeight;
+                    l_x = (realWidth - 1) - l_x;
+                } else {
+                    l_y = i / realWidth;
+                    l_x = i - l_y * realWidth;
+                }
+                l_y = (realHeight - 1) - l_y;
+
+                final int[] l_pixels = pixelBuffer.get();
+                data.getPixel(l_x, l_y, l_pixels);
+                if (!isPNG && l_pixels[3] == 0) l_pixels[3] = 255;
+
+                for (int c = 0; c < channel; ++c) {
+                    avc[c].addAndGet(l_pixels[c]);
+                    result.two.put(l_currPixelIdx + c, (byte) l_pixels[c]);
+                }
+            });
 
             result.two.clear();
             for (int i = 0; i < Math.min(avc.length, 3); ++i) {
-                avc[i] = Math.round(avc[i] / result.one[3]);
-                double gray = Math.round(avc[i] * _LINEAR[i]);
-                result.one[4 + i] = Math.max(Math.min((int) avc[i], 255), 0);
+                final double avgColor = Math.round((double) avc[i].get() / (double) result.one[3]),
+                        gray = Math.round(avgColor * _LINEAR[i]);
+                result.one[4 + i] = Math.max(Math.min((int) avgColor, 255), 0);
                 result.one[7 + i] = Math.max(Math.min((int) gray, 255), 0);
             }
         } catch (IOException e) {
@@ -912,6 +933,10 @@ public final class CommonUtil {
             return result;
         }
         return result;
+    }
+
+    public static Pair<int[], ByteBuffer> getRawPixels(String file, int channelNum) {
+        return getRawPixels(file, channelNum, false);
     }
 
     /**

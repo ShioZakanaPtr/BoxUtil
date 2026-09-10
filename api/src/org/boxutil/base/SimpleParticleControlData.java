@@ -15,6 +15,7 @@ import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <strong>Very^32</strong> simple particle dynamic resource manager.<p>
@@ -125,7 +126,7 @@ public class SimpleParticleControlData extends BaseControlData {
     }
 
     public Instance2Data addParticle(float spawnStartRadius, float velocity, float scale, Color basecolor, Color emissive, float in, float full, float out) {
-        return this.addParticle(spawnStartRadius, (float) Math.random() * TrigUtil.PI2_F, velocity, scale, basecolor, emissive, in, full, out);
+        return this.addParticle(spawnStartRadius, ThreadLocalRandom.current().nextFloat(TrigUtil.PI2_F), velocity, scale, basecolor, emissive, in, full, out);
     }
 
     public Instance2Data addParticle(float spawnStartRadius, float velocity, float scale, float in, float full, float out) {

@@ -54,15 +54,4 @@ public class BUtil_InstanceMemory extends GPUMemoryPool.InternalMemory<InstanceT
     public String toString() {
         return "'BoxUtil' Instance memory: Type = '" + this._type.name() + "' Reference = '" + this.ref.get() + "' Address = '0x" + Long.toHexString(this.address).toUpperCase() + "' Size = '" + this.size + "'";
     }
-
-    public int hashCode() {
-        int result = 31 + this._type.hashCode();
-        result = 31 * result + Long.hashCode(this.address);
-        return 31 * result + Long.hashCode(this.size);
-    }
-
-    public boolean equals(Object obj) {
-        if (obj instanceof BUtil_InstanceMemory) return hashCode() == obj.hashCode();
-        else return false;
-    }
 }

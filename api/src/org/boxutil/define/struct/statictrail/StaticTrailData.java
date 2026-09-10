@@ -69,7 +69,7 @@ public class StaticTrailData {
     public @Nullable String customTrackerID = null;
 
     /**
-     * @param id <b>IMPORTANT</b>, the unique ID in game, to define the unique trail style type and memory pool.<p>
+     * @param id <b>IMPORTANT</b>, the unique ID in game, to define the unique trail style type and memory pool, for example <code>ABCD_efgh_trail</code>.<p>
      * <b>MUST</b> be the const field.<p>
      * <b>CANNOT</b> be empty or contains only {@linkplain Character#isWhitespace(int) white space} codepoints.
      * @param initCapacity how many trails have in a typical scene, for example: 2048 for the weapon [vulkan]
@@ -87,7 +87,7 @@ public class StaticTrailData {
     /**
      * Deep copy constructor.
      *
-     * @param id <b>IMPORTANT</b>, the unique ID in game, to define the unique trail style type and memory pool.<p>
+     * @param id <b>IMPORTANT</b>, the unique ID in game, to define the unique trail style type and memory pool, for example <code>ABCD_abcd_trail</code>.<p>
      * <b>MUST</b> be the const field.<p>
      * <b>CANNOT</b> be empty or contains only {@linkplain Character#isWhitespace(int) white space} codepoints.
      * @param initCapacity how many trails have in a typical scene, for example: 2048 for the weapon [vulkan]
