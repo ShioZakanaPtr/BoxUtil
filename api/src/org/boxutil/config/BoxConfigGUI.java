@@ -133,6 +133,7 @@ public final class BoxConfigGUI extends BaseEveryFrameCombatPlugin {
     public static void globalInitLater() {
         if (globalInit) return;
         globalInit = true;
+        GLWrapper.init(); // check again
         ShaderCore.initCore();
         ShaderCore.initOptional();
         BUtil_InstanceDataMemoryPool.initPool();

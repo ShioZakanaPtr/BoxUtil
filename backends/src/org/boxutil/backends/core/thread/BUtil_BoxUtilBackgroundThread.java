@@ -11,9 +11,9 @@ import org.lwjgl.opengl.*;
 import java.util.concurrent.*;
 
 public final class BUtil_BoxUtilBackgroundThread {
-    private final static ExecutorService __POOL = Executors.newFixedThreadPool(3, r -> {
+    private final static ExecutorService __POOL = Executors.newFixedThreadPool(4, r -> {
         final Thread thread = new Thread(r);
-        thread.setDaemon(true);
+        thread.setDaemon(false);
         return thread;
     });
 
@@ -120,22 +120,23 @@ public final class BUtil_BoxUtilBackgroundThread {
             this.logicalInit();
             this._LOG.info("'BoxUtil' additional thread running.");
 
+            boolean hostClosed = false;
             try {
                 while (!this._CURR_THREAD.isInterrupted()) {
-                    if (this._HOST_THREAD == null || !this._HOST_THREAD.isAlive()) break;
+                    hostClosed = this._HOST_THREAD == null || !this._HOST_THREAD.isAlive();
+                    if (hostClosed) break;
                     this.runBody();
                 }
             } catch (Throwable e) {
                 CommonUtil.printThrowable(this._LOG, "'BoxUtil' additional thread catch: \n", e);
-                this.destroyDrawable();
-                this.logicalDestroy();
                 this._LOG.info("'BoxUtil' additional thread destroy by exception.");
                 BUtil_ResourceStorage.sharedResource().pushThreadException(e);
-                return;
+            } finally {
+                this.destroyDrawable();
+                this.logicalDestroy();
+                this._LOG.info(hostClosed ? "'BoxUtil' additional thread because by main thread has closed." : "'BoxUtil' additional thread destroy.");
             }
-            this.destroyDrawable();
-            this.logicalDestroy();
-            this._LOG.info("'BoxUtil' additional thread destroy.");
+
         }
     }
 

@@ -9,9 +9,6 @@ v1.6.2 / 2026.09.07
         custom_tracker_id: 用于在创建对应trail时，使用指定的自定义tracker控制trail的生成，可通过该次更新后 StaticTrailManager 的新方法设置
     提高内置尾迹系统计算时应用的随机性
     修复生涯中战斗内，后台线程判断状态错误的问题
-    于 org.boxutil.util.container 加入 Obj2ObjRHMap / Obj2IntRHMap / Int2ObjRHMap / Int2IntRHMap / ObjRHSet / IntRHSet 非线程安全容器类用于满足高频查询，与 ContainerHasher 哈希函数接口类，
-        其中 Obj2ObjRHMap / Obj2IntRHMap / Int2ObjRHMap / Int2IntRHMap 实现了 Map 接口，ObjRHSet / IntRHSet 实现了 Set 接口
-    资源Manager的储存换用该次更新的容器实现
 
     CommonUtil 新增方法：
         Pair<int[], ByteBuffer> getRawPixels(String, int, boolean);

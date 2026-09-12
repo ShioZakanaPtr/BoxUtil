@@ -889,15 +889,13 @@ public final class CommonUtil {
             result.one[1] = alignForward ? realWidth : realHeight;
             result.one[2] = channel;
             result.one[3] = result.one[0] * result.one[1];
-            result.two = BufferUtils.createByteBuffer(result.one[3] * channel).clear();
+            final int pixelBufSize = result.one[3] * channel;
+            result.two = BufferUtils.createByteBuffer(pixelBufSize).clear();
 
             _LOG.info("'BoxUtil' loading sprite file: '" + file + "', with width " + result.one[0] + " and height " + result.one[1] + ", pixel have " + channel + " channels.");
 
             final ThreadLocal<int[]> pixelBuffer = ThreadLocal.withInitial(() -> new int[4]);
-            final AtomicLong[] avc = new AtomicLong[channel];
-            for (byte i = 0; i < channel; i++) {
-                avc[i] = new AtomicLong(0);
-            }
+            final long[] avc = new long[pixelBufSize];
             IntStream.range(0, result.one[3]).parallel().unordered().forEach(i -> {
                 final int l_currPixelIdx = i * channel;
                 int l_y , l_x;
@@ -916,14 +914,19 @@ public final class CommonUtil {
                 if (!isPNG && l_pixels[3] == 0) l_pixels[3] = 255;
 
                 for (int c = 0; c < channel; ++c) {
-                    avc[c].addAndGet(l_pixels[c]);
-                    result.two.put(l_currPixelIdx + c, (byte) l_pixels[c]);
+                    final int l_writePos = l_currPixelIdx + c;
+                    avc[l_writePos] = l_pixels[c];
+                    result.two.put(l_writePos, (byte) l_pixels[c]);
                 }
             });
+            final long[] realAvc = new long[channel];
+            for (int i = 0; i < result.one[3]; i++) {
+                System.arraycopy(avc, i * channel, realAvc, 0, channel);
+            }
 
             result.two.clear();
             for (int i = 0; i < Math.min(avc.length, 3); ++i) {
-                final double avgColor = Math.round((double) avc[i].get() / (double) result.one[3]),
+                final double avgColor = Math.round((double) realAvc[i] / (double) result.one[3]),
                         gray = Math.round(avgColor * _LINEAR[i]);
                 result.one[4 + i] = Math.max(Math.min((int) avgColor, 255), 0);
                 result.one[7 + i] = Math.max(Math.min((int) gray, 255), 0);

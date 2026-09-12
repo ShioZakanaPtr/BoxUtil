@@ -10,7 +10,6 @@ import org.boxutil.backends.struct.BUtil_Stack2f;
 import org.boxutil.backends.struct.BUtil_Stack3f;
 import org.boxutil.backends.struct.BUtil_TriIndex;
 import org.boxutil.units.standard.attribute.ModelData;
-import org.boxutil.util.container.Obj2ObjRHMap;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,13 +23,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class ModelManager {
-    private static final Map<String, ModelData> _MODEL_DATA = new Obj2ObjRHMap<>(32);
-    private static final Map<String, LegacyModelData> _LEGACY_MODEL = new Obj2ObjRHMap<>(32);
+    private static final Map<String, ModelData> _MODEL_DATA = new HashMap<>(32);
+    private static final Map<String, LegacyModelData> _LEGACY_MODEL = new HashMap<>(32);
 
     private static final Logger _LOG = Global.getLogger(ModelManager.class);
 
@@ -182,7 +182,7 @@ public final class ModelManager {
     }
 
     private static Map<String, ModelData> wavefrontOBJCSVLoadCore(String path) throws JSONException, IOException {
-        Map<String, ModelData> map = new Obj2ObjRHMap<>(16);
+        Map<String, ModelData> map = new HashMap<>(16);
         JSONArray objDataArray = Global.getSettings().loadCSV(path);
         JSONObject objData;
         String objID, objPath, typeString;

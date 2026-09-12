@@ -1,8 +1,9 @@
 package org.boxutil.units.standard;
 
-import org.boxutil.backends.util.BUtil_BoundedIntMap;
+import org.boxutil.backends.util.BUtil_BoundedStr2IntMap;
 import org.boxutil.base.BaseShaderData;
 import org.boxutil.util.ShaderUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -73,12 +74,11 @@ import org.jetbrains.annotations.Nullable;
  * }
  * </pre>
  */
-@SuppressWarnings("unchecked")
 public class ShaderProgram extends BaseShaderData {
-    protected BUtil_BoundedIntMap<String> uniformMap = null;
-    protected BUtil_BoundedIntMap<String> uniformBlockMap = null;
-    protected BUtil_BoundedIntMap<String>[] subroutineMap = null;
-    protected BUtil_BoundedIntMap<String>[] subroutineUniformMap = null;
+    protected BUtil_BoundedStr2IntMap uniformMap = null;
+    protected BUtil_BoundedStr2IntMap uniformBlockMap = null;
+    protected BUtil_BoundedStr2IntMap[] subroutineMap = null;
+    protected BUtil_BoundedStr2IntMap[] subroutineUniformMap = null;
     protected final int[] _tmpIndex = new int[3];
 
     public ShaderProgram(final int id) {
@@ -127,7 +127,7 @@ public class ShaderProgram extends BaseShaderData {
 
     public ShaderProgram initUniformSize(int size) {
         this.location = new int[size];
-        this.uniformMap = new BUtil_BoundedIntMap<>(size, 0.8f);
+        this.uniformMap = new BUtil_BoundedStr2IntMap(size, 0.8f);
         return this;
     }
 
@@ -136,14 +136,14 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
-    public ShaderProgram loadUniformIndex(String name) {
+    public ShaderProgram loadUniformIndex(@NotNull final String name) {
         this.location[this._tmpIndex[0]] = this.getUniformIndex(name);
         this.uniformMap.put(name, this.location[this._tmpIndex[0]]);
         this._tmpIndex[0]++;
         return this;
     }
 
-    public ShaderProgram loadUniformIndex(int storeIndex, String name) {
+    public ShaderProgram loadUniformIndex(int storeIndex, @NotNull final String name) {
         this.location[storeIndex] = this.getUniformIndex(name);
         this.uniformMap.put(name, this.location[storeIndex]);
         return this;
@@ -160,7 +160,7 @@ public class ShaderProgram extends BaseShaderData {
 
     public ShaderProgram initUniformBlockSize(int size) {
         this.uboLocation = new int[size];
-        this.uniformBlockMap = new BUtil_BoundedIntMap<>(size, 0.8f);
+        this.uniformBlockMap = new BUtil_BoundedStr2IntMap(size, 0.8f);
         return this;
     }
 
@@ -169,27 +169,27 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
-    public ShaderProgram loadUniformBlockIndex(String name) {
+    public ShaderProgram loadUniformBlockIndex(@NotNull final String name) {
         this.uboLocation[this._tmpIndex[0]] = this.getStructUniformIndex(name);
         this.uniformBlockMap.put(name, this.uboLocation[this._tmpIndex[0]]);
         this._tmpIndex[0]++;
         return this;
     }
 
-    public ShaderProgram loadUniformBlockIndex(int storeIndex, String name) {
+    public ShaderProgram loadUniformBlockIndex(int storeIndex, @NotNull final String name) {
         this.uboLocation[storeIndex] = this.getStructUniformIndex(name);
         this.uniformBlockMap.put(name, this.uboLocation[storeIndex]);
         return this;
     }
 
-    public ShaderProgram loadAndSetUniformBlockIndex(String name, int bindingIndex) {
+    public ShaderProgram loadAndSetUniformBlockIndex(@NotNull final String name, int bindingIndex) {
         this.uboLocation[this._tmpIndex[0]] = this.getUBOIndex(name, bindingIndex);
         this.uniformBlockMap.put(name, this.uboLocation[this._tmpIndex[0]]);
         this._tmpIndex[0]++;
         return this;
     }
 
-    public ShaderProgram loadAndSetUniformBlockIndex(int storeIndex, String name, int bindingIndex) {
+    public ShaderProgram loadAndSetUniformBlockIndex(int storeIndex, @NotNull final String name, int bindingIndex) {
         this.uboLocation[storeIndex] = this.getUBOIndex(name, bindingIndex);
         this.uniformBlockMap.put(name, this.uboLocation[storeIndex]);
         return this;
@@ -207,10 +207,10 @@ public class ShaderProgram extends BaseShaderData {
     public ShaderProgram initSubroutineSize(int... categorySize) {
         final int size = categorySize.length;
         this.subroutineLocation = new int[size][];
-        this.subroutineMap = new BUtil_BoundedIntMap[size];
+        this.subroutineMap = new BUtil_BoundedStr2IntMap[size];
         for (int i = 0; i < size; i++) {
             this.subroutineLocation[i] = new int[categorySize[i]];
-            this.subroutineMap[i] = new BUtil_BoundedIntMap<>(categorySize[i], 0.8f);
+            this.subroutineMap[i] = new BUtil_BoundedStr2IntMap(categorySize[i], 0.8f);
         }
         return this;
     }
@@ -222,14 +222,14 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
-    public ShaderProgram loadSubroutineIndex(String name) {
+    public ShaderProgram loadSubroutineIndex(@NotNull final String name) {
         this.subroutineLocation[this._tmpIndex[1]][this._tmpIndex[0]] = this.getSubroutineIndex(this._tmpIndex[2], name);
         this.subroutineMap[this._tmpIndex[1]].put(name, this.subroutineLocation[this._tmpIndex[1]][this._tmpIndex[0]]);
         this._tmpIndex[0]++;
         return this;
     }
 
-    public ShaderProgram loadSubroutineIndex(int storeCategory, int storeIndex, int shaderType, String name) {
+    public ShaderProgram loadSubroutineIndex(int storeCategory, int storeIndex, int shaderType, @NotNull final String name) {
         this.subroutineLocation[storeCategory][storeIndex] = this.getSubroutineIndex(shaderType, name);
         this.subroutineMap[storeCategory].put(name, this.subroutineLocation[storeCategory][storeIndex]);
         return this;
@@ -247,10 +247,10 @@ public class ShaderProgram extends BaseShaderData {
     public ShaderProgram initSubroutineUniformSize(int... categorySize) {
         final int size = categorySize.length;
         this.subroutineUniformLocation = new int[size][];
-        this.subroutineUniformMap = new BUtil_BoundedIntMap[size];
+        this.subroutineUniformMap = new BUtil_BoundedStr2IntMap[size];
         for (int i = 0; i < size; i++) {
             this.subroutineUniformLocation[i] = new int[categorySize[i]];
-            this.subroutineUniformMap[i] = new BUtil_BoundedIntMap<>(categorySize[i], 0.8f);
+            this.subroutineUniformMap[i] = new BUtil_BoundedStr2IntMap(categorySize[i], 0.8f);
         }
         return this;
     }
@@ -262,14 +262,14 @@ public class ShaderProgram extends BaseShaderData {
         return this;
     }
 
-    public ShaderProgram loadSubroutineUniformIndex(String name) {
+    public ShaderProgram loadSubroutineUniformIndex(@NotNull final String name) {
         this.subroutineUniformLocation[this._tmpIndex[1]][this._tmpIndex[0]] = this.getSubroutineUniformLocation(this._tmpIndex[2], name);
         this.subroutineUniformMap[this._tmpIndex[1]].put(name, this.subroutineLocation[this._tmpIndex[1]][this._tmpIndex[0]]);
         this._tmpIndex[0]++;
         return this;
     }
 
-    public ShaderProgram loadSubroutineUniformIndex(int storeCategory, int storeIndex, int shaderType, String name) {
+    public ShaderProgram loadSubroutineUniformIndex(int storeCategory, int storeIndex, int shaderType, @NotNull final String name) {
         this.subroutineUniformLocation[storeCategory][storeIndex] = this.getSubroutineUniformLocation(shaderType, name);
         this.subroutineUniformMap[storeCategory].put(name, this.subroutineLocation[storeCategory][storeIndex]);
         return this;

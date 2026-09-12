@@ -18,23 +18,19 @@ public class BUtil_AtomicEnumSet32<E extends Enum<E>> {
 
     public boolean add(final E e) {
         final int pos = 1 << e.ordinal();
-        int oldValue, newValue;
+        int oldValue;
         do {
-            oldValue = this.elements.get();
-            if ((oldValue & pos) != 0) return false;
-            newValue = oldValue | pos;
-        } while (!this.elements.compareAndSet(oldValue, newValue));
+            if (((oldValue = this.elements.get()) & pos) != 0) return false;
+        } while (!this.elements.compareAndSet(oldValue, oldValue | pos));
         return true;
     }
 
     public boolean remove(final E e) {
         final int pos = 1 << e.ordinal();
-        int oldValue, newValue;
+        int oldValue;
         do {
-            oldValue = this.elements.get();
-            if ((oldValue & pos) == 0) return false;
-            newValue = oldValue & ~pos;
-        } while (!this.elements.compareAndSet(oldValue, newValue));
+            if (((oldValue = this.elements.get()) & pos) == 0) return false;
+        } while (!this.elements.compareAndSet(oldValue, oldValue & ~pos));
         return true;
     }
 
@@ -53,6 +49,6 @@ public class BUtil_AtomicEnumSet32<E extends Enum<E>> {
         do {
             if ((snapshot & pos) != 0) doEach.accept(this.elementsArray[getEnum]);
             pos <<= 1;
-        } while ((getEnum++) < this.maxElements);
+        } while ((++getEnum) < this.maxElements);
     }
 }

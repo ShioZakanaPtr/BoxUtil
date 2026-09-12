@@ -28,7 +28,8 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
 
     private static boolean poolReq(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> ignore) {
         return BoxDatabase.getGLState().BOXUTIL_VALID && BoxConfigs.isBackgroundThreadGLValid() &&
-                BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS > 7L && ShaderCore.isCoreProgramValid();
+                BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS > 7L && ShaderCore.isCoreProgramValid() &&
+                GLWrapper.Operation.Sync.valid_Barrier();
     }
 
     private static void poolRebind(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> pool) {

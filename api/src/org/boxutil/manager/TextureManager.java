@@ -9,11 +9,11 @@ import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.CommonUtil;
 import org.boxutil.util.ShaderUtil;
 import org.boxutil.util.TrigUtil;
-import org.boxutil.util.container.Obj2ObjRHMap;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.BufferUtils;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("UnusedReturnValue")
@@ -23,8 +23,8 @@ public final class TextureManager {
     private static volatile int[][] _INTERNAL_FORMAT = null;
     private static int[][] _FORMAT = null;
 
-    private final static Map<String, Integer> _PATH_TEX = new Obj2ObjRHMap<>(64);
-    private final static Map<Integer, Integer> _AUTO_NORMAL = new Obj2ObjRHMap<>(64);
+    private final static Map<String, Integer> _PATH_TEX = new HashMap<>(64);
+    private final static Map<Integer, Integer> _AUTO_NORMAL = new HashMap<>(64);
     public final static ShaderUtil.NormalMapGenParam DEFAULT_AUTO_NORMAL_PARAM = new ShaderUtil.NormalMapGenParam();
 
     private final static Logger _LOG = Global.getLogger(TextureManager.class);
@@ -175,7 +175,7 @@ public final class TextureManager {
             GLWrapper.Texture.glBindTexture(target, 0);
             _LOG.info("'BoxUtil' OpenGL texture loading finished: '" + file + "'" + (alignForward ? "(aligned forward)" : "") + " with ID: " + result[0]);
         }
-        putTexture(file, result[0]);
+        putTexture(BUtil_MiscUtil.fetchFilePostfix(file, alignForward ? ALIGN_FORWARD_SUFFIX : null), result[0]);
         return result;
     }
 
@@ -246,7 +246,7 @@ public final class TextureManager {
 
     public static int tryTexture(@NotNull final String file, boolean alignForward) {
         final String realFile = BUtil_MiscUtil.fetchFilePostfix(file, alignForward ? ALIGN_FORWARD_SUFFIX : null);
-        return haveTexture(realFile) ? _PATH_TEX.get(realFile) : loadTextureRGBA8(realFile, alignForward, false, true, false, true)[0];
+        return haveTexture(realFile) ? _PATH_TEX.get(realFile) : loadTextureRGBA8(file, alignForward, false, true, false, true)[0];
     }
 
     public static int tryTexture(@NotNull final String file) {

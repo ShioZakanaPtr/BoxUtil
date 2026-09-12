@@ -9,8 +9,6 @@ import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.util.CommonUtil;
-import org.boxutil.util.container.Obj2ObjRHMap;
-import org.boxutil.util.container.ObjRHSet;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,21 +30,21 @@ public final class EntityShadingDataManager {
     public final static String WEAPON_BARREL_SUFFIX = "_BARREL";
     public final static String WEAPON_UNDER_SUFFIX = "_UNDER";
 
-    private final static Map<String, TextureSet> _ENTITY = new Obj2ObjRHMap<>(32);
-    private final static Map<String, TextureSet> _MISSILE = new Obj2ObjRHMap<>(32);
-    private final static Map<String, TextureSet>[] _WEAPON = new Map[]{new Obj2ObjRHMap<String, TextureSet>(32), new Obj2ObjRHMap<String, TextureSet>(32)};
+    private final static Map<String, TextureSet> _ENTITY = new HashMap<>(32);
+    private final static Map<String, TextureSet> _MISSILE = new HashMap<>(32);
+    private final static Map<String, TextureSet>[] _WEAPON = new Map[]{new HashMap<String, TextureSet>(32), new HashMap<String, TextureSet>(32)};
     private final static Map<String, TextureSet>[][] _WEAPON_COVER = new Map[][]{
-            new Map[]{new Obj2ObjRHMap<String, TextureSet>(8), new Obj2ObjRHMap<String, TextureSet>(8), new Obj2ObjRHMap<String, TextureSet>(8)},
-            new Map[]{new Obj2ObjRHMap<String, TextureSet>(8), new Obj2ObjRHMap<String, TextureSet>(8), new Obj2ObjRHMap<String, TextureSet>(8)}
+            new Map[]{new HashMap<String, TextureSet>(8), new HashMap<String, TextureSet>(8), new HashMap<String, TextureSet>(8)},
+            new Map[]{new HashMap<String, TextureSet>(8), new HashMap<String, TextureSet>(8), new HashMap<String, TextureSet>(8)}
     };
 
-    private final static Map<String, ProjectileIlluminantData> _PROJ_ILLUM = new Obj2ObjRHMap<>(32);
-    private final static Map<String, IsoIlluminantData> _BEAM_ILLUM = new Obj2ObjRHMap<>(32);
-    private final static Map<String, IsoIlluminantData> _ENGINE_ILLUM = new Obj2ObjRHMap<>(8);
+    private final static Map<String, ProjectileIlluminantData> _PROJ_ILLUM = new HashMap<>(32);
+    private final static Map<String, IsoIlluminantData> _BEAM_ILLUM = new HashMap<>(32);
+    private final static Map<String, IsoIlluminantData> _ENGINE_ILLUM = new HashMap<>(8);
 
-    private final static Set<String> _CACHED_TEXTURE_PATH = new ObjRHSet<>(32);
-    private final static Set<String> _CACHED_GRAPHICS_LIB_LAYOUT_TEXTURE_PATH = new ObjRHSet<>(32);
-    private final static Set<String> _CACHED_ILLUMINANT_PATH = new ObjRHSet<>(32);
+    private final static Set<String> _CACHED_TEXTURE_PATH = new HashSet<>(32);
+    private final static Set<String> _CACHED_GRAPHICS_LIB_LAYOUT_TEXTURE_PATH = new HashSet<>(32);
+    private final static Set<String> _CACHED_ILLUMINANT_PATH = new HashSet<>(32);
 
     private static final Logger _LOG = Global.getLogger(EntityShadingDataManager.class);
 

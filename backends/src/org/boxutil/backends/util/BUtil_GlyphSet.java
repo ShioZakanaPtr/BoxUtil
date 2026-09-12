@@ -31,10 +31,11 @@ public class BUtil_GlyphSet<G extends BUtil_Glyph> {
     }
 
     public boolean get(char key, final G result) {
-        final int keyCast = key & 0xffff;
-        if (this.glyphIdx == null || keyCast > this.glyphIdx.length) return false;
-        final int i = this.glyphIdx[keyCast];
-        if (i < 0) return false;
+        final int[] glyphIdxL = this.glyphIdx;
+        final int keyCast;
+        if (glyphIdxL == null || (keyCast = key & 0xffff) > glyphIdxL.length) return false;
+        final int i;
+        if ((i = glyphIdxL[keyCast]) < 0) return false;
         result.fetch(i, this.glyphStorage);
         return true;
     }

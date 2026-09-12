@@ -2,15 +2,12 @@ package org.boxutil.manager;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.DamagingProjectileAPI;
-import com.fs.starfarer.api.graphics.SpriteAPI;
 import org.apache.log4j.Logger;
 import org.boxutil.backends.util.BUtil_MiscUtil;
 import org.boxutil.base.api.resource.StaticTrailTracker;
 import org.boxutil.define.struct.statictrail.StaticTrailData;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.util.CommonUtil;
-import org.boxutil.util.container.Obj2ObjRHMap;
-import org.boxutil.util.container.ObjRHSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
@@ -20,6 +17,8 @@ import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -42,11 +41,11 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings("UnusedReturnValue")
 public final class StaticTrailManager {
-    private final static Map<String, Set<String>> PROJ_TRAIL = new Obj2ObjRHMap<>(128);
-    private final static Map<String, StaticTrailData> TRAILS = new Obj2ObjRHMap<>(128);
-    private final static Map<String, BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker>> CUSTOM_TRACKER = new Obj2ObjRHMap<>(128);
-    private final static Set<String> _CACHED_PATH = new ObjRHSet<>(32);
-    private final static Set<String> _CACHED_MAGIC_LIB_LAYOUT_PATH = new ObjRHSet<>(32);
+    private final static Map<String, Set<String>> PROJ_TRAIL = new HashMap<>(128);
+    private final static Map<String, StaticTrailData> TRAILS = new HashMap<>(128);
+    private final static Map<String, BiFunction<DamagingProjectileAPI, StaticTrailData, StaticTrailTracker>> CUSTOM_TRACKER = new HashMap<>(128);
+    private final static Set<String> _CACHED_PATH = new HashSet<>(32);
+    private final static Set<String> _CACHED_MAGIC_LIB_LAYOUT_PATH = new HashSet<>(32);
 
     private final static Logger _LOG = Global.getLogger(StaticTrailManager.class);
 
@@ -72,7 +71,7 @@ public final class StaticTrailManager {
      */
     public static boolean putTrailDataConfig(@NotNull final String projID, final String trailID) {
         if (projID.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
-        return PROJ_TRAIL.computeIfAbsent(projID, k -> new ObjRHSet<>(2)).add(trailID);
+        return PROJ_TRAIL.computeIfAbsent(projID, k -> new HashSet<>(2)).add(trailID);
     }
 
     /**
@@ -174,7 +173,7 @@ public final class StaticTrailManager {
 
                 final boolean isExistingTrail = objData.optBoolean("use_existing_trail", false);
                 if (isExistingTrail) {
-                    PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailID);
+                    PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
                     continue;
                 }
 
@@ -249,7 +248,7 @@ public final class StaticTrailManager {
                 if (!tangentPath.isBlank()) material.setTangent(BUtil_MiscUtil.tryTangentTexture(tangentPath, objData.optBoolean("is_tangent_angle_map", true), true, false));
                 material.setGlowPower((float) objData.optDouble("glow_power", 1.0d));
 
-                PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailID);
+                PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
                 TRAILS.put(trailID, data);
             }
         } catch (JSONException | IOException e) {
@@ -360,7 +359,7 @@ public final class StaticTrailManager {
                 final String sprite = Global.getSettings().getSpriteName("fx", diffuseKey);
                 material.setDiffuse((sprite == null || sprite.isBlank()) ? 0 : BUtil_MiscUtil.tryTexture(sprite, true, TextureManager::tryTexture));
 
-                PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailID);
+                PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
                 TRAILS.put(trailID, data);
             }
         } catch (JSONException | IOException e) {
@@ -373,7 +372,7 @@ public final class StaticTrailManager {
      */
     public static void registerTrail(final String projID, final StaticTrailData trailData) {
         if (projID.isBlank()) throw new IllegalArgumentException("Illegal projID: a white space");
-        PROJ_TRAIL.computeIfAbsent(projID, key -> new ObjRHSet<>(2)).add(trailData.id);
+        PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailData.id);
         TRAILS.put(trailData.id, trailData);
     }
 
