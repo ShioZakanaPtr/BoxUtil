@@ -176,7 +176,6 @@ public final class BUtil_BoxUtilBackgroundThread {
             } finally {
                 this.destroyDrawable();
                 this.logicalDestroy();
-                this._LOG.info(_HOST_CLOSED ? "'BoxUtil' additional thread because by main thread has closed." : "'BoxUtil' additional thread destroy.");
             }
         }
     }
