@@ -19,6 +19,7 @@ import org.lwjgl.BufferUtils;
 import java.nio.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 public abstract class BaseInstanceRenderData extends BaseRenderData implements InstanceRenderAPI {
     protected int instanceRefreshIndex = 0;
@@ -194,12 +195,15 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     }
 
     protected void _packingInstanceData(final ByteBuffer rawBuffer, int offset, final InstanceType type, int index, int limit, boolean isFixed) {
+        final var instanceDataList = this.instanceData;
+        if (instanceDataList == null || instanceDataList.size() < limit) return;
+
         final FloatBuffer buffer = rawBuffer.asFloatBuffer();
         InstanceDataAPI data;
         float[] ptr;
         int pos = offset;
         for (int i = index; i < limit; ++i) {
-            data = this.instanceData.get(i);
+            data = instanceDataList.get(i);
             if (data == null) ptr = new float[type.getCompactComponent()];
             else ptr = isFixed ? data._pickFixed_ssbo() : data._pickDynamic_ssbo();
 
@@ -209,79 +213,78 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
     }
 
     public void submitInstance() {
-        this.sync_lock.lock();
-        final int refreshSize = this.instanceRefreshSize;
-        if (!this.haveValidInstanceData() || refreshSize < 1) {
-            this.sync_lock.unlock();
-            return;
-        }
-        if (refreshSize > this.memory.instance_count()) InstanceDataMemoryPool.realloc(this.memory, refreshSize);
+        final boolean mappingBuffer;
+        final int refreshSize, refreshIndex, refreshOffset;
+        final var in_syncLock = this.sync_lock;
+        in_syncLock.lock();
+        try {
+            refreshSize = this.instanceRefreshSize;
+            if (!this.haveValidInstanceData() || refreshSize < 1) return;
 
-        final int refreshIndex = this.instanceRefreshIndex, refreshOffset = this.instanceRefreshOffset;
-        final boolean mappingBuffer = this.mappingSubmit;
-        this.sync_lock.unlock();
+            if (refreshSize > this.memory.instance_count()) InstanceDataMemoryPool.realloc(this.memory, refreshSize);
+
+            refreshIndex = this.instanceRefreshIndex;
+            refreshOffset = this.instanceRefreshOffset;
+            mappingBuffer = this.mappingSubmit;
+        } finally {
+            in_syncLock.unlock();
+        }
 
         BUtil_ResourceStorage.sharedResource().offerSubmitInstance(() -> {
             if (this.hasDelete()) return;
-            this.sync_lock.lock();
-            if (this.memory == null || this.memory.is_free()) {
-                this.sync_lock.unlock();
-                return;
-            }
 
-            final boolean l_isFixed = this.memory.is_type_fixed();
-            final var l_type = this.memory.meta();
-            final var l_pool = BUtil_InstanceDataMemoryPool.getPool(l_type);
-            final var l_lock = l_pool.getGPULock();
+            Lock l_gpuLock = null;
+            in_syncLock.lock();
+            try {
+                if (this.memory == null || this.memory.is_free()) return;
 
-            l_lock.lock();
-            ByteBuffer l_rawBuffer = l_pool.getMappingBuffer();
-            final boolean l_persistentMapping = l_pool.isPersistentMapping() && l_rawBuffer != null;
-            final int l_bufferTarget = l_pool.getPoolBehavior().glTarget,
-                    l_refreshLimit = refreshIndex + refreshSize,
-                    l_uploadOffset = l_pool.getPoolBehavior().reservedSize;
-            final long l_refreshByteSize = (long) l_type.getSize() * refreshSize;
+                final boolean l_isFixed = this.memory.is_type_fixed();
+                final var l_type = this.memory.meta();
+                final var l_pool = BUtil_InstanceDataMemoryPool.getPool(l_type);
+
+                (l_gpuLock = l_pool.getGPULock()).lock();
+                ByteBuffer l_rawBuffer = l_pool.getMappingBuffer();
+                final boolean l_persistentMapping = l_pool.isPersistentMapping() && l_rawBuffer != null;
+                final int l_bufferTarget = l_pool.getPoolBehavior().glTarget,
+                        l_refreshLimit = refreshIndex + refreshSize,
+                        l_uploadOffset = l_pool.getPoolBehavior().reservedSize;
+                final long l_refreshByteSize = (long) l_type.getSize() * refreshSize;
 
 
-            if (!(mappingBuffer || l_persistentMapping)) {
-                l_rawBuffer = BufferUtils.createByteBuffer((int) l_refreshByteSize);
-                this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
-            }
+                if (!(mappingBuffer || l_persistentMapping)) {
+                    l_rawBuffer = BufferUtils.createByteBuffer((int) l_refreshByteSize);
+                    this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
+                }
 
-            final int l_ssbo = InstanceDataMemoryPool.getBufferID(l_type);
-            if (l_ssbo < 1) {
-                l_lock.unlock();
-                this.sync_lock.unlock();
-                return;
-            }
-            final long l_refreshByteOffset = this.memory.address() + (long) l_type.getSize() * refreshOffset + l_uploadOffset;
+                final int l_ssbo = InstanceDataMemoryPool.getBufferID(l_type);
+                if (l_ssbo < 1) return;
 
-            if (l_persistentMapping) {
-                this._packingInstanceData(l_rawBuffer, (int) (l_refreshByteOffset >> 2), l_type, refreshIndex, l_refreshLimit, l_isFixed);
-                l_lock.unlock();
-                this.sync_lock.unlock();
-                return;
-            }
+                final long l_refreshByteOffset = this.memory.address() + (long) l_type.getSize() * refreshOffset + l_uploadOffset;
 
-            GLWrapper.Buffer.glBindBuffer(l_bufferTarget, l_ssbo);
-            if (mappingBuffer) {
-                final int l_access = GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
-                l_rawBuffer = GLWrapper.Buffer.glMapBufferRange(l_bufferTarget, l_refreshByteOffset, l_refreshByteSize, l_access, null);
-                if (l_rawBuffer == null || l_rawBuffer.capacity() < l_refreshByteSize) {
-                    GLWrapper.Buffer.glUnmapBuffer(l_bufferTarget);
-                    l_lock.unlock();
-                    this.sync_lock.unlock();
+                if (l_persistentMapping) {
+                    this._packingInstanceData(l_rawBuffer, (int) (l_refreshByteOffset >> 2), l_type, refreshIndex, l_refreshLimit, l_isFixed);
                     return;
                 }
 
-                this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
-            }
+                GLWrapper.Buffer.glBindBuffer(l_bufferTarget, l_ssbo);
+                if (mappingBuffer) {
+                    final int l_access = GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+                    l_rawBuffer = GLWrapper.Buffer.glMapBufferRange(l_bufferTarget, l_refreshByteOffset, l_refreshByteSize, l_access, null);
+                    if (l_rawBuffer == null || l_rawBuffer.capacity() < l_refreshByteSize) {
+                        GLWrapper.Buffer.glUnmapBuffer(l_bufferTarget);
+                        return;
+                    }
 
-            l_rawBuffer.clear(); // assert not null
-            if (mappingBuffer) GLWrapper.Buffer.glUnmapBuffer(l_bufferTarget);
-            else GLWrapper.Buffer.glBufferSubData(l_bufferTarget, l_refreshByteOffset, l_rawBuffer);
-            l_lock.unlock();
-            this.sync_lock.unlock();
+                    this._packingInstanceData(l_rawBuffer, 0, l_type, refreshIndex, l_refreshLimit, l_isFixed);
+                }
+
+                l_rawBuffer.clear(); // assert not null
+                if (mappingBuffer) GLWrapper.Buffer.glUnmapBuffer(l_bufferTarget);
+                else GLWrapper.Buffer.glBufferSubData(l_bufferTarget, l_refreshByteOffset, l_rawBuffer);
+            } finally {
+                if (l_gpuLock != null) l_gpuLock.unlock();
+                in_syncLock.unlock();
+            }
         });
     }
 

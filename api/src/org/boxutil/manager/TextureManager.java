@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.BufferUtils;
 
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -115,9 +116,10 @@ public final class TextureManager {
             result[0] = GLWrapper.Texture.glGenTextures();
             GLWrapper.Texture.glBindTexture(target, result[0]);
             if (is1DTexture) {
-                if (texStorage) GLWrapper.Texture.glTexStorage1D(GLWrapper.Texture.GL_TEXTURE_1D, 1, _INTERNAL_FORMAT[typePicker][channelPicker], result[2]);
-                else GLWrapper.Texture.glTexImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, _INTERNAL_FORMAT[typePicker][channelPicker], result[2], 0, _FORMAT[typePicker][channelPicker], GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
-                GLWrapper.Texture.glTexSubImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, 0, result[4], _FORMAT[typePicker][channelPicker], GLWrapper.DataType.GL_UNSIGNED_BYTE, rawData.two);
+                final int real1DWidth = Math.max(result[2], result[3]), real1DDataWidth = Math.max(result[4], result[5]);
+                if (texStorage) GLWrapper.Texture.glTexStorage1D(GLWrapper.Texture.GL_TEXTURE_1D, 1, _INTERNAL_FORMAT[typePicker][channelPicker], real1DWidth);
+                else GLWrapper.Texture.glTexImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, _INTERNAL_FORMAT[typePicker][channelPicker], real1DWidth, 0, _FORMAT[typePicker][channelPicker], GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+                GLWrapper.Texture.glTexSubImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, 0, real1DDataWidth, _FORMAT[typePicker][channelPicker], GLWrapper.DataType.GL_UNSIGNED_BYTE, rawData.two);
             } else {
                 if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, _INTERNAL_FORMAT[typePicker][channelPicker], result[2], result[3]);
                 else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, _INTERNAL_FORMAT[typePicker][channelPicker], result[2], result[3], 0, _FORMAT[typePicker][channelPicker], GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
@@ -162,18 +164,19 @@ public final class TextureManager {
             result[0] = GLWrapper.Texture.glGenTextures();
             GLWrapper.Texture.glBindTexture(target, result[0]);
             if (is1DTexture) {
-                if (texStorage) GLWrapper.Texture.glTexStorage1D(GLWrapper.Texture.GL_TEXTURE_1D, 1, GLWrapper.Texture.GL_RGBA8, result[2]);
-                else GLWrapper.Texture.glTexImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, GLWrapper.Texture.GL_RGBA8, result[2], 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
-                GLWrapper.Texture.glTexSubImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, 0, result[4], GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, rawData.two);
+                final int real1DWidth = Math.max(result[1], result[2]), real1DDataWidth = Math.max(result[3], result[4]);
+                if (texStorage) GLWrapper.Texture.glTexStorage1D(GLWrapper.Texture.GL_TEXTURE_1D, 1, GLWrapper.Texture.GL_RGBA8, real1DWidth);
+                else GLWrapper.Texture.glTexImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, GLWrapper.Texture.GL_RGBA8, real1DWidth, 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+                GLWrapper.Texture.glTexSubImage1D(GLWrapper.Texture.GL_TEXTURE_1D, 0, 0, real1DDataWidth, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, rawData.two);
             } else {
-                if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, GLWrapper.Texture.GL_RGBA8, result[2], result[3]);
-                else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGBA8, result[2], result[3], 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
-                GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, result[4], result[5], GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, rawData.two);
+                if (texStorage) GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, GLWrapper.Texture.GL_RGBA8, result[1], result[2]);
+                else GLWrapper.Texture.glTexImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_RGBA8, result[1], result[2], 0, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+                GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, result[3], result[4], GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE, rawData.two);
             }
             GLWrapper.Texture.glTexParameteri(target, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, sampler);
             GLWrapper.Texture.glTexParameteri(target, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, sampler);
             GLWrapper.Texture.glBindTexture(target, 0);
-            _LOG.info("'BoxUtil' OpenGL texture loading finished: '" + file + "'" + (alignForward ? "(aligned forward)" : "") + " with ID: " + result[0]);
+            _LOG.info("'BoxUtil' OpenGL texture loading finished: '" + file + "'" + (alignForward ? " (aligned forward)" : "") + " with ID: " + result[0]);
         }
         putTexture(BUtil_MiscUtil.fetchFilePostfix(file, alignForward ? ALIGN_FORWARD_SUFFIX : null), result[0]);
         return result;
@@ -244,7 +247,7 @@ public final class TextureManager {
         return haveTexture(file) ? _PATH_TEX.get(file) : loadTexture(file, channelNum, is1DTexture, uintTexture, useTextureStorage, nearestSampler, potAligned)[0];
     }
 
-    public static int tryTexture(@NotNull final String file, boolean alignForward) {
+    public static int tryTextureRGBA(@NotNull final String file, boolean alignForward) {
         final String realFile = BUtil_MiscUtil.fetchFilePostfix(file, alignForward ? ALIGN_FORWARD_SUFFIX : null);
         return haveTexture(realFile) ? _PATH_TEX.get(realFile) : loadTextureRGBA8(file, alignForward, false, true, false, true)[0];
     }

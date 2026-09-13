@@ -29,7 +29,7 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
     private static boolean poolReq(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> ignore) {
         return BoxDatabase.getGLState().BOXUTIL_VALID && BoxConfigs.isBackgroundThreadGLValid() &&
                 BoxDatabase.getGLState().MAX_VERTEX_SHADER_STORAGE_BLOCKS > 7L && ShaderCore.isCoreProgramValid() &&
-                GLWrapper.Operation.Sync.valid_Barrier();
+                GLWrapper.Operation.Sync.valid_Barrier() && GLWrapper.Buffer.valid_BufferStorage() && GLWrapper.Buffer.SSBO.valid();
     }
 
     private static void poolRebind(GPUMemoryPool<BUtil_InstanceMemory, InstanceType> pool) {
@@ -87,17 +87,17 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
     }
 
     public void rebindBase() {
-        this.getClientLock().lock();
-        this.poolGPULock().lock();
-        if (this.glID < 1 || this.memTotal < 1) {
-            this.poolGPULock().unlock();
-            this.getClientLock().unlock();
-            return;
+        final var in_clientLock = this.getClientLock();
+        final var in_poolLock = this.poolGPULock();
+        in_clientLock.lock();
+        in_poolLock.lock();
+        try {
+            if (this.glID < 1 || this.memTotal < 1) return;
+            this.behavior.glRebindBuffer.accept(this);
+        } finally {
+            in_poolLock.unlock();
+            in_clientLock.unlock();
         }
-
-        this.behavior.glRebindBuffer.accept(this);
-        this.poolGPULock().unlock();
-        this.getClientLock().unlock();
     }
 
     /**
@@ -106,37 +106,41 @@ public final class BUtil_InstanceDataMemoryPool extends GPUMemoryPool<BUtil_Inst
      * @param values {space, total}
      */
     public void glDrawMemoryUsage(final long[] values) {
-        this.getClientLock().lock();
-        if (this.glID < 1) {
-            GL11.glColor4ub(BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ONE_COLOR);
-            GL11.glRectf(0.0f, 0.0f, 1.0f, 1.0f);
-            values[0] = values[1] = 0L;
-        } else {
-            final byte[] rgb = new byte[3];
-            final double div = 1.0d / this.memTotal;
-            int colorSeed;
+        final var in_clientLock = this.getClientLock();
+        in_clientLock.lock();
+        try {
+            if (this.glID < 1) {
+                GL11.glColor4ub(BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ZERO, BoxEnum.ONE_COLOR);
+                GL11.glRectf(0.0f, 0.0f, 1.0f, 1.0f);
+                values[0] = values[1] = 0L;
+            } else {
+                final byte[] rgb = new byte[3];
+                final double div = 1.0d / this.memTotal;
+                int colorSeed;
 
-            for (BUtil_InstanceMemory block : this.mem) {
-                if (block == null) continue;
-                if (block.is_free()) {
-                    rgb[0] = rgb[1] = rgb[2] = BoxEnum.ZERO;
-                } else {
-                    colorSeed = Long.hashCode((block.address() + 1L) * block.size());
-                    colorSeed ^= colorSeed >> 16;
-                    colorSeed *= 0x85ebca6b;
-                    colorSeed ^= colorSeed >> 13;
-                    colorSeed *= 0xc2b2ae35;
-                    colorSeed ^= colorSeed >> 16;
-                    rgb[0] = (byte) (colorSeed >>> 16 & 0xff);
-                    rgb[1] = (byte) (colorSeed >>> 8 & 0xff);
-                    rgb[2] = (byte) (colorSeed & 0xff);
+                for (BUtil_InstanceMemory block : this.mem) {
+                    if (block == null) continue;
+                    if (block.is_free()) {
+                        rgb[0] = rgb[1] = rgb[2] = BoxEnum.ZERO;
+                    } else {
+                        colorSeed = Long.hashCode((block.address() + 1L) * block.size());
+                        colorSeed ^= colorSeed >> 16;
+                        colorSeed *= 0x85ebca6b;
+                        colorSeed ^= colorSeed >> 13;
+                        colorSeed *= 0xc2b2ae35;
+                        colorSeed ^= colorSeed >> 16;
+                        rgb[0] = (byte) (colorSeed >>> 16 & 0xff);
+                        rgb[1] = (byte) (colorSeed >>> 8 & 0xff);
+                        rgb[2] = (byte) (colorSeed & 0xff);
+                    }
+                    GL11.glColor4ub(rgb[0], rgb[1], rgb[2], BoxEnum.ONE_COLOR);
+                    GL11.glRectd(block.address() * div, 0.0d, (block.address() + block.size()) * div, 1.0d);
                 }
-                GL11.glColor4ub(rgb[0], rgb[1], rgb[2], BoxEnum.ONE_COLOR);
-                GL11.glRectd(block.address() * div, 0.0d, (block.address() + block.size()) * div, 1.0d);
+                values[0] = this.memSpace;
+                values[1] = this.memTotal;
             }
-            values[0] = this.memSpace;
-            values[1] = this.memTotal;
+        } finally {
+            in_clientLock.unlock();
         }
-        this.getClientLock().unlock();
     }
 }

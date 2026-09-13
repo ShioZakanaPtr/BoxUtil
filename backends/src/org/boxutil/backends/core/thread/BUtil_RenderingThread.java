@@ -11,8 +11,8 @@ import org.lwjgl.opengl.*;
 import java.util.Iterator;
 
 final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread.ThreadTemplate {
-    BUtil_RenderingThread(Thread hostThread, Drawable sharedDrawable, Object ignored) {
-        super(hostThread, sharedDrawable, ignored);
+    BUtil_RenderingThread(Thread host, Drawable sharedDrawable, Object ignored) {
+        super(host, sharedDrawable, ignored);
     }
 
     private interface InvokePluginFun {
@@ -35,32 +35,32 @@ final class BUtil_RenderingThread extends BUtil_BoxUtilBackgroundThread.ThreadTe
     }
 
     protected void runBody() {
-        BoxThreadSync.Rendering.beforeRendering().arriveAndAwaitAdvance();
-        BUtil_ResourceStorage.sharedResource().runEntitySubmit(true);
-        BUtil_ResourceStorage.sharedResource().delayAddRenderingPlugin();
+        if (this.tryArrive(BoxThreadSync.Rendering.beforeRendering())) return;
+        if (!this.checkExit()) BUtil_ResourceStorage.sharedResource().runEntitySubmit(true);
+        if (!this.checkExit()) BUtil_ResourceStorage.sharedResource().delayAddRenderingPlugin();
 
-        BoxThreadSync.Rendering.beginRendering().arriveAndAwaitAdvance();
-        this.runThreadPlugin(BackgroundEveryFramePlugin::runBeginRendering);
+        if (this.tryArrive(BoxThreadSync.Rendering.beginRendering())) return;
+        if (!this.checkExit()) this.runThreadPlugin(BackgroundEveryFramePlugin::runBeginRendering);
 
-        BoxThreadSync.Rendering.beginIllumination().arriveAndAwaitAdvance();
-        this.runThreadPlugin(BackgroundEveryFramePlugin::runBeginIllumination);
+        if (this.tryArrive(BoxThreadSync.Rendering.beginIllumination())) return;
+        if (!this.checkExit()) this.runThreadPlugin(BackgroundEveryFramePlugin::runBeginIllumination);
 
-        BoxThreadSync.Rendering.afterRendering().arriveAndAwaitAdvance();
-        this.runThreadPlugin(BackgroundEveryFramePlugin::runAfterRendering);
-        if (!this._FAILED) GLWrapper.Operation.Sync.glFlush();
+        if (this.tryArrive(BoxThreadSync.Rendering.afterRendering())) return;
+        if (!this.checkExit()) this.runThreadPlugin(BackgroundEveryFramePlugin::runAfterRendering);
+        if (!(this._FAILED || this.checkExit())) GLWrapper.Operation.Sync.glFlush();
     }
 
     protected void logicalInit() {
-        BoxThreadSync.Rendering.beforeRendering().register();
-        BoxThreadSync.Rendering.beginRendering().register();
-        BoxThreadSync.Rendering.beginIllumination().register();
-        BoxThreadSync.Rendering.afterRendering().register();
+        registerPhaser(BoxThreadSync.Rendering.beforeRendering());
+        registerPhaser(BoxThreadSync.Rendering.beginRendering());
+        registerPhaser(BoxThreadSync.Rendering.beginIllumination());
+        registerPhaser(BoxThreadSync.Rendering.afterRendering());
     }
 
     protected void logicalDestroy() {
-        BoxThreadSync.Rendering.beforeRendering().arriveAndDeregister();
-        BoxThreadSync.Rendering.beginRendering().arriveAndDeregister();
-        BoxThreadSync.Rendering.beginIllumination().arriveAndDeregister();
-        BoxThreadSync.Rendering.afterRendering().arriveAndDeregister();
+        deregisterPhaser(BoxThreadSync.Rendering.beforeRendering());
+        deregisterPhaser(BoxThreadSync.Rendering.beginRendering());
+        deregisterPhaser(BoxThreadSync.Rendering.beginIllumination());
+        deregisterPhaser(BoxThreadSync.Rendering.afterRendering());
     }
 }

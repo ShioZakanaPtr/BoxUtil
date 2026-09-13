@@ -152,39 +152,41 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
      * Initializes the environment; the actual vRAM for the buffer object is formally allocated only on the first {@linkplain GPUMemoryPool#malloc(Object, long) malloc} call.
      */
     public void init() {
-        this.getClientLock().lock();
-        this.poolGPULock().lock();
-        if (this.init) {
-            this.poolGPULock().unlock();
-            this.getClientLock().unlock();
-            return;
-        }
-        this.init = true;
+        final var in_clientLock = this.getClientLock();
+        final var in_poolLock = this.poolGPULock();
+        in_clientLock.lock();
+        in_poolLock.lock();
+        try {
+            if (this.init) return;
+            this.init = true;
 
-        final var req = this.behavior.glContextRequirements;
-        if (!GLWrapper.Buffer.valid() || (req != null && !req.apply(this))) {
-            this.poolGPULock().unlock();
-            this.getClientLock().unlock();
-            return;
+            final var req = this.behavior.glContextRequirements;
+            if (!GLWrapper.Buffer.valid() || (req != null && !req.apply(this))) return;
+            this.immutableBuffer = GLWrapper.Buffer.valid_MapRange() && GLWrapper.Buffer.valid_BufferStorage() && this.behavior.immutableBufferAllow;
+            this.persistentMapping = this.immutableBuffer && (this.behavior.glBufferAccessBits & GLWrapper.Buffer.GL_MAP_PERSISTENT_BIT) > 0;
+            this.invalid = false;
+            if (this.behavior.glPoolInit != null) this.behavior.glPoolInit.accept(this);
+        } finally {
+            in_poolLock.unlock();
+            in_clientLock.unlock();
         }
-        this.immutableBuffer = GLWrapper.Buffer.valid_MapRange() && GLWrapper.Buffer.valid_BufferStorage() && this.behavior.immutableBufferAllow;
-        this.persistentMapping = this.immutableBuffer && (this.behavior.glBufferAccessBits & GLWrapper.Buffer.GL_MAP_PERSISTENT_BIT) > 0;
-        this.invalid = false;
-        if (this.behavior.glPoolInit != null) this.behavior.glPoolInit.accept(this);
-        this.poolGPULock().unlock();
-        this.getClientLock().unlock();
     }
 
     public void destroy() {
-        this.getClientLock().lock();
-        this.poolGPULock().lock();
-        this._cleanupClientMem();
-        this._invalidateBuffer();
-        if (this.behavior.glPoolDestroy != null) this.behavior.glPoolDestroy.accept(this);
-        this.init = false;
-        this.invalid = true;
-        this.poolGPULock().unlock();
-        this.getClientLock().unlock();
+        final var in_clientLock = this.getClientLock();
+        final var in_poolLock = this.poolGPULock();
+        in_clientLock.lock();
+        in_poolLock.lock();
+        try {
+            this._cleanupClientMem();
+            this._invalidateBuffer();
+            if (this.behavior.glPoolDestroy != null) this.behavior.glPoolDestroy.accept(this);
+            this.init = false;
+            this.invalid = true;
+        } finally {
+            in_poolLock.unlock();
+            in_clientLock.unlock();
+        }
     }
 
     public boolean isInvalid() {
@@ -308,22 +310,26 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     }
 
     protected void _initBuffer(final D meta, long size) {
-        this.poolGPULock().lock();
-        this._invalidateBuffer();
-        this.memTotal = this.behavior.bufferInitRule.apply(size, this);
+        final var in_poolLock = this.poolGPULock();
+        in_poolLock.lock();
+        try {
+            this._invalidateBuffer();
+            this.memTotal = this.behavior.bufferInitRule.apply(size, this);
 
-        this.glID = GLWrapper.Buffer.glGenBuffers();
-        this._runtimeBufferIDCheck();
-        GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-        this._allocateBuffer(this.memTotal);
-        GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
-        this.memRef.set(0);
+            this.glID = GLWrapper.Buffer.glGenBuffers();
+            this._runtimeBufferIDCheck();
+            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+            this._allocateBuffer(this.memTotal);
+            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+            this.memRef.set(0);
 
-        if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
-        this.poolGPULock().unlock();
+            if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
 
-        this._eraseMemory(meta);
-        this.lastCompactTime = System.nanoTime();
+            this._eraseMemory(meta);
+            this.lastCompactTime = System.nanoTime();
+        } finally {
+            in_poolLock.unlock();
+        }
     }
 
     protected void _cleanupClientMem() {
@@ -342,97 +348,105 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     }
 
     protected void _copyRangeBufferOverlap(long srcAddress, long dstAddress, long size) {
-        this.poolGPULock().lock();
-        final long realSrcAddress = srcAddress + this.behavior.reservedSize, realDstAddress = dstAddress + this.behavior.reservedSize;
-        if (GLWrapper.Buffer.valid_CopyBuffer()) {
-            final int tmpBuffer = GLWrapper.Buffer.glGenBuffers();
-            this._runtimeBufferIDCheck();
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, tmpBuffer);
-            if (this.immutableBuffer) GLWrapper.Buffer.glBufferStorage(this.behavior.glTarget, size, 0);
-            else GLWrapper.Buffer.glBufferData(this.behavior.glTarget, size, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+        final var in_poolLock = this.poolGPULock();
+        in_poolLock.lock();
+        try {
+            final long realSrcAddress = srcAddress + this.behavior.reservedSize, realDstAddress = dstAddress + this.behavior.reservedSize;
+            if (GLWrapper.Buffer.valid_CopyBuffer()) {
+                final int tmpBuffer = GLWrapper.Buffer.glGenBuffers();
+                this._runtimeBufferIDCheck();
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, tmpBuffer);
+                if (this.immutableBuffer) GLWrapper.Buffer.glBufferStorage(this.behavior.glTarget, size, 0);
+                else GLWrapper.Buffer.glBufferData(this.behavior.glTarget, size, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
 
-            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
-            GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, realSrcAddress, 0, size);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
+                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, realSrcAddress, 0, size);
 
-            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, tmpBuffer);
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-            GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, 0, realDstAddress, size);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, tmpBuffer);
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, 0, realDstAddress, size);
 
-            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
-            if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(tmpBuffer);
-            GLWrapper.Buffer.glDeleteBuffers(tmpBuffer);
-        } else {
-            final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) size).clear();
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-            GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realSrcAddress, legacyCopyBuf);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(tmpBuffer);
+                GLWrapper.Buffer.glDeleteBuffers(tmpBuffer);
+            } else {
+                final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) size).clear();
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+                GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realSrcAddress, legacyCopyBuf);
 
-            GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realDstAddress, legacyCopyBuf);
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realDstAddress, legacyCopyBuf);
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+            }
+        } finally {
+            in_poolLock.unlock();
         }
-        this.poolGPULock().unlock();
     }
 
     protected void _expandBuffer(long reqSize) {
         if (this.memTotal < 1) throw new OpenGLException("Failed to expand SSBO: not initialization yet.");
 
-        this.poolGPULock().lock();
-        final long oldSize = this.memTotal;
-        do {
-            this.memTotal = this.behavior.bufferExpendRule.apply(this.memTotal, this);
-        } while (this.memTotal - this.memRightEdge <= reqSize);
+        final var in_poolLock = this.poolGPULock();
+        in_poolLock.lock();
+        try {
+            final long oldSize = this.memTotal;
+            do {
+                this.memTotal = this.behavior.bufferExpendRule.apply(this.memTotal, this);
+            } while (this.memTotal - this.memRightEdge <= reqSize);
 
 
-        if (this.behavior.maxBufferSize > 0 && this.memTotal > this.behavior.maxBufferSize) throw new OutOfMemoryError("Failed to allocate buffer object with over " + this.behavior.maxBufferSize + " Byte.");
-        if (this.memTotal < 1) throw new OutOfMemoryError("Failed to allocate buffer object with over 8_388_608 TiB.");
-        final long diff = this.memTotal - oldSize;
-        this.memSpace += diff;
+            if (this.behavior.maxBufferSize > 0 && this.memTotal > this.behavior.maxBufferSize) throw new OutOfMemoryError("Failed to allocate buffer object with over " + this.behavior.maxBufferSize + " Byte.");
+            if (this.memTotal < 1) throw new OutOfMemoryError("Failed to allocate buffer object with over 8_388_608 TiB.");
+            final long diff = this.memTotal - oldSize;
+            this.memSpace += diff;
 
-        T block = this.mem.get(this.mem.size() - 1);
-        if (block.is_free()) {
-            block._setSize(block.size() + diff);
-            block.afterSizeChanged();
-        } else {
-            block = this._makeMemory(this.behavior.newEmptyMemory, block.meta(), block.address() + block.size(), diff, block._getIndex() + 1);
-            this.mem.add(block);
-            this.memFree.add(block);
-        }
+            T block = this.mem.get(this.mem.size() - 1);
+            if (block.is_free()) {
+                block._setSize(block.size() + diff);
+                block.afterSizeChanged();
+            } else {
+                block = this._makeMemory(this.behavior.newEmptyMemory, block.meta(), block.address() + block.size(), diff, block._getIndex() + 1);
+                this.mem.add(block);
+                this.memFree.add(block);
+            }
 
-        if (this.persistentMapping && this.clientMapping != null) {
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-            GLWrapper.Buffer.glUnmapBuffer(this.behavior.glTarget);
-            this.clientMapping = null;
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
-        }
+            if (this.persistentMapping && this.clientMapping != null) {
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+                GLWrapper.Buffer.glUnmapBuffer(this.behavior.glTarget);
+                this.clientMapping = null;
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+            }
 
-        final int newBuffer = GLWrapper.Buffer.glGenBuffers();
-        this._runtimeBufferIDCheck();
-        GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
-        this._allocateBuffer(this.memTotal);
-
-        final long realMoveMem = this.memRightEdge + this.behavior.reservedSize;
-        if (GLWrapper.Buffer.valid_CopyBuffer()) {
-            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
-            GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, 0, 0, realMoveMem);
-            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
-        } else {
-            final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) realMoveMem).clear();
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-            GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, 0, legacyCopyBuf);
-
+            final int newBuffer = GLWrapper.Buffer.glGenBuffers();
+            this._runtimeBufferIDCheck();
             GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
-            GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, 0, legacyCopyBuf);
-        }
+            this._allocateBuffer(this.memTotal);
 
-        GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
-        if (this.glID > 0) {
-            if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(this.glID);
-            GLWrapper.Buffer.glDeleteBuffers(this.glID);
-        }
-        this.glID = newBuffer;
+            final long realMoveMem = this.memRightEdge + this.behavior.reservedSize;
+            if (GLWrapper.Buffer.valid_CopyBuffer()) {
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
+                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, 0, 0, realMoveMem);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
+            } else {
+                final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) realMoveMem).clear();
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+                GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, 0, legacyCopyBuf);
 
-        if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
-        this.poolGPULock().unlock();
+                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
+                GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, 0, legacyCopyBuf);
+            }
+
+            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+            if (this.glID > 0) {
+                if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(this.glID);
+                GLWrapper.Buffer.glDeleteBuffers(this.glID);
+            }
+            this.glID = newBuffer;
+
+            if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
+        } finally {
+            in_poolLock.unlock();
+        }
     }
 
     protected T _scanEndsFreeBlock(long foundSize) {
@@ -525,52 +539,51 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         if (size == 0) throw new IllegalArgumentException("Undefined behavior, cannot call malloc() with '0' size");
         if (size < 1) throw new IllegalArgumentException("Unable to allocate memory block with size: '" + size + '\'');
 
-        this.getClientLock().lock();
-        if (!this.gpuInit) {
-            this._initBuffer(meta, size);
-            this.gpuInit = true;
-        }
-
-        if (this._sizeOverRange(size)) {
-            this.getClientLock().unlock();
-            return null;
-        }
-        T result, freeBlock = this._scanEndsFreeBlock(size);
-
-        boolean allocateAtEnd = freeBlock == null;
-        int memIndexLimit;
-        if (allocateAtEnd) {
-            this._expandBuffer(size); // keep last free block, resize the space
-            memIndexLimit = this.mem.size() - 1;
-            freeBlock = this.mem.get(memIndexLimit);
-            if (freeBlock.size() < size) {
-                this.getClientLock().unlock();
-                return null;
+        final T result;
+        final var in_clientLock = this.getClientLock();
+        in_clientLock.lock();
+        try {
+            if (!this.gpuInit) {
+                this._initBuffer(meta, size);
+                this.gpuInit = true;
             }
-        } else memIndexLimit = this.mem.size() - 1;
 
-        this.memSpace -= size;
-        allocateAtEnd = freeBlock._getIndex() == memIndexLimit;
-        if (freeBlock.size() == size) {
-            freeBlock._setRef(1);
-            freeBlock.afterAllocatedFromFree(meta);
-            result = freeBlock;
-            this.memFree.remove(freeBlock);
-        } else {
-            result = this._makeMemory(this.behavior.newNotEmptyMemory, meta, freeBlock.address(), size, freeBlock._getIndex());
-            freeBlock._setAddress(freeBlock.address() + size);
-            freeBlock._setSize(freeBlock.size() - size);
-            freeBlock.afterAddressChanged();
-            freeBlock.afterSizeChanged();
-            this.mem.add(freeBlock._getIndex(), result);
-            memIndexLimit = this.mem.size();
-            for (int i = result._getIndex() + 1; i < memIndexLimit; ++i) this.mem.get(i)._indexIncrement();
+            if (this._sizeOverRange(size)) return null;
+            T freeBlock = this._scanEndsFreeBlock(size);
+
+            boolean allocateAtEnd = freeBlock == null;
+            int memIndexLimit;
+            if (allocateAtEnd) {
+                this._expandBuffer(size); // keep last free block, resize the space
+                memIndexLimit = this.mem.size() - 1;
+                freeBlock = this.mem.get(memIndexLimit);
+                if (freeBlock.size() < size) return null;
+            } else memIndexLimit = this.mem.size() - 1;
+
+            this.memSpace -= size;
+            allocateAtEnd = freeBlock._getIndex() == memIndexLimit;
+            if (freeBlock.size() == size) {
+                freeBlock._setRef(1);
+                freeBlock.afterAllocatedFromFree(meta);
+                result = freeBlock;
+                this.memFree.remove(freeBlock);
+            } else {
+                result = this._makeMemory(this.behavior.newNotEmptyMemory, meta, freeBlock.address(), size, freeBlock._getIndex());
+                freeBlock._setAddress(freeBlock.address() + size);
+                freeBlock._setSize(freeBlock.size() - size);
+                freeBlock.afterAddressChanged();
+                freeBlock.afterSizeChanged();
+                this.mem.add(freeBlock._getIndex(), result);
+                memIndexLimit = this.mem.size();
+                for (int i = result._getIndex() + 1; i < memIndexLimit; ++i) this.mem.get(i)._indexIncrement();
+            }
+            if (allocateAtEnd) this.memRightEdge += size;
+
+            this.requireCompact = true;
+            this.memRef.incrementAndGet();
+        } finally {
+            in_clientLock.unlock();
         }
-        if (allocateAtEnd) this.memRightEdge += size;
-
-        this.requireCompact = true;
-        this.memRef.incrementAndGet();
-        this.getClientLock().unlock();
         return result;
     }
 
@@ -585,200 +598,197 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         if (this.invalid) return false;
         if (newSize == 0) throw new IllegalCallerException("Undefined behavior, cannot call realloc() with '0' size, should use free()");
         if (newSize < 1) throw new IllegalArgumentException("Unable to call realloc() with size: '" + newSize + '\'');
-        this.getClientLock().lock();
-        if (memory.is_free()) throw new IllegalArgumentException("Undefined memory block: realloc() for free block.");
-        if (memory.size() == newSize) {
-            this.getClientLock().unlock();
-            return true;
-        }
 
-        final int indexI = memory._getIndex();
-        T nextBlock = null;
-        final long diff = newSize - memory.size();
-        if (this._sizeOverRange(newSize)) {
-            this.getClientLock().unlock();
-            return false;
-        }
-        int memArraySize = this.mem.size(), indexMax = memArraySize - 1, nextIndex = indexI + 1;
-        boolean nextBlockAtEnd = false;
-        if (indexI < indexMax) { // found next
-            nextBlockAtEnd = nextIndex == indexMax;
-            nextBlock = this.mem.get(nextIndex);
-        }
+        final var in_clientLock = this.getClientLock();
+        in_clientLock.lock();
+        try {
+            if (memory.is_free()) throw new IllegalArgumentException("Undefined memory block: realloc() for free block.");
+            if (memory.size() == newSize) return true;
 
-        if (memory.size() > newSize) { // contracting
-            boolean haveNextBlock = nextBlock != null;
-            memory._setSize(newSize);
-            memory.afterSizeChanged();
-            this.memSpace -= diff;
+            final int indexI = memory._getIndex();
+            T nextBlock = null;
+            final long diff = newSize - memory.size();
+            if (this._sizeOverRange(newSize)) return false;
 
-            if (haveNextBlock && nextBlock.is_free()) {
-                nextBlock._setAddress(nextBlock.address() + diff);
-                nextBlock._setSize(nextBlock.size() - diff);
-                nextBlock.afterAddressChanged();
-                nextBlock.afterSizeChanged();
-                this.memRightEdge += diff;
-
-                this.requireCompact = true;
-                this.getClientLock().unlock();
-                return true;
+            int memArraySize = this.mem.size(), indexMax = memArraySize - 1, nextIndex = indexI + 1;
+            boolean nextBlockAtEnd = false;
+            if (indexI < indexMax) { // found next
+                nextBlockAtEnd = nextIndex == indexMax;
+                nextBlock = this.mem.get(nextIndex);
             }
 
-            nextBlock = this._makeMemory(this.behavior.newEmptyMemory, memory.meta(), memory.address() + memory.size(), -diff, indexI);
-            this.memFree.add(nextBlock);
-            if (haveNextBlock) {
-                this.mem.add(nextIndex, nextBlock);
-                ++memArraySize;
-                for (int i = nextIndex + 1; i < memArraySize; ++i) this.mem.get(i)._indexIncrement();
-            } else {
-                this.memRightEdge += diff;
-                this.mem.add(nextBlock);
-            }
+            if (memory.size() > newSize) { // contracting
+                boolean haveNextBlock = nextBlock != null;
+                memory._setSize(newSize);
+                memory.afterSizeChanged();
+                this.memSpace -= diff;
 
-            this.requireCompact = true;
-            this.getClientLock().unlock();
-            return true;
-        } // else expanding:
-
-        T preBlock = null, globalFreeBlock;
-        final long oldAddress = memory.address(), oldSize = memory.size();
-        boolean nextBlockFree = false, freeBlockNotEnough, callExpand;
-        if (nextBlock != null && nextBlock.is_free()) {
-            nextBlockFree = true;
-            freeBlockNotEnough = nextBlock.size() < diff;
-
-            if (!freeBlockNotEnough) {
-                if (nextBlock.size() == diff) {
-                    this.mem.remove(nextBlock);
-                    this.memFree.remove(nextBlock);
-                    --memArraySize;
-                    for (int i = nextIndex; i < memArraySize; ++i) this.mem.get(i)._indexDecrement();
-                } else {
+                if (haveNextBlock && nextBlock.is_free()) {
                     nextBlock._setAddress(nextBlock.address() + diff);
                     nextBlock._setSize(nextBlock.size() - diff);
                     nextBlock.afterAddressChanged();
                     nextBlock.afterSizeChanged();
+                    this.memRightEdge += diff;
+
+                    this.requireCompact = true;
+                    return true;
                 }
-                memory._setSize(newSize);
-                memory.afterSizeChanged();
-                this.memSpace -= diff;
-                if (nextBlockAtEnd) this.memRightEdge += diff;
 
-                this.requireCompact = true;
-                this.getClientLock().unlock();
-                return true;
-            }
-        }
-
-        // found pre
-        final int preIndex = indexI - 1;
-        if (indexI > 0) preBlock = this.mem.get(preIndex);
-        if (preBlock != null && preBlock.is_free()) {
-            long _freeSpace = nextBlockFree ? preBlock.size() + nextBlock.size() : preBlock.size();
-            freeBlockNotEnough = _freeSpace < diff;
-
-            if (!freeBlockNotEnough) {
-                byte _subValue = 0;
-                if (_freeSpace == diff) {
-                    this.mem.remove(preBlock);
-                    this.memFree.remove(preBlock);
-                    if (nextBlockFree) ++_subValue;
-                    --nextIndex; // lost pre block
+                nextBlock = this._makeMemory(this.behavior.newEmptyMemory, memory.meta(), memory.address() + memory.size(), -diff, indexI);
+                this.memFree.add(nextBlock);
+                if (haveNextBlock) {
+                    this.mem.add(nextIndex, nextBlock);
+                    ++memArraySize;
+                    for (int i = nextIndex + 1; i < memArraySize; ++i) this.mem.get(i)._indexIncrement();
                 } else {
-                    Collections.swap(this.mem, preIndex, indexI);
-                    preBlock._indexIncrement();
+                    this.memRightEdge += diff;
+                    this.mem.add(nextBlock);
                 }
-                if (nextBlockFree) {
-                    this.mem.remove(nextBlock);
-                    this.memFree.remove(nextBlock);
-                    ++_subValue;
-                }
-
-                if (_subValue > 0) {
-                    memArraySize -= _subValue;
-                    for (int i = nextIndex; i < memArraySize; ++i) this.mem.get(i)._indexSub(_subValue);
-                }
-
-                this._copyRangeBufferOverlap(oldAddress, preBlock.address(), oldSize);
-                memory._setAddress(preBlock.address());
-                memory._setSize(newSize);
-                memory.afterAddressChanged();
-                memory.afterSizeChanged();
-                memory._indexDecrement();
-                preBlock._setAddress(memory.address() + memory.size());
-                preBlock._setSize(diff);
-                preBlock.afterAddressChanged();
-                preBlock.afterSizeChanged();
-                this.memSpace -= diff;
-                if (nextBlockAtEnd) this.memRightEdge += diff;
 
                 this.requireCompact = true;
-                this.getClientLock().unlock();
                 return true;
+            } // else expanding:
+
+            T preBlock = null, globalFreeBlock;
+            final long oldAddress = memory.address(), oldSize = memory.size();
+            boolean nextBlockFree = false, freeBlockNotEnough, callExpand;
+            if (nextBlock != null && nextBlock.is_free()) {
+                nextBlockFree = true;
+                freeBlockNotEnough = nextBlock.size() < diff;
+
+                if (!freeBlockNotEnough) {
+                    if (nextBlock.size() == diff) {
+                        this.mem.remove(nextBlock);
+                        this.memFree.remove(nextBlock);
+                        --memArraySize;
+                        for (int i = nextIndex; i < memArraySize; ++i) this.mem.get(i)._indexDecrement();
+                    } else {
+                        nextBlock._setAddress(nextBlock.address() + diff);
+                        nextBlock._setSize(nextBlock.size() - diff);
+                        nextBlock.afterAddressChanged();
+                        nextBlock.afterSizeChanged();
+                    }
+                    memory._setSize(newSize);
+                    memory.afterSizeChanged();
+                    this.memSpace -= diff;
+                    if (nextBlockAtEnd) this.memRightEdge += diff;
+
+                    this.requireCompact = true;
+                    return true;
+                }
             }
-        }
 
-        // found ends
-        globalFreeBlock = this._scanEndsFreeBlock(newSize);
-        callExpand = globalFreeBlock == null || globalFreeBlock.size() < newSize;
+            // found pre
+            final int preIndex = indexI - 1;
+            if (indexI > 0) preBlock = this.mem.get(preIndex);
+            if (preBlock != null && preBlock.is_free()) {
+                long _freeSpace = nextBlockFree ? preBlock.size() + nextBlock.size() : preBlock.size();
+                freeBlockNotEnough = _freeSpace < diff;
 
-        if (callExpand) {
-            this._expandBuffer(newSize); // expand at end
-            memArraySize = this.mem.size();
-            indexMax = memArraySize - 1;
-            globalFreeBlock = this.mem.get(indexMax);
-            if (globalFreeBlock.size() < newSize) {
-                this.getClientLock().unlock();
-                return false;
+                if (!freeBlockNotEnough) {
+                    byte _subValue = 0;
+                    if (_freeSpace == diff) {
+                        this.mem.remove(preBlock);
+                        this.memFree.remove(preBlock);
+                        if (nextBlockFree) ++_subValue;
+                        --nextIndex; // lost pre block
+                    } else {
+                        Collections.swap(this.mem, preIndex, indexI);
+                        preBlock._indexIncrement();
+                    }
+                    if (nextBlockFree) {
+                        this.mem.remove(nextBlock);
+                        this.memFree.remove(nextBlock);
+                        ++_subValue;
+                    }
+
+                    if (_subValue > 0) {
+                        memArraySize -= _subValue;
+                        for (int i = nextIndex; i < memArraySize; ++i) this.mem.get(i)._indexSub(_subValue);
+                    }
+
+                    this._copyRangeBufferOverlap(oldAddress, preBlock.address(), oldSize);
+                    memory._setAddress(preBlock.address());
+                    memory._setSize(newSize);
+                    memory.afterAddressChanged();
+                    memory.afterSizeChanged();
+                    memory._indexDecrement();
+                    preBlock._setAddress(memory.address() + memory.size());
+                    preBlock._setSize(diff);
+                    preBlock.afterAddressChanged();
+                    preBlock.afterSizeChanged();
+                    this.memSpace -= diff;
+                    if (nextBlockAtEnd) this.memRightEdge += diff;
+
+                    this.requireCompact = true;
+                    return true;
+                }
             }
-        }
 
-        final boolean freeBlockAtEnd = globalFreeBlock._getIndex() == indexMax, notAllocateFromExpand = globalFreeBlock._getIndex() - 1 != indexI, removeFreeBlock = globalFreeBlock.size() == diff;
-        if (notAllocateFromExpand) {
-            nextBlock = this._makeMemory(this.behavior.newEmptyMemory, memory.meta(), memory.address(), memory.size(), indexI);
-            this.mem.set(indexI, nextBlock);
-            this.memFree.add(nextBlock);
+            // found ends
+            globalFreeBlock = this._scanEndsFreeBlock(newSize);
+            callExpand = globalFreeBlock == null || globalFreeBlock.size() < newSize;
 
-            this.mem.add(globalFreeBlock._getIndex(), memory);
-            memory._setIndex(globalFreeBlock._getIndex());
-            memory._setAddress(globalFreeBlock.address());
-            ++memArraySize;
-            if (!removeFreeBlock) for (int i = globalFreeBlock._getIndex() + 1; i < memArraySize; ++i) this.mem.get(i)._indexIncrement();
+            if (callExpand) {
+                this._expandBuffer(newSize); // expand at end
+                memArraySize = this.mem.size();
+                indexMax = memArraySize - 1;
+                globalFreeBlock = this.mem.get(indexMax);
+                if (globalFreeBlock.size() < newSize) return false;
+            }
 
-            // assert not overlap
-            this.poolGPULock().lock();
-            final long realReadAddress = oldAddress + this.behavior.reservedSize,
-                    realWriteAddress = memory.address() + this.behavior.reservedSize;
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-            if (GLWrapper.Buffer.valid_CopyBuffer()) {
-                GLWrapper.Buffer.glCopyBufferSubData(this.behavior.glTarget, this.behavior.glTarget, realReadAddress, realWriteAddress, oldSize);
+            final boolean freeBlockAtEnd = globalFreeBlock._getIndex() == indexMax, notAllocateFromExpand = globalFreeBlock._getIndex() - 1 != indexI, removeFreeBlock = globalFreeBlock.size() == diff;
+            if (notAllocateFromExpand) {
+                nextBlock = this._makeMemory(this.behavior.newEmptyMemory, memory.meta(), memory.address(), memory.size(), indexI);
+                this.mem.set(indexI, nextBlock);
+                this.memFree.add(nextBlock);
+
+                this.mem.add(globalFreeBlock._getIndex(), memory);
+                memory._setIndex(globalFreeBlock._getIndex());
+                memory._setAddress(globalFreeBlock.address());
+                ++memArraySize;
+                if (!removeFreeBlock) for (int i = globalFreeBlock._getIndex() + 1; i < memArraySize; ++i) this.mem.get(i)._indexIncrement();
+
+                // assert not overlap
+                final var in_poolLock = this.poolGPULock();
+                in_poolLock.lock();
+                try {
+                    final long realReadAddress = oldAddress + this.behavior.reservedSize,
+                            realWriteAddress = memory.address() + this.behavior.reservedSize;
+                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+                    if (GLWrapper.Buffer.valid_CopyBuffer()) {
+                        GLWrapper.Buffer.glCopyBufferSubData(this.behavior.glTarget, this.behavior.glTarget, realReadAddress, realWriteAddress, oldSize);
+                    } else {
+                        final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) oldSize).clear();
+                        GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realReadAddress, legacyCopyBuf);
+
+                        GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realWriteAddress, legacyCopyBuf);
+                    }
+                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                } finally {
+                    in_poolLock.unlock();
+                }
+            }
+            memory._setSize(newSize);
+            memory.afterAddressChanged();
+            memory.afterSizeChanged();
+
+            if (removeFreeBlock) {
+                this.mem.remove(globalFreeBlock);
+                this.memFree.remove(globalFreeBlock);
             } else {
-                final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) oldSize).clear();
-                GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realReadAddress, legacyCopyBuf);
-
-                GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realWriteAddress, legacyCopyBuf);
+                globalFreeBlock._setAddress(globalFreeBlock.address() + diff);
+                globalFreeBlock._setSize(globalFreeBlock.size() - diff);
+                globalFreeBlock.afterAddressChanged();
+                globalFreeBlock.afterSizeChanged();
             }
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
-            this.poolGPULock().unlock();
-        }
-        memory._setSize(newSize);
-        memory.afterAddressChanged();
-        memory.afterSizeChanged();
 
-        if (removeFreeBlock) {
-            this.mem.remove(globalFreeBlock);
-            this.memFree.remove(globalFreeBlock);
-        } else {
-            globalFreeBlock._setAddress(globalFreeBlock.address() + diff);
-            globalFreeBlock._setSize(globalFreeBlock.size() - diff);
-            globalFreeBlock.afterAddressChanged();
-            globalFreeBlock.afterSizeChanged();
+            this.memSpace -= diff;
+            if (freeBlockAtEnd) this.memRightEdge = memory.address() + memory.size();
+            this.requireCompact = true;
+        } finally {
+            in_clientLock.unlock();
         }
-
-        this.memSpace -= diff;
-        if (freeBlockAtEnd) this.memRightEdge = memory.address() + memory.size();
-        this.requireCompact = true;
-        this.getClientLock().unlock();
         return true;
     }
 
@@ -790,32 +800,37 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         if (newSize == 0) return null;
         if (newSize < 0) throw new IllegalArgumentException("Unable to call split() for memory block with size: '" + newSize + '\'');
 
-        this.getClientLock().lock();
-        if (memory.is_free()) throw new IllegalArgumentException("Undefined memory block: split() for free block.");
-        if (memory.size() == newSize) throw new IllegalArgumentException("Undefined behavior, cannot split memory block as same size.");
+        final T result;
+        final var in_clientLock = this.getClientLock();
+        in_clientLock.lock();
+        try {
+            if (memory.is_free()) throw new IllegalArgumentException("Undefined memory block: split() for free block.");
+            if (memory.size() == newSize) throw new IllegalArgumentException("Undefined behavior, cannot split memory block as same size.");
 
-        final long oriBlockSize = memory.size() - newSize;
-        final T result = this._makeMemory(this.behavior.newNotEmptyMemory, memory.meta(), memory.address(), newSize, memory._getIndex());
-        memory._setSize(oriBlockSize);
-        memory.afterSizeChanged();
+            final long oriBlockSize = memory.size() - newSize;
+            result = this._makeMemory(this.behavior.newNotEmptyMemory, memory.meta(), memory.address(), newSize, memory._getIndex());
+            memory._setSize(oriBlockSize);
+            memory.afterSizeChanged();
 
-        final int index = memory._getIndex(), memArraySize = this.mem.size();
-        final boolean noAtEnd = index != memArraySize - 1;
-        if (fromStartOrEnd) {
-            memory._setAddress(memory.address() + newSize);
-            memory.afterAddressChanged();
-            this.mem.add(index, result);
-        } else {
-            result._setAddress(result.address() + oriBlockSize);
-            result.afterAddressChanged();
-            if (noAtEnd) this.mem.add(index + 1, result); else this.mem.add(result);
+            final int index = memory._getIndex(), memArraySize = this.mem.size();
+            final boolean noAtEnd = index != memArraySize - 1;
+            if (fromStartOrEnd) {
+                memory._setAddress(memory.address() + newSize);
+                memory.afterAddressChanged();
+                this.mem.add(index, result);
+            } else {
+                result._setAddress(result.address() + oriBlockSize);
+                result.afterAddressChanged();
+                if (noAtEnd) this.mem.add(index + 1, result); else this.mem.add(result);
+            }
+            result.afterSplitFrom(memory);
+            for (int i = index + 1; i < memArraySize; ++i) this.mem.get(i)._indexIncrement();
+
+            this.requireCompact = true;
+            this.memRef.incrementAndGet();
+        } finally {
+            in_clientLock.unlock();
         }
-        result.afterSplitFrom(memory);
-        for (int i = index + 1; i < memArraySize; ++i) this.mem.get(i)._indexIncrement();
-
-        this.requireCompact = true;
-        this.memRef.incrementAndGet();
-        this.getClientLock().unlock();
         return result;
     }
 
@@ -826,31 +841,41 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
      */
     public boolean free(@NotNull final T memory) {
         if (this.invalid) return false;
+
         boolean result = true;
-        this.getClientLock().lock();
-        if (memory.reference() > 0) {
-            if (this.memRef.get() < 1) throw new IllegalStateException("Failed to free memory: SSBO was free but memory block still have reference.");
-            memory._refDecrement();
-            final boolean cleanup = this.memRef.getAndDecrement() < 1;
-            result = memory.is_free();
-            if (result) {
-                this._mergeFreeBlock(memory);
-                memory.afterFree();
-                this.requireCompact = !cleanup;
-                if (cleanup) this._eraseMemory(memory.meta());
+        final var in_clientLock = this.getClientLock();
+        in_clientLock.lock();
+        try {
+            if (memory.reference() > 0) {
+                if (this.memRef.get() < 1) throw new IllegalStateException("Failed to free memory: SSBO was free but memory block still have reference.");
+                memory._refDecrement();
+                final boolean cleanup = this.memRef.getAndDecrement() < 1;
+                result = memory.is_free();
+                if (result) {
+                    this._mergeFreeBlock(memory);
+                    memory.afterFree();
+                    this.requireCompact = !cleanup;
+                    if (cleanup) this._eraseMemory(memory.meta());
+                }
             }
+        } finally {
+            in_clientLock.unlock();
         }
-        this.getClientLock().unlock();
         return result;
     }
 
     public T share(@NotNull final T memory) {
         if (this.invalid) return null;
         if (memory.is_free()) throw new IllegalArgumentException("Undefined memory block.");
-        this.getClientLock().lock();
-        memory._refIncrement();
-        this.memRef.getAndIncrement();
-        this.getClientLock().unlock();
+
+        final var in_clientLock = this.getClientLock();
+        in_clientLock.lock();
+        try {
+            memory._refIncrement();
+            this.memRef.getAndIncrement();
+        } finally {
+            in_clientLock.unlock();
+        }
         return memory;
     }
 
@@ -859,91 +884,89 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
      */
     public long compact() {
         if (this.invalid) return 0;
-        this.getClientLock().lock();
-        this.poolGPULock().lock();
-        this.lastCompactTime = System.nanoTime();
 
-        if (this.glID < 1 || this.memSpace == this.memTotal || this.memTotal < 1) {
-            this.poolGPULock().unlock();
-            this.getClientLock().unlock();
-            return 0;
-        }
-        if (!this.requireCompact) {
-            this.poolGPULock().unlock();
-            this.getClientLock().unlock();
-            return 0;
-        }
-        if (this.memRef.get() < 1 || this.mem == null) {
-            this._cleanupClientMem();
-            this._invalidateBuffer();
-            this.poolGPULock().unlock();
-            this.getClientLock().unlock();
-            return 0;
-        }
-        this.requireCompact = false;
+        final var in_clientLock = this.getClientLock();
+        final var in_poolLock = this.poolGPULock();
+        in_clientLock.lock();
+        in_poolLock.lock();
+        final long compactTime;
+        try {
+            this.lastCompactTime = System.nanoTime();
 
-        final boolean modernCopyBuf = GLWrapper.Buffer.valid_CopyBuffer();
-        final int newBuffer = GLWrapper.Buffer.glGenBuffers();
-        this._runtimeBufferIDCheck();
-        GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
-        this._allocateBuffer(this.memTotal);
-
-        Collections.sort(this.mem);
-        if (modernCopyBuf) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
-
-        int index = 0;
-        long currOffset = 0L, realReadAddress, realWriteAddress;
-        T block, firstBlock = this.memFree.get(0);
-        final ByteBuffer legacyCopyBuf = modernCopyBuf ? null : BufferUtils.createByteBuffer((int) this.memTotal);
-        for (Iterator<T> iterator = this.mem.iterator(); iterator.hasNext();) {
-            block = iterator.next();
-            if (block == null || block.is_free() || block.address() < 0 || block.size() < 1) {
-                iterator.remove();
-                continue;
+            if (this.glID < 1 || this.memSpace == this.memTotal || this.memTotal < 1) return 0;
+            if (!this.requireCompact) return 0;
+            if (this.memRef.get() < 1 || this.mem == null) {
+                this._cleanupClientMem();
+                this._invalidateBuffer();
+                return 0;
             }
-            if (firstBlock == null) firstBlock = block;
+            this.requireCompact = false;
 
-            realReadAddress = block.address() + this.behavior.reservedSize;
-            realWriteAddress = currOffset + this.behavior.reservedSize;
-            if (modernCopyBuf) {
-                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, realReadAddress, realWriteAddress, block.size());
-            } else {
-                legacyCopyBuf.position(0).limit((int) block.size());
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-                GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realReadAddress, legacyCopyBuf);
+            final boolean modernCopyBuf = GLWrapper.Buffer.valid_CopyBuffer();
+            final int newBuffer = GLWrapper.Buffer.glGenBuffers();
+            this._runtimeBufferIDCheck();
+            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
+            this._allocateBuffer(this.memTotal);
 
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
-                GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realWriteAddress, legacyCopyBuf);
+            Collections.sort(this.mem);
+            if (modernCopyBuf) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
+
+            int index = 0;
+            long currOffset = 0L, realReadAddress, realWriteAddress;
+            T block, firstBlock = this.memFree.get(0);
+            final ByteBuffer legacyCopyBuf = modernCopyBuf ? null : BufferUtils.createByteBuffer((int) this.memTotal);
+            for (Iterator<T> iterator = this.mem.iterator(); iterator.hasNext();) {
+                block = iterator.next();
+                if (block == null || block.is_free() || block.address() < 0 || block.size() < 1) {
+                    iterator.remove();
+                    continue;
+                }
+                if (firstBlock == null) firstBlock = block;
+
+                realReadAddress = block.address() + this.behavior.reservedSize;
+                realWriteAddress = currOffset + this.behavior.reservedSize;
+                if (modernCopyBuf) {
+                    GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, realReadAddress, realWriteAddress, block.size());
+                } else {
+                    legacyCopyBuf.position(0).limit((int) block.size());
+                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+                    GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realReadAddress, legacyCopyBuf);
+
+                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
+                    GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realWriteAddress, legacyCopyBuf);
+                }
+
+                block._setAddress(currOffset);
+                block.afterAddressChanged();
+                currOffset += block.size();
+                block._setIndex(index);
+                ++index;
+            }
+            this.memSpace = this.memTotal - currOffset;
+            this.memRightEdge = currOffset;
+            this.memFree.clear();
+            if (this.memSpace > 0) {
+                block = this._makeMemory(this.behavior.newEmptyMemory, firstBlock.meta(), currOffset, this.memSpace, index);
+                this.mem.add(block);
+                this.memFree.add(block);
             }
 
-            block._setAddress(currOffset);
-            block.afterAddressChanged();
-            currOffset += block.size();
-            block._setIndex(index);
-            ++index;
+            if (modernCopyBuf) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
+            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+
+            if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(this.glID);
+            GLWrapper.Buffer.glDeleteBuffers(this.glID);
+            this.glID = newBuffer;
+
+            if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
+
+            final long ts = System.nanoTime();
+            compactTime = ts - this.lastCompactTime;
+            this.lastCompactTime = ts;
+        } finally {
+            in_poolLock.unlock();
+            in_clientLock.unlock();
         }
-        this.memSpace = this.memTotal - currOffset;
-        this.memRightEdge = currOffset;
-        this.memFree.clear();
-        if (this.memSpace > 0) {
-            block = this._makeMemory(this.behavior.newEmptyMemory, firstBlock.meta(), currOffset, this.memSpace, index);
-            this.mem.add(block);
-            this.memFree.add(block);
-        }
-
-        if (modernCopyBuf) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
-        GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
-
-        if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(this.glID);
-        GLWrapper.Buffer.glDeleteBuffers(this.glID);
-        this.glID = newBuffer;
-
-        if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
-        
-        final long ts = System.nanoTime(), compactTime = ts - this.lastCompactTime;
-        this.lastCompactTime = ts;
-        this.poolGPULock().unlock();
-        this.getClientLock().unlock();
         return compactTime;
     }
 }

@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
@@ -884,18 +885,19 @@ public final class CommonUtil {
                 return result;
             }
 
-            final int realWidth = data.getWidth(), realHeight = data.getHeight();
+            final int realWidth = data.getWidth(), realHeight = data.getHeight(), avgColorChannel = Math.min(channel, 3);
             result.one[0] = alignForward ? realHeight : realWidth;
             result.one[1] = alignForward ? realWidth : realHeight;
             result.one[2] = channel;
             result.one[3] = result.one[0] * result.one[1];
             final int pixelBufSize = result.one[3] * channel;
-            result.two = BufferUtils.createByteBuffer(pixelBufSize).clear();
+            final ByteBuffer uploadBuf;
+            uploadBuf = result.two = BufferUtils.createByteBuffer(pixelBufSize).clear();
 
             _LOG.info("'BoxUtil' loading sprite file: '" + file + "', with width " + result.one[0] + " and height " + result.one[1] + ", pixel have " + channel + " channels.");
 
             final ThreadLocal<int[]> pixelBuffer = ThreadLocal.withInitial(() -> new int[4]);
-            final long[] avc = new long[pixelBufSize];
+            final long[] avc = new long[result.one[3] * avgColorChannel];
             IntStream.range(0, result.one[3]).parallel().unordered().forEach(i -> {
                 final int l_currPixelIdx = i * channel;
                 int l_y , l_x;
@@ -913,19 +915,22 @@ public final class CommonUtil {
                 data.getPixel(l_x, l_y, l_pixels);
                 if (!isPNG && l_pixels[3] == 0) l_pixels[3] = 255;
 
+                final int l_avgColorIdx = i * avgColorChannel;
                 for (int c = 0; c < channel; ++c) {
-                    final int l_writePos = l_currPixelIdx + c;
-                    avc[l_writePos] = l_pixels[c];
-                    result.two.put(l_writePos, (byte) l_pixels[c]);
+                    if (c < avgColorChannel) avc[l_avgColorIdx + c] = l_pixels[c];
+                    uploadBuf.put(l_currPixelIdx + c, (byte) l_pixels[c]);
                 }
             });
-            final long[] realAvc = new long[channel];
+
+            final long[] realAvc = new long[avgColorChannel];
             for (int i = 0; i < result.one[3]; i++) {
-                System.arraycopy(avc, i * channel, realAvc, 0, channel);
+                final int in_avgColorIdx = i * avgColorChannel;
+                for (int c = 0; c < avgColorChannel; ++c) {
+                    realAvc[c] += avc[in_avgColorIdx + c];
+                }
             }
 
-            result.two.clear();
-            for (int i = 0; i < Math.min(avc.length, 3); ++i) {
+            for (int i = 0; i < avgColorChannel; ++i) {
                 final double avgColor = Math.round((double) realAvc[i] / (double) result.one[3]),
                         gray = Math.round(avgColor * _LINEAR[i]);
                 result.one[4 + i] = Math.max(Math.min((int) avgColor, 255), 0);

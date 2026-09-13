@@ -295,7 +295,7 @@ public class StaticTrailData {
 
     /**
      * <b>Only for system-gen trail, invalid for custom trail, not required.</b><p>
-     * The trail will try to use specific tracker by ID, call {@link org.boxutil.manager.StaticTrailManager#putCustomTracker(String, BiFunction)} for register one.<p>
+     * The trail will try to use specific tracker by ID, call {@link org.boxutil.manager.StaticTrailManager#registerCustomTracker(String, BiFunction)} for register one.<p>
      * <code>null</code> or {@linkplain Character#isWhitespace(int) white space}, or not find the tracker constructor with the ID, then the trail will use default built-in tracker.
      */
     public StaticTrailData setCustomTrackerID(@Nullable String trackerID) {

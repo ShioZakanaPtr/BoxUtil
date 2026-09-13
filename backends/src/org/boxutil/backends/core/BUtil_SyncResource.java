@@ -55,4 +55,16 @@ public final class BUtil_SyncResource {
     public Phaser getFinishAdvance() {
         return finishAdvance;
     }
+
+    public void forceTermination() {
+        this.beforeRendering.forceTermination();
+        this.beginRendering.forceTermination();
+        this.beginIllumination.forceTermination();
+        this.afterRendering.forceTermination();
+
+        this.beginAdvance.forceTermination();
+        this.beginPoolCompact.forceTermination();
+        this.beginInstanceCompute.forceTermination();
+        this.finishAdvance.forceTermination();
+    }
 }

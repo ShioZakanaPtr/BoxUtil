@@ -91,8 +91,9 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
      * @return any nodes to draw, exclude fill node.
      */
     public int computeData(final BUtil_StaticTrailMemoryPool pool, IntBuffer uploadBuffer, boolean notPersistentMapping, float amount, float elapsedTime) {
-        final var callback = this.trackerObj.callback();
-        this.trackerObj.tracker().advance(amount, elapsedTime, callback);
+        final var in_trackerObj = this.trackerObj;
+        final var callback = in_trackerObj.callback();
+        in_trackerObj.tracker().advance(amount, elapsedTime, callback);
         if (callback.shouldDestroyImmediate()) return -1;
 
         final boolean isDestroyed = callback.shouldDestroy(), isPaused = callback.isPaused();
@@ -132,8 +133,9 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
                 a_uv = this.makeUVBits(Float.floatToRawIntBits(callback.getLastUV()));
         int buffOffset = this.nextNodePtr * 6;
 
+        final int[] in_loopWriteData = this.loopWriteData;
         final boolean loopWrite = this.shouldLoopWrite;
-        if (notPersistentMapping) uploadBuffer = this.trackerObj.legacyBuf().clear(); else buffOffset += this.intBufAddress;
+        if (notPersistentMapping) uploadBuffer = in_trackerObj.legacyBuf().clear(); else buffOffset += this.intBufAddress;
         if (loopWrite) {
             this.shouldLoopWrite = false;
             final int lastBufPos = maxNodes - 1;
@@ -153,19 +155,19 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
 
             }
 
-            uploadBuffer.put(buffOffset - 6, this.loopWriteData[0]);
-            uploadBuffer.put(buffOffset - 5, this.loopWriteData[1]);
-            uploadBuffer.put(buffOffset - 4, this.loopWriteData[2]);
-            uploadBuffer.put(buffOffset - 3, this.loopWriteData[3]);
-            uploadBuffer.put(buffOffset - 2, this.loopWriteData[4]);
-            uploadBuffer.put(buffOffset - 1, this.loopWriteData[5]);
+            uploadBuffer.put(buffOffset - 6, in_loopWriteData[0]);
+            uploadBuffer.put(buffOffset - 5, in_loopWriteData[1]);
+            uploadBuffer.put(buffOffset - 4, in_loopWriteData[2]);
+            uploadBuffer.put(buffOffset - 3, in_loopWriteData[3]);
+            uploadBuffer.put(buffOffset - 2, in_loopWriteData[4]);
+            uploadBuffer.put(buffOffset - 1, in_loopWriteData[5]);
 
-            uploadBuffer.put(buffOffset, this.loopWriteData[6]);
-            uploadBuffer.put(buffOffset + 1, this.loopWriteData[7]);
-            uploadBuffer.put(buffOffset + 2, this.loopWriteData[8]);
-            uploadBuffer.put(buffOffset + 3, this.loopWriteData[9]);
-            uploadBuffer.put(buffOffset + 4, this.loopWriteData[10]);
-            uploadBuffer.put(buffOffset + 5, this.loopWriteData[11]);
+            uploadBuffer.put(buffOffset, in_loopWriteData[6]);
+            uploadBuffer.put(buffOffset + 1, in_loopWriteData[7]);
+            uploadBuffer.put(buffOffset + 2, in_loopWriteData[8]);
+            uploadBuffer.put(buffOffset + 3, in_loopWriteData[9]);
+            uploadBuffer.put(buffOffset + 4, in_loopWriteData[10]);
+            uploadBuffer.put(buffOffset + 5, in_loopWriteData[11]);
             buffOffset += 6;
             this.nextNodePtr++;
         }
@@ -183,21 +185,21 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
             GLWrapper.Buffer.glBufferSubData(pool.getPoolBehavior().glTarget, l_currWritePtr, l_uploadBuf);
         }
 
-        this.loopWriteData[6] = a_position_x;
-        this.loopWriteData[7] = a_position_y;
-        this.loopWriteData[8] = a_facingVector;
-        this.loopWriteData[9] = a_nodeColor;
-        this.loopWriteData[10] = a_timeStampRaw;
-        this.loopWriteData[11] = a_uv;
+        in_loopWriteData[6] = a_position_x;
+        in_loopWriteData[7] = a_position_y;
+        in_loopWriteData[8] = a_facingVector;
+        in_loopWriteData[9] = a_nodeColor;
+        in_loopWriteData[10] = a_timeStampRaw;
+        in_loopWriteData[11] = a_uv;
 
         this.canSwitchTrailSegment = true;
         if (this.nextNodePtr + 3 == maxNodes) {
-            this.loopWriteData[0] = a_position_x;
-            this.loopWriteData[1] = a_position_y;
-            this.loopWriteData[2] = a_facingVector;
-            this.loopWriteData[3] = a_nodeColor;
-            this.loopWriteData[4] = a_timeStampRaw;
-            this.loopWriteData[5] = a_uv;
+            in_loopWriteData[0] = a_position_x;
+            in_loopWriteData[1] = a_position_y;
+            in_loopWriteData[2] = a_facingVector;
+            in_loopWriteData[3] = a_nodeColor;
+            in_loopWriteData[4] = a_timeStampRaw;
+            in_loopWriteData[5] = a_uv;
         }
         this.nextNodePtr++;
         if (this.nextNodePtr + 1 >= maxNodes) {
@@ -212,16 +214,17 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
         if (this.cannotCut) return;
         this.cannotCut = true;
 
+        final var in_trackerObj = this.trackerObj;
         if (this.canSwitchTrailSegment) {
             this.switchTrailSegment = !this.switchTrailSegment;
             this.canSwitchTrailSegment = false;
         }
         this.shouldLoopWrite = false;
-        this.trackerObj.callback().onCutTrail();
+        in_trackerObj.callback().onCutTrail();
 
         final int writePtr = this.nextNodePtr - 1,
                 buffOffset = notPersistentMapping ? 0 : writePtr * 6 + 5 + this.intBufAddress;
-        if (notPersistentMapping) uploadBuffer = this.trackerObj.legacyBuf().position(0).limit(1);
+        if (notPersistentMapping) uploadBuffer = in_trackerObj.legacyBuf().position(0).limit(1);
         uploadBuffer.put(buffOffset, this.loopWriteData[11] = this.makeUVBits(0));
         if (notPersistentMapping) GLWrapper.Buffer.glBufferSubData(pool.getPoolBehavior().glTarget, this.address() + ((long) writePtr * BUtil_StaticTrailMemoryPool.NODE_BYTE_SIZE) + 20L, uploadBuffer);
     }

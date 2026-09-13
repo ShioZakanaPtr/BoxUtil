@@ -241,10 +241,10 @@ public final class StaticTrailManager {
                         .setCustomTrackerID(customTrackerID);
                 final boolean rotateTex = objData.optBoolean("is_vertical_tex", false);
                 final MaterialData material = data.material;
-                material.setDiffuse(diffusePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(diffusePath, rotateTex, TextureManager::tryTexture));
+                material.setDiffuse(diffusePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(diffusePath, rotateTex, TextureManager::tryTextureRGBA));
                 if (!normalPath.isBlank()) material.setNormal(BUtil_MiscUtil.tryTexture(normalPath, TextureManager::tryTextureChannel3));
                 if (!complexPath.isBlank()) material.setComplex(BUtil_MiscUtil.tryTexture(complexPath, TextureManager::tryTextureChannel3));
-                material.setEmissive(emissivePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(emissivePath, rotateTex, TextureManager::tryTexture));
+                material.setEmissive(emissivePath.isBlank() ? 0 : BUtil_MiscUtil.tryTexture(emissivePath, rotateTex, TextureManager::tryTextureRGBA));
                 if (!tangentPath.isBlank()) material.setTangent(BUtil_MiscUtil.tryTangentTexture(tangentPath, objData.optBoolean("is_tangent_angle_map", true), true, false));
                 material.setGlowPower((float) objData.optDouble("glow_power", 1.0d));
 
@@ -357,7 +357,7 @@ public final class StaticTrailManager {
                         .setRenderBelowExplosions(renderBelowExplosions);
                 final MaterialData material = data.material;
                 final String sprite = Global.getSettings().getSpriteName("fx", diffuseKey);
-                material.setDiffuse((sprite == null || sprite.isBlank()) ? 0 : BUtil_MiscUtil.tryTexture(sprite, true, TextureManager::tryTexture));
+                material.setDiffuse((sprite == null || sprite.isBlank()) ? 0 : BUtil_MiscUtil.tryTexture(sprite, true, TextureManager::tryTextureRGBA));
 
                 PROJ_TRAIL.computeIfAbsent(projID, key -> new HashSet<>(2)).add(trailID);
                 TRAILS.put(trailID, data);

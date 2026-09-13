@@ -2,7 +2,9 @@ package org.boxutil.backends.core.thread;
 
 import com.fs.starfarer.api.Global;
 import org.apache.log4j.Logger;
+import org.boxutil.BoxUtilModPlugin;
 import org.boxutil.backends.core.BUtil_ResourceStorage;
+import org.boxutil.config.BoxThreadSync;
 import org.boxutil.manager.ShaderCore;
 import org.boxutil.util.CommonUtil;
 import org.lwjgl.LWJGLException;
@@ -24,12 +26,14 @@ public final class BUtil_BoxUtilBackgroundThread {
     private final static ThreadTemplate[] _THREAD_RUNNABLE = new ThreadTemplate[_TOTAL_THREAD];
     private final static Thread[] _THREAD = new Thread[_TOTAL_THREAD];
 
+    private static volatile boolean _HOST_CLOSED = false;
+
     private static boolean _INIT = false;
     private static boolean _VALID = true;
 
     @FunctionalInterface
     private interface _ThreadInit {
-        ThreadTemplate apply(Thread thread, Drawable drawable, Object args);
+        ThreadTemplate apply(Thread host, Drawable drawable, Object args);
     }
 
     private static void setupThread(byte target, final _ThreadInit thread, final Object args, final String name) {
@@ -46,10 +50,30 @@ public final class BUtil_BoxUtilBackgroundThread {
         }
     }
 
+    private static void setupGuard() {
+        final var l_host = Thread.currentThread();
+
+        __POOL.execute(() -> {
+            final var l_currThread = Thread.currentThread();
+            try {
+                Global.getLogger(BoxUtilModPlugin.class).info("'BoxUtil' guard thread running.");
+                l_currThread.setName(l_currThread.getName() + "-AS-BUtil_GuardThread");
+                l_host.join();
+            } catch (InterruptedException e) {
+                l_currThread.interrupt();
+            } finally {
+                _HOST_CLOSED = true;
+                BUtil_ResourceStorage.syncResource().forceTermination();
+                for (final var l_bgThread : _THREAD) if (l_bgThread != null) l_bgThread.interrupt();
+            }
+        });
+    }
+
     public static boolean initWithFailedCheck() {
         if (_INIT) return _VALID;
         _INIT = true;
 
+        setupGuard();
         setupThread(_RENDERING_THREAD, BUtil_RenderingThread::new, null, "rendering");
         setupThread(_LOGICAL_THREAD, BUtil_LogicalThread::new, false, "logical");
         setupThread(_LOGICAL_AUX_THREAD, BUtil_LogicalThread::new, true, "logical-aux");
@@ -66,8 +90,8 @@ public final class BUtil_BoxUtilBackgroundThread {
 
         protected Thread _CURR_THREAD = null;
 
-        ThreadTemplate(final Thread hostThread, final Drawable sharedDrawable, final Object args) {
-            this._HOST_THREAD = hostThread;
+        ThreadTemplate(final Thread host, final Drawable sharedDrawable, final Object args) {
+            this._HOST_THREAD = host;
             this._DRAWABLE = sharedDrawable;
             this._LOG = Global.getLogger(this.getClass());
         }
@@ -75,7 +99,7 @@ public final class BUtil_BoxUtilBackgroundThread {
         void destroyDrawable() {
             if (this._DRAWABLE != null) {
                 try {
-                    this._DRAWABLE.releaseContext();
+                    if (this._DRAWABLE.isCurrent()) this._DRAWABLE.releaseContext();
                 } catch (LWJGLException e) {
                     CommonUtil.printThrowable(this._LOG, "'BoxUtil' additional thread gl-context release failed: ", e);
                 } finally {
@@ -108,9 +132,26 @@ public final class BUtil_BoxUtilBackgroundThread {
             this._INIT_SYNC.countDown();
         }
 
+        protected static void registerPhaser(final Phaser phaser) {
+            if (!phaser.isTerminated()) phaser.register();
+        }
+
+        protected static void deregisterPhaser(final Phaser phaser) {
+            if (!phaser.isTerminated()) phaser.arriveAndDeregister();
+        }
+
         protected abstract void logicalInit();
         protected abstract void logicalDestroy();
         protected abstract void runBody();
+
+        protected boolean checkExit() {
+            return _HOST_CLOSED || Thread.currentThread().isInterrupted();
+        }
+
+        protected boolean tryArrive(final Phaser phaser) {
+            if (this.checkExit() || phaser.arriveAndAwaitAdvance() < 0) return true;
+            return this.checkExit();
+        }
 
         public void run() {
             this._CURR_THREAD = Thread.currentThread();
@@ -120,11 +161,12 @@ public final class BUtil_BoxUtilBackgroundThread {
             this.logicalInit();
             this._LOG.info("'BoxUtil' additional thread running.");
 
-            boolean hostClosed = false;
             try {
-                while (!this._CURR_THREAD.isInterrupted()) {
-                    hostClosed = this._HOST_THREAD == null || !this._HOST_THREAD.isAlive();
-                    if (hostClosed) break;
+                if (this._HOST_THREAD == null || this._HOST_THREAD.isInterrupted() ||
+                        !this._HOST_THREAD.isAlive() || this.checkExit()) {
+                    throw new IllegalThreadStateException("'BoxUtil' StarSector main thread error occurred.");
+                }
+                while (!this.checkExit()) {
                     this.runBody();
                 }
             } catch (Throwable e) {
@@ -134,9 +176,8 @@ public final class BUtil_BoxUtilBackgroundThread {
             } finally {
                 this.destroyDrawable();
                 this.logicalDestroy();
-                this._LOG.info(hostClosed ? "'BoxUtil' additional thread because by main thread has closed." : "'BoxUtil' additional thread destroy.");
+                this._LOG.info(_HOST_CLOSED ? "'BoxUtil' additional thread because by main thread has closed." : "'BoxUtil' additional thread destroy.");
             }
-
         }
     }
 

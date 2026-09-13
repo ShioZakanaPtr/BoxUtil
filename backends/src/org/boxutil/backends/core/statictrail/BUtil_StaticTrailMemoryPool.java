@@ -113,40 +113,41 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
 
         private int putDrawPi(final BUtil_StaticTrailMemoryPool pool, int piFirst, int piCount) {
             final int writeP = this.writePtr.getAndIncrement();
+            final var atomicSize = this.bufSize;
 
-            if (this.bufSize.get() > writeP) {
+            if (atomicSize.get() > writeP) {
                 this.writeData(writeP, piFirst, piCount);
                 return writeP;
             }
 
+            final var in_lock = pool.drawPiLock;
             while (true) { // just for more threads at future
-                if (pool.drawPiLock.tryLock()) {
-                    if (this.bufSize.get() > writeP) {
+                if (in_lock.tryLock()) {
+                    if (atomicSize.get() > writeP) {
                         this.writeData(writeP, piFirst, piCount);
-                        pool.drawPiLock.unlock();
+                        in_lock.unlock();
                         return writeP;
                     }
 
-                    final int newSize = this.bufSize.get() << 2;
+                    final int newSize = atomicSize.get() << 2;
 
-                    IntBuffer tmpBuf = BufferUtils.createIntBuffer(newSize).position(0);
-                    tmpBuf.put(this.piFirst.duplicate());
+                    IntBuffer tmpBuf;
+                    (tmpBuf = BufferUtils.createIntBuffer(newSize).position(0)).put(this.piFirst.duplicate());
                     this.piFirst = tmpBuf.clear();
                     this.piFirstViewer = tmpBuf.duplicate();
 
-                    tmpBuf = BufferUtils.createIntBuffer(newSize).position(0);
-                    tmpBuf.put(this.piCount.duplicate());
+                    (tmpBuf = BufferUtils.createIntBuffer(newSize).position(0)).put(this.piCount.duplicate());
                     this.piCount = tmpBuf.clear();
                     this.piCountViewer = tmpBuf.duplicate();
 
                     this.writeData(writeP, piFirst, piCount);
 
-                    this.bufSize.set(newSize);
-                    pool.drawPiLock.unlock();
+                    atomicSize.set(newSize);
+                    in_lock.unlock();
                 } else {
-                    while (pool.drawPiLock.isLocked()) Thread.onSpinWait();
+                    while (in_lock.isLocked()) Thread.onSpinWait();
 
-                    if (this.bufSize.get() > writeP) {
+                    if (atomicSize.get() > writeP) {
                         this.writeData(writeP, piFirst, piCount);
                         return writeP;
                     }
@@ -365,7 +366,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
     public static void computeTrailNode(boolean auxThread) {
         final float amount = BUtil_GLImpl.getStaticTrailFrameAmount(), elapsedTime = BUtil_GLImpl.getElapsedTimeWithoutPaused();
         final boolean inCampaignSim = Global.getCombatEngine() != null && Global.getCombatEngine().isInCampaignSim(),
-                inCampaign = BUtil_GLImpl.isInCampaignSector() && (Global.getCurrentState() == GameState.COMBAT || inCampaignSim);
+                inCampaign = BUtil_GLImpl.isInCampaignSector() && Global.getCurrentState() == GameState.CAMPAIGN && !inCampaignSim;
 
         for (var pool : RES.trailPoolMap.values()) {
             if (pool == null || pool.isInvalid() || pool.getBufferReference() < 1) continue;

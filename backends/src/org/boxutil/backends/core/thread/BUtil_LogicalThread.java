@@ -59,8 +59,8 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
 
     private final boolean _isAux;
 
-    BUtil_LogicalThread(Thread hostThread, Drawable sharedDrawable, Object isAux) {
-        super(hostThread, sharedDrawable, isAux);
+    BUtil_LogicalThread(Thread host, Drawable sharedDrawable, Object isAux) {
+        super(host, sharedDrawable, isAux);
         this._isAux = (boolean) isAux;
     }
 
@@ -278,22 +278,22 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
     }
 
     protected void runBody() {
-        BoxThreadSync.Logical.beginAdvance().arriveAndAwaitAdvance();
-        this.runThreadPlugin(true);
-        this.runEntityAdvance();
-        this.runEntitySubmit();
-        if (BoxConfigs.isTrailSystemEnable()) BUtil_StaticTrailMemoryPool.deferredDeletePool(this._isAux);
+        if (this.tryArrive(BoxThreadSync.Logical.beginAdvance())) return;
+        if (!this.checkExit()) this.runThreadPlugin(true);
+        if (!this.checkExit()) this.runEntityAdvance();
+        if (!this.checkExit()) this.runEntitySubmit();
+        if (!this.checkExit() && BoxConfigs.isTrailSystemEnable()) BUtil_StaticTrailMemoryPool.deferredDeletePool(this._isAux);
 
-        BoxThreadSync.Logical.beginPoolCompact().arriveAndAwaitAdvance();
-        this.compactMemoryPool();
+        if (this.tryArrive(BoxThreadSync.Logical.beginPoolCompact())) return;
+        if (!this.checkExit()) this.compactMemoryPool();
 
-        BoxThreadSync.Logical.beginInstanceCompute().arriveAndAwaitAdvance();
-        if (BoxConfigs.isShaderEnable()) this.preComputeInstance();
-        if (BoxConfigs.isTrailSystemEnable()) {
+        if (this.tryArrive(BoxThreadSync.Logical.beginInstanceCompute())) return;
+        if (!this.checkExit() && BoxConfigs.isShaderEnable()) this.preComputeInstance();
+        if (!this.checkExit() && BoxConfigs.isTrailSystemEnable()) {
             this.markAndGenProjectiles();
             if (!BUtil_GLImpl.isPaused() && BUtil_GLImpl.doStaticTrailCompute()) BUtil_StaticTrailMemoryPool.computeTrailNode(this._isAux);
         }
-        if (!this._FAILED) {
+        if (!(this._FAILED || this.checkExit())) {
             if (GLWrapper.Operation.Sync.valid_Barrier()) {
                 int barriers = GLWrapper.Operation.Sync.GL_BUFFER_UPDATE_BARRIER_BIT;
                 if (GLWrapper.Buffer.valid_BufferStorage()) barriers |= GLWrapper.Operation.Sync.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT;
@@ -302,22 +302,22 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
             GLWrapper.Operation.Sync.glFlush();
         }
 
-        BoxThreadSync.Logical.finishAdvance().arriveAndAwaitAdvance();
-        this.runThreadPlugin(false);
-        if (BoxConfigs.isTrailSystemEnable()) BUtil_StaticTrailMemoryPool.deferredAddTracker(this._isAux);
+        if (this.tryArrive(BoxThreadSync.Logical.finishAdvance())) return;
+        if (!this.checkExit()) this.runThreadPlugin(false);
+        if (!this.checkExit() && BoxConfigs.isTrailSystemEnable()) BUtil_StaticTrailMemoryPool.deferredAddTracker(this._isAux);
     }
 
     protected void logicalInit() {
-        BoxThreadSync.Logical.beginAdvance().register();
-        BoxThreadSync.Logical.beginPoolCompact().register();
-        BoxThreadSync.Logical.beginInstanceCompute().register();
-        BoxThreadSync.Logical.finishAdvance().register();
+        registerPhaser(BoxThreadSync.Logical.beginAdvance());
+        registerPhaser(BoxThreadSync.Logical.beginPoolCompact());
+        registerPhaser(BoxThreadSync.Logical.beginInstanceCompute());
+        registerPhaser(BoxThreadSync.Logical.finishAdvance());
     }
 
     protected void logicalDestroy() {
-        BoxThreadSync.Logical.beginAdvance().arriveAndDeregister();
-        BoxThreadSync.Logical.beginPoolCompact().arriveAndDeregister();
-        BoxThreadSync.Logical.beginInstanceCompute().arriveAndDeregister();
-        BoxThreadSync.Logical.finishAdvance().arriveAndDeregister();
+        deregisterPhaser(BoxThreadSync.Logical.beginAdvance());
+        deregisterPhaser(BoxThreadSync.Logical.beginPoolCompact());
+        deregisterPhaser(BoxThreadSync.Logical.beginInstanceCompute());
+        deregisterPhaser(BoxThreadSync.Logical.finishAdvance());
     }
 }
