@@ -144,8 +144,10 @@ public final class StaticTrailManager {
 
     private static @Nullable <V> V writeVec(final JSONObject json, final String key, final BiConsumer<String, V> fun, final Supplier<V> make) {
         final String tmpStr = json.optString(key);
-        V result = null;
-        if (!tmpStr.isBlank()) {
+        V result;
+        if (tmpStr.isBlank()) {
+            return null;
+        } else {
             result = make.get();
             fun.accept(tmpStr, result);
         }

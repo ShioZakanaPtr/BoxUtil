@@ -234,7 +234,7 @@ public class StaticTrailData {
 
     /**
      * Based on forward direction.<p>
-     * <code>{minAngular, maxAngular}</code>, <code>null</code> if without angular applied
+     * <code>{minAngular, maxAngular}</code>, <code>null</code> for without angular applied
      */
     public StaticTrailData setAngularInRange(@Nullable Vector2f angularInRange) {
         this.angularInRange = angularInRange;
@@ -243,7 +243,7 @@ public class StaticTrailData {
 
     /**
      * Based on forward direction.<p>
-     * <code>{minAngular, maxAngular}</code>, <code>null</code> if without angular applied
+     * <code>{minAngular, maxAngular}</code>, <code>null</code> for without angular applied
      */
     public StaticTrailData setAngularOutRange(@Nullable Vector2f angularOutRange) {
         this.angularOutRange = angularOutRange;
@@ -268,7 +268,7 @@ public class StaticTrailData {
 
     /**
      * Based on forward direction.<p>
-     * <code>{minVelocity.xy, maxVelocity.xy}</code>, <code>null</code> if without velocity applied
+     * <code>{minVelocity.xy, maxVelocity.xy}</code>, <code>null</code> for without velocity applied
      */
     public StaticTrailData setVelocityInRange(@Nullable Vector4f velocityInRange) {
         this.velocityInRange = velocityInRange;
@@ -277,7 +277,7 @@ public class StaticTrailData {
 
     /**
      * Based on forward direction.<p>
-     * <code>{minVelocity.xy, maxVelocity.xy}</code>, <code>null</code> if without velocity applied
+     * <code>{minVelocity.xy, maxVelocity.xy}</code>, <code>null</code> for without velocity applied
      */
     public StaticTrailData setVelocityOutRange(@Nullable Vector4f velocityOutRange) {
         this.velocityOutRange = velocityOutRange;
@@ -287,7 +287,7 @@ public class StaticTrailData {
     /**
      * <b>Only for system-gen trail, invalid for custom trail, not required.</b><p>
      * Based on forward direction.<p>
-     * <code>{minOffset.xy, maxOffset.xy}</code>, <code>null</code> if without offset
+     * <code>{minOffset.xy, maxOffset.xy}</code>, <code>null</code> for without offset
      */
     public StaticTrailData setFixedSpawnOffsetRange(@Nullable Vector4f fixedSpawnOffsetRange) {
         this.fixedSpawnOffsetRange = fixedSpawnOffsetRange;

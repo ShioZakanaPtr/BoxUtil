@@ -26,13 +26,14 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
 
     public void advance(float amount, float elapsedTime, Result callback) {
         if (callback.isExpired()) return;
-        if (this.projectile.wasRemoved() || this.projectile.isExpired()) {
+        final var projectileL = this.projectile;
+        if (projectileL.wasRemoved() || projectileL.isExpired() || projectileL.didDamage()) {
             callback.destroy();
             return;
         }
 
-        final float brightness = this.projectile.getBrightness();
-        final Vector2f loc = this.projectile.getLocation();
+        final float brightness = projectileL.getBrightness();
+        final Vector2f loc = projectileL.getLocation();
         if (callback.isNotRecommendedRecordsCurrent(loc) || !Float.isFinite(brightness)) {
             callback.pauseOnce();
             return;
@@ -40,10 +41,11 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
         callback.setCurrentLocation(loc);
         callback.setCurrentAlpha((byte) Math.max(Math.min((int) (brightness * 255.0f), 255), 0));
 
-        boolean velForForward = this.trailData.velocityForForward;
+        final var trailDataL = this.trailData;
+        boolean velForForward = trailDataL.velocityForForward;
         float offsetRotateC = 1.0f, offsetRotateS = 0.0f;
         if (velForForward) {
-            final Vector2f velocity = this.projectile.getVelocity();
+            final Vector2f velocity = projectileL.getVelocity();
             final float velLength = velocity == null ? 0.0f : velocity.length();
             velForForward = velLength != 0.0f;
             if (velForForward) {
@@ -53,13 +55,13 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
             }
         }
         if (!velForForward) {
-            final float a = (float) Math.toRadians(this.projectile.getFacing());
+            final float a = (float) Math.toRadians(projectileL.getFacing());
             offsetRotateC = (float) Math.cos(a);
             offsetRotateS = TrigUtil.sinFormCosRadiansF(offsetRotateC, a);
             callback.setCurrentFacing(offsetRotateC, offsetRotateS);
         }
 
-        final Vector4f spawnOffsetRange = this.trailData.fixedSpawnOffsetRange;
+        final Vector4f spawnOffsetRange = trailDataL.fixedSpawnOffsetRange;
         if (spawnOffsetRange != null) {
             final float rnd = ThreadLocalRandom.current().nextFloat(),
                     offsetX = CalculateUtil.mix(spawnOffsetRange.x, spawnOffsetRange.z, rnd),
