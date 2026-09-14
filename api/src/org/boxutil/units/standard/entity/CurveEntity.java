@@ -12,6 +12,7 @@ import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.units.standard.attribute.NodeData;
 import org.boxutil.util.CommonUtil;
+import org.boxutil.util.concurrent.SpinLock;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -166,78 +167,75 @@ public class CurveEntity extends BaseMIRenderData {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when an empty node list or refresh count is zero.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte submitNodes() {
-        this.sync_lock.lock();
-        if (this.nodeList == null || this.nodeList.size() < 2) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        if (!this.isValid()) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
-        final int nodeSize = this.nodeList.size();
-        final boolean newBuffer = nodeSize > this._lastNodeLength;
-        final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
-        final int refreshCount = newBuffer ? nodeSize : this.nodeRefreshState[1];
-        if (refreshCount < 1) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        final int refreshLimit = refreshIndex + refreshCount;
-        final long bufferSize = (refreshCount > 1 ? (2L * refreshCount - 2) : refreshCount) * _NODE_LENGTH << 2;
+        final var in_syncLock = this.sync_lock;
+        in_syncLock.lock();
+        try {
+            final var nodeListL = this.nodeList;
+            if (nodeListL == null || nodeListL.size() < 2) return BoxEnum.STATE_FAILED;
+            if (!this.isValid()) return BoxEnum.STATE_FAILED_OTHER;
 
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
-        if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+            final int nodeSize = nodeListL.size();
+            final boolean newBuffer = nodeSize > this._lastNodeLength;
+            final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
+            final int refreshCount = newBuffer ? nodeSize : this.nodeRefreshState[1];
+            if (refreshCount < 1) return BoxEnum.STATE_FAILED;
 
-        final long bufferIndex = (refreshIndex > 1 ? (2L * refreshIndex - 1) : refreshIndex) * _NODE_LENGTH << 2;
-        final boolean useMapping = this.isMappingModeSubmitData();
-        ByteBuffer buffer;
-        if (useMapping) {
-            final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
-            buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
-            if (buffer == null || buffer.capacity() < 1) {
-                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
-                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-                this._lastNodeLengthReal = this.shouldRenderingCount = 0;
-                this.sync_lock.unlock();
-                return BoxEnum.STATE_FAILED_OTHER;
+            final int refreshLimit = refreshIndex + refreshCount;
+            final long bufferSize = (refreshCount > 1 ? (2L * refreshCount - 2) : refreshCount) * _NODE_LENGTH << 2;
+
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+            if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+
+            final long bufferIndex = (refreshIndex > 1 ? (2L * refreshIndex - 1) : refreshIndex) * _NODE_LENGTH << 2;
+            final boolean useMapping = this.isMappingModeSubmitData();
+            ByteBuffer buffer;
+            if (useMapping) {
+                final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+                buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
+                if (buffer == null || buffer.capacity() < 1) {
+                    GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+                    GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+                    this._lastNodeLengthReal = this.shouldRenderingCount = 0;
+                    return BoxEnum.STATE_FAILED_OTHER;
+                }
+            } else {
+                buffer = BufferUtils.createByteBuffer((int) bufferSize);
             }
-        } else {
-            buffer = BufferUtils.createByteBuffer((int) bufferSize);
-        }
 
-        ShortBuffer newData = buffer.asShortBuffer();
-        NodeData data;
-        float nodeDis;
-        if (refreshIndex == 0) nodeDis = 0.0f;
-        else {
-            int getIndex = refreshIndex - 1;
-            nodeDis = (this._distance != null && this._distance.size() > getIndex) ? this._distance.get(getIndex) : 0.0f;
-        }
-        if (this._distance == null) this._distance = new ArrayList<>(nodeSize);
-        short[] dataPackage = new short[_NODE_LENGTH];
-        for (int i = refreshIndex; i < refreshLimit; i++) {
-            data = this.nodeList.get(i);
-            if (i != 0) {
-                nodeDis += CurveUtil.getCurveLength(data, this.nodeList.get(i - 1), this.nodeRefreshState[2]);
+            ShortBuffer newData = buffer.asShortBuffer();
+            List<Float> distanceL = this._distance;
+            NodeData data;
+            float nodeDis;
+            if (refreshIndex == 0) nodeDis = 0.0f;
+            else {
+                int getIndex = refreshIndex - 1;
+                nodeDis = (distanceL != null && distanceL.size() > getIndex) ? distanceL.get(getIndex) : 0.0f;
             }
-            if (i >= this._distance.size()) this._distance.add(nodeDis); else this._distance.set(i, nodeDis);
-            System.arraycopy(CommonUtil.float16ToShort(data.getState()), 0, dataPackage, 0, 8);
-            dataPackage[8] = CommonUtil.float16ToShort(nodeDis);
-            System.arraycopy(CommonUtil.packingBytesToShort(data.pickColor_RGBA8_A(), data.pickColor_RGBA8_B()), 0, dataPackage, 9, 4);
-            newData.put(dataPackage);
-            if (i != 0 && i < this.nodeList.size() - 1) newData.put(dataPackage);
-        }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
+            if (distanceL == null) this._distance = distanceL = new ArrayList<>(nodeSize);
+            short[] dataPackage = new short[_NODE_LENGTH];
+            for (int i = refreshIndex; i < refreshLimit; i++) {
+                data = nodeListL.get(i);
+                if (i != 0) {
+                    nodeDis += CurveUtil.getCurveLength(data, nodeListL.get(i - 1), this.nodeRefreshState[2]);
+                }
+                if (i >= distanceL.size()) distanceL.add(nodeDis); else distanceL.set(i, nodeDis);
+                System.arraycopy(CommonUtil.float16ToShort(data.getState()), 0, dataPackage, 0, 8);
+                dataPackage[8] = CommonUtil.float16ToShort(nodeDis);
+                System.arraycopy(CommonUtil.packingBytesToShort(data.pickColor_RGBA8_A(), data.pickColor_RGBA8_B()), 0, dataPackage, 9, 4);
+                newData.put(dataPackage);
+                if (i != 0 && i < nodeListL.size() - 1) newData.put(dataPackage);
+            }
+            buffer.clear();
 
-        if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
-        else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, buffer);
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-        if (newBuffer) this._lastNodeLength = nodeSize;
-        this._lastNodeLengthReal = this.shouldRenderingCount = nodeSize * 2 - 2;
-        this.sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
+            if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+            else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, buffer);
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            if (newBuffer) this._lastNodeLength = nodeSize;
+            this._lastNodeLengthReal = this.shouldRenderingCount = nodeSize * 2 - 2;
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
+        }
     }
 
     /**
@@ -249,25 +247,23 @@ public class CurveEntity extends BaseMIRenderData {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte mallocNodeData(int nodeNum) {
-        this.sync_lock.lock();
-        if (nodeNum < 1) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        if (!this.isValid()) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
+        final var in_syncLock = this.sync_lock;
+        in_syncLock.lock();
+        try {
+            if (nodeNum < 1) return BoxEnum.STATE_FAILED;
+            if (!this.isValid()) return BoxEnum.STATE_FAILED_OTHER;
 
-        this._lastNodeLength = nodeNum;
-        this._lastNodeLengthReal = this.shouldRenderingCount = nodeNum * 2 - 2;
-        final long bufferSize = (long) this._lastNodeLengthReal * _NODE_LENGTH << 1;
+            this._lastNodeLength = nodeNum;
+            this._lastNodeLengthReal = this.shouldRenderingCount = nodeNum * 2 - 2;
+            final long bufferSize = (long) this._lastNodeLengthReal * _NODE_LENGTH << 1;
 
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
-        GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-        this.sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+            GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
+        }
     }
 
     /**

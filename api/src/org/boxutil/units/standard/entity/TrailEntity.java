@@ -11,6 +11,7 @@ import org.boxutil.manager.ShaderCore;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.util.CommonUtil;
 import de.unkrig.commons.nullanalysis.NotNull;
+import org.boxutil.util.concurrent.SpinLock;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
@@ -144,87 +145,84 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when an empty node list or refresh count is zero.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte submitNodes() {
-        this.sync_lock.lock();
-        if (this.nodeList == null || this.nodeList.size() < 2) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        if (!this.isValid()) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
-        final int nodeSize = this.nodeList.size();
-        final boolean newBuffer = nodeSize > this._lastNodeLength;
-        final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
-        final int refreshCount = newBuffer ? nodeSize - refreshIndex : this.nodeRefreshState[1];
-        if (refreshCount < 1) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        final int refreshLimit = refreshIndex + refreshCount;
-        final int bufferSizeLoc = refreshCount * _BUFFER_DATA_SIZE;
-        final long bufferSize = (long) bufferSizeLoc << 2;
-        final long bufferIndex = (long) refreshIndex * _BUFFER_DATA_SIZE << 2;
+        final var in_syncLock = this.sync_lock;
+        in_syncLock.lock();
+        try {
+            final var nodeListL = this.nodeList;
+            if (nodeListL == null || nodeListL.size() < 2) return BoxEnum.STATE_FAILED;
+            if (!this.isValid()) return BoxEnum.STATE_FAILED_OTHER;
 
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBO());
-        if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+            final int nodeSize = nodeListL.size();
+            final boolean newBuffer = nodeSize > this._lastNodeLength;
+            final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
+            final int refreshCount = newBuffer ? nodeSize - refreshIndex : this.nodeRefreshState[1];
+            if (refreshCount < 1) return BoxEnum.STATE_FAILED;
 
-        ByteBuffer buffer;
-        final boolean useMapping = this.isMappingModeSubmitData();
-        if (useMapping) {
-            final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
-            buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferIndex, bufferSize, _access, null);
-            if (buffer == null || buffer.capacity() < 1) {
-                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER);
-                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
-                this.shouldRenderingCount = 0;
-                this.sync_lock.unlock();
-                return BoxEnum.STATE_FAILED_OTHER;
+            final int refreshLimit = refreshIndex + refreshCount;
+            final int bufferSizeLoc = refreshCount * _BUFFER_DATA_SIZE;
+            final long bufferSize = (long) bufferSizeLoc << 2;
+            final long bufferIndex = (long) refreshIndex * _BUFFER_DATA_SIZE << 2;
+
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBO());
+            if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+
+            ByteBuffer buffer;
+            final boolean useMapping = this.isMappingModeSubmitData();
+            if (useMapping) {
+                final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+                buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferIndex, bufferSize, _access, null);
+                if (buffer == null || buffer.capacity() < 1) {
+                    GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER);
+                    GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+                    this.shouldRenderingCount = 0;
+                    return BoxEnum.STATE_FAILED_OTHER;
+                }
+            } else {
+                buffer = BufferUtils.createByteBuffer((int) bufferSize);
             }
-        } else {
-            buffer = BufferUtils.createByteBuffer((int) bufferSize);
-        }
 
-        Vector2f currLoc, lastLoc;
-        FloatBuffer newData = buffer.asFloatBuffer();
-        int index = 0;
-        float distance, tmpX, tmpY;
-        if (refreshIndex == 0) distance = 0.0f;
-        else {
-            int getIndex = refreshIndex - 1;
-            distance = (this._distance != null && this._distance.size() > getIndex) ? this._distance.get(getIndex) : 0.0f;
-        }
-        if (this._distance == null) this._distance = new ArrayList<>(nodeSize);
-        for (int i = refreshIndex; i < refreshLimit; ++i) {
-            currLoc = this.nodeList.get(i);
-            newData.put(index, currLoc.x);
-            ++index;
-            newData.put(index, currLoc.y);
-            ++index;
-            if (i != 0) {
-                lastLoc = this.nodeList.get(i - 1);
-                tmpX = currLoc.x - lastLoc.x;
-                tmpY = currLoc.y - lastLoc.y;
-                distance += (float) Math.sqrt(tmpX * tmpX + tmpY * tmpY);
+            Vector2f currLoc, lastLoc;
+            FloatBuffer newData = buffer.asFloatBuffer();
+            List<Float> distanceL = this._distance;
+            int index = 0;
+            float distance, tmpX, tmpY;
+            if (refreshIndex == 0) distance = 0.0f;
+            else {
+                int getIndex = refreshIndex - 1;
+                distance = (distanceL != null && distanceL.size() > getIndex) ? distanceL.get(getIndex) : 0.0f;
             }
-            if (i >= this._distance.size()) this._distance.add(distance); else this._distance.set(i, distance);
-            newData.put(index, distance);
-            ++index;
+            if (distanceL == null) this._distance = distanceL = new ArrayList<>(nodeSize);
+            for (int i = refreshIndex; i < refreshLimit; ++i) {
+                currLoc = nodeListL.get(i);
+                newData.put(index, currLoc.x);
+                ++index;
+                newData.put(index, currLoc.y);
+                ++index;
+                if (i != 0) {
+                    lastLoc = nodeListL.get(i - 1);
+                    tmpX = currLoc.x - lastLoc.x;
+                    tmpY = currLoc.y - lastLoc.y;
+                    distance += (float) Math.sqrt(tmpX * tmpX + tmpY * tmpY);
+                }
+                if (i >= distanceL.size()) distanceL.add(distance); else distanceL.set(i, distance);
+                newData.put(index, distance);
+                ++index;
+            }
+            buffer.clear();
+
+            if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER);
+            else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferIndex, buffer);
+
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
+            GLWrapper.Buffer.TBO.glTexBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, GLWrapper.Texture.GL_RGB32F, this.getNodesTBO()); // damn it where my RGB16F is
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            if (newBuffer) this._lastNodeLength = nodeSize;
+            this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
         }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
-
-        if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER);
-        else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferIndex, buffer);
-
-        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
-        GLWrapper.Buffer.TBO.glTexBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, GLWrapper.Texture.GL_RGB32F, this.getNodesTBO()); // damn it where my RGB16F is
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
-        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
-        if (newBuffer) this._lastNodeLength = nodeSize;
-        this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
-        this.sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
     }
 
     /**
@@ -236,27 +234,26 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte mallocNodeData(int nodeNum) {
-        this.sync_lock.lock();
-        if (nodeNum < 1) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        if (!this.isValid()) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
+        final var in_syncLock = this.sync_lock;
+        in_syncLock.lock();
+        try {
+            if (nodeNum < 1) return BoxEnum.STATE_FAILED;
+            if (!this.isValid()) return BoxEnum.STATE_FAILED_OTHER;
 
-        final long bufferSize = (long) nodeNum * _BUFFER_DATA_SIZE << 2;
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBO());
-        GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
-        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
-        GLWrapper.Buffer.TBO.glTexBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, GLWrapper.Texture.GL_RGB32F, this.getNodesTBO());
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
-        GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
-        this._lastNodeLength = nodeNum;
-        this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
-        this.sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
+            final long bufferSize = (long) nodeNum * _BUFFER_DATA_SIZE << 2;
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBO());
+            GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, this.getNodesTBOTex());
+            GLWrapper.Buffer.TBO.glTexBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, GLWrapper.Texture.GL_RGB32F, this.getNodesTBO());
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            GLWrapper.Texture.glBindTexture(GLWrapper.Buffer.TBO.GL_TEXTURE_BUFFER, 0);
+            this._lastNodeLength = nodeNum;
+            this.shouldRenderingCount = this.computePrim(this._lastNodeLength);
+
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
+        }
     }
 
     public boolean isSynchronousSubmit() {

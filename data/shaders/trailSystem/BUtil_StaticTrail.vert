@@ -39,12 +39,12 @@ uniform float u_time;
 #ifdef LEGACY_TRAIL_MODE
 out vec4 vgb_geomEntityColor;
 out vec4 vgb_geomMixEmissive;
-out uvec4 vgb_geomSymbolID_Life_UV_Width;
+out uvec4 vgb_geomSymbolID_RawUV_UV_Width;
 #else
 out VERT_GEOM_BLOCK {
     vec4 geomEntityColor;
     vec4 geomMixEmissive;
-    uvec4 geomSymbolID_Life_UV_Width;
+    uvec4 geomSymbolID_RawUV_UV_Width;
 } vgb_data;
 #endif
 
@@ -76,11 +76,11 @@ void main() {
 #ifdef LEGACY_TRAIL_MODE
         vgb_geomEntityColor = u_statePackage[COLOR];
         vgb_geomMixEmissive = u_statePackage[EMISSIVE_COLOR];
-        vgb_geomSymbolID_Life_UV_Width = out_emptyNodeData;
+        vgb_geomSymbolID_RawUV_UV_Width = out_emptyNodeData;
 #else
         vgb_data.geomEntityColor = u_statePackage[COLOR];
         vgb_data.geomMixEmissive = u_statePackage[EMISSIVE_COLOR];
-        vgb_data.geomSymbolID_Life_UV_Width = out_emptyNodeData;
+        vgb_data.geomSymbolID_RawUV_UV_Width = out_emptyNodeData;
 #endif
         gl_Position = vec4(-1024.0);
         return;
@@ -93,7 +93,8 @@ void main() {
     float totalLife = intoFadeOutLife + u_statePackage[TIMER_STATE].z;
     float life = clamp(elapsedTime / totalLife, 0.0, 1.0);
 
-    float nodeUV = uintBitsToFloat(a_uv & 0x7fffffffu) - (u_statePackage[6].w * elapsedTime);
+    uint rawUVBits = a_uv & 0x7fffffffu;
+    float nodeUV = uintBitsToFloat(rawUVBits) - (u_statePackage[6].w * elapsedTime);
     if (u_statePackage[5].w > 0.0) nodeUV += rndID;
     vec4 nodeColor = mix(u_statePackage[3], u_statePackage[4], life) * a_nodeColor;
     vec2 currPosition = a_position + currPositionOffset(timeStamp * rndID, elapsedTime, life);
@@ -103,15 +104,15 @@ void main() {
 
     vec4 out_entityColor = nodeColor * u_statePackage[COLOR];
     vec4 out_mixEmissive = nodeColor * mix(u_statePackage[EMISSIVE_COLOR], u_statePackage[EMISSIVE_COLOR] * u_statePackage[COLOR], vec4(vec3(u_statePackage[EMISSIVE_SA].y), u_statePackage[EMISSIVE_SA].x));
-    uvec4 out_nodeData = uvec4(a_uv & 0x80000000u, floatBitsToUint(vec3(life, nodeUV, mix(u_statePackage[6].x, u_statePackage[6].y, life))));
+    uvec4 out_nodeData = uvec4(a_uv & 0x80000000u, rawUVBits, floatBitsToUint(vec2(nodeUV, mix(u_statePackage[6].x, u_statePackage[6].y, life))));
 #ifdef LEGACY_TRAIL_MODE
     vgb_geomEntityColor = out_entityColor;
     vgb_geomMixEmissive = out_mixEmissive;
-    vgb_geomSymbolID_Life_UV_Width = out_nodeData;
+    vgb_geomSymbolID_RawUV_UV_Width = out_nodeData;
 #else
     vgb_data.geomEntityColor = out_entityColor;
     vgb_data.geomMixEmissive = out_mixEmissive;
-    vgb_data.geomSymbolID_Life_UV_Width = out_nodeData;
+    vgb_data.geomSymbolID_RawUV_UV_Width = out_nodeData;
 #endif
     gl_Position = vec4(currPosition, 0.0, 1.0);
 }

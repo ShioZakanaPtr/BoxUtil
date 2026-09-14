@@ -14,6 +14,7 @@ import org.boxutil.define.BoxEnum;
 import org.boxutil.units.standard.attribute.MaterialData;
 import org.boxutil.units.standard.attribute.NodeData;
 import org.boxutil.util.CommonUtil;
+import org.boxutil.util.concurrent.SpinLock;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -192,103 +193,100 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when an empty node list or refresh count is zero.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte submitNodes() {
-        this.sync_lock.lock();
-        if (this.nodeList == null || this.nodeList.size() < 2) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        if (!this.isValid()) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
-        final int nodeSize = this.getListValidNodeCount();
-        final boolean newBuffer = nodeSize > this._lastNodeLength;
-        final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
-        final int refreshCount = newBuffer ? nodeSize : this.nodeRefreshState[1];
-        if (refreshCount < 1) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        final int refreshLimit = refreshIndex + refreshCount;
-        final long bufferSize = (long) refreshCount * this._currNodeSize;
-        final long bufferIndex = (long) refreshIndex * this._currNodeSize;
+        final var in_syncLock = this.sync_lock;
+        in_syncLock.lock();
+        try {
+            final var nodeListL = this.nodeList;
+            if (nodeListL == null || nodeListL.size() < 2) return BoxEnum.STATE_FAILED;
+            if (!this.isValid()) return BoxEnum.STATE_FAILED_OTHER;
 
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
-        if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
-        final boolean useMapping = this.isMappingModeSubmitData();
-        ByteBuffer buffer;
-        if (useMapping) {
-            final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
-            buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
-            if (buffer == null || buffer.capacity() < 1) {
-                GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
-                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-                this.shouldRenderingCount = 0;
-                this.sync_lock.unlock();
-                return BoxEnum.STATE_FAILED_OTHER;
-            }
-        } else {
-            buffer = BufferUtils.createByteBuffer((int) bufferSize);
-        }
+            final int nodeSize = this.getListValidNodeCount();
+            final boolean newBuffer = nodeSize > this._lastNodeLength;
+            final int refreshIndex = newBuffer ? 0 : this.nodeRefreshState[0];
+            final int refreshCount = newBuffer ? nodeSize : this.nodeRefreshState[1];
+            if (refreshCount < 1) return BoxEnum.STATE_FAILED;
 
-        final ShortBuffer newDataF16 = this._useHalfFloat ? buffer.asShortBuffer() : null;
-        final FloatBuffer newDataF32 = this._useHalfFloat ? null : buffer.asFloatBuffer();
-        NodeData data;
-        float nodeDis;
-        if (refreshIndex == 0) nodeDis = 0.0f;
-        else {
-            int getIndex = refreshIndex - 1;
-            nodeDis = (this._distance != null && this._distance.size() > getIndex) ? this._distance.get(getIndex) : 0.0f;
-        }
-        if (this._distance == null) this._distance = new ArrayList<>(nodeSize);
-        float nodeDisTmp;
-        boolean isNodeEnd = isEndNode(refreshIndex);
-        float[] dataPackage;
-        short[] dataPackageF16;
-        byte[] colorArray;
-        for (int i = refreshIndex; i < refreshLimit; i++) {
-            data = this.nodeList.get(i);
-            if (i != 0) {
-                nodeDisTmp = CurveUtil.getCurveLength(data, this.nodeList.get(i - 1), this.nodeRefreshState[2]);
-                if (isNodeEnd && nodeDisTmp > 1.0E-05f) nodeDis = 0.0f; else nodeDis += nodeDisTmp;
-            }
-            if (i >= this._distance.size()) this._distance.add(nodeDis); else this._distance.set(i, nodeDis);
-            isNodeEnd = isEndNode(i);
-            dataPackage = data.getState();
-            if (this._useHalfFloat) {
-                dataPackageF16 = CommonUtil.float16ToShort(dataPackage);
-                newDataF16.put(dataPackageF16[0]);
-                newDataF16.put(dataPackageF16[1]);
-                newDataF16.put(dataPackageF16[isNodeEnd ? 2 : 4]);
-                newDataF16.put(dataPackageF16[isNodeEnd ? 3 : 5]);
-                newDataF16.put(dataPackageF16[6]);
-                newDataF16.put(dataPackageF16[7]);
-                newDataF16.put(CommonUtil.float16ToShort(nodeDis));
-                CommonUtil.putPackingBytes(newDataF16, data.pickColor_RGBA8_A(), data.pickColor_RGBA8_B());
+            final int refreshLimit = refreshIndex + refreshCount;
+            final long bufferSize = (long) refreshCount * this._currNodeSize;
+            final long bufferIndex = (long) refreshIndex * this._currNodeSize;
+
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+            if (newBuffer) GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+            final boolean useMapping = this.isMappingModeSubmitData();
+            ByteBuffer buffer;
+            if (useMapping) {
+                final int _access = this.isSynchronousSubmit() ? GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT : GLWrapper.Buffer.GL_MAP_WRITE_BIT | GLWrapper.Buffer.GL_MAP_UNSYNCHRONIZED_BIT | GLWrapper.Buffer.GL_MAP_INVALIDATE_RANGE_BIT;
+                buffer = GLWrapper.Buffer.glMapBufferRange(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, bufferSize, _access, null);
+                if (buffer == null || buffer.capacity() < 1) {
+                    GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+                    GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+                    this.shouldRenderingCount = 0;
+                    return BoxEnum.STATE_FAILED_OTHER;
+                }
             } else {
-                newDataF32.put(dataPackage[0]);
-                newDataF32.put(dataPackage[1]);
-                newDataF32.put(dataPackage[isNodeEnd ? 2 : 4]);
-                newDataF32.put(dataPackage[isNodeEnd ? 3 : 5]);
-                newDataF32.put(dataPackage[6]);
-                newDataF32.put(dataPackage[7]);
-                newDataF32.put(nodeDis);
-                colorArray = data.getColorArray();
-                CommonUtil.putPackingBytes(newDataF32, colorArray[3], colorArray[2], colorArray[1], colorArray[0]);
-                colorArray = data.getEmissiveColorArray();
-                CommonUtil.putPackingBytes(newDataF32, colorArray[3], colorArray[2], colorArray[1], colorArray[0]);
+                buffer = BufferUtils.createByteBuffer((int) bufferSize);
             }
-        }
-        buffer.position(0);
-        buffer.limit(buffer.capacity());
 
-        if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
-        else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, buffer);
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-        if (newBuffer) this._lastNodeLength = nodeSize;
-        this.shouldRenderingCount = refreshIndex + refreshCount;
-        this.sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
+            final ShortBuffer newDataF16 = this._useHalfFloat ? buffer.asShortBuffer() : null;
+            final FloatBuffer newDataF32 = this._useHalfFloat ? null : buffer.asFloatBuffer();
+            List<Float> distanceL = this._distance;
+            NodeData data;
+            float nodeDis;
+            if (refreshIndex == 0) nodeDis = 0.0f;
+            else {
+                int getIndex = refreshIndex - 1;
+                nodeDis = (distanceL != null && distanceL.size() > getIndex) ? distanceL.get(getIndex) : 0.0f;
+            }
+            if (distanceL == null) this._distance = distanceL = new ArrayList<>(nodeSize);
+            float nodeDisTmp;
+            boolean isNodeEnd = isEndNode(refreshIndex);
+            float[] dataPackage;
+            short[] dataPackageF16;
+            byte[] colorArray;
+            for (int i = refreshIndex; i < refreshLimit; i++) {
+                data = nodeListL.get(i);
+                if (i != 0) {
+                    nodeDisTmp = CurveUtil.getCurveLength(data, nodeListL.get(i - 1), this.nodeRefreshState[2]);
+                    if (isNodeEnd && nodeDisTmp > 1.0E-05f) nodeDis = 0.0f; else nodeDis += nodeDisTmp;
+                }
+                if (i >= distanceL.size()) distanceL.add(nodeDis); else distanceL.set(i, nodeDis);
+                isNodeEnd = isEndNode(i);
+                dataPackage = data.getState();
+                if (this._useHalfFloat) {
+                    dataPackageF16 = CommonUtil.float16ToShort(dataPackage);
+                    newDataF16.put(dataPackageF16[0]);
+                    newDataF16.put(dataPackageF16[1]);
+                    newDataF16.put(dataPackageF16[isNodeEnd ? 2 : 4]);
+                    newDataF16.put(dataPackageF16[isNodeEnd ? 3 : 5]);
+                    newDataF16.put(dataPackageF16[6]);
+                    newDataF16.put(dataPackageF16[7]);
+                    newDataF16.put(CommonUtil.float16ToShort(nodeDis));
+                    CommonUtil.putPackingBytes(newDataF16, data.pickColor_RGBA8_A(), data.pickColor_RGBA8_B());
+                } else {
+                    newDataF32.put(dataPackage[0]);
+                    newDataF32.put(dataPackage[1]);
+                    newDataF32.put(dataPackage[isNodeEnd ? 2 : 4]);
+                    newDataF32.put(dataPackage[isNodeEnd ? 3 : 5]);
+                    newDataF32.put(dataPackage[6]);
+                    newDataF32.put(dataPackage[7]);
+                    newDataF32.put(nodeDis);
+                    colorArray = data.getColorArray();
+                    CommonUtil.putPackingBytes(newDataF32, colorArray[3], colorArray[2], colorArray[1], colorArray[0]);
+                    colorArray = data.getEmissiveColorArray();
+                    CommonUtil.putPackingBytes(newDataF32, colorArray[3], colorArray[2], colorArray[1], colorArray[0]);
+                }
+            }
+            buffer.clear();
+
+            if (useMapping) GLWrapper.Buffer.glUnmapBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER);
+            else GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferIndex, buffer);
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            if (newBuffer) this._lastNodeLength = nodeSize;
+            this.shouldRenderingCount = refreshIndex + refreshCount;
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
+        }
     }
 
     /**
@@ -300,24 +298,22 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte mallocNodeData(int nodeNum) {
-        this.sync_lock.lock();
-        final int realSize = getRealNodeCount(nodeNum);
-        if (realSize < 1) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        if (!this.isValid()) {
-            this.sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
+        final var in_syncLock = this.sync_lock;
+        in_syncLock.lock();
+        try {
+            final int realSize = getRealNodeCount(nodeNum);
+            if (realSize < 1) return BoxEnum.STATE_FAILED;
+            if (!this.isValid()) return BoxEnum.STATE_FAILED_OTHER;
 
-        final long bufferSize = (long) realSize * this._currNodeSize;
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
-        GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
-        GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-        this._lastNodeLength = this.shouldRenderingCount = realSize;
-        this.sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
+            final long bufferSize = (long) realSize * this._currNodeSize;
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getNodesVBO());
+            GLWrapper.Buffer.glBufferData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, bufferSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+            GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            this._lastNodeLength = this.shouldRenderingCount = realSize;
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
+        }
     }
 
     /**

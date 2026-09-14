@@ -24,6 +24,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector4f;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
@@ -87,6 +88,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
     private final int maxFullNodes;
     private final float maxDur;
     private final long allocSize;
+    private final ByteBuffer emptyTrailMemory;
     private final FloatBuffer statePackageMem = BufferUtils.createFloatBuffer(40).clear();
     private final StaticTrailData trailData;
     private final AtomicInteger trailComputeIdx = new AtomicInteger(0);
@@ -191,11 +193,27 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
         return new BUtil_StaticTrailMemory(meta, address, size, index, false);
     }
 
+    private static void newMemoryFormat(BUtil_StaticTrailMemory memory, GPUMemoryPool<BUtil_StaticTrailMemory, BUtil_StaticTrailTrackerObject> pool) {
+        if (pool instanceof BUtil_StaticTrailMemoryPool poolCast) {
+            final var emptyBuf = poolCast.emptyTrailMemory;
+            final boolean notPersistentMapping = poolCast.isNotPersistentMapping();
+            if (notPersistentMapping) {
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, poolCast.getBufferID());
+                GLWrapper.Buffer.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, memory.address(), emptyBuf);
+                GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            } else {
+                final ByteBuffer mappingBuffer = poolCast.getMappingBuffer();
+                mappingBuffer.put((int) memory.address(), emptyBuf, 0, emptyBuf.capacity());
+            }
+        }
+    }
+
     public BUtil_StaticTrailMemoryPool(final GPUPoolBehavior<BUtil_StaticTrailMemory, BUtil_StaticTrailTrackerObject> behavior, final StaticTrailData trailData, float maxDur) {
         super(behavior);
         this.maxDur = maxDur;
         this.maxFullNodes = (int) Math.ceil(this.maxDur * BoxConfigs.getMaxTrailSystemNodePerSeconds()) + 3; // two for ends fill, another for loop draw
         this.allocSize = (long) this.maxFullNodes * NODE_BYTE_SIZE;
+        this.emptyTrailMemory = BufferUtils.createByteBuffer((int) this.allocSize).clear();
         this.trailData = trailData;
         this.behavior.setDefaultBufferSize(this.allocSize * trailData.initCapacity);
     }
@@ -283,6 +301,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
                     .setContextRequirements(BUtil_StaticTrailMemoryPool::poolReq)
                     .setRebindBuffer(BUtil_StaticTrailMemoryPool::poolRebind)
                     .setPoolDestroy(BUtil_StaticTrailMemoryPool::poolDestroy)
+                    .setNewMemoryFormat(BUtil_StaticTrailMemoryPool::newMemoryFormat)
                     .setBufferInitRule((req, pool) -> req < l_behavior.defaultBufferSize ? l_behavior.defaultBufferSize : CalculateUtil.getPOTMax(req));
             final var l_pool = new BUtil_StaticTrailMemoryPool(l_behavior, targetData, maxDur);
             l_pool.init();
@@ -375,11 +394,14 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
             final int totalTrail = trailMemList.size();
             if (totalTrail < 1) continue;
 
+            final var computeIdx = pool.trailComputeIdx;
+            final var vertexBufIdx = pool.trailVertexBufIdx;
+            final var barrier = RES.computeBarrier;
             if (auxThread) {
-                pool.trailComputeIdx.set(0);
-                pool.trailVertexBufIdx.set(inCampaign ? MAX_COMBAT_LAYERS : 0);
+                computeIdx.set(0);
+                vertexBufIdx.set(inCampaign ? MAX_COMBAT_LAYERS : 0);
             }
-            RES.computeBarrier.barrier();
+            barrier.barrier();
 
             byte layerLoc;
             int computeNode;
@@ -388,10 +410,11 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
             final boolean notPersistentMapping = pool.isNotPersistentMapping();
             final IntBuffer writeBuffer = notPersistentMapping ? null : pool.getMappingBuffer().asIntBuffer(); // notnull
             final List<BUtil_StaticTrailMemory> toFreeList = new ArrayList<>(totalTrail);
+            final var drawPiL = pool.drawPi;
 
             int idx;
             if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, pool.getBufferID());
-            while ((idx = pool.trailComputeIdx.getAndIncrement()) < totalTrail) {
+            while ((idx = computeIdx.getAndIncrement()) < totalTrail) {
                 trailMemory = trailMemList.get(idx);
                 if (trailMemory.is_free()) continue;
                 layerLoc = trailMemory.meta().layerLoc();
@@ -403,15 +426,15 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
                     continue;
                 }
 
-                trailMemory.setCurrPiFirstBufPos(pool.drawPi[layerLoc].putDrawPi(pool, trailMemory.getPiFirstAddress(), computeNode + 2)); // 2 => ends fill node
+                trailMemory.setCurrPiFirstBufPos(drawPiL[layerLoc].putDrawPi(pool, trailMemory.getPiFirstAddress(), computeNode + 2)); // 2 => ends fill node
             }
             if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-            RES.computeBarrier.barrier();
+            barrier.barrier();
 
             DrawPi drawPiVar;
             final byte totalLayers = inCampaign ? MAX_LAYERS : MAX_COMBAT_LAYERS;
-            while ((idx = pool.trailVertexBufIdx.getAndIncrement()) < totalLayers) {
-                if ((drawPiVar = pool.drawPi[idx]) != null) drawPiVar.finishVertexPtr();
+            while ((idx = vertexBufIdx.getAndIncrement()) < totalLayers) {
+                if ((drawPiVar = drawPiL[idx]) != null) drawPiVar.finishVertexPtr();
             }
 
             for (var trailMem : toFreeList) {
@@ -494,7 +517,7 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
 
         if (toProcess.isEmpty()) return;
 
-        BUtil_StaticTrailMemoryPool pool = null;
+        BUtil_StaticTrailMemoryPool pool;
         List<BUtil_StaticTrailMemory> trailList;
         boolean shouldUnbind = false;
         for (var entry : toProcess.entrySet()) {

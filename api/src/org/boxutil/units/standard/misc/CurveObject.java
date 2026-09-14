@@ -153,44 +153,48 @@ public class CurveObject {
      */
     public void submitNode(float elapsedTime) {
         if (!this.isValid()) return;
-        this._sync_lock.lock();
-        this.buffer.position(0);
-        Vector2f currPoint, currTangent;
-        Color currColorC;
-        byte[] currColor;
-        float t, tPow, currWidth;
-        currColor = this.nodes[0].getColorArray();
-        currWidth = this.nodes[0].getWidth();
-        currPoint = this.nodes[0].getLocation();
-        currTangent = CurveUtil.getCurveDerivative(this.nodes[0], this.nodes[1], 0.0f);
-        this.putPart(currPoint, currTangent, elapsedTime, currWidth, currColor);
+        final var in_syncLock = this._sync_lock;
+        in_syncLock.lock();
+        try {
+            this.buffer.position(0);
+            final var nodesL = this.nodes;
+            Vector2f currPoint, currTangent;
+            Color currColorC;
+            byte[] currColor;
+            float t, tPow, currWidth;
+            currColor = nodesL[0].getColorArray();
+            currWidth = nodesL[0].getWidth();
+            currPoint = nodesL[0].getLocation();
+            currTangent = CurveUtil.getCurveDerivative(nodesL[0], nodesL[1], 0.0f);
+            this.putPart(currPoint, currTangent, elapsedTime, currWidth, currColor);
 
-        for (short i = 1; i < this.interpolationPOne; ++i) {
-            t = (float) i / this.interpolationPOne;
-            tPow = (float) Math.pow(t, this.nodes[0].getMixFactor());
-            currColorC = CalculateUtil.mix(this.nodes[0].getColorC(), this.nodes[1].getColorC(), true, tPow);
-            currColor[0] = (byte) currColorC.getRed();
-            currColor[1] = (byte) currColorC.getGreen();
-            currColor[2] = (byte) currColorC.getBlue();
-            currColor[3] = (byte) currColorC.getAlpha();
-            currWidth = CalculateUtil.mix(this.nodes[0].getWidth(), this.nodes[1].getWidth(), tPow);
-            currPoint = CurveUtil.getPointOnCurve(this.nodes[0], this.nodes[1], t);
-            currTangent = CurveUtil.getCurveDerivative(this.nodes[0], this.nodes[1], t);
-            this.putPart(currPoint, currTangent, t * this.getUvScale() + elapsedTime, currWidth, currColor);
+            for (short i = 1; i < this.interpolationPOne; ++i) {
+                t = (float) i / this.interpolationPOne;
+                tPow = (float) Math.pow(t, nodesL[0].getMixFactor());
+                currColorC = CalculateUtil.mix(nodesL[0].getColorC(), nodesL[1].getColorC(), true, tPow);
+                currColor[0] = (byte) currColorC.getRed();
+                currColor[1] = (byte) currColorC.getGreen();
+                currColor[2] = (byte) currColorC.getBlue();
+                currColor[3] = (byte) currColorC.getAlpha();
+                currWidth = CalculateUtil.mix(nodesL[0].getWidth(), nodesL[1].getWidth(), tPow);
+                currPoint = CurveUtil.getPointOnCurve(nodesL[0], nodesL[1], t);
+                currTangent = CurveUtil.getCurveDerivative(nodesL[0], nodesL[1], t);
+                this.putPart(currPoint, currTangent, t * this.getUvScale() + elapsedTime, currWidth, currColor);
+            }
+
+            currColor = nodesL[1].getColorArray();
+            currWidth = nodesL[1].getWidth();
+            currPoint = nodesL[1].getLocation();
+            currTangent = CurveUtil.getCurveDerivative(nodesL[0], nodesL[1], 1.0f);
+            this.putPart(currPoint, currTangent, this.getUvScale() + elapsedTime, currWidth, currColor);
+
+            this.buffer.clear();
+            GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getCurveID());
+            GLWrapper.Buffer.VBO.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0, this.buffer);
+            GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+        } finally {
+            in_syncLock.unlock();
         }
-
-        currColor = this.nodes[1].getColorArray();
-        currWidth = this.nodes[1].getWidth();
-        currPoint = this.nodes[1].getLocation();
-        currTangent = CurveUtil.getCurveDerivative(this.nodes[0], this.nodes[1], 1.0f);
-        this.putPart(currPoint, currTangent, this.getUvScale() + elapsedTime, currWidth, currColor);
-
-        this.buffer.position(0);
-        this.buffer.limit(this.buffer.capacity());
-        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, this.getCurveID());
-        GLWrapper.Buffer.VBO.glBufferSubData(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0, this.buffer);
-        GLWrapper.Buffer.VBO.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
-        this._sync_lock.unlock();
     }
 
     public NodeData getStartNode() {

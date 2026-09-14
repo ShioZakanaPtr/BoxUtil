@@ -124,20 +124,18 @@ public class TextFieldObject {
             if (useVertexColor) GL11.glEnableClientState(GL11.GL_COLOR_ARRAY); else GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
             GLWrapper.Operation.glEnable(GLWrapper.Texture.GL_TEXTURE_2D);
             GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.fontMap.getTextureID());
-            this._sync_lock.lock();
-            this.vertexBuffer.position(0);
-            this.vertexBuffer.limit(this.vertexBuffer.capacity());
-            this.uvBuffer.position(0);
-            this.uvBuffer.limit(this.uvBuffer.capacity());
-            GL11.glVertexPointer(2, 0, this.vertexBuffer);
-            GL11.glTexCoordPointer(2, 0, this.uvBuffer);
-            if (useVertexColor) {
-                this.colorBuffer.position(0);
-                this.colorBuffer.limit(this.colorBuffer.capacity());
-                GL11.glColorPointer(4, true, 0, this.colorBuffer);
+            final var in_syncLock = this._sync_lock;
+            in_syncLock.lock();
+            try {
+                GL11.glVertexPointer(2, 0, this.vertexBuffer);
+                GL11.glTexCoordPointer(2, 0, this.uvBuffer);
+                if (useVertexColor) {
+                    GL11.glColorPointer(4, true, 0, this.colorBuffer);
+                }
+                GLWrapper.Drawcall.glDrawArrays(GLWrapper.Drawcall.GL_QUADS, 0, this.getValidCharLength() << 2);
+            } finally {
+                in_syncLock.unlock();
             }
-            GLWrapper.Drawcall.glDrawArrays(GLWrapper.Drawcall.GL_QUADS, 0, this.getValidCharLength() << 2);
-            this._sync_lock.unlock();
             GL11.glPopClientAttrib();
         }
     }
@@ -224,268 +222,263 @@ public class TextFieldObject {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when an empty text data list or refresh count is zero.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte submitText() {
-        this._sync_lock.lock();
-        if (this.fontMap == null) {
-            this._sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
-        if (this._lastTextDataList == null || this._lastTextDataList.isEmpty()) {
-            this._sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        final int textDataRefreshIndex = this.textDataRefreshState[1];
-        final int textDataRefreshCount = this.textDataRefreshState[2];
-        final int textDataRefreshLimit = textDataRefreshIndex + textDataRefreshCount;
-        if (textDataRefreshCount < 1) {
-            this._sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-        if (this._lastTextDataState == null) this._lastTextDataState = new ArrayList<>(textDataRefreshCount);
+        SpinLock in_syncLock = this._sync_lock;
+        in_syncLock.lock();
+        try {
+            final var fontMapL = this.fontMap;
+            if (fontMapL == null) return BoxEnum.STATE_FAILED_OTHER;
+            if (this._lastTextDataList == null || this._lastTextDataList.isEmpty()) return BoxEnum.STATE_FAILED;
+            final int textDataRefreshIndex = this.textDataRefreshState[1];
+            final int textDataRefreshCount = this.textDataRefreshState[2];
+            final int textDataRefreshLimit = textDataRefreshIndex + textDataRefreshCount;
+            if (textDataRefreshCount < 1) return BoxEnum.STATE_FAILED;
 
-        Vector3f refreshDataTmp;
-        int charLength, lastCharLength;
-        charLength = lastCharLength = 0;
-        final int preDataIndex = textDataRefreshIndex - 1;
-        float currentLine, currentStep, currentDrawStep, lastLineVisualWidth = 0.0f, maxLineVisualWidth = 0.0f;
-        for (int i = 0; i < Math.min(textDataRefreshIndex, this._lastTextDataState.size()); i++) {
-            lastCharLength += (int) this._lastTextDataState.get(i).getZ();
-        }
-        if (textDataRefreshIndex >= this._lastTextDataState.size()) {
-            currentLine = currentStep = 0.0f;
-        } else {
-            if (preDataIndex > -1) {
-                refreshDataTmp = this._lastTextDataState.get(preDataIndex);
-                currentLine = refreshDataTmp.getX();
-                currentStep = refreshDataTmp.getY();
-            } else currentLine = currentStep = 0.0f;
-        }
-        char[] charArray;
-        final byte offset = (byte) (this.getAlignment() == TextFieldEntity.Alignment.MID ? 2 : (this.getAlignment() == TextFieldEntity.Alignment.RIGHT ? 1 : 0));
-        final boolean notDefaultAlignment = offset > 0, haveSubmitFeedback = this._submitFeedback != null;
-        int charLimit, currentTextSize, lineValidChar = 0;
-        char lastCharacter;
-        boolean putWidthDataCheck = false, hasCharSubmit = false;
-        List<FloatBuffer> tmpVertexList = new ArrayList<>(textDataRefreshCount);
-        List<FloatBuffer> tmpUVList = new ArrayList<>(textDataRefreshCount);
-        List<FloatBuffer> tmpColorList = new ArrayList<>(textDataRefreshCount);
-        FloatBuffer tmpVertexBuffer, tmpUVBuffer, tmpColorBuffer;
-        Pair<Integer, Float> lastLineAlignmentData = new Pair<Integer, Float>(0, 0.0f);
-        List<Pair<Integer, Float>> currLineAlignmentData = new ArrayList<>(8); // lineCharCount, currWidth
-        TextFieldEntity.TextData textData;
-        final FontMapData.BitMapGlyph fontData = new FontMapData.BitMapGlyph(),
-                notFoundSymbol = new FontMapData.BitMapGlyph();
-        final float[] currCharUV = new float[4];
-        float currYPos, currRightPos, currBottomPos, bottomItalicOffset, topItalicOffset;
-        for (int i = textDataRefreshIndex; i < textDataRefreshLimit; i++) {
-            textData = this._lastTextDataList.get(i);
-            if (textData == null) continue;
-            String text = textData.text;
-            final byte fontLineHeight = this.fontMap.getLineHeight(), fontBaseHeight = this.fontMap.getLineBase();
-            lastCharacter = 0;
-            char character;
-            boolean isLineFeed,
-                    currNotFound,
-                    haveNotFoundSymbol = this.fontMap.loadGlyph(TextFieldEntity.NOT_FOUND_SYMBOL, notFoundSymbol);
-            if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
-                if (haveSubmitFeedback) this._submitFeedback.processBreak(BoxEnum.ZERO, i, true, '\0', 0, currentStep, currentLine);
-                break;
+            List<Vector3f> lastTextDataStateL;
+            if ((lastTextDataStateL = this._lastTextDataState) == null) this._lastTextDataState = lastTextDataStateL = new ArrayList<>(textDataRefreshCount);
+
+            Vector3f refreshDataTmp;
+            int charLength, lastCharLength;
+            charLength = lastCharLength = 0;
+            final int preDataIndex = textDataRefreshIndex - 1;
+            float currentLine, currentStep, currentDrawStep, lastLineVisualWidth = 0.0f, maxLineVisualWidth = 0.0f;
+            for (int i = 0; i < Math.min(textDataRefreshIndex, lastTextDataStateL.size()); i++) {
+                lastCharLength += (int) lastTextDataStateL.get(i).getZ();
             }
-            charArray = text.toCharArray();
-            currentTextSize = charArray.length;
-            charLimit = currentTextSize - 1;
-            tmpVertexBuffer = BufferUtils.createFloatBuffer(currentTextSize << 3);
-            tmpUVBuffer = BufferUtils.createFloatBuffer(currentTextSize << 3);
-            tmpColorBuffer = BufferUtils.createFloatBuffer(currentTextSize << 2);
-            charLength += currentTextSize;
-            currentLine -= textData.getPadding();
-            final boolean isItalic = (textData.byteState[1] & 0b0100) > 0;
-            final float colorBit = Float.intBitsToFloat(textData.pickColorPackage_int32());
-
-            for (int j = 0; j < charArray.length; j++) {
-                character = charArray[j];
-                isLineFeed = character == TextFieldEntity.LINE_FEED_SYMBOL;
-                currNotFound = !this.fontMap.loadGlyph(character, fontData);
-                if (currNotFound && haveNotFoundSymbol) {
-                    currNotFound = false;
-                    character = TextFieldEntity.NOT_FOUND_SYMBOL;
-                    fontData.copyFrom(notFoundSymbol);
+            if (textDataRefreshIndex >= lastTextDataStateL.size()) {
+                currentLine = currentStep = 0.0f;
+            } else {
+                if (preDataIndex > -1) {
+                    refreshDataTmp = lastTextDataStateL.get(preDataIndex);
+                    currentLine = refreshDataTmp.getX();
+                    currentStep = refreshDataTmp.getY();
+                } else currentLine = currentStep = 0.0f;
+            }
+            char[] charArray;
+            final byte offset = (byte) (this.getAlignment() == TextFieldEntity.Alignment.MID ? 2 : (this.getAlignment() == TextFieldEntity.Alignment.RIGHT ? 1 : 0));
+            final var submitFeedbackL = this._submitFeedback;
+            final boolean notDefaultAlignment = offset > 0, haveSubmitFeedback = submitFeedbackL != null;
+            int charLimit, currentTextSize, lineValidChar = 0;
+            char lastCharacter;
+            boolean putWidthDataCheck = false, hasCharSubmit = false;
+            List<FloatBuffer> tmpVertexList = new ArrayList<>(textDataRefreshCount);
+            List<FloatBuffer> tmpUVList = new ArrayList<>(textDataRefreshCount);
+            List<FloatBuffer> tmpColorList = new ArrayList<>(textDataRefreshCount);
+            FloatBuffer tmpVertexBuffer, tmpUVBuffer, tmpColorBuffer;
+            Pair<Integer, Float> lastLineAlignmentData = new Pair<>(0, 0.0f);
+            List<Pair<Integer, Float>> currLineAlignmentData = new ArrayList<>(8); // lineCharCount, currWidth
+            TextFieldEntity.TextData textData;
+            final FontMapData.BitMapGlyph fontData = new FontMapData.BitMapGlyph(),
+                    notFoundSymbol = new FontMapData.BitMapGlyph();
+            final float[] currCharUV = new float[4], textStateAfterSubmitL = this.textStateAfterSubmit;
+            float currYPos, currRightPos, currBottomPos, bottomItalicOffset, topItalicOffset;
+            for (int i = textDataRefreshIndex; i < textDataRefreshLimit; i++) {
+                textData = this._lastTextDataList.get(i);
+                if (textData == null) continue;
+                String text = textData.text;
+                final byte fontLineHeight = fontMapL.getLineHeight(), fontBaseHeight = fontMapL.getLineBase();
+                lastCharacter = 0;
+                char character;
+                boolean isLineFeed,
+                        currNotFound,
+                        haveNotFoundSymbol = fontMapL.loadGlyph(TextFieldEntity.NOT_FOUND_SYMBOL, notFoundSymbol);
+                if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
+                    if (haveSubmitFeedback) submitFeedbackL.processBreak(BoxEnum.ZERO, i, true, '\0', 0, currentStep, currentLine);
+                    break;
                 }
+                charArray = text.toCharArray();
+                currentTextSize = charArray.length;
+                charLimit = currentTextSize - 1;
+                tmpVertexBuffer = BufferUtils.createFloatBuffer(currentTextSize << 3);
+                tmpUVBuffer = BufferUtils.createFloatBuffer(currentTextSize << 3);
+                tmpColorBuffer = BufferUtils.createFloatBuffer(currentTextSize << 2);
+                charLength += currentTextSize;
+                currentLine -= textData.getPadding();
+                final boolean isItalic = (textData.byteState[1] & 0b0100) > 0;
+                final float colorBit = Float.intBitsToFloat(textData.pickColorPackage_int32());
 
-                if (currNotFound || isLineFeed) {
-                    if (haveSubmitFeedback) this._submitFeedback.processText(BoxEnum.ZERO, i, character, !currNotFound, isLineFeed, j, currentStep, currentLine, textData.getPadding(), textData.byteState[1], textData.byteState[2], textData.byteState[3], textData.byteState[4], textData.byteState[5]);
+                for (int j = 0; j < charArray.length; j++) {
+                    character = charArray[j];
+                    isLineFeed = character == TextFieldEntity.LINE_FEED_SYMBOL;
+                    currNotFound = !fontMapL.loadGlyph(character, fontData);
+                    if (currNotFound && haveNotFoundSymbol) {
+                        currNotFound = false;
+                        character = TextFieldEntity.NOT_FOUND_SYMBOL;
+                        fontData.copyFrom(notFoundSymbol);
+                    }
+
+                    if (currNotFound || isLineFeed) {
+                        if (haveSubmitFeedback) submitFeedbackL.processText(BoxEnum.ZERO, i, character, !currNotFound, isLineFeed, j, currentStep, currentLine, textData.getPadding(), textData.byteState[1], textData.byteState[2], textData.byteState[3], textData.byteState[4], textData.byteState[5]);
+                        if (isLineFeed) {
+                            currentLine -= fontLineHeight + this.getFontHeightSpace();
+                            currentStep = 0.0f;
+                        }
+                        charLength--;
+                        currentTextSize--;
+                        lastCharacter = character;
+                        if (j >= charLimit) {
+                            refreshDataTmp = new Vector3f(currentLine, currentStep, currentTextSize);
+                            if (i >= lastTextDataStateL.size()) lastTextDataStateL.add(refreshDataTmp); else lastTextDataStateL.set(i, refreshDataTmp);
+                        }
+                        if (notDefaultAlignment && lineValidChar > 0) {
+                            putWidthDataCheck = false;
+                            currLineAlignmentData.add(new Pair<>(lineValidChar, lastLineVisualWidth));
+                            lineValidChar = 0;
+                        }
+                        continue;
+                    }
+
+                    if (fontMapL.haveKerning()) {
+                        currentStep += fontMapL.getKerning(lastCharacter, character);
+                    }
+
+                    currentDrawStep = currentStep + fontData.xOffset;
+                    isLineFeed = currentDrawStep + fontData.width > this.getTextFieldWidth();
                     if (isLineFeed) {
-                        currentLine -= fontLineHeight + this.getFontHeightSpace();
                         currentStep = 0.0f;
-                    }
-                    charLength--;
-                    currentTextSize--;
-                    lastCharacter = character;
-                    if (j >= charLimit) {
-                        refreshDataTmp = new Vector3f(currentLine, currentStep, currentTextSize);
-                        if (i >= this._lastTextDataState.size()) this._lastTextDataState.add(refreshDataTmp); else this._lastTextDataState.set(i, refreshDataTmp);
-                    }
-                    if (notDefaultAlignment && lineValidChar > 0) {
+                        currentDrawStep = fontData.xOffset;
+                        currentLine -= fontLineHeight + this.getFontHeightSpace();
+
                         putWidthDataCheck = false;
                         currLineAlignmentData.add(new Pair<>(lineValidChar, lastLineVisualWidth));
                         lineValidChar = 0;
                     }
-                    continue;
+                    lastLineVisualWidth = currentDrawStep + fontData.width;
+                    maxLineVisualWidth = Math.max(maxLineVisualWidth, lastLineVisualWidth);
+
+                    if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
+                        if (haveSubmitFeedback) submitFeedbackL.processBreak(BoxEnum.ZERO, i, false, character, j, currentStep, currentLine);
+                        break;
+                    }
+                    if (haveSubmitFeedback) submitFeedbackL.processText(BoxEnum.ZERO, i, character, true, isLineFeed, j, currentStep, currentLine, textData.getPadding(), textData.byteState[1], textData.byteState[2], textData.byteState[3], textData.byteState[4], textData.byteState[5]);
+
+                    currCharUV[0] = fontData.uvBLx + 0.5f;
+                    currCharUV[1] = fontData.uvBLy + 0.5f;
+                    currCharUV[2] = fontData.uvTRx + 0.5f;
+                    currCharUV[3] = fontData.uvTRy + 0.5f;
+                    currYPos = currentLine - fontData.yOffset; // top
+                    currRightPos = currentDrawStep + fontData.width;
+                    currBottomPos = currYPos - fontData.height;
+                    if (isItalic) {
+                        final byte bottomEdge = (byte) (Math.max(fontLineHeight - fontData.yOffset - fontData.height, 0) - fontBaseHeight);
+                        bottomItalicOffset = this.getCurrentItalicFactor() * bottomEdge;
+                        topItalicOffset = this.getCurrentItalicFactor() * (fontData.height + bottomEdge);
+                    } else bottomItalicOffset = topItalicOffset = 0.0f;
+                    // bl
+                    tmpVertexBuffer.put(currentDrawStep + bottomItalicOffset);
+                    tmpVertexBuffer.put(currBottomPos);
+                    tmpUVBuffer.put(currCharUV[0]);
+                    tmpUVBuffer.put(currCharUV[1]);
+                    // br
+                    tmpVertexBuffer.put(currRightPos + bottomItalicOffset);
+                    tmpVertexBuffer.put(currBottomPos);
+                    tmpUVBuffer.put(currCharUV[2]);
+                    tmpUVBuffer.put(currCharUV[1]);
+                    // tr
+                    tmpVertexBuffer.put(currRightPos + topItalicOffset);
+                    tmpVertexBuffer.put(currYPos);
+                    tmpUVBuffer.put(currCharUV[2]);
+                    tmpUVBuffer.put(currCharUV[3]);
+                    // tl
+                    tmpVertexBuffer.put(currentDrawStep + topItalicOffset);
+                    tmpVertexBuffer.put(currYPos);
+                    tmpUVBuffer.put(currCharUV[0]);
+                    tmpUVBuffer.put(currCharUV[3]);
+                    for (int n = 0; n < 4; ++n) tmpColorBuffer.put(colorBit);
+
+                    if (notDefaultAlignment) {
+                        if (!putWidthDataCheck) putWidthDataCheck = true;
+                        lineValidChar++;
+                    }
+                    lastCharacter = character;
+                    currentStep += fontData.xAdvance + this.getFontWidthSpace();
+                    if (character == '\t') currentStep += this.getFontWidthSpace() * 3.0f;
+                    if (!hasCharSubmit) {
+                        hasCharSubmit = true;
+                        textStateAfterSubmitL[0] = 0.0f;
+                    }
                 }
-
-                if (this.fontMap.haveKerning()) {
-                    currentStep += this.fontMap.getKerning(lastCharacter, character);
-                }
-
-                currentDrawStep = currentStep + fontData.xOffset;
-                isLineFeed = currentDrawStep + fontData.width > this.getTextFieldWidth();
-                if (isLineFeed) {
-                    currentStep = 0.0f;
-                    currentDrawStep = fontData.xOffset;
-                    currentLine -= fontLineHeight + this.getFontHeightSpace();
-
-                    putWidthDataCheck = false;
-                    currLineAlignmentData.add(new Pair<>(lineValidChar, lastLineVisualWidth));
-                    lineValidChar = 0;
-                }
-                lastLineVisualWidth = currentDrawStep + fontData.width;
-                maxLineVisualWidth = Math.max(maxLineVisualWidth, lastLineVisualWidth);
-
-                if (Math.abs(currentLine - fontLineHeight) > this.getTextFieldHeight()) {
-                    if (haveSubmitFeedback) this._submitFeedback.processBreak(BoxEnum.ZERO, i, false, character, j, currentStep, currentLine);
-                    break;
-                }
-                if (haveSubmitFeedback) this._submitFeedback.processText(BoxEnum.ZERO, i, character, true, isLineFeed, j, currentStep, currentLine, textData.getPadding(), textData.byteState[1], textData.byteState[2], textData.byteState[3], textData.byteState[4], textData.byteState[5]);
-
-                currCharUV[0] = fontData.uvBLx + 0.5f;
-                currCharUV[1] = fontData.uvBLy + 0.5f;
-                currCharUV[2] = fontData.uvTRx + 0.5f;
-                currCharUV[3] = fontData.uvTRy + 0.5f;
-                currYPos = currentLine - fontData.yOffset; // top
-                currRightPos = currentDrawStep + fontData.width;
-                currBottomPos = currYPos - fontData.height;
-                if (isItalic) {
-                    final byte bottomEdge = (byte) (Math.max(fontLineHeight - fontData.yOffset - fontData.height, 0) - fontBaseHeight);
-                    bottomItalicOffset = this.getCurrentItalicFactor() * bottomEdge;
-                    topItalicOffset = this.getCurrentItalicFactor() * (fontData.height + bottomEdge);
-                } else bottomItalicOffset = topItalicOffset = 0.0f;
-                // bl
-                tmpVertexBuffer.put(currentDrawStep + bottomItalicOffset);
-                tmpVertexBuffer.put(currBottomPos);
-                tmpUVBuffer.put(currCharUV[0]);
-                tmpUVBuffer.put(currCharUV[1]);
-                // br
-                tmpVertexBuffer.put(currRightPos + bottomItalicOffset);
-                tmpVertexBuffer.put(currBottomPos);
-                tmpUVBuffer.put(currCharUV[2]);
-                tmpUVBuffer.put(currCharUV[1]);
-                // tr
-                tmpVertexBuffer.put(currRightPos + topItalicOffset);
-                tmpVertexBuffer.put(currYPos);
-                tmpUVBuffer.put(currCharUV[2]);
-                tmpUVBuffer.put(currCharUV[3]);
-                // tl
-                tmpVertexBuffer.put(currentDrawStep + topItalicOffset);
-                tmpVertexBuffer.put(currYPos);
-                tmpUVBuffer.put(currCharUV[0]);
-                tmpUVBuffer.put(currCharUV[3]);
-                for (int n = 0; n < 4; ++n) tmpColorBuffer.put(colorBit);
-
                 if (notDefaultAlignment) {
-                    if (!putWidthDataCheck) putWidthDataCheck = true;
-                    lineValidChar++;
+                    lastLineAlignmentData.one = lineValidChar;
+                    lastLineAlignmentData.two = lastLineVisualWidth;
                 }
-                lastCharacter = character;
-                currentStep += fontData.xAdvance + this.getFontWidthSpace();
-                if (character == '\t') currentStep += this.getFontWidthSpace() * 3.0f;
-                if (!hasCharSubmit) {
-                    hasCharSubmit = true;
-                    this.textStateAfterSubmit[0] = 0.0f;
+                tmpVertexBuffer.position(0);
+                tmpVertexBuffer.limit(currentTextSize << 3);
+                tmpUVBuffer.position(0);
+                tmpUVBuffer.limit(currentTextSize << 3);
+                tmpColorBuffer.position(0);
+                tmpColorBuffer.limit(currentTextSize << 2);
+                tmpVertexList.add(tmpVertexBuffer);
+                tmpUVList.add(tmpUVBuffer);
+                tmpColorList.add(tmpColorBuffer);
+                if (i >= lastTextDataStateL.size()) {
+                    lastTextDataStateL.add(new Vector3f(currentLine, currentStep, currentTextSize));
+                } else {
+                    lastTextDataStateL.set(i, new Vector3f(currentLine, currentStep, currentTextSize));
                 }
+                if (hasCharSubmit) textStateAfterSubmitL[0] = Math.max(textStateAfterSubmitL[0], maxLineVisualWidth);
+                textStateAfterSubmitL[1] = Math.abs(currentLine - fontLineHeight);
+            }
+            if (putWidthDataCheck && lastLineAlignmentData.one > 0) currLineAlignmentData.add(lastLineAlignmentData);
+
+            if (charLength < 1) return BoxEnum.STATE_FAILED;
+
+            final int newCharLength = charLength + lastCharLength;
+            if (newCharLength > this.textDataRefreshState[0]) {
+                this.reallocateBuffer(newCharLength);
+                this.textDataRefreshState[0] = newCharLength;
+            }
+
+            final int subVec2Index = lastCharLength << 3;
+            final int subColorIndex = lastCharLength << 2;
+            final var vertexBufferL = this.vertexBuffer;
+            final var uvBufferL = this.uvBuffer;
+            final var colorBufferFL = this.colorBuffer.asFloatBuffer();
+            vertexBufferL.position(subVec2Index);
+            uvBufferL.position(subVec2Index);
+            colorBufferFL.position(subColorIndex);
+            if (this.isRefreshRenderingLengthWhenSubmit()) this.textDataRefreshState[3] = newCharLength;
+
+            FloatBuffer tmpPutBuffer;
+            int tmpBufferAddIndexA = subVec2Index, tmpBufferAddIndexB = subColorIndex;
+            for (int i = 0; i < tmpVertexList.size(); i++) {
+                tmpPutBuffer = tmpVertexList.get(i);
+                tmpBufferAddIndexA += tmpPutBuffer.limit();
+                vertexBufferL.put(tmpPutBuffer);
+                vertexBufferL.position(tmpBufferAddIndexA);
+                tmpPutBuffer = tmpUVList.get(i);
+                uvBufferL.put(tmpPutBuffer);
+                uvBufferL.position(tmpBufferAddIndexA);
+
+                tmpPutBuffer = tmpColorList.get(i);
+                tmpBufferAddIndexB += tmpPutBuffer.limit();
+                colorBufferFL.put(tmpPutBuffer);
+                colorBufferFL.position(tmpBufferAddIndexB);
             }
             if (notDefaultAlignment) {
-                lastLineAlignmentData.one = lineValidChar;
-                lastLineAlignmentData.two = lastLineVisualWidth;
-            }
-            tmpVertexBuffer.position(0);
-            tmpVertexBuffer.limit(currentTextSize << 3);
-            tmpUVBuffer.position(0);
-            tmpUVBuffer.limit(currentTextSize << 3);
-            tmpColorBuffer.position(0);
-            tmpColorBuffer.limit(currentTextSize << 2);
-            tmpVertexList.add(tmpVertexBuffer);
-            tmpUVList.add(tmpUVBuffer);
-            tmpColorList.add(tmpColorBuffer);
-            if (i >= this._lastTextDataState.size()) {
-                this._lastTextDataState.add(new Vector3f(currentLine, currentStep, currentTextSize));
-            } else {
-                this._lastTextDataState.set(i, new Vector3f(currentLine, currentStep, currentTextSize));
-            }
-            if (hasCharSubmit) this.textStateAfterSubmit[0] = Math.max(this.textStateAfterSubmit[0], maxLineVisualWidth);
-            this.textStateAfterSubmit[1] = Math.abs(currentLine - fontLineHeight);
-        }
-        if (putWidthDataCheck && lastLineAlignmentData.one > 0) currLineAlignmentData.add(lastLineAlignmentData);
-
-        if (charLength < 1) {
-            this._sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
-
-        final int newCharLength = charLength + lastCharLength;
-        if (newCharLength > this.textDataRefreshState[0]) {
-            this.reallocateBuffer(newCharLength);
-            this.textDataRefreshState[0] = newCharLength;
-        }
-
-        final int subVec2Index = lastCharLength << 3;
-        final int subColorIndex = lastCharLength << 2;
-        this.vertexBuffer.position(subVec2Index);
-        this.uvBuffer.position(subVec2Index);
-        FloatBuffer colorBufferF = this.colorBuffer.asFloatBuffer();
-        colorBufferF.position(subColorIndex);
-        if (this.isRefreshRenderingLengthWhenSubmit()) this.textDataRefreshState[3] = newCharLength;
-
-        FloatBuffer tmpPutBuffer;
-        int tmpBufferAddIndexA = subVec2Index, tmpBufferAddIndexB = subColorIndex;
-        for (int i = 0; i < tmpVertexList.size(); i++) {
-            tmpPutBuffer = tmpVertexList.get(i);
-            tmpBufferAddIndexA += tmpPutBuffer.limit();
-            this.vertexBuffer.put(tmpPutBuffer);
-            this.vertexBuffer.position(tmpBufferAddIndexA);
-            tmpPutBuffer = tmpUVList.get(i);
-            this.uvBuffer.put(tmpPutBuffer);
-            this.uvBuffer.position(tmpBufferAddIndexA);
-
-            tmpPutBuffer = tmpColorList.get(i);
-            tmpBufferAddIndexB += tmpPutBuffer.limit();
-            colorBufferF.put(tmpPutBuffer);
-            colorBufferF.position(tmpBufferAddIndexB);
-        }
-        if (notDefaultAlignment) {
-            int lineBufferIndexA = subVec2Index, lineBufferIndexB = subVec2Index + 2, lineBufferIndexC = subVec2Index + 4, lineBufferIndexD = subVec2Index + 6;
-            float currOffsetStep;
-            for (Pair<Integer, Float> line : currLineAlignmentData) {
-                currOffsetStep = Math.max(this.getTextFieldWidth() - line.two, 0.0f) / offset;
-                for (int n = 0; n < line.one; ++n) {
-                    this.vertexBuffer.put(lineBufferIndexA, this.vertexBuffer.get(lineBufferIndexA) + currOffsetStep);
-                    this.vertexBuffer.put(lineBufferIndexB, this.vertexBuffer.get(lineBufferIndexB) + currOffsetStep);
-                    this.vertexBuffer.put(lineBufferIndexC, this.vertexBuffer.get(lineBufferIndexC) + currOffsetStep);
-                    this.vertexBuffer.put(lineBufferIndexD, this.vertexBuffer.get(lineBufferIndexD) + currOffsetStep);
-                    lineBufferIndexA += 8;
-                    lineBufferIndexB += 8;
-                    lineBufferIndexC += 8;
-                    lineBufferIndexD += 8;
+                int lineBufferIndexA = subVec2Index, lineBufferIndexB = subVec2Index + 2, lineBufferIndexC = subVec2Index + 4, lineBufferIndexD = subVec2Index + 6;
+                float currOffsetStep;
+                for (Pair<Integer, Float> line : currLineAlignmentData) {
+                    currOffsetStep = Math.max(this.getTextFieldWidth() - line.two, 0.0f) / offset;
+                    for (int n = 0; n < line.one; ++n) {
+                        vertexBufferL.put(lineBufferIndexA, vertexBufferL.get(lineBufferIndexA) + currOffsetStep);
+                        vertexBufferL.put(lineBufferIndexB, vertexBufferL.get(lineBufferIndexB) + currOffsetStep);
+                        vertexBufferL.put(lineBufferIndexC, vertexBufferL.get(lineBufferIndexC) + currOffsetStep);
+                        vertexBufferL.put(lineBufferIndexD, vertexBufferL.get(lineBufferIndexD) + currOffsetStep);
+                        lineBufferIndexA += 8;
+                        lineBufferIndexB += 8;
+                        lineBufferIndexC += 8;
+                        lineBufferIndexD += 8;
+                    }
                 }
             }
-        }
 
-        this.vertexBuffer.position(0);
-        this.vertexBuffer.limit(this.vertexBuffer.capacity());
-        this.uvBuffer.position(0);
-        this.uvBuffer.limit(this.uvBuffer.capacity());
-        this.colorBuffer.position(0);
-        this.colorBuffer.limit(this.colorBuffer.capacity());
-        this._sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
+            vertexBufferL.clear();
+            uvBufferL.clear();
+            this.colorBuffer.clear();
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
+        }
     }
 
     /**
@@ -497,21 +490,19 @@ public class TextFieldObject {
      * @return return {@link BoxEnum#STATE_SUCCESS} when success.<p> return {@link BoxEnum#STATE_FAILED} when parameter error.<p> return {@link BoxEnum#STATE_FAILED_OTHER} when happened another error.
      */
     public byte mallocTextData(int charNum) {
-        this._sync_lock.lock();
-        if (this.fontMap == null) {
-            this._sync_lock.unlock();
-            return BoxEnum.STATE_FAILED_OTHER;
-        }
-        if (charNum < 1) {
-            this._sync_lock.unlock();
-            return BoxEnum.STATE_FAILED;
-        }
+        final var in_syncLock = this._sync_lock;
+        in_syncLock.lock();
+        try {
+            if (this.fontMap == null) return BoxEnum.STATE_FAILED_OTHER;
+            if (charNum < 1) return BoxEnum.STATE_FAILED;
 
-        this.reallocateBuffer(charNum);
-        this.textDataRefreshState[0] = charNum;
-        this.textDataRefreshState[3] = 0;
-        this._sync_lock.unlock();
-        return BoxEnum.STATE_SUCCESS;
+            this.reallocateBuffer(charNum);
+            this.textDataRefreshState[0] = charNum;
+            this.textDataRefreshState[3] = 0;
+            return BoxEnum.STATE_SUCCESS;
+        } finally {
+            in_syncLock.unlock();
+        }
     }
 
     public TextSubmitFeedbackAPI getSubmitFeedback() {

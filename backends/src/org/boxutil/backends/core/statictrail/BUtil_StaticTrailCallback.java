@@ -120,11 +120,11 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.Result {
     }
 
     public byte getCurrentAlpha() {
-        return this.color[0];
+        return this.color[3];
     }
 
     public int getCurrentAlphaI() {
-        return this.color[0] & 0xff;
+        return this.color[3] & 0xff;
     }
 
     public float getCurrentAlphaF() {
@@ -132,7 +132,7 @@ public class BUtil_StaticTrailCallback implements StaticTrailTracker.Result {
     }
 
     public void setCurrentAlpha(byte a) {
-        this.color[0] = a;
+        this.color[3] = a;
     }
 
     public void setCurrentAlpha(int a) {

@@ -42,7 +42,7 @@ uniform float u_time;
 #ifdef LEGACY_TRAIL_MODE
 varying in vec4 vgb_geomEntityColor[];
 varying in vec4 vgb_geomMixEmissive[];
-varying in uvec4 vgb_geomSymbolID_Life_UV_Width[];
+varying in uvec4 vgb_geomSymbolID_RawUV_UV_Width[];
 
 varying out vec4 gfb_fragEntityColor;
 varying out vec4 gfb_fragMixEmissive;
@@ -52,7 +52,7 @@ varying out float gfb_fragEndsAlpha;
 in VERT_GEOM_BLOCK {
     vec4 geomEntityColor;
     vec4 geomMixEmissive;
-    uvec4 geomSymbolID_Life_UV_Width;
+    uvec4 geomSymbolID_RawUV_UV_Width;
 } vgb_datas[];
 
 out GEOM_FRAG_BLOCK {
@@ -74,10 +74,10 @@ void main() {
         startPos = gl_PositionIn[1].xy,
         endPos = gl_PositionIn[2].xy,
         rightPos = gl_PositionIn[3].xy;
-    uvec4 in_vgb_nodeData_0 = vgb_geomSymbolID_Life_UV_Width[0],
-        in_vgb_nodeData_1 = vgb_geomSymbolID_Life_UV_Width[1],
-        in_vgb_nodeData_2 = vgb_geomSymbolID_Life_UV_Width[2],
-        in_vgb_nodeData_3 = vgb_geomSymbolID_Life_UV_Width[3];
+    uvec4 in_vgb_nodeData_0 = vgb_geomSymbolID_RawUV_UV_Width[0],
+        in_vgb_nodeData_1 = vgb_geomSymbolID_RawUV_UV_Width[1],
+        in_vgb_nodeData_2 = vgb_geomSymbolID_RawUV_UV_Width[2],
+        in_vgb_nodeData_3 = vgb_geomSymbolID_RawUV_UV_Width[3];
     vec4 in_vgb_entityColor_1 = vgb_geomEntityColor[1],
         in_vgb_mixEmissive_1 = vgb_geomMixEmissive[1],
         in_vgb_entityColor_2 = vgb_geomEntityColor[2],
@@ -87,10 +87,10 @@ void main() {
         startPos = gl_in[1].gl_Position.xy,
         endPos = gl_in[2].gl_Position.xy,
         rightPos = gl_in[3].gl_Position.xy;
-    uvec4 in_vgb_nodeData_0 = vgb_datas[0].geomSymbolID_Life_UV_Width,
-        in_vgb_nodeData_1 = vgb_datas[1].geomSymbolID_Life_UV_Width,
-        in_vgb_nodeData_2 = vgb_datas[2].geomSymbolID_Life_UV_Width,
-        in_vgb_nodeData_3 = vgb_datas[3].geomSymbolID_Life_UV_Width;
+    uvec4 in_vgb_nodeData_0 = vgb_datas[0].geomSymbolID_RawUV_UV_Width,
+        in_vgb_nodeData_1 = vgb_datas[1].geomSymbolID_RawUV_UV_Width,
+        in_vgb_nodeData_2 = vgb_datas[2].geomSymbolID_RawUV_UV_Width,
+        in_vgb_nodeData_3 = vgb_datas[3].geomSymbolID_RawUV_UV_Width;
     vec4 in_vgb_entityColor_1 = vgb_datas[1].geomEntityColor,
         in_vgb_mixEmissive_1 = vgb_datas[1].geomMixEmissive,
         in_vgb_entityColor_2 = vgb_datas[2].geomEntityColor,
@@ -98,12 +98,14 @@ void main() {
 #endif
 
     // cut different trail || cut loop in same trail
-    vec3 startNode_Life_UV_Width = uintBitsToFloat(in_vgb_nodeData_1.yzw),
-        endNode_Life_UV_Width = uintBitsToFloat(in_vgb_nodeData_2.yzw);
-    if (in_vgb_nodeData_1.x != in_vgb_nodeData_2.x || startNode_Life_UV_Width.x <= endNode_Life_UV_Width.x) return;
+    vec3 leftNode_RawUV_UV_Width = uintBitsToFloat(in_vgb_nodeData_0.yzw),
+        startNode_RawUV_UV_Width = uintBitsToFloat(in_vgb_nodeData_1.yzw),
+        endNode_RawUV_UV_Width = uintBitsToFloat(in_vgb_nodeData_2.yzw),
+        rightNode_RawUV_UV_Width = uintBitsToFloat(in_vgb_nodeData_3.yzw);
+    if (in_vgb_nodeData_1.x != in_vgb_nodeData_2.x || startNode_RawUV_UV_Width.x > endNode_RawUV_UV_Width.x) return;
 
-    bool isLeftAuxPoint = (uintBitsToFloat(in_vgb_nodeData_0.z) < -1000.0) || (in_vgb_nodeData_0.x != in_vgb_nodeData_1.x),
-        isRightAuxPoint = (uintBitsToFloat(in_vgb_nodeData_3.z) < -1000.0) || (in_vgb_nodeData_2.x != in_vgb_nodeData_3.x);
+    bool isLeftAuxPoint = leftNode_RawUV_UV_Width.x > startNode_RawUV_UV_Width.x || leftNode_RawUV_UV_Width.x < -1000.0 || (in_vgb_nodeData_0.x != in_vgb_nodeData_1.x),
+        isRightAuxPoint = endNode_RawUV_UV_Width.x > rightNode_RawUV_UV_Width.x || rightNode_RawUV_UV_Width.x < -1000.0 || (in_vgb_nodeData_2.x != in_vgb_nodeData_3.x);
 
     vec2 trailDir, midNormal, startNormal = vec2(0.0), endNormal = vec2(0.0);
     trailDir = normalize(endPos.xy - startPos.xy);
@@ -121,14 +123,14 @@ void main() {
         endNormal = normalize(normalize(endNormal) + midNormal);
     }
     if (isLeftAuxPoint) startNormal = endNormal;
-    startNormal *= startNode_Life_UV_Width.z;
-    endNormal *= endNode_Life_UV_Width.z;
+    startNormal *= startNode_RawUV_UV_Width.z;
+    endNormal *= endNode_RawUV_UV_Width.z;
 
 #ifdef LEGACY_TRAIL_MODE
     gfb_fragEndsAlpha = isLeftAuxPoint ? 0.0 : 1.0;
     gfb_fragEntityColor = in_vgb_entityColor_1;
     gfb_fragMixEmissive = in_vgb_mixEmissive_1;
-    gfb_fragUV = vec2(startNode_Life_UV_Width.y, 1.0);
+    gfb_fragUV = vec2(startNode_RawUV_UV_Width.y, 1.0);
     gl_Position = b_gameViewport * vec4(startPos + startNormal, 0.0, 1.0);
     EmitVertex();
 
@@ -140,7 +142,7 @@ void main() {
     gfb_data.fragEntityColor = in_vgb_entityColor_1;
     gfb_data.fragMixEmissive = in_vgb_mixEmissive_1;
     vec4 resultGLPos;
-    gfb_data.fragUV_TBN = vec4(startNode_Life_UV_Width.y, 1.0, trailDir);
+    gfb_data.fragUV_TBN = vec4(startNode_RawUV_UV_Width.y, 1.0, trailDir);
     resultGLPos = b_gameViewport * vec4(startPos + startNormal, 0.0, 1.0);
     gfb_data.fragPosN = toGBufferPos(resultGLPos.xy);
     gl_Position = resultGLPos;
@@ -158,7 +160,7 @@ void main() {
     gfb_fragEndsAlpha = isRightAuxPoint ? 0.0 : 1.0;
     gfb_fragEntityColor = in_vgb_entityColor_2;
     gfb_fragMixEmissive = in_vgb_mixEmissive_2;
-    gfb_fragUV.x = endNode_Life_UV_Width.y;
+    gfb_fragUV.x = endNode_RawUV_UV_Width.y;
     gfb_fragUV.y = 1.0;
     gl_Position = b_gameViewport * vec4(endPos + endNormal, 0.0, 1.0);
     EmitVertex();
@@ -171,7 +173,7 @@ void main() {
     gfb_data.fragEndsAlpha = isRightAuxPoint ? 0.0 : 1.0;
     gfb_data.fragEntityColor = in_vgb_entityColor_2;
     gfb_data.fragMixEmissive = in_vgb_mixEmissive_2;
-    gfb_data.fragUV_TBN.x = endNode_Life_UV_Width.y;
+    gfb_data.fragUV_TBN.x = endNode_RawUV_UV_Width.y;
     gfb_data.fragUV_TBN.y = 1.0;
     resultGLPos = b_gameViewport * vec4(endPos + endNormal, 0.0, 1.0);
     gfb_data.fragPosN = toGBufferPos(resultGLPos.xy);

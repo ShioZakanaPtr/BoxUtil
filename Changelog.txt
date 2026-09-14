@@ -3,6 +3,13 @@
 
 若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
 
+v1.6.3 / 2026.09.14
+    修复使用MagicLib格式的尾迹配置时，颜色透明度错误的问题
+    修复并改善尾迹渲染时部分细节问题
+
+    GPUPoolBehavior 新增方法与相应字段：
+        GPUPoolBehavior<T, D> setNewMemoryFormat(GPUMemoryPool.MemoryFormat<T, D>);
+
 v1.6.2 / 2026.09.13
     对自动尾迹生成系统提供数据的表格增加 boolean 类型 is_vertical_tex 抬头，与 String 类型 custom_tracker_id 抬头:
         is_vertical_tex: 用于适配如MagicLib形式的等非常规朝向的尾迹纹理，且通过 StaticTrailManager.loadMagicLibLayoutTrailData 加载尾迹数据时会自动旋转纹理，但仅对 diffuse/emissive 层生效

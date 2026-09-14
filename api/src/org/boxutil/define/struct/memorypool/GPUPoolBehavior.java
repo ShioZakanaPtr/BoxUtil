@@ -31,6 +31,7 @@ public class GPUPoolBehavior<T extends GPUMemoryPool.InternalMemory<D>, D> {
     public @NotNull BiFunction<Long, ? super GPUMemoryPool<T, D>, Long> bufferExpendRule = (old, pool) -> old << 1;
     public final GPUMemoryPool.MemoryBuilder<T, D> newEmptyMemory;
     public final GPUMemoryPool.MemoryBuilder<T, D> newNotEmptyMemory;
+    public GPUMemoryPool.MemoryFormat<T, D> newMemoryFormat ;
 
     /**
      * @param glTarget          the type of buffer, for example: {@link GL15#GL_ARRAY_BUFFER}, {@link GL31#GL_TEXTURE_BUFFER}, {@link GL31#GL_UNIFORM_BUFFER} etc.
@@ -64,6 +65,7 @@ public class GPUPoolBehavior<T extends GPUMemoryPool.InternalMemory<D>, D> {
         this.bufferExpendRule = src.bufferExpendRule;
         this.newEmptyMemory = src.newEmptyMemory;
         this.newNotEmptyMemory = src.newNotEmptyMemory;
+        this.newMemoryFormat = src.newMemoryFormat;
     }
 
     /**
@@ -139,8 +141,8 @@ public class GPUPoolBehavior<T extends GPUMemoryPool.InternalMemory<D>, D> {
     }
 
     /**
-     * After a new buffer has created, maybe you want to bind it to any location in shader; without {@link GL15#glBindBuffer(int, int)} before or after this calls,
-     * so you should be bind and unbind your buffer in method.<p>
+     * After a new buffer has created, maybe you want to bind it to any location in shader;
+     * without {@link GL15#glBindBuffer(int, int)} before or after this calls, so you should be bind and unbind your buffer in method.<p>
      * <b>NOTE:</b> For objects that are <b>private</b> to the OpenGL context – such as a VBO thread pool with an associated VAO –
      * the reBind operation should dispatch a signal (or closure) to the actual thread that requires it,
      * thereby deferring VAO configuration to be performed on that thread.<p>
@@ -185,6 +187,16 @@ public class GPUPoolBehavior<T extends GPUMemoryPool.InternalMemory<D>, D> {
      */
     public GPUPoolBehavior<T, D> setBufferExpendRule(@NotNull BiFunction<Long, ? super GPUMemoryPool<T, D>, Long> bufferExpendRule) {
         this.bufferExpendRule = bufferExpendRule;
+        return this;
+    }
+
+    /**
+     * The behavior of make a new memory region by {@link GPUMemoryPool#malloc(Object, long)} and then check or write data into memory;
+     * without {@link GL15#glBindBuffer(int, int)} before or after this calls, so you should be bind and unbind your buffer in method.<p>
+     * <code>null</code> when without format behavior.
+     */
+    public GPUPoolBehavior<T, D> setNewMemoryFormat(GPUMemoryPool.MemoryFormat<T, D> format) {
+        this.newMemoryFormat = format;
         return this;
     }
 }

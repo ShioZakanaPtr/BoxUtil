@@ -195,7 +195,7 @@ public final class StaticTrailManager {
                         sizeIn = (float) objData.optDouble("size_in", 16.0d),
                         sizeOut = (float) objData.optDouble("size_out", 8.0d),
                         smoothEnds = (float) objData.optDouble("smooth_ends", 1.0d),
-                        texPixels = (float) objData.optDouble("tex_pixels", 256.0d),
+                        texPixels = Math.max(Math.abs((float) objData.optDouble("tex_pixels", 256.0d)), 0.001f),
                         texSpeed = (float) objData.optDouble("tex_speed", -256.0d);
                 if (_invalidDuration(fadeIn, full, fadeOut)) {
                     _LOG.warn("'BoxUtil' static trail csv data have illegal duration at id '" + trailID + "' in: '" + path + "'.");
@@ -286,7 +286,7 @@ public final class StaticTrailManager {
                         fadeOut = (float) objData.optDouble("fadeOut", 1.0d),
                         sizeIn = (float) objData.optDouble("sizeIn", 16.0d),
                         sizeOut = (float) objData.optDouble("sizeOut", 8.0d),
-                        texPixels = (float) objData.optDouble("textLength", 256.0d),
+                        texPixels = Math.max(Math.abs((float) objData.optDouble("textLength", 256.0d)), 0.001f),
                         texSpeed = (float) objData.optDouble("textScroll", -256.0d),
                         opacityMultiply = (float) objData.optDouble("opacity", 1.0d);
                 if (_invalidDuration(fadeIn, full, fadeOut)) {
@@ -318,8 +318,8 @@ public final class StaticTrailManager {
                         rotationIn = (float) objData.optDouble("rotationIn", 0.0d),
                         rotationOut = (float) objData.optDouble("rotationOut", 0.0d);
                 final boolean randomRotation_not = !objData.optBoolean("randomRotation", false);
-                if (colorIn != null) colorIn.w *= opacityMultiply;
-                if (colorOut != null) colorOut.w *= opacityMultiply;
+                if (colorIn != null) colorIn.w = opacityMultiply;
+                if (colorOut != null) colorOut.w = opacityMultiply;
                 spawnOffset.x = spawnOffset.z = -distance;
 
                 velIn.x = velIn.z = -velocityIn;
@@ -352,7 +352,7 @@ public final class StaticTrailManager {
                         .setAngularInRange(angularIn)
                         .setAngularOutRange(angularOut)
                         .setAdditiveBlend(additiveBlend)
-                        .setFixedSpawnOffsetRange(spawnOffset)
+                        .setFixedSpawnOffsetRange(distance == 0.0f ? null : spawnOffset)
                         .setVelocityForForward(velocityForward)
                         .setRenderBelowExplosions(renderBelowExplosions);
                 final MaterialData material = data.material;

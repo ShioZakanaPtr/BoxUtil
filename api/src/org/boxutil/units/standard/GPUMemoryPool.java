@@ -64,6 +64,11 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         T make(D oldMeta, long address, long size, int index, GPUMemoryPool<T, D> pool);
     }
 
+    @FunctionalInterface
+    public interface MemoryFormat<T extends GPUMemoryPool.InternalMemory<D>, D> {
+        void format(T memory, GPUMemoryPool<T, D> pool);
+    }
+
     /**
      * Do not forget override the {@link GPUMemory#meta()} if you need.
      */
@@ -160,12 +165,13 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             if (this.init) return;
             this.init = true;
 
-            final var req = this.behavior.glContextRequirements;
+            final var poolBehavior = this.behavior;
+            final var req = poolBehavior.glContextRequirements;
             if (!GLWrapper.Buffer.valid() || (req != null && !req.apply(this))) return;
-            this.immutableBuffer = GLWrapper.Buffer.valid_MapRange() && GLWrapper.Buffer.valid_BufferStorage() && this.behavior.immutableBufferAllow;
-            this.persistentMapping = this.immutableBuffer && (this.behavior.glBufferAccessBits & GLWrapper.Buffer.GL_MAP_PERSISTENT_BIT) > 0;
+            this.immutableBuffer = GLWrapper.Buffer.valid_MapRange() && GLWrapper.Buffer.valid_BufferStorage() && poolBehavior.immutableBufferAllow;
+            this.persistentMapping = this.immutableBuffer && (poolBehavior.glBufferAccessBits & GLWrapper.Buffer.GL_MAP_PERSISTENT_BIT) > 0;
             this.invalid = false;
-            if (this.behavior.glPoolInit != null) this.behavior.glPoolInit.accept(this);
+            if (poolBehavior.glPoolInit != null) poolBehavior.glPoolInit.accept(this);
         } finally {
             in_poolLock.unlock();
             in_clientLock.unlock();
@@ -180,7 +186,8 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         try {
             this._cleanupClientMem();
             this._invalidateBuffer();
-            if (this.behavior.glPoolDestroy != null) this.behavior.glPoolDestroy.accept(this);
+            final var poolBehavior = this.behavior;
+            if (poolBehavior.glPoolDestroy != null) poolBehavior.glPoolDestroy.accept(this);
             this.init = false;
             this.invalid = true;
         } finally {
@@ -273,9 +280,10 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     protected void _invalidateBuffer() {
         if (this.glID > 0) {
             if (this.persistentMapping && this.clientMapping != null) {
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-                GLWrapper.Buffer.glUnmapBuffer(this.behavior.glTarget);
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                final var poolBehavior = this.behavior;
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
+                GLWrapper.Buffer.glUnmapBuffer(poolBehavior.glTarget);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
                 this.clientMapping = null;
             }
             if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(this.glID);
@@ -297,33 +305,35 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     }
 
     protected void _allocateBuffer(long size) {
-        final long realSize = this.behavior.reservedSize + size;
+        final var poolBehavior = this.behavior;
+        final long realSize = poolBehavior.reservedSize + size;
         if (this.immutableBuffer) {
-            final int access_mapping = this.behavior.glBufferAccessBits,
-                    access_buffer = this.behavior.useDynamicStorageBuffer ? GLWrapper.Buffer.GL_DYNAMIC_STORAGE_BIT | access_mapping : access_mapping;
-            GLWrapper.Buffer.glBufferStorage(this.behavior.glTarget, realSize, access_buffer);
+            final int access_mapping = poolBehavior.glBufferAccessBits,
+                    access_buffer = poolBehavior.useDynamicStorageBuffer ? GLWrapper.Buffer.GL_DYNAMIC_STORAGE_BIT | access_mapping : access_mapping;
+            GLWrapper.Buffer.glBufferStorage(poolBehavior.glTarget, realSize, access_buffer);
             if (this.persistentMapping) {
-                this.clientMapping = GLWrapper.Buffer.glMapBufferRange(this.behavior.glTarget, 0, realSize, access_mapping, null);
+                this.clientMapping = GLWrapper.Buffer.glMapBufferRange(poolBehavior.glTarget, 0, realSize, access_mapping, null);
                 if (this.clientMapping != null) this.clientMapping.clear();
             }
-        } else GLWrapper.Buffer.glBufferData(this.behavior.glTarget, realSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+        } else GLWrapper.Buffer.glBufferData(poolBehavior.glTarget, realSize, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
     }
 
     protected void _initBuffer(final D meta, long size) {
+        final var poolBehavior = this.behavior;
         final var in_poolLock = this.poolGPULock();
         in_poolLock.lock();
         try {
             this._invalidateBuffer();
-            this.memTotal = this.behavior.bufferInitRule.apply(size, this);
+            this.memTotal = poolBehavior.bufferInitRule.apply(size, this);
 
             this.glID = GLWrapper.Buffer.glGenBuffers();
             this._runtimeBufferIDCheck();
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+            GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
             this._allocateBuffer(this.memTotal);
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+            GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
             this.memRef.set(0);
 
-            if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
+            if (poolBehavior.glRebindBuffer != null) poolBehavior.glRebindBuffer.accept(this);
 
             this._eraseMemory(meta);
             this.lastCompactTime = System.nanoTime();
@@ -348,35 +358,36 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     }
 
     protected void _copyRangeBufferOverlap(long srcAddress, long dstAddress, long size) {
+        final var poolBehavior = this.behavior;
         final var in_poolLock = this.poolGPULock();
         in_poolLock.lock();
         try {
-            final long realSrcAddress = srcAddress + this.behavior.reservedSize, realDstAddress = dstAddress + this.behavior.reservedSize;
+            final long realSrcAddress = srcAddress + poolBehavior.reservedSize, realDstAddress = dstAddress + poolBehavior.reservedSize;
             if (GLWrapper.Buffer.valid_CopyBuffer()) {
                 final int tmpBuffer = GLWrapper.Buffer.glGenBuffers();
                 this._runtimeBufferIDCheck();
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, tmpBuffer);
-                if (this.immutableBuffer) GLWrapper.Buffer.glBufferStorage(this.behavior.glTarget, size, 0);
-                else GLWrapper.Buffer.glBufferData(this.behavior.glTarget, size, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, tmpBuffer);
+                if (this.immutableBuffer) GLWrapper.Buffer.glBufferStorage(poolBehavior.glTarget, size, 0);
+                else GLWrapper.Buffer.glBufferData(poolBehavior.glTarget, size, GLWrapper.Buffer.GL_DYNAMIC_DRAW);
 
                 GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
-                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, realSrcAddress, 0, size);
+                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, poolBehavior.glTarget, realSrcAddress, 0, size);
 
                 GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, tmpBuffer);
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, 0, realDstAddress, size);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
+                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, poolBehavior.glTarget, 0, realDstAddress, size);
 
                 GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
                 if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(tmpBuffer);
                 GLWrapper.Buffer.glDeleteBuffers(tmpBuffer);
             } else {
                 final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) size).clear();
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-                GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realSrcAddress, legacyCopyBuf);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
+                GLWrapper.Buffer.glGetBufferSubData(poolBehavior.glTarget, realSrcAddress, legacyCopyBuf);
 
-                GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realDstAddress, legacyCopyBuf);
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                GLWrapper.Buffer.glBufferSubData(poolBehavior.glTarget, realDstAddress, legacyCopyBuf);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
             }
         } finally {
             in_poolLock.unlock();
@@ -386,16 +397,17 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     protected void _expandBuffer(long reqSize) {
         if (this.memTotal < 1) throw new OpenGLException("Failed to expand SSBO: not initialization yet.");
 
+        final var poolBehavior = this.behavior;
         final var in_poolLock = this.poolGPULock();
         in_poolLock.lock();
         try {
             final long oldSize = this.memTotal;
             do {
-                this.memTotal = this.behavior.bufferExpendRule.apply(this.memTotal, this);
+                this.memTotal = poolBehavior.bufferExpendRule.apply(this.memTotal, this);
             } while (this.memTotal - this.memRightEdge <= reqSize);
 
 
-            if (this.behavior.maxBufferSize > 0 && this.memTotal > this.behavior.maxBufferSize) throw new OutOfMemoryError("Failed to allocate buffer object with over " + this.behavior.maxBufferSize + " Byte.");
+            if (poolBehavior.maxBufferSize > 0 && this.memTotal > poolBehavior.maxBufferSize) throw new OutOfMemoryError("Failed to allocate buffer object with over " + poolBehavior.maxBufferSize + " Byte.");
             if (this.memTotal < 1) throw new OutOfMemoryError("Failed to allocate buffer object with over 8_388_608 TiB.");
             final long diff = this.memTotal - oldSize;
             this.memSpace += diff;
@@ -405,45 +417,45 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
                 block._setSize(block.size() + diff);
                 block.afterSizeChanged();
             } else {
-                block = this._makeMemory(this.behavior.newEmptyMemory, block.meta(), block.address() + block.size(), diff, block._getIndex() + 1);
+                block = this._makeMemory(poolBehavior.newEmptyMemory, block.meta(), block.address() + block.size(), diff, block._getIndex() + 1);
                 this.mem.add(block);
                 this.memFree.add(block);
             }
 
             if (this.persistentMapping && this.clientMapping != null) {
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-                GLWrapper.Buffer.glUnmapBuffer(this.behavior.glTarget);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
+                GLWrapper.Buffer.glUnmapBuffer(poolBehavior.glTarget);
                 this.clientMapping = null;
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
             }
 
             final int newBuffer = GLWrapper.Buffer.glGenBuffers();
             this._runtimeBufferIDCheck();
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
+            GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, newBuffer);
             this._allocateBuffer(this.memTotal);
 
-            final long realMoveMem = this.memRightEdge + this.behavior.reservedSize;
+            final long realMoveMem = this.memRightEdge + poolBehavior.reservedSize;
             if (GLWrapper.Buffer.valid_CopyBuffer()) {
                 GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.glID);
-                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, 0, 0, realMoveMem);
+                GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, poolBehavior.glTarget, 0, 0, realMoveMem);
                 GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
             } else {
                 final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) realMoveMem).clear();
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-                GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, 0, legacyCopyBuf);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
+                GLWrapper.Buffer.glGetBufferSubData(poolBehavior.glTarget, 0, legacyCopyBuf);
 
-                GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
-                GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, 0, legacyCopyBuf);
+                GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, newBuffer);
+                GLWrapper.Buffer.glBufferSubData(poolBehavior.glTarget, 0, legacyCopyBuf);
             }
 
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+            GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
             if (this.glID > 0) {
                 if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(this.glID);
                 GLWrapper.Buffer.glDeleteBuffers(this.glID);
             }
             this.glID = newBuffer;
 
-            if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
+            if (poolBehavior.glRebindBuffer != null) poolBehavior.glRebindBuffer.accept(this);
         } finally {
             in_poolLock.unlock();
         }
@@ -528,7 +540,8 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     }
 
     protected boolean _sizeOverRange(long size) {
-        return this.behavior.maxBufferSize > 0 && this.memRightEdge + size > this.behavior.maxBufferSize;
+        final var poolBehavior = this.behavior;
+        return poolBehavior.maxBufferSize > 0 && this.memRightEdge + size > poolBehavior.maxBufferSize;
     }
 
     /**
@@ -540,6 +553,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         if (size < 1) throw new IllegalArgumentException("Unable to allocate memory block with size: '" + size + '\'');
 
         final T result;
+        final var poolBehavior = this.behavior;
         final var in_clientLock = this.getClientLock();
         in_clientLock.lock();
         try {
@@ -568,7 +582,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
                 result = freeBlock;
                 this.memFree.remove(freeBlock);
             } else {
-                result = this._makeMemory(this.behavior.newNotEmptyMemory, meta, freeBlock.address(), size, freeBlock._getIndex());
+                result = this._makeMemory(poolBehavior.newNotEmptyMemory, meta, freeBlock.address(), size, freeBlock._getIndex());
                 freeBlock._setAddress(freeBlock.address() + size);
                 freeBlock._setSize(freeBlock.size() - size);
                 freeBlock.afterAddressChanged();
@@ -581,6 +595,8 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
 
             this.requireCompact = true;
             this.memRef.incrementAndGet();
+
+            if (poolBehavior.newMemoryFormat != null) poolBehavior.newMemoryFormat.format(result, this);
         } finally {
             in_clientLock.unlock();
         }
@@ -599,6 +615,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
         if (newSize == 0) throw new IllegalCallerException("Undefined behavior, cannot call realloc() with '0' size, should use free()");
         if (newSize < 1) throw new IllegalArgumentException("Unable to call realloc() with size: '" + newSize + '\'');
 
+        final var poolBehavior = this.behavior;
         final var in_clientLock = this.getClientLock();
         in_clientLock.lock();
         try {
@@ -634,7 +651,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
                     return true;
                 }
 
-                nextBlock = this._makeMemory(this.behavior.newEmptyMemory, memory.meta(), memory.address() + memory.size(), -diff, indexI);
+                nextBlock = this._makeMemory(poolBehavior.newEmptyMemory, memory.meta(), memory.address() + memory.size(), -diff, indexI);
                 this.memFree.add(nextBlock);
                 if (haveNextBlock) {
                     this.mem.add(nextIndex, nextBlock);
@@ -739,7 +756,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
 
             final boolean freeBlockAtEnd = globalFreeBlock._getIndex() == indexMax, notAllocateFromExpand = globalFreeBlock._getIndex() - 1 != indexI, removeFreeBlock = globalFreeBlock.size() == diff;
             if (notAllocateFromExpand) {
-                nextBlock = this._makeMemory(this.behavior.newEmptyMemory, memory.meta(), memory.address(), memory.size(), indexI);
+                nextBlock = this._makeMemory(poolBehavior.newEmptyMemory, memory.meta(), memory.address(), memory.size(), indexI);
                 this.mem.set(indexI, nextBlock);
                 this.memFree.add(nextBlock);
 
@@ -753,18 +770,18 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
                 final var in_poolLock = this.poolGPULock();
                 in_poolLock.lock();
                 try {
-                    final long realReadAddress = oldAddress + this.behavior.reservedSize,
-                            realWriteAddress = memory.address() + this.behavior.reservedSize;
-                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
+                    final long realReadAddress = oldAddress + poolBehavior.reservedSize,
+                            realWriteAddress = memory.address() + poolBehavior.reservedSize;
+                    GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
                     if (GLWrapper.Buffer.valid_CopyBuffer()) {
-                        GLWrapper.Buffer.glCopyBufferSubData(this.behavior.glTarget, this.behavior.glTarget, realReadAddress, realWriteAddress, oldSize);
+                        GLWrapper.Buffer.glCopyBufferSubData(poolBehavior.glTarget, poolBehavior.glTarget, realReadAddress, realWriteAddress, oldSize);
                     } else {
                         final ByteBuffer legacyCopyBuf = BufferUtils.createByteBuffer((int) oldSize).clear();
-                        GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realReadAddress, legacyCopyBuf);
+                        GLWrapper.Buffer.glGetBufferSubData(poolBehavior.glTarget, realReadAddress, legacyCopyBuf);
 
-                        GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realWriteAddress, legacyCopyBuf);
+                        GLWrapper.Buffer.glBufferSubData(poolBehavior.glTarget, realWriteAddress, legacyCopyBuf);
                     }
-                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+                    GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
                 } finally {
                     in_poolLock.unlock();
                 }
@@ -885,6 +902,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
     public long compact() {
         if (this.invalid) return 0;
 
+        final var poolBehavior = this.behavior;
         final var in_clientLock = this.getClientLock();
         final var in_poolLock = this.poolGPULock();
         in_clientLock.lock();
@@ -905,7 +923,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             final boolean modernCopyBuf = GLWrapper.Buffer.valid_CopyBuffer();
             final int newBuffer = GLWrapper.Buffer.glGenBuffers();
             this._runtimeBufferIDCheck();
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
+            GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, newBuffer);
             this._allocateBuffer(this.memTotal);
 
             Collections.sort(this.mem);
@@ -923,17 +941,17 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
                 }
                 if (firstBlock == null) firstBlock = block;
 
-                realReadAddress = block.address() + this.behavior.reservedSize;
-                realWriteAddress = currOffset + this.behavior.reservedSize;
+                realReadAddress = block.address() + poolBehavior.reservedSize;
+                realWriteAddress = currOffset + poolBehavior.reservedSize;
                 if (modernCopyBuf) {
-                    GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, this.behavior.glTarget, realReadAddress, realWriteAddress, block.size());
+                    GLWrapper.Buffer.glCopyBufferSubData(GLWrapper.Buffer.GL_COPY_READ_BUFFER, poolBehavior.glTarget, realReadAddress, realWriteAddress, block.size());
                 } else {
                     legacyCopyBuf.position(0).limit((int) block.size());
-                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, this.glID);
-                    GLWrapper.Buffer.glGetBufferSubData(this.behavior.glTarget, realReadAddress, legacyCopyBuf);
+                    GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, this.glID);
+                    GLWrapper.Buffer.glGetBufferSubData(poolBehavior.glTarget, realReadAddress, legacyCopyBuf);
 
-                    GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, newBuffer);
-                    GLWrapper.Buffer.glBufferSubData(this.behavior.glTarget, realWriteAddress, legacyCopyBuf);
+                    GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, newBuffer);
+                    GLWrapper.Buffer.glBufferSubData(poolBehavior.glTarget, realWriteAddress, legacyCopyBuf);
                 }
 
                 block._setAddress(currOffset);
@@ -946,19 +964,19 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             this.memRightEdge = currOffset;
             this.memFree.clear();
             if (this.memSpace > 0) {
-                block = this._makeMemory(this.behavior.newEmptyMemory, firstBlock.meta(), currOffset, this.memSpace, index);
+                block = this._makeMemory(poolBehavior.newEmptyMemory, firstBlock.meta(), currOffset, this.memSpace, index);
                 this.mem.add(block);
                 this.memFree.add(block);
             }
 
             if (modernCopyBuf) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.GL_COPY_READ_BUFFER, 0);
-            GLWrapper.Buffer.glBindBuffer(this.behavior.glTarget, 0);
+            GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
 
             if (GLWrapper.Buffer.valid_Invalidate()) GLWrapper.Buffer.glInvalidateBufferData(this.glID);
             GLWrapper.Buffer.glDeleteBuffers(this.glID);
             this.glID = newBuffer;
 
-            if (this.behavior.glRebindBuffer != null) this.behavior.glRebindBuffer.accept(this);
+            if (poolBehavior.glRebindBuffer != null) poolBehavior.glRebindBuffer.accept(this);
 
             final long ts = System.nanoTime();
             compactTime = ts - this.lastCompactTime;

@@ -70,10 +70,10 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
         return (this.rndID << 29) | (Float.floatToRawIntBits(elapsedTime) & 0x1fffffff);
     }
 
-    private void framePass(final float amount) {
+    private void framePass(final float amountNeg) {
         this.shouldLoopWrite = false;
-        if (this.timer > 0.0f) this.timer = Math.max(this.timer - amount, 0.0f);
-        if (this.totalNode != 0 && this.timer <= 0.0f) {
+        this.timer += amountNeg;
+        if (this.totalNode != 0 && this.timer < amountNeg) {
             this.totalNode = 0;
             this.nextNodePtr = 1;
             this.trackerObj.callback().idleReset();
@@ -96,9 +96,10 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
         in_trackerObj.tracker().advance(amount, elapsedTime, callback);
         if (callback.shouldDestroyImmediate()) return -1;
 
+        final float amountNeg = -amount;
         final boolean isDestroyed = callback.shouldDestroy(), isPaused = callback.isPaused();
         if (isDestroyed || isPaused) {
-            if (isDestroyed && this.timer <= 0.0f) {
+            if (isDestroyed && this.timer < amountNeg) {
                 callback.destroyImmediate();
                 return -1;
             }
@@ -107,7 +108,7 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
                 this.canSwitchTrailSegment = false;
             }
             callback.nextFrame(0.0f);
-            this.framePass(amount);
+            this.framePass(amountNeg);
             return this.totalNode;
         }
 
@@ -115,7 +116,7 @@ public class BUtil_StaticTrailMemory extends GPUMemoryPool.InternalMemory<BUtil_
         final boolean nanDistSq = Float.isNaN(distSq);
         if (!nanDistSq && distSq < StaticTrailTracker.MINIMAL_VALID_LENGTH_SQ) {
             callback.nextFrame(0.0f);
-            this.framePass(amount);
+            this.framePass(amountNeg);
             return this.totalNode;
         }
 

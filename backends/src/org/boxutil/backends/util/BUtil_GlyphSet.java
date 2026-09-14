@@ -13,18 +13,18 @@ public class BUtil_GlyphSet<G extends BUtil_Glyph> {
     public BUtil_GlyphSet(@NotNull final Set<G> src, final int maxCharValue, final byte dataLongStride) {
         this.totalGlyph = src.size();
         if (this.totalGlyph < 1) {
-            this.glyphIdx = null;
-            this.glyphStorage = null;
+            throw new IllegalArgumentException("Empty glyph set.");
         } else {
-            this.glyphIdx = new int[maxCharValue + 1]; // => index + 1
-            this.glyphStorage = new long[this.totalGlyph * dataLongStride];
-            Arrays.fill(this.glyphIdx, -1);
+            final int[] glyphIdxL;
+            final long[] glyphStorageL;
+            this.glyphIdx = glyphIdxL = new int[maxCharValue + 1]; // => index + 1
+            this.glyphStorage = glyphStorageL = new long[this.totalGlyph * dataLongStride];
+            Arrays.fill(glyphIdxL, -1);
 
-            int charPos, offset = 0;
+            int offset = 0;
             for (G glyph : src) {
-                charPos = glyph.character() & 0xffff;
-                this.glyphIdx[charPos] = offset;
-                glyph.store(offset, this.glyphStorage);
+                glyphIdxL[glyph.character() & 0xffff] = offset;
+                glyph.store(offset, glyphStorageL);
                 offset += dataLongStride;
             }
         }
@@ -33,7 +33,7 @@ public class BUtil_GlyphSet<G extends BUtil_Glyph> {
     public boolean get(char key, final G result) {
         final int[] glyphIdxL = this.glyphIdx;
         final int keyCast;
-        if (glyphIdxL == null || (keyCast = key & 0xffff) > glyphIdxL.length) return false;
+        if ((keyCast = key & 0xffff) >= glyphIdxL.length) return false;
         final int i;
         if ((i = glyphIdxL[keyCast]) < 0) return false;
         result.fetch(i, this.glyphStorage);

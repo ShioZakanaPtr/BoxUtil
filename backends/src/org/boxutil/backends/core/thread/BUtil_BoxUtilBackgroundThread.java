@@ -56,8 +56,8 @@ public final class BUtil_BoxUtilBackgroundThread {
         __POOL.execute(() -> {
             final var l_currThread = Thread.currentThread();
             try {
-                Global.getLogger(BoxUtilModPlugin.class).info("'BoxUtil' guard thread running.");
                 l_currThread.setName(l_currThread.getName() + "-AS-BUtil_GuardThread");
+                Global.getLogger(BoxUtilModPlugin.class).info("'BoxUtil' guard thread ready.");
                 l_host.join();
             } catch (InterruptedException e) {
                 l_currThread.interrupt();

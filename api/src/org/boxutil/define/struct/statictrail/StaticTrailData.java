@@ -140,7 +140,8 @@ public class StaticTrailData {
     /**
      * <b>Only for system-gen trail, invalid for custom trail, not required.</b><p>
      * Use the facing of entity for forward direction when <code>false</code>, use the velocity of entity when <code>true</code>.<p>
-     * For any stationary projectiles (velocity is a zero vector), also use facing for forward.
+     * For any stationary projectiles (velocity is a zero vector), also use facing for forward.<p>
+     * Recommended to set to <code>true</code> if the spawnType of projectile is <code>BALLISTIC_AS_BEAM</code>.
      */
     public StaticTrailData setVelocityForForward(boolean velocityForForward) {
         this.velocityForForward = velocityForForward;
@@ -207,7 +208,7 @@ public class StaticTrailData {
     }
 
     /**
-     * <b>MUST be the const field</b>, and should be a nonnegative number.
+     * <b>MUST be the const field</b>, and should be a positive number.
      */
     public StaticTrailData setTexturePixels(float texturePixels) {
         this.texturePixels = texturePixels;
