@@ -32,7 +32,7 @@ import java.util.function.Supplier;
  * public final class YourModPlugin extends BaseModPlugin {
  *     public void onApplicationLoad() {
  *         BoxUtilModPlugin.initPre();
- *         // StaticTrailManager.putCustomTracker("ABCD_efgh_tracker", ABCD_SomeTracker::new); // if you hava any custom tracker
+ *         // StaticTrailManager.registerCustomTracker("ABCD_efgh_tracker", ABCD_SomeTracker::new); // if you hava any custom tracker
  *         StaticTrailManager.loadTrailData("data/config/modFiles/ABCD_trail_data.csv"); // also the path can be anywhere
  *     }
  * }
