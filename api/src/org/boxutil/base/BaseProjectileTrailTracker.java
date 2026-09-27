@@ -43,31 +43,26 @@ public class BaseProjectileTrailTracker implements StaticTrailTracker {
 
         final var trailDataL = this.trailData;
         boolean velForForward = trailDataL.velocityForForward;
-        float offsetRotateC = 1.0f, offsetRotateS = 0.0f;
+        final float[] offsetRotatePtr = new float[]{1.0f, 0.0f};
         if (velForForward) {
             final Vector2f velocity = projectileL.getVelocity();
-            final float velLength = velocity == null ? 0.0f : velocity.length();
-            velForForward = velLength != 0.0f;
+            velForForward = velocity != null && velocity.x != 0.0f && velocity.y != 0.0f;
             if (velForForward) {
-                offsetRotateC = velocity.x / velLength;
-                offsetRotateS = velocity.y / velLength;
-                callback.setCurrentFacing(offsetRotateC, offsetRotateS);
+                final float velLength = 1.0f / (float) Math.sqrt(velocity.lengthSquared());
+                offsetRotatePtr[0] = velocity.x * velLength;
+                offsetRotatePtr[1] = velocity.y * velLength;
             }
         }
-        if (!velForForward) {
-            final float a = (float) Math.toRadians(projectileL.getFacing());
-            offsetRotateC = (float) Math.cos(a);
-            offsetRotateS = TrigUtil.sinFormCosRadiansF(offsetRotateC, a);
-            callback.setCurrentFacing(offsetRotateC, offsetRotateS);
-        }
+        if (!velForForward) TrigUtil.approxCosSinF(projectileL.getFacing() * 0.017453292519943295f, offsetRotatePtr);
+        callback.setCurrentFacing(offsetRotatePtr[0], offsetRotatePtr[1]);
 
         final Vector4f spawnOffsetRange = trailDataL.fixedSpawnOffsetRange;
         if (spawnOffsetRange != null) {
             final float rnd = ThreadLocalRandom.current().nextFloat(),
                     offsetX = CalculateUtil.mix(spawnOffsetRange.x, spawnOffsetRange.z, rnd),
                     offsetY = CalculateUtil.mix(spawnOffsetRange.y, spawnOffsetRange.w, rnd);
-            callback.getCurrentLocation().x += offsetX * offsetRotateC - offsetY * offsetRotateS;
-            callback.getCurrentLocation().y += offsetX * offsetRotateS + offsetY * offsetRotateC;
+            callback.getCurrentLocation().x += offsetX * offsetRotatePtr[0] - offsetY * offsetRotatePtr[1];
+            callback.getCurrentLocation().y += offsetX * offsetRotatePtr[1] + offsetY * offsetRotatePtr[0];
         }
     }
 }

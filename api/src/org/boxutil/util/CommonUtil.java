@@ -56,42 +56,72 @@ public final class CommonUtil {
         return Math.max(Math.min(value, 1.0f), 0.0f);
     }
 
+    private static float clampF1(float value) {
+        return Math.max(Math.min(value, 1.0f), 0.0f);
+    }
+
     /**
-     * Not accurate numbers.<p>
-     * The value at <code>[1000, 40000]</code>, unit is <code>K</code>(Kelvin).
+     * Not accurate numbers, just for visual.
+     *
+     * @param temperature at <code>[1000, 40000]</code>, unit is <code>K</code>(Kelvin).
      */
     public static Color getKelvinColor(float temperature) {
-        float k = temperature;
-        if (k <= 1000.0f) return Kelvin.K_1000;
-        else if (k == 6500.0f) return Kelvin.K_6500;
-        else if (k >= 40000.0f) return Kelvin.K_40000;
+        if (temperature <= 1000.0f) return new Color(Kelvin.K_1000.getRGB());
+        else if (temperature == 6500.0f) return new Color(Kelvin.K_6500.getRGB());
+        else if (temperature >= 40000.0f) return new Color(Kelvin.K_40000.getRGB());
 
-        int red, green, blue;
-        k *= 0.01f;
-        if (k <= 66.0f) {
-            red = 0;
-
-            float toClamp = 99.4708025861f * (float) Math.log(k) - 161.1195681661f;
-            green = colorClamp((int) toClamp);
-
-            if (k <= 19.0f) {
-                blue = 0;
-            } else {
-                toClamp = 138.5177312231f * (float) Math.log(k - 10.0f) - 305.0447927307f;
-                blue = colorClamp((int) toClamp);
-            }
+        int r = 0, g, b = 0;
+        temperature *= 0.01f;
+        if (temperature <= 66.0f) {
+            g = colorClamp((int) Math.fma(Math.log(temperature), 99.4708025861d, -161.1195681661d));
+            if (temperature > 19.0f) b = colorClamp((int) Math.fma(Math.log(temperature - 10.0f), 138.5177312231d, -305.0447927307d));
         } else {
-            float km = k - 60.0f;
-            float toClamp = 329.698727446f * (float) Math.pow(km, -0.1332047592f);
-            red = colorClamp((int) toClamp);
-
-            toClamp = 288.1221695283f * (float) Math.pow(km, -0.0755148492f);
-            green = colorClamp((int) toClamp);
-
-            blue = 255;
+            temperature -= 60.0f;
+            r = colorClamp((int) (329.698727446f * (float) Math.pow(temperature, -0.1332047592f)));
+            g = colorClamp((int) (288.1221695283f * (float) Math.pow(temperature, -0.0755148492f)));
+            b = 255;
         }
 
-        return new Color(red, green, blue);
+        return new Color(r, g, b);
+    }
+
+    /**
+     * Not accurate numbers, just for visual.
+     *
+     * @param temperature at <code>[1000, 40000]</code>, unit is <code>K</code>(Kelvin).
+     */
+    public static Vector4f getKelvinColor(float temperature, @Nullable Vector4f result) {
+        if (result == null) {
+            result = new Vector4f();
+            result.w = 1.0f;
+        }
+        if (temperature <= 1000.0f) {
+            result.set(1.0f, 0.2666667f, 0.0f);
+            return result;
+        }
+        else if (temperature == 6500.0f) {
+            result.set(1.0f, 0.9960784f, 0.9803921f);
+            return result;
+        }
+        else if (temperature >= 40000.0f) {
+            result.set(0.5921569f, 0.7254902f, 1.0f);
+            return result;
+        }
+
+        float r = 0, g, b = 0;
+        temperature *= 0.01f;
+        if (temperature <= 66.0f) {
+            g = clampF1((float) Math.fma(Math.log(temperature), 0.3900815788d, -0.6318414438d));
+            if (temperature > 19.0f) b = clampF1((float) Math.fma(Math.log(temperature - 10.0f), 0.5432067891d, -1.1962540891d));
+        } else {
+            temperature -= 60.0f;
+            r = clampF1(1.2929361861f * (float) Math.pow(temperature, -0.1332047592f));
+            g = clampF1(1.1298908609f * (float) Math.pow(temperature, -0.0755148492f));
+            b = 1.0f;
+        }
+
+        result.set(r, g, b);
+        return result;
     }
 
     public static float[] RGBToHSVArray(float r, float g, float b) {
@@ -113,26 +143,40 @@ public final class CommonUtil {
     }
 
     public static float[] HSVToRGBArray(float h, float s, float v) {
-        float inX = h * 6.0f;
-        float[] result = new float[]{inX, inX + 4.0f, inX + 2.0f};
-        result[0] %= 6.0f;
-        result[0] = Math.max(Math.min(Math.abs(result[0] - 3.0f) - 1.0f, 1.0f), 0.0f);
-        result[1] %= 6.0f;
-        result[1] = Math.max(Math.min(Math.abs(result[1] - 3.0f) - 1.0f, 1.0f), 0.0f);
-        result[2] %= 6.0f;
-        result[2] = Math.max(Math.min(Math.abs(result[2] - 3.0f) - 1.0f, 1.0f), 0.0f);
-        float factorOM = 1.0f - s;
+        return HSVToRGBArray(h, s, v, new float[3]);
+    }
+
+    public static float[] HSVToRGBArray(float h, float s, float v, @Nullable float[] result) {
+        if (result == null) result = new float[3];
+        final float inX = h * 6.0f;
+        result[0] = inX % 6.0f;
+        result[0] = clampF1(Math.abs(result[0] - 3.0f) - 1.0f);
+        result[1] = (inX + 4.0f) % 6.0f;
+        result[1] = clampF1(Math.abs(result[1] - 3.0f) - 1.0f);
+        result[2] = (inX + 2.0f) % 6.0f;
+        result[2] = clampF1(Math.abs(result[2] - 3.0f) - 1.0f);
+        final float factorOM = 1.0f - s;
         result[0] = v * (factorOM + result[0] * s);
         result[1] = v * (factorOM + result[1] * s);
         result[2] = v * (factorOM + result[2] * s);
         return result;
     }
 
-    public static Vector3f HSVToRGB(Vector3f color, Vector3f out) {
-        if (out == null) out = new Vector3f();
+    public static Vector3f HSVToRGB(Vector3f color, @Nullable Vector3f result) {
+        if (result == null) result = new Vector3f();
         float[] array = HSVToRGBArray(color.x, color.y, color.z);
-        out.set(array[0], array[1], array[2]);
-        return out;
+        result.set(array[0], array[1], array[2]);
+        return result;
+    }
+
+    public static Vector4f HSVToRGB(Vector4f color, @Nullable Vector4f result) {
+        if (result == null) {
+            result = new Vector4f();
+            result.w = 1.0f;
+        }
+        float[] array = HSVToRGBArray(color.x, color.y, color.z);
+        result.set(array[0], array[1], array[2]);
+        return result;
     }
 
     public static Color HSVToRGB(Vector3f color) {
@@ -755,6 +799,11 @@ public final class CommonUtil {
         return (i3 << 24) | ((i2 << 16) & 0xff0000) | ((i1 << 8) & 0xff00) | (i0 & 0xff);
     }
 
+    public static int packingColorToInt(final Color color) {
+        final int bits = color.getRGB();
+        return bits & 0xff00ff00 | bits >> 16 & 0xff | bits << 16 & 0xff0000;
+    }
+
     public static int[] packingBytesToInt(byte[] i3, byte[] i2, byte[] i1, byte[] i0) {
         final int length = i3.length;
         int[] result = new int[length];
@@ -772,13 +821,27 @@ public final class CommonUtil {
         return buffer;
     }
 
+    public static IntBuffer putPackingColor(@NotNull IntBuffer buffer, final Color color) {
+        buffer.put(packingColorToInt(color));
+        return buffer;
+    }
+
     public static IntBuffer putPackingBytes(@NotNull IntBuffer buffer, byte[] i3, byte[] i2, byte[] i1, byte[] i0) {
         for (int i = 0; i < i3.length; i++) buffer.put(packingBytesToInt(i3[i], i2[i], i1[i], i0[i]));
         return buffer;
     }
 
+    public static IntBuffer putPackingColor(@NotNull IntBuffer buffer, final Color... colors) {
+        for (Color value : colors) buffer.put(packingColorToInt(value));
+        return buffer;
+    }
+
     public static float packingBytesToFloat(byte i3, byte i2, byte i1, byte i0) {
         return Float.intBitsToFloat(packingBytesToInt(i3, i2, i1, i0));
+    }
+
+    public static float packingColorToFloat(final Color color) {
+        return Float.intBitsToFloat(packingColorToInt(color));
     }
 
     public static float[] packingBytesToFloat(byte[] i3, byte[] i2, byte[] i1, byte[] i0) {
@@ -798,8 +861,18 @@ public final class CommonUtil {
         return buffer;
     }
 
+    public static FloatBuffer putPackingColor(@NotNull FloatBuffer buffer, final Color color) {
+        buffer.put(packingColorToInt(color));
+        return buffer;
+    }
+
     public static FloatBuffer putPackingBytes(@NotNull FloatBuffer buffer, byte[] i3, byte[] i2, byte[] i1, byte[] i0) {
         for (int i = 0; i < i3.length; i++) buffer.put(packingBytesToFloat(i3[i], i2[i], i1[i], i0[i]));
+        return buffer;
+    }
+
+    public static FloatBuffer putPackingColor(@NotNull FloatBuffer buffer, final Color... colors) {
+        for (Color value : colors) buffer.put(packingColorToInt(value));
         return buffer;
     }
 

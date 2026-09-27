@@ -67,6 +67,7 @@ public class SpriteEntity extends BaseMIRenderData {
         this.spriteState[2] = 0.0f;
         this.spriteState[3] = 0.0f;
         this.spriteState[8] = this.hashCode() * 0.00066667f;
+        this.currentTileCount = 1;
         this.isRandomTile = true;
         this.resetUV();
     }
@@ -116,7 +117,7 @@ public class SpriteEntity extends BaseMIRenderData {
     }
 
     public void setCurrentTileCount(int count) {
-        this.currentTileCount = Math.min(count, this.getMaxTileCount());
+        this.currentTileCount = Math.max(Math.min(count, this.getMaxTileCount()), 1);
     }
 
     public int getCountPerRow() {

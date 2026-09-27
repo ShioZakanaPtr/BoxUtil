@@ -7,15 +7,18 @@ import org.boxutil.define.BoxEnum;
 import org.boxutil.define.BoxDatabase;
 import org.boxutil.define.GLWrapper;
 import org.boxutil.manager.ShaderCore;
+import org.boxutil.units.standard.GPUMemoryPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
+import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -546,15 +549,15 @@ public final class ShaderUtil {
         GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
     }
 
-    private static void initGLStorageTex(int tex, int levels, int internalFormat, int width, int height) {
+    private static void initGLStorageTex(int tex, int levels, int internalFormat, int width, int height, boolean iTex) {
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, tex);
         GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, levels, internalFormat, width, height);
-        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
-        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, iTex ? GLWrapper.Texture.GL_NEAREST : GLWrapper.Texture.GL_LINEAR);
+        GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, iTex ? GLWrapper.Texture.GL_NEAREST : GLWrapper.Texture.GL_LINEAR);
     }
 
-    private static void initGLStorageTex(int tex, int internalFormat, int width, int height) {
-        initGLStorageTex(tex, 1, internalFormat, width, height);
+    private static void initGLStorageTex(int tex, int internalFormat, int width, int height, boolean iTex) {
+        initGLStorageTex(tex, 1, internalFormat, width, height, iTex);
     }
 
     private static int[] genLegacySDFCore(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int finalWidth, int finalHeight, int borderWidth, int borderHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, int resultTex, int resultOffsetX, int resultOffsetY, boolean genResultTex) {
@@ -570,7 +573,7 @@ public final class ShaderUtil {
             resultHeight = result[2];
             result[3] = CalculateUtil.getPOTMax(resultWidth);
             result[4] = CalculateUtil.getPOTMax(resultHeight);
-            initGLTex(result[0], GLWrapper.Texture.GL_INTENSITY8, result[3], result[4], GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE);
+            initGLTex(result[0], GLWrapper.Texture.GL_INTENSITY8, result[3], result[4], GLWrapper.Texture.GL_LUMINANCE, GLWrapper.DataType.GL_UNSIGNED_BYTE);
 
             final int in_fillNewTexTopDiff = result[4] - finalHeight,
                     in_fillNewTexTopSize = result[3] * in_fillNewTexTopDiff,
@@ -582,11 +585,11 @@ public final class ShaderUtil {
                 IntStream.range(0, in_maxFillNewTexSize).parallel().unordered().forEach(i -> in_fillNewTexBuf.put(i, BoxEnum.ONE_COLOR));
                 if (in_fillNewTexTopSize > 0) {
                     in_fillNewTexBuf.limit(in_fillNewTexTopSize);
-                    GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, finalHeight, result[3], in_fillNewTexTopDiff, GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE, in_fillNewTexBuf);
+                    GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, finalHeight, result[3], in_fillNewTexTopDiff, GLWrapper.Texture.GL_LUMINANCE, GLWrapper.DataType.GL_UNSIGNED_BYTE, in_fillNewTexBuf);
                 }
                 if (in_fillNewTexRightSize > 0) {
                     in_fillNewTexBuf.limit(in_fillNewTexRightSize);
-                    GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, finalWidth, 0, in_fillNewTexRightDiff, result[4], GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE, in_fillNewTexBuf);
+                    GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, finalWidth, 0, in_fillNewTexRightDiff, result[4], GLWrapper.Texture.GL_LUMINANCE, GLWrapper.DataType.GL_UNSIGNED_BYTE, in_fillNewTexBuf);
                 }
             }
         } else {
@@ -714,7 +717,7 @@ public final class ShaderUtil {
         });
 
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, result[0]);
-        GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, resultOffsetX, resultOffsetY, finalWidth, finalHeight, GLWrapper.Texture.GL_INTENSITY, GLWrapper.DataType.GL_UNSIGNED_BYTE, resultBuf);
+        GLWrapper.Texture.glTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, resultOffsetX, resultOffsetY, finalWidth, finalHeight, GLWrapper.Texture.GL_LUMINANCE, GLWrapper.DataType.GL_UNSIGNED_BYTE, resultBuf);
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
         return result;
     }
@@ -736,7 +739,7 @@ public final class ShaderUtil {
      * @param resultTex texture to store result, must be {@link GL11#GL_INTENSITY8} texture and size must be greater than or equal to the final size.
      * @param resultOffsetX the result texture region left-bottom origin x-position.
      * @param resultOffsetY the result texture region left-bottom origin x-position.
-     * @return generated sdf texture with {@link GL11#GL_INTENSITY8} POT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, validWidth, validHeight, glRealWidth, glRealHeight}
+     * @return generated sdf texture with {@link GL11#GL_INTENSITY8} and {@link GL11#GL_LUMINANCE} format POT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, validWidth, validHeight, glRealWidth, glRealHeight}
      */
     public static int[] genLegacySDF(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int extraWidth, int extraHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply, int resultTex, int resultOffsetX, int resultOffsetY) {
         final int borderWidth = Math.abs(extraWidth), borderHeight = Math.abs(extraHeight);
@@ -757,7 +760,7 @@ public final class ShaderUtil {
      * @param step 8 or 9 for general usage, range from 0 to 30; also you can use <code>CalculateUtil.getExponentPOTMin(Math.max(localWidth, localHeight))</code> for automatic step calculation.
      * @param resultInsidePreMultiply 0.01 or (1.0f / required thickness) for general usage.
      * @param resultOutsidePreMultiply 0.01 or (1.0f / max(extraWidth, extraHeight)) for general usage.
-     * @return generated sdf texture with {@link GL11#GL_INTENSITY8} POT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, validWidth, validHeight, glRealWidth, glRealHeight}
+     * @return generated sdf texture with {@link GL11#GL_INTENSITY8} and {@link GL11#GL_LUMINANCE} format POT at [0.0, 1.0], texture return 0 if failed; int[] = {texture, validWidth, validHeight, glRealWidth, glRealHeight}
      */
     public static int[] genLegacySDF(int source, int checkChannel, int sourceOffsetX, int sourceOffsetY, int localWidth, int localHeight, int extraWidth, int extraHeight, float outsideThreshold, byte step, float resultInsidePreMultiply, float resultOutsidePreMultiply) {
         final int borderWidth = Math.abs(extraWidth), borderHeight = Math.abs(extraHeight);
@@ -772,9 +775,9 @@ public final class ShaderUtil {
         if (!ShaderCore.isSDFGenValid() || source < 1 || result[0] < 1 || localWidth < 1 || localHeight < 1) return result;
 
         int tmpTex = GLWrapper.Texture.glGenTextures();
-        initGLStorageTex(tmpTex, GLWrapper.Texture.GL_RGBA16UI, result[1], result[2]);
+        initGLStorageTex(tmpTex, GLWrapper.Texture.GL_RGBA16UI, result[1], result[2], true);
         if (genResultTex) {
-            initGLStorageTex(result[0], bit16OutMode ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8, result[1], result[2]);
+            initGLStorageTex(result[0], bit16OutMode ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8, result[1], result[2], true);
         }
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
 
@@ -797,7 +800,7 @@ public final class ShaderUtil {
         GLWrapper.Shader.glUniform4i(program.location[1], borderWidth, borderHeight, sourceOffsetX, sourceOffsetY);
         GLWrapper.Shader.glUniform1f(program.location[2], outsideThreshold);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program = ShaderCore.getSDFProcessProgram();
         program.active();
         program.bindTexture2D(0, tmpTex);
@@ -806,7 +809,7 @@ public final class ShaderUtil {
         for (int i = 1 << Math.min(Math.max(step, 0), 30); i > 0; i = i >>> 1) {
             GLWrapper.Shader.glUniform1i(program.location[1], i);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         }
         program = ShaderCore.getSDFResultProgram();
         program.active();
@@ -815,7 +818,7 @@ public final class ShaderUtil {
         GLWrapper.Shader.glUniform4i(program.location[0], result[1], result[2], resultOffsetX, resultOffsetY);
         GLWrapper.Shader.glUniform2f(program.location[1], resultInsidePreMultiply, resultOutsidePreMultiply);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.close();
         GLWrapper.Texture.glDeleteTextures(tmpTex);
         return result;
@@ -1019,7 +1022,7 @@ public final class ShaderUtil {
         int tmpTex = 0;
         if (useFilter) {
             tmpTex = GLWrapper.Texture.glGenTextures();
-            initGLStorageTex(tmpTex, formatOut, texWidth, texHeight);
+            initGLStorageTex(tmpTex, formatOut, texWidth, texHeight, false);
         }
 
         program.active();
@@ -1032,13 +1035,13 @@ public final class ShaderUtil {
             GLWrapper.Shader.glUniform1f(program.location[3], 1.0f / (step * 0.1111111f * TrigUtil.PI_F));
             program.putBindingImageTextureWriteOnly(outIndex, tmpTex, formatOut);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
             GLWrapper.Shader.glUniform1i(program.location[2], 1);
             program.bindTexture2D(0, tmpTex);
         }
         program.putBindingImageTextureWriteOnly(outIndex, result, formatOut);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.close();
         if (useFilter) GLWrapper.Texture.glDeleteTextures(tmpTex);
     }
@@ -1094,7 +1097,7 @@ public final class ShaderUtil {
         final int formatOut = useRed ? (bit16OutMode ? GLWrapper.Texture.GL_R16 : GLWrapper.Texture.GL_R8) : (bit16OutMode ? GLWrapper.Texture.GL_RGBA16 : GLWrapper.Texture.GL_RGBA8);
         final byte outIndex = (byte) (bit16OutMode ? 1 : 0);
         int tmpTex = GLWrapper.Texture.glGenTextures();
-        initGLStorageTex(tmpTex, formatOut, texWidth, texHeight);
+        initGLStorageTex(tmpTex, formatOut, texWidth, texHeight, false);
 
         float gsInv = sigmaSpace * sigmaSpace;
         gsInv = -1.0f / (gsInv + gsInv);
@@ -1110,12 +1113,12 @@ public final class ShaderUtil {
         GLWrapper.Shader.glUniform1i(program.location[2], 0);
         GLWrapper.Shader.glUniform2f(program.location[3], gsInv, grInv);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.bindTexture2D(1, tmpTex);
         program.putBindingImageTextureWriteOnly(outIndex, result, formatOut);
         GLWrapper.Shader.glUniform1i(program.location[2], 1);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.close();
         GLWrapper.Texture.glDeleteTextures(tmpTex);
         GLWrapper.Drawcall.MultiTex.glActiveTexture(GLWrapper.Drawcall.MultiTex.GL_TEXTURE0);
@@ -1161,10 +1164,10 @@ public final class ShaderUtil {
         final byte outIndex = (byte) (f16OutMode ? 1 : 2);
 
         int tmpTex = GLWrapper.Texture.glGenTextures();
-        initGLStorageTex(tmpTex, formatOut, texWidth + texWidth, texHeight);
+        initGLStorageTex(tmpTex, formatOut, texWidth + texWidth, texHeight, false);
         if (genResultTex) {
             result = GLWrapper.Texture.glGenTextures();
-            initGLStorageTex(result, formatOut, texWidth + texWidth, texHeight);
+            initGLStorageTex(result, formatOut, texWidth + texWidth, texHeight, false);
         }
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
 
@@ -1178,12 +1181,12 @@ public final class ShaderUtil {
         GLWrapper.Shader.glUniform1i(program.location[2], 0b100);
         GLWrapper.Shader.glUniform2f(program.location[3], 1.0f / texWidth, 1.0f / texHeight);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.bindTexture2D(0, tmpTex);
         program.putBindingImageTextureWriteOnly(outIndex, result, formatOut);
         GLWrapper.Shader.glUniform1i(program.location[2], 0b10010);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.close();
         GLWrapper.Texture.glDeleteTextures(tmpTex);
         return result;
@@ -1197,10 +1200,10 @@ public final class ShaderUtil {
         final int formatOut = useRed ? (f16OutMode ? GLWrapper.Texture.GL_R16F : GLWrapper.Texture.GL_R8) : (f16OutMode ? GLWrapper.Texture.GL_RGBA16F : GLWrapper.Texture.GL_RGBA8);
 
         int tmpTex = GLWrapper.Texture.glGenTextures();
-        initGLStorageTex(tmpTex, formatIn, texWidth + texWidth, texHeight);
+        initGLStorageTex(tmpTex, formatIn, texWidth + texWidth, texHeight, false);
         if (genResultTex) {
             result = GLWrapper.Texture.glGenTextures();
-            initGLStorageTex(result, formatOut, texWidth, texHeight);
+            initGLStorageTex(result, formatOut, texWidth, texHeight, false);
         }
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
 
@@ -1214,12 +1217,12 @@ public final class ShaderUtil {
         GLWrapper.Shader.glUniform1i(program.location[2], 0b1);
         GLWrapper.Shader.glUniform2f(program.location[3], 1.0f / texWidth, 1.0f / texHeight);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.bindTexture2D(0, tmpTex);
         program.putBindingImageTextureWriteOnly(f16OutMode ? 1 : 0, result, formatOut);
         GLWrapper.Shader.glUniform1i(program.location[2], 0b11011);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.close();
         GLWrapper.Texture.glDeleteTextures(tmpTex);
         return result;
@@ -1458,7 +1461,7 @@ public final class ShaderUtil {
         int result = resultTex;
         final int resultTmp = GLWrapper.Texture.glGenTextures();
         if (!ShaderCore.isNormalMapGenValid() || !ShaderCore.isCompGaussianBlurValid() || source < 1 || srcLocalWidth < 1 || srcLocalHeight < 1 || (resultTex < 1 && !genResultTex) || resultTmp < 1) return result;
-        initGLStorageTex(resultTmp, GLWrapper.Texture.GL_RGBA16, srcLocalWidth, srcLocalHeight);
+        initGLStorageTex(resultTmp, GLWrapper.Texture.GL_RGBA16, srcLocalWidth, srcLocalHeight, false);
         final boolean mipValid = param.alignPOT && param.genMipmap && genResultTex && GLWrapper.FBO.valid();
         if (genResultTex) {
             result = GLWrapper.Texture.glGenTextures();
@@ -1469,7 +1472,7 @@ public final class ShaderUtil {
             }
 
             final byte levels = mipValid ? CalculateUtil.getExponentPOTMin(Math.min(resultWidth, resultHeight)) : 1;
-            if (param.useTextureStorage && GLWrapper.Texture.valid_ImageLoadStore()) initGLStorageTex(result, levels, GLWrapper.Texture.GL_RGBA8, resultWidth, resultHeight);
+            if (param.useTextureStorage && GLWrapper.Texture.valid_ImageLoadStore()) initGLStorageTex(result, levels, GLWrapper.Texture.GL_RGBA8, resultWidth, resultHeight, false);
             else initGLTex(result, GLWrapper.Texture.GL_RGBA8, resultWidth, resultHeight, GLWrapper.Texture.GL_RGBA, GLWrapper.DataType.GL_UNSIGNED_BYTE);
             if (mipValid) {
                 GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_LOD, 0);
@@ -1489,7 +1492,7 @@ public final class ShaderUtil {
         if (haveBF) applyImageBilateralFilter(source, sourceOffsetX, sourceOffsetY, false, param.filterRadius, param.filterSigmaSpace, param.filterSigmaRange, srcLocalWidth, srcLocalHeight, resultTmp, 0, 0, true);
         if (param.details != null && param.details.x > 0.0f && param.details.y > 0.0f) {
             detailsTex[1] = GLWrapper.Texture.glGenTextures();
-            initGLStorageTex(detailsTex[1], GLWrapper.Texture.GL_RGBA16, srcLocalWidth, srcLocalHeight);
+            initGLStorageTex(detailsTex[1], GLWrapper.Texture.GL_RGBA16, srcLocalWidth, srcLocalHeight, false);
             GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
             applyImageGaussianBlur(haveBF ? resultTmp : source, haveBF ? 0 : sourceOffsetX, haveBF ? 0 : sourceOffsetY, false, (byte) Math.min(Math.ceil(param.details.x), 127), srcLocalWidth, srcLocalHeight, detailsTex[1], 0, 0, true);
         }
@@ -1512,7 +1515,7 @@ public final class ShaderUtil {
         if (volumeValid) program.bindTexture2D(1, detailsTex[0]);
         if (detailsValid) program.bindTexture2D(2, detailsTex[1]);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
 
         int resultStateBit = param.flipY ? 0b1 : 0b0;
         if (param.flipX) resultStateBit |= 0b10;
@@ -1526,7 +1529,7 @@ public final class ShaderUtil {
         program.bindTexture2D(1, source);
         program.bindTexture2D(0, resultTmp);
         GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         program.close();
         GLWrapper.Texture.glDeleteTextures(resultTmp);
         if (volumeValid) GLWrapper.Texture.glDeleteTextures(detailsTex[0]);

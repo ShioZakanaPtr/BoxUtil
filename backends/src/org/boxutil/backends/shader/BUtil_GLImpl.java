@@ -20,7 +20,6 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.util.vector.Matrix4f;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.*;
 
 public final class BUtil_GLImpl {
@@ -395,7 +394,7 @@ public final class BUtil_GLImpl {
         } else if (entity.isGlobalTimerOnce()) {
             toRemove = true;
         }
-        if (toRemove) iterator.remove();
+        if (toRemove || entity.hasDelete()) iterator.remove();
     }
 
     public static void glDisabledIterator(List<RenderDataAPI> list) {
@@ -417,20 +416,45 @@ public final class BUtil_GLImpl {
         }
     }
 
-    public static void glScreenBlit() {
-        final int blitWidth = ShaderCore.getScreenScaleWidth();
-        final int blitHeight = ShaderCore.getScreenScaleHeight();
-        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, ShaderCore.getRenderingBuffer().getFBO(0));
-        GLWrapper.FBO.glDrawBuffers(GLWrapper.FBO.GL_COLOR_ATTACHMENT0);
+    public static void glCopyScreenToFBOTex() {
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_FRAMEBUFFER_BARRIER_BIT);
+        final int blitWidth = ShaderCore.getScreenScaleWidth(),
+                blitHeight = ShaderCore.getScreenScaleHeight(),
+                fbo = ShaderCore.getRenderingBuffer().getFBO(0);
         GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_READ_FRAMEBUFFER, 0);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_DRAW_FRAMEBUFFER, fbo);
+        GLWrapper.FBO.glDrawBuffers(GLWrapper.FBO.GL_COLOR_ATTACHMENT0);
         GLWrapper.FBO.glBlitFramebuffer(0, 0, blitWidth, blitHeight, 0, 0, blitWidth, blitHeight, GLWrapper.Operation.GL_COLOR_BUFFER_BIT, GLWrapper.Texture.GL_NEAREST);
-        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, ShaderCore.getRenderingBuffer().getFBO(0));
 
-        IntBuffer drawBuffer = ShaderCore.getRenderingBuffer().getDrawBufferConfig((byte) 0);
-        drawBuffer.position(0);
-        drawBuffer.limit(drawBuffer.capacity());
-        GLWrapper.FBO.glDrawBuffers(drawBuffer);
+        GLWrapper.FBO.glDrawBuffers(ShaderCore.getRenderingBuffer().getDrawBufferConfig((byte) 0));
         GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
+    }
+
+    public static void glBeginLayerFBO() {
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_FRAMEBUFFER_BARRIER_BIT);
+        final int blitWidth = ShaderCore.getScreenScaleWidth(),
+                blitHeight = ShaderCore.getScreenScaleHeight(),
+                fbo = ShaderCore.getRenderingBuffer().getFBO(0);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_READ_FRAMEBUFFER, 0);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_DRAW_FRAMEBUFFER, fbo);
+        GLWrapper.FBO.glDrawBuffers(GLWrapper.FBO.GL_COLOR_ATTACHMENT0);
+        GLWrapper.FBO.glBlitFramebuffer(0, 0, blitWidth, blitHeight, 0, 0, blitWidth, blitHeight, GLWrapper.Operation.GL_COLOR_BUFFER_BIT, GLWrapper.Texture.GL_NEAREST);
+
+        GLWrapper.FBO.glDrawBuffers(ShaderCore.getRenderingBuffer().getDrawBufferConfig((byte) 0));
+    }
+
+    public static void glEndLayerFBO() {
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_FRAMEBUFFER_BARRIER_BIT);
+        final int blitWidth = ShaderCore.getScreenScaleWidth(),
+                blitHeight = ShaderCore.getScreenScaleHeight(),
+                fbo = ShaderCore.getRenderingBuffer().getFBO(0);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_READ_FRAMEBUFFER, fbo);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_DRAW_FRAMEBUFFER, 0);
+        GLWrapper.FBO.glBlitFramebuffer(0, 0, blitWidth, blitHeight, 0, 0, blitWidth, blitHeight, GLWrapper.Operation.GL_COLOR_BUFFER_BIT, GLWrapper.Texture.GL_NEAREST);
+        GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
+
+        GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
     }
 
     public static boolean checkSkipMeshCurrentLayout(EnumMap<LayeredEntityType, List<RenderDataAPI>> meshMap, Set<LayeredRenderingPlugin> renderingPlugins) {

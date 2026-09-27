@@ -100,7 +100,14 @@ public abstract class BaseRenderData implements RenderDataAPI {
         this.globalTimer[1] = -512.0f;
         this.globalTimer[2] = -512.0f;
         this.globalTimer[3] = -512.0f;
+        this.timingWhenPaused = false;
+        this.isTimerPaused = false;
+        this.autoSubmitPrimeMat = true;
+        this.autoSubmitModelMat = true;
+        this.autoSubmitDataBuffer = true;
         Matrix4f.setIdentity(this.primeMatrix);
+        CommonUtil.fillIdentityMatrix4x4f(0, this.primeMatBuffer);
+        CommonUtil.fillIdentityMatrix4x4f(0, this.modelMatBuffer);
         this.primeMatrixState = BoxEnum.ENTITY_VANILLA_PRIME_MATRIX;
         Matrix4f.setIdentity(this.modelMatrix);
         this.blendConfig[0] = GLWrapper.Operation.GL_SRC_ALPHA;

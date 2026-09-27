@@ -129,10 +129,10 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     NodeData end = new NodeData();
                     start.setTangentRight(200.0f, 0.0f);
                     end.setLocation(1200.0f, 0.0f);
-                    float a = rnd.nextFloat(TrigUtil.PI2_F), c, s, length = rnd.nextFloat(420.0f);
-                    c = (float) Math.cos(a);
-                    s = TrigUtil.sinFormCosRadiansF(c, a);
-                    end.setTangentLeft(c * length, s * length);
+                    final float[] ptr = new float[2];
+                    final float length = CalculateUtil.random(420.0f, rnd);
+                    TrigUtil.approxCosSinF(CalculateUtil.random(TrigUtil.PI2_F, rnd), ptr);
+                    end.setTangentLeft(ptr[0] * length, ptr[1] * length);
                     var beam = CurveUtil.spawnCurveBeam(this.engine, new Vector3f(ship.getLocation().x, ship.getLocation().y, ship.getFacing()),
                             start, end, ship, 200.0f, DamageType.ENERGY, 20.0f, true,
                             Global.getSettings().getSprite("graphics/fx/beam_rough2_core.png"), Color.WHITE,
@@ -180,11 +180,9 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                     segmentEntity.submitModelMatrix();
                     CombatRenderingManager.addEntity(segmentEntity);
 
-                    float a, c, s;
-                    a = (float) Math.toRadians(ship.getFacing());
-                    c = (float) Math.cos(a);
-                    s = TrigUtil.sinFormCosRadiansF(c, a);
-                    Vector2f beamTo = new Vector2f(c * 1500, s * 1500);
+                    final float[] ptr = new float[2];
+                    TrigUtil.approxCosSinF((float) Math.toRadians(ship.getFacing()), ptr);
+                    Vector2f beamTo = new Vector2f(ptr[0] * 1500, ptr[1] * 1500);
                     Vector2f.add(ship.getLocation(), beamTo, beamTo);
                     var beam = CurveUtil.spawnDirectBeam(this.engine, ship.getLocation(), beamTo, ship,
                             200.0f, DamageType.ENERGY, 20.0f, true,
@@ -203,22 +201,21 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                         short count = 256;
                         List<InstanceDataAPI> particleList = new ArrayList<>(count);
                         Instance2Data instance;
-                        float a, c, s, length;
+                        final float[] ptr = new float[2];
+                        float length;
                         for (short i = 0; i < count; i++) {
                             instance = new Instance2Data();
-                            a = rnd.nextFloat(TrigUtil.PI2_F);
-                            c = (float) Math.cos(a);
-                            s = TrigUtil.sinFormCosRadiansF(c, a);
-                            length = rnd.nextFloat(128.0f);
-                            instance.setLocation(c * length, s * length);
-                            length = rnd.nextFloat(200.0f, 350.0f);
-                            instance.setVelocity(c * length, s * length);
-                            instance.setFacing(rnd.nextFloat(360.0f));
-                            instance.setTurnRate(rnd.nextFloat(-22.5f, 22.5f));
-                            length = rnd.nextFloat(0.6f, 1.6f);
+                            TrigUtil.approxCosSinF(CalculateUtil.random(TrigUtil.PI2_F, rnd), ptr);
+                            length = CalculateUtil.random(128.0f, rnd);
+                            instance.setLocation(ptr[0] * length, ptr[1] * length);
+                            length = CalculateUtil.random(200.0f, 350.0f, rnd);
+                            instance.setVelocity(ptr[0] * length, ptr[1] * length);
+                            instance.setFacing(CalculateUtil.random(360.0f, rnd));
+                            instance.setTurnRate(CalculateUtil.random(-22.5f, 22.5f, rnd));
+                            length = CalculateUtil.random(0.6f, 1.6f, rnd);
                             instance.setScale(length, length);
                             instance.setScaleRate(1.0f, 1.0f);
-                            instance.setTimer(0.05f, 0.2f, rnd.nextFloat(0.5f, 1.5f));
+                            instance.setTimer(0.05f, 0.2f, CalculateUtil.random(0.5f, 1.5f, rnd));
                             particleList.add(instance);
                         }
 
@@ -283,11 +280,11 @@ public class MissionDefinition implements MissionDefinitionPlugin {
                                 Instance2Data addedParticle = this.particle.addParticle();
                                 if (addedParticle != null) {
                                     addedParticle.setLocation(mousePos);
-                                    addedParticle.setScaleAll(rnd.nextFloat(1.0f, 3.0f));
+                                    addedParticle.setScaleAll(CalculateUtil.random(1.0f, 3.0f, rnd));
                                     addedParticle.setScaleRateAll(2.0f);
                                     addedParticle.setLowColor(Misc.getNegativeHighlightColor());
-                                    addedParticle.setAlpha(rnd.nextFloat(0.4f, 0.8f));
-                                    addedParticle.setVelocity(rnd.nextFloat(-128.0f, 128.0f), rnd.nextFloat(-128.0f, 128.0f));
+                                    addedParticle.setAlpha(CalculateUtil.random(0.4f, 0.8f, rnd));
+                                    addedParticle.setVelocity(CalculateUtil.random(-128.0f, 128.0f, rnd), CalculateUtil.random(-128.0f, 128.0f, rnd));
                                     addedParticle.setTimer(0.1f, 0.8f, 1.1f);
                                 }
                             }

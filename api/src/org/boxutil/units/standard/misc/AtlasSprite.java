@@ -73,15 +73,14 @@ public class AtlasSprite implements SpriteAPI {
         FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
         float angle = (this.facing[0] + this.facing[1]) * 0.5f;
         angle = (angle + 360.0f) % 360.0f;
-        angle = (float) Math.toRadians(angle);
-        float w = (float) Math.cos(angle);
-        float z = TrigUtil.sinFormCosRadiansF(w, angle);
-        float dqz = z + z;
-        float q22 = dqz * z;
-        float q23 = dqz * w;
-        float q22OM = 1.0f - q22;
-        float offsetX = x;
-        float offsetY = y;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(angle * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0],
+                q22OM = 1.0f - q22;
+        float offsetX = x,
+                offsetY = y;
         if (offset) {
             offsetX += this.getCenterX();
             offsetY += this.getCenterY();

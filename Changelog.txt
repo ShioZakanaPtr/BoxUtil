@@ -3,6 +3,59 @@
 
 若未额外注明，将BoxUtil更新至高版本后通常无需新建存档
 
+v1.6.4 / 2026.09.32
+    三角函数相关计算性能改进
+    为每帧帧缓冲操作增加barrier，并略微减少绑定帧缓冲的固定开销
+    修复 ShaderUtil 纹理相关生成或处理算法在部分Mesa平台上的问题
+    现在渲染类在 hasDelete 返回 true 时，会从渲染专用列表中移除
+
+    RenderDataAPI 现在reset调用后会对以往一些不受任何reset的设置起效，其他Entity类或功能接口同等
+
+    CommonUtil 新增方法：
+        Vector4f getKelvinColor(float, Vector4f);
+        float[] HSVToRGBArray(float, float, float, float[]);
+        Vector4f HSVToRGB(Vector4f, Vector4f);
+        int packingColorToInt(Color);
+        IntBuffer putPackingColor(IntBuffer, Color);
+        IntBuffer putPackingColor(IntBuffer, Color...);
+        float packingColorToFloat(Color);
+        FloatBuffer putPackingColor(FloatBuffer, Color);
+        FloatBuffer putPackingColor(FloatBuffer, Color...);
+
+    TrigUtil 新增方法：
+        double approxSinFitD(double);
+        float approxSinFitF(float);
+        double approxCosFitD(double);
+        float approxCosFitF(float);
+        double approxSinD(double);
+        float approxSinF(float);
+        double approxCosD(double);
+        float approxCosF(float);
+        void approxCosSinD(double, double[]);
+        void approxCosSinF(float, float[]);
+        void approxCosSinF(float, Vector2f);
+        void approxCosSinF(float, Matrix2f);
+
+    CalculateUtil 新增方法：
+        long mix(long, long, double);
+        long[] mix(long[], long[], double);
+        int random(int, int, ThreadLocalRandom);
+        int random(int, ThreadLocalRandom);
+        long random(long, long, ThreadLocalRandom);
+        long random(long, ThreadLocalRandom);
+        float random(float, float, ThreadLocalRandom);
+        float random(float, ThreadLocalRandom);
+        double random(double, double, ThreadLocalRandom);
+        double random(double, ThreadLocalRandom);
+        int random(int, int, ThreadLocalRandom);
+        int random(int);
+        long random(long, long);
+        long random(long);
+        float random(float, float);
+        float random(float);
+        double random(double, double);
+        double random(double);
+
 v1.6.3 / 2026.09.14
     修复使用MagicLib格式的尾迹配置时，颜色透明度错误的问题
     修复并改善尾迹渲染时部分细节问题

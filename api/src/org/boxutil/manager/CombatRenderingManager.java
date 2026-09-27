@@ -157,7 +157,7 @@ public final class CombatRenderingManager {
     /**
      * Will auto cleanup after combat over.
      */
-    public static ConcurrentMap<String, Object> getCustomData() {
+    public static @NotNull ConcurrentMap<String, Object> getCustomData() {
         return BUtil_ResourceStorage.combatLayered().getCustomData();
     }
 

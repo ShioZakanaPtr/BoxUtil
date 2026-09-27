@@ -63,7 +63,7 @@ public final class BUtil_SharedRenderingPass {
         return in_notMultiPass;
     }
 
-    public static boolean checkSkipOrRemove(boolean shaderEnable, boolean highestLayer, boolean lowestLayer, final EnumMap<LayeredEntityType, List<RenderDataAPI>> meshMap, final Set<LayeredRenderingPlugin> renderingPlugins, int layerLoc, final Runnable onRemove) {
+    public static boolean checkSkipOrRemove(boolean highestLayer, boolean lowestLayer, final EnumMap<LayeredEntityType, List<RenderDataAPI>> meshMap, final Set<LayeredRenderingPlugin> renderingPlugins, int layerLoc, final Runnable onRemove) {
         final boolean stageContinue = BUtil_GLImpl.checkSkipMeshCurrentLayout(meshMap, renderingPlugins) && BUtil_StaticTrailMemoryPool.bypassDrawTrail(layerLoc);
         if (stageContinue) {
             if (highestLayer) ShaderCore.glEndDraw();
@@ -76,22 +76,13 @@ public final class BUtil_SharedRenderingPass {
 
     public static void drawEachLayer(boolean shaderEnable, boolean highestLayer, int layerBits, final Object layer, int layerLoc, boolean notMultiPass, final ViewportAPI viewport, final EnumMap<LayeredEntityType, List<RenderDataAPI>> meshMap, final Set<LayeredRenderingPlugin> renderingPlugins) {
         if (!highestLayer) ShaderCore.glBeginDraw();
-        final var renderingBuffer = ShaderCore.getRenderingBuffer();
         StandardShaderpacksPass.activateBloomPass();
         if (shaderEnable) {
-            GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
-            if (!highestLayer) {
-                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, renderingBuffer.getColorResult());
-                GLWrapper.Texture.glCopyTexSubImage2D(GLWrapper.Texture.GL_TEXTURE_2D, 0, 0, 0, 0, 0, ShaderCore.getScreenScaleWidth(), ShaderCore.getScreenScaleHeight());
-                GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, renderingBuffer.getFBO(0));
-            }
+            if (!highestLayer) BUtil_GLImpl.glBeginLayerFBO();
         }
 
         BUtil_EntityImpl.Mesh.processMeshCurrentLayout(shaderEnable, layerBits, layer, layerLoc, notMultiPass, viewport, meshMap, renderingPlugins);
-        if (shaderEnable && !highestLayer) {
-            GLWrapper.FBO.glBindFramebuffer(GLWrapper.FBO.GL_FRAMEBUFFER, 0);
-            ShaderUtil.blitToScreen(renderingBuffer.getFBO(0));
-        }
+        if (shaderEnable && !highestLayer) BUtil_GLImpl.glEndLayerFBO();
         ShaderCore.glEndDraw();
         if (highestLayer) BoxThreadSync.Rendering.afterRendering().arriveAndAwaitAdvance();
     }

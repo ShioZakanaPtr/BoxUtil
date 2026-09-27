@@ -220,7 +220,7 @@ public final class TextureManager {
                     rad = rawData.two.get(i) / 255.0f;
                     rad = rad * TrigUtil.PI2_F - TrigUtil.PI_F;
                     c = (float) Math.cos(rad);
-                    s = TrigUtil.sinFormCosRadiansF(c, rad);
+                    s = (float) Math.sin(rad);
                     putBuffer.put((byte) Math.max(Math.min(Math.round((c * 0.5f + 0.5f) * 255.0f), 255), 0));
                     putBuffer.put((byte) Math.max(Math.min(Math.round((s * 0.5f + 0.5f) * 255.0f), 255), 0));
                     putBuffer.put(Byte.MAX_VALUE);

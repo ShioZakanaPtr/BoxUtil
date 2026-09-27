@@ -37,6 +37,7 @@ import java.nio.FloatBuffer;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class RenderingUtil {
@@ -162,11 +163,11 @@ public final class RenderingUtil {
         minFactor = 0.8f / maxJitterNode;
         for (int i = maxJitterNode - 1; i > 0; --i) {
             factor = (float) i / (float) maxJitterNode;
-            factor += rnd.nextFloat(-0.5f, 0.5f) * minFactor;
+            factor += CalculateUtil.random(-0.5f, 0.5f, rnd) * minFactor;
             curr = CalculateUtil.mix(start, end, new Vector2f(), factor);
             curr.x += normal.x * jitterLength;
             curr.y += normal.y * jitterLength;
-            if (rnd.nextFloat() >= 0.5f) curr.set(-curr.x, -curr.y);
+            if (rnd.nextBoolean()) curr.set(-curr.x, -curr.y);
             arc.addNode(curr);
         }
         arc.addNode(start);
@@ -222,7 +223,7 @@ public final class RenderingUtil {
     }
 
     public static Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCombatEmpArcVisual(Vector2f start, Vector2f end, float width, Color fringe, @Nullable Color core) {
-        return spawnCombatEmpArcVisual(start, end, width, fringe, core, 1.0f, ThreadLocalRandom.current().nextFloat(0.5f, 2.5f), 0.5f);
+        return spawnCombatEmpArcVisual(start, end, width, fringe, core, 1.0f, CalculateUtil.random(0.5f, 2.5f), 0.5f);
     }
 
     public static Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCampaignEmpArcVisual(Vector2f start, Vector2f end, float width, Color fringe, @Nullable Color core, float jitterPower, float full, float fadeOut) {
@@ -236,7 +237,7 @@ public final class RenderingUtil {
     }
 
     public static Pair<Byte, Pair<TrailEntity, FlareEntity>> spawnCampaignEmpArcVisual(Vector2f start, Vector2f end, float width, Color fringe, @Nullable Color core) {
-        return spawnCampaignEmpArcVisual(start, end, width, fringe, core, 1.0f, ThreadLocalRandom.current().nextFloat(0.5f, 2.5f), 0.5f);
+        return spawnCampaignEmpArcVisual(start, end, width, fringe, core, 1.0f, CalculateUtil.random(0.5f, 2.5f), 0.5f);
     }
 
     public static SpriteEntity createParticleField(Vector2f location, int count, float facing, float arc, @Nullable Vector2f baseSpreadRange, @Nullable Vector2f velocityRange, @Nullable Vector2f facingRange, @Nullable Vector2f turnRateRange, Vector4f sizeRangeXY, @Nullable Vector4f sizeGrowScaleRangeXY, @Nullable Color baseColor, @Nullable Color baseColorShift, @Nullable Color baseEmissiveColor, @Nullable Color baseEmissiveColorShift, SpriteAPI diffuse, @Nullable SpriteAPI emissive, float fadeIn, float full, float fadeOut, float timerOffsetRange, boolean isAdditiveBlend) {
@@ -255,6 +256,7 @@ public final class RenderingUtil {
         final boolean haveSpreadRange = baseSpreadRange != null;
         final boolean haveVelocityRange = velocityRange != null;
         final var rnd = ThreadLocalRandom.current();
+        final float[] ptr = new float[2];
         List<InstanceDataAPI> dataList = new ArrayList<>();
         for (int i = 0; i < finalCount; i++) {
             float factor = rnd.nextFloat();
@@ -264,8 +266,8 @@ public final class RenderingUtil {
             float angle = facing + finalArc * (factor2 * 2.0f - 1.0f);
             if (angle < 0.0f) angle += 360.0f;
             if (angle > 360.0f) angle -= 360.0f;
-            float baseX = (float) Math.cos(Math.toRadians(angle));
-            float baseY = TrigUtil.sinFormCosF(baseX, angle);
+            TrigUtil.approxCosSinF(angle * 0.017453292519943295f, ptr);
+
             Color finalColor;
             if (haveColorShift) {
                 finalColor = CalculateUtil.mix(baseColor, baseColorShift, true, factor);
@@ -276,11 +278,11 @@ public final class RenderingUtil {
             } else finalEmissiveColor = baseEmissiveColor;
             if (haveSpreadRange) {
                 float locationLength = (baseSpreadRange.y - baseSpreadRange.x) * factor + baseSpreadRange.x;
-                data.setLocation(locationLength * baseX, locationLength * baseY);
+                data.setLocation(locationLength * ptr[0], locationLength * ptr[1]);
             }
             if (haveVelocityRange) {
                 float velocityLength = (velocityRange.x - velocityRange.y) * factor + velocityRange.x;
-                data.setVelocity(velocityLength * baseX, velocityLength * baseY);
+                data.setVelocity(velocityLength * ptr[0], velocityLength * ptr[1]);
             }
             float sizeX = (sizeRangeXY.z - sizeRangeXY.x) * factor + sizeRangeXY.x;
             float sizeY = (sizeRangeXY.w - sizeRangeXY.y) * factor + sizeRangeXY.y;
@@ -342,6 +344,7 @@ public final class RenderingUtil {
         final boolean haveFringeColorShift = baseFringeColorShift != null;
         final boolean haveCoreColorShift = baseCoreColorShift != null;
         final boolean haveSpreadRange = baseSpreadRange != null;
+        final float[] ptr = new float[2];
         final var rnd = ThreadLocalRandom.current();
         List<InstanceDataAPI> dataList = new ArrayList<>();
         for (int i = 0; i < finalCount; i++) {
@@ -352,8 +355,8 @@ public final class RenderingUtil {
             float angle = facing + finalArc * (factor2 * 2.0f - 1.0f);
             if (angle < 0.0f) angle += 360.0f;
             if (angle > 360.0f) angle -= 360.0f;
-            float baseX = (float) Math.cos(Math.toRadians(angle));
-            float baseY = TrigUtil.sinFormCosF(baseX, angle);
+            TrigUtil.approxCosSinF(angle * 0.017453292519943295f, ptr);
+
             Color finalFringeColor;
             if (haveFringeColorShift) {
                 finalFringeColor = CalculateUtil.mix(baseFringeColor, baseFringeColorShift, true, factor);
@@ -364,7 +367,7 @@ public final class RenderingUtil {
             } else finalCoreColor = baseCoreColor;
             if (haveSpreadRange) {
                 float locationLength = (baseSpreadRange.y - baseSpreadRange.x) * factor + baseSpreadRange.x;
-                data.setLocation(locationLength * baseX, locationLength * baseY);
+                data.setLocation(locationLength * ptr[0], locationLength * ptr[1]);
             }
             float sizeX = (sizeRangeXY.z - sizeRangeXY.x) * factor + sizeRangeXY.x;
             float sizeY = (sizeRangeXY.w - sizeRangeXY.y) * factor + sizeRangeXY.y;
@@ -507,21 +510,21 @@ public final class RenderingUtil {
         GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, sprite.getTextureId());
 
         Misc.setColor(color, alphaMulti);
-        float[] currVertices = new float[4];
-        float currRadius, currRad, currOffsetX, currOffsetY;
+        float[] currVertices = new float[4], ptr = new float[2];
+        float currRadius, currRad;
         FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(bufferSize);
         FloatBuffer uvBuffer = BufferUtils.createFloatBuffer(bufferSize);
         for (int i = 0; i < num; ++i) {
             currRadius = hash11(seed + i) * (maxRadius - minRadius) + minRadius;
             currRad = hash11(seed + i + 3) * TrigUtil.PI2_F;
-            currOffsetX = (float) Math.cos(currRad);
-            currOffsetY = TrigUtil.sinFormCosRadiansF(currOffsetX, currRad) * currRadius;
-            currOffsetX *= currRadius;
+            TrigUtil.approxCosSinF(currRad, ptr);
+            ptr[0] *= currRadius;
+            ptr[1] *= currRadius;
 
-            currVertices[0] = oriVertices[0] + currOffsetX;
-            currVertices[1] = oriVertices[1] + currOffsetY;
-            currVertices[2] = oriVertices[2] + currOffsetX;
-            currVertices[3] = oriVertices[3] + currOffsetY;
+            currVertices[0] = oriVertices[0] + ptr[0];
+            currVertices[1] = oriVertices[1] + ptr[1];
+            currVertices[2] = oriVertices[2] + ptr[0];
+            currVertices[3] = oriVertices[3] + ptr[1];
 
             vertexBuffer.put(currVertices[0]);
             vertexBuffer.put(currVertices[1]);
@@ -657,57 +660,60 @@ public final class RenderingUtil {
                 final var lock = getControllerLock(isCampaign, key);
 
                 lock.lock();
-                var controller = getControllerFromMap(isCampaign, key);
+                try {
+                    var controller = getControllerFromMap(isCampaign, key);
 
-                if (controller == null || controller.isEntityExpired()) {
-                    controller = new SimpleParticleControlData(maxParticles, 3.2f, -5120.0f, false);
+                    if (controller == null || controller.isEntityExpired()) {
+                        controller = new SimpleParticleControlData(maxParticles, 3.2f, -5120.0f, false);
 
-                    final boolean withDiffuse = diffuse != null, withEmissive = emissive != null;
-                    final SpriteAPI diffuseSprite = withDiffuse ? Global.getSettings().getSprite(diffuse) : null,
-                            emissiveSprite = withEmissive ? Global.getSettings().getSprite(emissive) : null;
+                        final boolean withDiffuse = diffuse != null, withEmissive = emissive != null;
+                        final SpriteAPI diffuseSprite = withDiffuse ? Global.getSettings().getSprite(diffuse) : null,
+                                emissiveSprite = withEmissive ? Global.getSettings().getSprite(emissive) : null;
 
-                    SpriteEntity sprite = new SpriteEntity();
-                    if (withDiffuse) sprite.setDiffuseSprite(diffuseSprite); else sprite.setDiffuseSprite(BoxDatabase.BUtil_NONE);
-                    if (withEmissive) sprite.setEmissiveSprite(emissiveSprite);
-                    sprite.getMaterialData().setEmissiveColorAlpha(emissiveAlphaMult);
-                    sprite.getMaterialData().setColorToEmissive(0.0f);
-                    sprite.getMaterialData().setAlphaToEmissive(0.0f);
-                    if (additive || negative) {
-                        if (negative) sprite.setNegativeBlend(); else sprite.setAdditiveBlend();
-                        sprite.getMaterialData().setIgnoreIllumination(true);
-                    } else if (withDiffuse) {
-                        sprite.getMaterialData().setNormal(_AUTO_PARTICLE_NORMAL.computeIfAbsent(diffuseSprite.getTextureId(), tex -> {
-                            if (tex < 1) return 0;
-                            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, tex);
-                            final int texWidth = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH),
-                                    texHeight = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
-                            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
-                            if (texWidth < 1 || texHeight < 1) return 0;
-                            return ShaderUtil.genNormalMapFromRGB(tex, texWidth, texHeight, _AUTO_PARTICLE_NORMAL_PARAM);
-                        }));
+                        SpriteEntity sprite = new SpriteEntity();
+                        if (withDiffuse) sprite.setDiffuseSprite(diffuseSprite); else sprite.setDiffuseSprite(BoxDatabase.BUtil_NONE);
+                        if (withEmissive) sprite.setEmissiveSprite(emissiveSprite);
+                        sprite.getMaterialData().setEmissiveColorAlpha(emissiveAlphaMult);
+                        sprite.getMaterialData().setColorToEmissive(0.0f);
+                        sprite.getMaterialData().setAlphaToEmissive(0.0f);
+                        if (additive || negative) {
+                            if (negative) sprite.setNegativeBlend(); else sprite.setAdditiveBlend();
+                            sprite.getMaterialData().setIgnoreIllumination(true);
+                        } else if (withDiffuse) {
+                            sprite.getMaterialData().setNormal(_AUTO_PARTICLE_NORMAL.computeIfAbsent(diffuseSprite.getTextureId(), tex -> {
+                                if (tex < 1) return 0;
+                                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, tex);
+                                final int texWidth = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH),
+                                        texHeight = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
+                                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+                                if (texWidth < 1 || texHeight < 1) return 0;
+                                return ShaderUtil.genNormalMapFromRGB(tex, texWidth, texHeight, _AUTO_PARTICLE_NORMAL_PARAM);
+                            }));
+                        }
+
+                        if (tileX > 1 || tileY > 1) {
+                            sprite.setTileSize(tileX, tileY);
+                            sprite.setRandomTile(true);
+                            sprite.setRandomTileEachInstance(true);
+                        }
+                        if (withDiffuse) sprite.setUVEnd(diffuseSprite.getTexWidth(), diffuseSprite.getTexHeight());
+                        else if (withEmissive) sprite.setUVEnd(emissiveSprite.getTexWidth(), emissiveSprite.getTexHeight());
+                        if (!negative) sprite.getMaterialData().setGlowPower(0.25f);
+                        sprite.setBaseSizePerTiles(0.5f, 0.5f);
+                        sprite.setLayer(defaultFXLayer(isCampaign));
+                        sprite.setControlData(controller);
+
+                        sprite.setAutoSubmitEntityData(false);
+                        sprite.setAutoSubmitModelMatrix(false);
+                        sprite.submitEntityData();
+                        sprite.submitModelMatrix();
+
+                        putControllerFromMap(isCampaign, sprite, key, controller);
                     }
-
-                    if (tileX > 1 || tileY > 1) {
-                        sprite.setTileSize(tileX, tileY);
-                        sprite.setRandomTile(true);
-                        sprite.setRandomTileEachInstance(true);
-                    }
-                    if (withDiffuse) sprite.setUVEnd(diffuseSprite.getTexWidth(), diffuseSprite.getTexHeight());
-                    else if (withEmissive) sprite.setUVEnd(emissiveSprite.getTexWidth(), emissiveSprite.getTexHeight());
-                    if (!negative) sprite.getMaterialData().setGlowPower(0.25f);
-                    sprite.setBaseSizePerTiles(0.5f, 0.5f);
-                    sprite.setLayer(defaultFXLayer(isCampaign));
-                    sprite.setControlData(controller);
-
-                    sprite.setAutoSubmitEntityData(false);
-                    sprite.setAutoSubmitModelMatrix(false);
-                    sprite.submitEntityData();
-                    sprite.submitModelMatrix();
-
-                    putControllerFromMap(isCampaign, sprite, key, controller);
+                    return controller;
+                } finally {
+                    lock.unlock();
                 }
-                lock.unlock();
-                return controller;
             }
 
             public static SimpleParticleControlData getHitParticle(final boolean isCampaign) {
@@ -755,9 +761,8 @@ public final class RenderingUtil {
              */
             public static SimpleParticleControlData[] getExplosion(final boolean isCampaign) {
                 return new SimpleParticleControlData[]{
-                        getController(isCampaign, 13100, "BUtil_VanillaFX_spawnExplosion_A", null, Global.getSettings().getSpriteName("fx", "BUtil_explosion"), 3, 1, 1.0f, true, false),
-                        getController(isCampaign, 3200, "BUtil_VanillaFX_spawnExplosion_B", null, Global.getSettings().getSpriteName("fx", "BUtil_explosionRing"), 1, 1, 1.0f, true, false),
-                        getController(isCampaign, 84, "BUtil_VanillaFX_spawnExplosion_C", null, Global.getSettings().getSpriteName("fx", "BUtil_smoothParticle"), 1, 1, 1.0f, true, false)
+                        getController(isCampaign, 13114, "BUtil_VanillaFX_spawnExplosion_A", null, Global.getSettings().getSpriteName("fx", "BUtil_explosion"), 3, 1, 1.0f, true, false),
+                        getController(isCampaign, 3270, "BUtil_VanillaFX_spawnExplosion_B", null, Global.getSettings().getSpriteName("fx", "BUtil_explosionRing"), 1, 1, 1.0f, true, false),
                 };
             }
 
@@ -907,7 +912,7 @@ public final class RenderingUtil {
             final var controller = Controllers.getSmokeParticle(isCampaign);
             return setParticle(
                     controller,
-                    loc, vel, scaleRate, size, rnd.nextFloat(360.0f), rnd.nextFloat(-70.0f, 70.0f), color, 1.0f, fadeIn, 0.0f, fadeOut);
+                    loc, vel, scaleRate, size, CalculateUtil.random(360.0f, rnd), CalculateUtil.random(-70.0f, 70.0f, rnd), color, 1.0f, fadeIn, 0.0f, fadeOut);
         }
 
         private static boolean _nebulaParticleCommon(boolean isCampaign, Vector2f loc, Vector2f vel, float size, float endSizeMult, float rampUpFraction, float fullBrightnessFraction, float totalDuration, Color color, final SimpleParticleControlData controller) {
@@ -922,7 +927,7 @@ public final class RenderingUtil {
 
             return setParticle(
                     controller,
-                    loc, vel, scaleRate, size, ThreadLocalRandom.current().nextFloat(360.0f), 0.0f, color, brightness, fadeIn, full, fadeOut);
+                    loc, vel, scaleRate, size, CalculateUtil.random(360.0f), 0.0f, color, brightness, fadeIn, full, fadeOut);
         }
 
         public static boolean addNebulaParticle(boolean isCampaign, Vector2f loc, Vector2f vel, float size, float endSizeMult, float rampUpFraction, float fullBrightnessFraction, float totalDuration, Color color) {
@@ -961,56 +966,47 @@ public final class RenderingUtil {
 
             final var rnd = ThreadLocalRandom.current();
             final SimpleParticleControlData[] controller = Controllers.getExplosion(isCampaign);
-            final boolean[] withoutSetter = new boolean[]{true, true, true};
+            final boolean[] withoutSetter = new boolean[]{true, true};
 
             final float baseSize = 20.0f + 0.12f * size, extraVel = 0.04f * size;
             final float rollCountF = (size * size) / (baseSize * baseSize) * 3.4435262f;
             final int count = Math.max((int) rollCountF, 5);
 
             Instance2Data particle;
+            final float[] ptr = new float[2];
             int roll;
-            float finalSize, finalSizeEnd, rndRad, vecX, vecY, velOffsetLength, posOffsetLength;
-            boolean pickRing, pickRound;
+            float finalSize, finalSizeEnd, rndRad, velOffsetLength, posOffsetLength;
+            boolean pickRing;
 
             for (int i = 0; i < count; ++i) {
-                roll = rnd.nextInt(1048576);
-                if (roll > 786432 && roll != 1048575) roll = rnd.nextInt(1048576);
-                if (roll < 262143) roll = 0;
-                else if (roll < 524287) roll = 1;
-                else if (roll < 786431) roll = 2;
-                else if (roll < 1048575) roll = 3;
-                else roll = 4;
-                pickRound = roll == 4;
+                roll = CalculateUtil.random(4, rnd);
+                if (roll == 3) roll = CalculateUtil.random(4, rnd);
                 pickRing = roll == 3;
 
-                finalSize = rnd.nextFloat(baseSize, baseSize + baseSize);
+                finalSize = CalculateUtil.random(baseSize, baseSize + baseSize, rnd);
                 finalSizeEnd = finalSize * 1.25f;
                 if (pickRing) {
                     finalSizeEnd = finalSize * 3.0f;
                     finalSize = finalSizeEnd * 0.1f;
-                } else if (pickRound) {
-                    finalSize *= 1.5f;
-                    finalSizeEnd = finalSize;
                 }
 
-                rndRad = rnd.nextFloat(TrigUtil.PI2_F); // wtf
-                vecX = (float) Math.cos(rndRad);
-                vecY = TrigUtil.sinFormCosRadiansF(vecX, rndRad);
+                rndRad = CalculateUtil.random(TrigUtil.PI2_F, rnd); // wtf
+                TrigUtil.approxCosSinF(rndRad, ptr);
 
-                if (!pickRing && i > 4) posOffsetLength = rnd.nextFloat(size * 0.25f);
+                if (!pickRing && i > 4) posOffsetLength = CalculateUtil.random(size * 0.25f, rnd);
                 else posOffsetLength = 0.0f;
 
-                roll = Math.max(roll - 2, 0);
+                roll = pickRing ? 1 : 0;
                 particle = controller[roll].addParticle();
                 if (particle != null) {
-                    particle.setLocation(vecX * posOffsetLength + loc.x, vecY * posOffsetLength + loc.y);
+                    particle.setLocation(ptr[0] * posOffsetLength + loc.x, ptr[1] * posOffsetLength + loc.y);
                     if (pickRing) {
                         particle.setVelocity(vel.x, vel.y);
                     } else {
-                        velOffsetLength = rnd.nextFloat(10.0f, 10.0f + extraVel);
-                        particle.setVelocity(vecX * velOffsetLength + vel.x, vecY * velOffsetLength + vel.y);
+                        velOffsetLength = CalculateUtil.random(10.0f, 10.0f + extraVel, rnd);
+                        particle.setVelocity(ptr[0] * velOffsetLength + vel.x, ptr[1] * velOffsetLength + vel.y);
                     }
-                    particle.setFacing(rnd.nextFloat(360.0f));
+                    particle.setFacing(CalculateUtil.random(360.0f, rnd));
                     particle.setScaleAll(finalSize);
                     particle.setScaleRateAll((finalSizeEnd - finalSize) / maxDuration);
                     particle.setEmissiveColor(color.getRed(), color.getGreen(), color.getBlue(), 255);
@@ -1018,12 +1014,14 @@ public final class RenderingUtil {
 
                     if (withoutSetter[roll]) withoutSetter[roll] = false;
                 } else {
-                    for (byte c = 0; c < 3; ++c) if (!withoutSetter[c]) controller[c].refreshRemainingTimeToReset(maxDuration);
+                    if (!withoutSetter[0]) controller[0].refreshRemainingTimeToReset(maxDuration);
+                    if (!withoutSetter[1]) controller[1].refreshRemainingTimeToReset(maxDuration);
                     return false;
                 }
             }
 
-            for (byte c = 0; c < 3; ++c) if (!withoutSetter[c]) controller[c].refreshRemainingTimeToReset(maxDuration);
+            if (!withoutSetter[0]) controller[0].refreshRemainingTimeToReset(maxDuration);
+            if (!withoutSetter[1]) controller[1].refreshRemainingTimeToReset(maxDuration);
             return true;
         }
 
@@ -1054,28 +1052,27 @@ public final class RenderingUtil {
         }
 
         private static float clampAngleRad(final float in) {
-            float result = in % 360.0f;
+            float result = (float) Math.IEEEremainder(in, 360.0d);
             if (result < 0.0f) result += 360.0f;
-            return (float) Math.toRadians(result);
+            return result * 0.017453292519943295f;
         }
 
         private static boolean setDebrisParticle(SimpleParticleControlData controller, final _DebrisType type, final boolean isGlowDebris, final Vector2f loc, final Vector2f vel, final float facing, final float spread, final float minVel, final float velRange, final float maxRotation) {
             final var rnd = ThreadLocalRandom.current();
             Instance2Data particle = controller.addParticle();
             if (particle != null) {
-                final float size = type.size * rnd.nextFloat(0.5f, 1.0f),
-                        currFacing = clampAngleRad(rnd.nextFloat(spread) + facing - spread * 0.5f),
-                        vecX = (float) Math.cos(currFacing),
-                        vecY = TrigUtil.sinFormCosRadiansF(vecX, currFacing), vecLength = minVel + rnd.nextFloat(velRange),
-                        spawnFacing = clampAngleRad(facing + rnd.nextFloat(90.0f, 270.0f)),
-                        posX = (float) Math.cos(spawnFacing),
-                        posY = TrigUtil.sinFormCosRadiansF(posX, spawnFacing);
+                final float[] ptrVec = new float[2], ptrPos = new float[2];
+                final float size = CalculateUtil.random(0.5f * type.size, type.size, rnd),
+                        vecLength = minVel + CalculateUtil.random(velRange, rnd);
 
-                particle.setLocation(size * posX + loc.x, size * posY + loc.y);
-                particle.setVelocity(vecLength * vecX + vel.x, vecLength * vecY + vel.y);
+                TrigUtil.approxCosSinF(clampAngleRad(CalculateUtil.random(spread, rnd) + facing - spread * 0.5f), ptrVec);
+                TrigUtil.approxCosSinF(clampAngleRad(CalculateUtil.random(90.0f, 270.0f, rnd) + facing), ptrPos);
+
+                particle.setLocation(size * ptrPos[0] + loc.x, size * ptrPos[1] + loc.y);
+                particle.setVelocity(vecLength * ptrVec[0] + vel.x, vecLength * ptrVec[1] + vel.y);
                 particle.setScaleAll(size);
-                particle.setTurnRate(rnd.nextFloat(-0.5f, 0.5f) * maxRotation * 2.0f);
-                if (isGlowDebris) particle.setEmissiveColor(255, rnd.nextInt(155, 256), 100, 255);
+                particle.setTurnRate(CalculateUtil.random(-0.5f, 0.5f, rnd) * maxRotation * 2.0f);
+                if (isGlowDebris) particle.setEmissiveColor(255, CalculateUtil.random(155, 256, rnd), 100, 255);
                 particle.setTimer(type.fadeIn, type.full, type.fadeOut);
                 return false;
             }
@@ -1087,10 +1084,11 @@ public final class RenderingUtil {
             if (ignoreSpawn(isCampaign, loc, type.size) || num < 1) return true;
             final boolean[] withoutSetter = new boolean[]{true, true};
 
+            final var rnd = ThreadLocalRandom.current();
             byte picker;
             boolean spawnGlowDebris;
             for (int i = 0; i < num; i++) {
-                spawnGlowDebris = ThreadLocalRandom.current().nextFloat() > 0.33f;
+                spawnGlowDebris = rnd.nextFloat() > 0.3333333f;
                 picker = spawnGlowDebris ? BoxEnum.ONE : BoxEnum.ZERO;
                 if (setDebrisParticle(controller[picker], type, spawnGlowDebris, loc, vel, facing, spread, minVel, velRange, maxRotation)) {
                     for (byte c = 0; c < 2; ++c) if (!withoutSetter[c]) controller[c].refreshRemainingTimeToReset(type.totalDur);
@@ -1122,11 +1120,7 @@ public final class RenderingUtil {
 
     public final static class SpecialFX {
         public final static class Controllers {
-            public static SimpleParticleControlData getDefaultDistortion(final boolean isCampaign) {
-                final var key = "BUtil_SpecialFX_getDefaultDistortion";
-
-                final var lock = getControllerLock(isCampaign, key);
-                lock.lock();
+            private static SimpleParticleControlData initDistortion(final String key, boolean isCampaign, final Consumer<DistortionEntity> configure) {
                 var controller = getControllerFromMap(isCampaign, key);
 
                 if (controller == null || controller.isEntityExpired()) {
@@ -1136,9 +1130,7 @@ public final class RenderingUtil {
                     entity.setPowerIn(0.0f);
                     entity.setPowerFull(1.0f);
                     entity.setPowerOut(0.0f);
-                    entity.setInnerIn(1.0f, 1.0f);
-                    entity.setInnerFull(1.0f, 1.0f);
-                    entity.setInnerOut(1.0f, 1.0f);
+                    configure.accept(entity);
                     entity.setControlData(controller);
 
                     entity.setAutoSubmitEntityData(false);
@@ -1148,8 +1140,23 @@ public final class RenderingUtil {
 
                     putControllerFromMap(isCampaign, entity, key, controller);
                 }
-                lock.unlock();
                 return controller;
+            }
+
+            public static SimpleParticleControlData getDefaultDistortion(final boolean isCampaign) {
+                final var key = "BUtil_SpecialFX_getDefaultDistortion";
+
+                final var lock = getControllerLock(isCampaign, key);
+                lock.lock();
+                try {
+                    return initDistortion(key, isCampaign, l_entity -> {
+                        l_entity.setInnerIn(1.0f, 1.0f);
+                        l_entity.setInnerFull(1.0f, 1.0f);
+                        l_entity.setInnerOut(1.0f, 1.0f);
+                    });
+                } finally {
+                    lock.unlock();
+                }
             }
 
             public static SimpleParticleControlData getImpactDistortion(final boolean isCampaign) {
@@ -1157,60 +1164,49 @@ public final class RenderingUtil {
 
                 final var lock = getControllerLock(isCampaign, key);
                 lock.lock();
-                var controller = getControllerFromMap(isCampaign, key);
-
-                if (controller == null || controller.isEntityExpired()) {
-                    controller = new SimpleParticleControlData(8192, 6.4f, -5120.0f, false);
-
-                    DistortionEntity entity = new DistortionEntity();
-                    entity.setPowerIn(0.0f);
-                    entity.setPowerFull(1.0f);
-                    entity.setPowerOut(0.0f);
-                    entity.setSizeOut(2.0f, 2.0f);
-                    entity.setInnerFull(0.5f, 0.5f);
-                    entity.setInnerOut(0.9f, 0.9f);
-                    entity.setControlData(controller);
-
-                    entity.setAutoSubmitEntityData(false);
-                    entity.setAutoSubmitModelMatrix(false);
-                    entity.submitEntityData();
-                    entity.submitModelMatrix();
-
-                    putControllerFromMap(isCampaign, entity, key, controller);
+                try {
+                    return initDistortion(key, isCampaign, l_entity -> {
+                        l_entity.setSizeOut(2.0f, 2.0f);
+                        l_entity.setInnerFull(0.5f, 0.5f);
+                        l_entity.setInnerOut(0.9f, 0.9f);
+                    });
+                } finally {
+                    lock.unlock();
                 }
-                lock.unlock();
-                return controller;
             }
 
             private static SimpleParticleControlData _getFlareCommon(final boolean isCampaign, final String key, final boolean isSharp) {
                 final var lock = getControllerLock(isCampaign, key);
 
                 lock.lock();
-                var controller = getControllerFromMap(isCampaign, key);
+                try {
+                    var controller = getControllerFromMap(isCampaign, key);
 
-                if (controller == null || controller.isEntityExpired()) {
-                    controller = new SimpleParticleControlData(8192, 6.4f, -5120.0f, false);
+                    if (controller == null || controller.isEntityExpired()) {
+                        controller = new SimpleParticleControlData(8192, 6.4f, -5120.0f, false);
 
-                    FlareEntity entity = new FlareEntity();
-                    entity.setSize(4.0f, 1.0f);
-                    entity.setFlick(true);
-                    entity.setFlickWhenPaused(false);
-                    if (isSharp) entity.setSharpDisc(); else entity.setSmoothDisc();
-                    entity.setGlowPower(1.0f);
-                    entity.setAdditiveBlend();
-                    entity.autoAspect();
-                    entity.setLayer(defaultFXLayer(isCampaign));
-                    entity.setControlData(controller);
+                        FlareEntity entity = new FlareEntity();
+                        entity.setSize(4.0f, 1.0f);
+                        entity.setFlick(true);
+                        entity.setFlickWhenPaused(false);
+                        if (isSharp) entity.setSharpDisc(); else entity.setSmoothDisc();
+                        entity.setGlowPower(1.0f);
+                        entity.setAdditiveBlend();
+                        entity.autoAspect();
+                        entity.setLayer(defaultFXLayer(isCampaign));
+                        entity.setControlData(controller);
 
-                    entity.setAutoSubmitEntityData(false);
-                    entity.setAutoSubmitModelMatrix(false);
-                    entity.submitEntityData();
-                    entity.submitModelMatrix();
+                        entity.setAutoSubmitEntityData(false);
+                        entity.setAutoSubmitModelMatrix(false);
+                        entity.submitEntityData();
+                        entity.submitModelMatrix();
 
-                    putControllerFromMap(isCampaign, entity, key, controller);
+                        putControllerFromMap(isCampaign, entity, key, controller);
+                    }
+                    return controller;
+                } finally {
+                    lock.unlock();
                 }
-                lock.unlock();
-                return controller;
             }
 
             public static SimpleParticleControlData getSmoothFlare(final boolean isCampaign) {

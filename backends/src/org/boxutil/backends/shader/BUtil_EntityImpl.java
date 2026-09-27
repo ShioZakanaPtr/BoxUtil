@@ -49,11 +49,11 @@ public final class BUtil_EntityImpl {
             int instanceBit, dataBit;
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 if (data != null) {
                     data.controlBeforeRenderingAdvance(entity, BUtil_GLImpl.getLastFrameAmount());
@@ -119,11 +119,11 @@ public final class BUtil_EntityImpl {
             int instanceBit = 4, dataBit;
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 if (data != null) {
                     data.controlBeforeRenderingAdvance(entity, BUtil_GLImpl.getLastFrameAmount());
@@ -189,11 +189,11 @@ public final class BUtil_EntityImpl {
             int instanceBit, dataBit;
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 curveEntity = (CurveEntity) entity;
                 if (data != null) {
@@ -253,11 +253,11 @@ public final class BUtil_EntityImpl {
             int dataBit;
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 segmentEntity = (SegmentEntity) entity;
                 if (data != null) {
@@ -301,11 +301,11 @@ public final class BUtil_EntityImpl {
             int dataBit;
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 trailEntity = (TrailEntity) entity;
                 if (data != null) {
@@ -359,11 +359,11 @@ public final class BUtil_EntityImpl {
             GLWrapper.Shader.glUniform1ui(program.location[2], layerBits | 0b10);
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 if (data != null) {
                     data.controlBeforeRenderingAdvance(entity, BUtil_GLImpl.getLastFrameAmount());
@@ -420,11 +420,11 @@ public final class BUtil_EntityImpl {
             GLWrapper.Shader.glUniform1ui(program.location[7], layerBits | 0b11);
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 textFieldEntity = (TextFieldEntity) entity;
                 if (data != null) {
@@ -456,18 +456,18 @@ public final class BUtil_EntityImpl {
                 ShaderCore.getDefaultQuadObject().glBind();
                 program.active();
 
-                BUtil_GLImpl.glScreenBlit();
+                BUtil_GLImpl.glCopyScreenToFBOTex();
 
                 program.bindTexture2D(0, ShaderCore.getRenderingBuffer().getColorResult());
                 program.putUniformSubroutine(GLWrapper.Shader.Vert.GL_VERTEX_SHADER, 0, 1);
                 int instanceBit = 1;
                 for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                     entity = entitiesI.next();
-                    if (entity == null) {
+                    if (entity == null || entity.hasDelete()) {
                         entitiesI.remove();
                         continue;
                     }
-                    if (entity.hasDelete()) continue;
+
                     data = entity.getControlData();
                     if (data != null) {
                         data.controlBeforeRenderingAdvance(entity, BUtil_GLImpl.getLastFrameAmount());
@@ -571,11 +571,11 @@ public final class BUtil_EntityImpl {
             MemoryBlock memory;
             for (Iterator<RenderDataAPI> entitiesI = list.iterator(); entitiesI.hasNext();) {
                 entity = entitiesI.next();
-                if (entity == null) {
+                if (entity == null || entity.hasDelete()) {
                     entitiesI.remove();
                     continue;
                 }
-                if (entity.hasDelete()) continue;
+
                 data = entity.getControlData();
                 if (data != null) {
                     data.controlBeforeRenderingAdvance(entity, BUtil_GLImpl.getLastFrameAmount());

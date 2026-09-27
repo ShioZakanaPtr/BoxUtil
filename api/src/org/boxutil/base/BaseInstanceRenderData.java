@@ -57,6 +57,7 @@ public abstract class BaseInstanceRenderData extends BaseRenderData implements I
         this.instanceRefreshSize = 0;
         this.instanceRenderingCount = 0;
         this.instanceRenderingOffset = 0;
+        this.instanceTimerOverride = -1.0f;
         this.needRefreshInstanceData[0] = false;
         this.needRefreshInstanceData[1] = false;
         this.mappingSubmit = false;

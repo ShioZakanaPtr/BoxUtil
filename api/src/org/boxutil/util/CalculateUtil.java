@@ -34,8 +34,8 @@ public final class CalculateUtil {
     }
 
     public static float smoothstep(float edgeL, float edgeR, float value) {
-        float result = clampF((value - edgeL) / (edgeR - edgeL), 0.0f, 1.0f);
-        return result * result * (3.0f - 2.0f * result);
+        value = clampF1((value - edgeL) / (edgeR - edgeL));
+        return value * value * (3.0f - 2.0f * value);
     }
 
     public static float inverseLerp(float edgeL, float edgeR, float value) {
@@ -67,8 +67,9 @@ public final class CalculateUtil {
     }
 
     public static boolean pointAtRight(Vector2f point, CombatEntityAPI entity) {
-        float cosValue = (float) Math.cos(Math.toRadians(entity.getFacing()));
-        return (point.x * TrigUtil.sinFormCosF(cosValue, entity.getFacing()) - point.y * cosValue) >= 0.0f;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(entity.getFacing() * 0.017453292519943295f, ptr);
+        return (point.x * ptr[1] - point.y * ptr[0]) >= 0.0f;
     }
 
     public static boolean pointAtFront(Vector2f point, Vector2f forward) {
@@ -76,8 +77,9 @@ public final class CalculateUtil {
     }
 
     public static boolean pointAtFront(Vector2f point, CombatEntityAPI entity) {
-        float cosValue = (float) Math.cos(Math.toRadians(entity.getFacing()));
-        return (point.x * cosValue + point.y * TrigUtil.sinFormCosF(cosValue, entity.getFacing())) >= 0.0f;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(entity.getFacing() * 0.017453292519943295f, ptr);
+        return (point.x * ptr[0] + point.y * ptr[1]) >= 0.0f;
     }
 
     /**
@@ -101,8 +103,8 @@ public final class CalculateUtil {
     }
 
     private static float[] intersectionRayCircle(Vector2f rayFrom, float rayFacing, Vector2f circle, float radius) {
-        Vector2f facingVec = new Vector2f((float) Math.cos(Math.toRadians(rayFacing)), 0.0f);
-        facingVec.y = TrigUtil.sinFormCosF(facingVec.x, rayFacing);
+        final Vector2f facingVec = new Vector2f();
+        TrigUtil.approxCosSinF(rayFacing * 0.017453292519943295f, facingVec);
         return intersectionLineCircle(rayFrom, facingVec, circle, radius, 1.0f);
     }
 
@@ -176,7 +178,7 @@ public final class CalculateUtil {
 
     public static Vector3f getRandomPointOnSphere(@Nullable Vector3f center, float radius) {
         final var rnd = ThreadLocalRandom.current();
-        return getPointOnSphere(center, radius, new Vector3f(rnd.nextFloat(360.0f), rnd.nextFloat(360.0f), rnd.nextFloat(360.0f)));
+        return getPointOnSphere(center, radius, new Vector3f(random(360.0f, rnd), random(360.0f, rnd), random(360.0f, rnd)));
     }
 
     public static Vector3f scaleFormCenter(@Nullable Vector3f center, float factor, @NotNull Vector3f target, @Nullable Vector3f out) {
@@ -269,19 +271,23 @@ public final class CalculateUtil {
     }
 
     public static byte mix(byte src, byte dst, float factor) {
-        return (byte) Math.round(src * (1.0f - factor) + dst * factor);
+        return (byte) Math.round(src + (dst - src) * factor);
     }
 
     public static int mix(int src, int dst, float factor) {
-        return Math.round(src * (1.0f - factor) + dst * factor);
+        return Math.round(src + (dst - src) * factor);
+    }
+
+    public static long mix(long src, long dst, double factor) {
+        return Math.round(Math.fma(factor, dst - src, src));
     }
 
     public static float mix(float src, float dst, float factor) {
-        return src * (1.0f - factor) + dst * factor;
+        return src + (dst - src) * factor;
     }
 
     public static double mix(double src, double dst, double factor) {
-        return src * (1.0f - factor) + dst * factor;
+        return Math.fma(factor, dst - src, src);
     }
 
     public static Color mix(Color src, Color dst, boolean mixAlpha, float factor) {
@@ -318,7 +324,7 @@ public final class CalculateUtil {
     }
 
     public static byte[] mix(byte[] src, byte[] dst, float factor) {
-        byte[] out = new byte[src.length];
+        final byte[] out = new byte[src.length];
         for (int i = 0; i < out.length; i++) {
             out[i] = mix(src[i], dst[i], factor);
         }
@@ -326,7 +332,15 @@ public final class CalculateUtil {
     }
 
     public static int[] mix(int[] src, int[] dst, float factor) {
-        int[] out = new int[src.length];
+        final int[] out = new int[src.length];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = mix(src[i], dst[i], factor);
+        }
+        return out;
+    }
+
+    public static long[] mix(long[] src, long[] dst, double factor) {
+        final long[] out = new long[src.length];
         for (int i = 0; i < out.length; i++) {
             out[i] = mix(src[i], dst[i], factor);
         }
@@ -334,7 +348,7 @@ public final class CalculateUtil {
     }
 
     public static float[] mix(float[] src, float[] dst, float factor) {
-        float[] out = new float[src.length];
+        final float[] out = new float[src.length];
         for (int i = 0; i < out.length; i++) {
             out[i] = mix(src[i], dst[i], factor);
         }
@@ -342,11 +356,135 @@ public final class CalculateUtil {
     }
 
     public static double[] mix(double[] src, double[] dst, float factor) {
-        double[] out = new double[src.length];
+        final double[] out = new double[src.length];
         for (int i = 0; i < out.length; i++) {
             out[i] = mix(src[i], dst[i], factor);
         }
         return out;
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static int random(int a, int b, final ThreadLocalRandom rnd) {
+        if (a == b) return a;
+        final int realMin = Math.min(a, b);
+        return realMin + (Math.abs(rnd.nextInt()) % (Math.max(a, b) - realMin));
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static int random(int a, final ThreadLocalRandom rnd) {
+        if (a == 0) return a;
+        final int result = Math.abs(rnd.nextInt()) % a;
+        return a < 0 ? -result : result;
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static long random(long a, long b, final ThreadLocalRandom rnd) {
+        if (a == b) return a;
+        final long realMin = Math.min(a, b);
+        return realMin + (Math.abs(rnd.nextLong()) % (Math.max(a, b) - realMin));
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static long random(long a, final ThreadLocalRandom rnd) {
+        if (a == 0) return a;
+        final long result = rnd.nextLong() % a;
+        return a < 0 ? -result : result;
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static float random(float a, float b, final ThreadLocalRandom rnd) {
+        if (a == b) return a;
+        return mix(a, b, rnd.nextFloat());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static float random(float a, final ThreadLocalRandom rnd) {
+        if (a == 0.0f) return a;
+        return rnd.nextFloat() * a;
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static double random(double a, double b, final ThreadLocalRandom rnd) {
+        if (a == b) return a;
+        return mix(a, b, rnd.nextDouble());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static double random(double a, final ThreadLocalRandom rnd) {
+        if (a == 0.0d) return a;
+        return rnd.nextDouble() * a;
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static int random(int a, int b) {
+        return random(a, b, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static int random(int a) {
+        return random(a, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static long random(long a, long b) {
+        return random(a, b, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static long random(long a) {
+        return random(a, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static float random(float a, float b) {
+        return random(a, b, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static float random(float a) {
+        return random(a, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static double random(double a, double b) {
+        return random(a, b, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     */
+    public static double random(double a) {
+        return random(a, ThreadLocalRandom.current());
     }
 
     public static float[] addAll(float[] src, float[]... dst) {

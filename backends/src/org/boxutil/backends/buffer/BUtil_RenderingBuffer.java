@@ -76,8 +76,13 @@ public final class BUtil_RenderingBuffer {
                 int att = GLWrapper.FBO.GL_COLOR_ATTACHMENT0 + i;
                 GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, this.texID[f][i]);
                 GLWrapper.Texture.glTexStorage2D(GLWrapper.Texture.GL_TEXTURE_2D, 1, internalFormat[f][i], width, height);
-                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
-                GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+                if (f == 0 && i == 6) {
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_NEAREST);
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_NEAREST);
+                } else {
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MIN_FILTER, GLWrapper.Texture.GL_LINEAR);
+                    GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_MAG_FILTER, GLWrapper.Texture.GL_LINEAR);
+                }
                 if (f == 1 && i == 0) {
                     GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_S, GLWrapper.Texture.GL_CLAMP_TO_BORDER);
                     GLWrapper.Texture.glTexParameteri(GLWrapper.Texture.GL_TEXTURE_2D, GLWrapper.Texture.GL_TEXTURE_WRAP_T, GLWrapper.Texture.GL_CLAMP_TO_BORDER);

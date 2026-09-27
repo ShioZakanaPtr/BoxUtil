@@ -117,6 +117,7 @@ public class TrailEntity extends BaseRenderData implements MaterialRenderAPI {
         this.stateB[2] = false;
         this.stateB[3] = true;
         this.stateB[4] = true;
+        if (this.material != null) this.material.reset();
     }
 
     public void resetNodes() {

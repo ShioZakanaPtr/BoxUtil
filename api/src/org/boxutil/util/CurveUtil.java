@@ -342,12 +342,12 @@ public final class CurveUtil {
         if (result == null || result.two.length < 3) result = new Pair<>(new NodeData(), new float[3]);
         if (result.one == null) result.one = new NodeData();
         Vector2f endPoint = new Vector2f();
-        float halfAngle = angle * 0.5f;
-        result.two[2] = (float) Math.cos(Math.toRadians(halfAngle));
-        halfAngle = TrigUtil.sinFormCosF(result.two[2], halfAngle);
-        result.two[2] = (4.0f * (1.0f - result.two[2])) / (3.0f * halfAngle) * radius;
-        result.two[0] = endPoint.x = (float) Math.cos(Math.toRadians(angle));
-        result.two[1] = endPoint.y = TrigUtil.sinFormCosF(endPoint.x, angle);
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(angle * 0.5f * 0.017453292519943295f, ptr);
+        TrigUtil.approxCosSinF(angle * 0.017453292519943295f, result.two);
+        result.two[2] = (4.0f * (1.0f - ptr[0])) / (3.0f * ptr[1]) * radius;
+        endPoint.x = result.two[0];
+        endPoint.y = result.two[1];
         endPoint.scale(radius);
         result.one.setLocation(endPoint);
         result.one.setTangentLeft(result.two[2] * result.two[1], -result.two[2] * result.two[0]);

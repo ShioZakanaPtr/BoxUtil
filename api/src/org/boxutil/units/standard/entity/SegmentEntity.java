@@ -160,6 +160,7 @@ public class SegmentEntity extends BaseRenderData implements MaterialRenderAPI {
         this.state[5] = 1.0f;
         this.state[6] = 0.0f;
         this.stateB[0] = false;
+        if (this.material != null) this.material.reset();
     }
 
     public void resetNodes() {

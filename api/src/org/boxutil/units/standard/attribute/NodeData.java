@@ -71,12 +71,12 @@ public class NodeData {
      * @param angle [0.0f, 360.0f]
      */
     public NodeData(float locationX, float locationY, float angle, float lengthLeft, float lengthRight) {
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(angle * 0.017453292519943295f, ptr);
         this.state[0] = locationX;
         this.state[1] = locationY;
-        final float x = (float) Math.cos(Math.toRadians(angle));
-        final float y = TrigUtil.sinFormCosF(x, angle);
-        this.state[4] = x;
-        this.state[5] = y;
+        this.state[4] = ptr[0];
+        this.state[5] = ptr[1];
         this.state[2] = -this.state[4] * lengthLeft;
         this.state[3] = -this.state[5] * lengthLeft;
         this.state[4] *= lengthRight;

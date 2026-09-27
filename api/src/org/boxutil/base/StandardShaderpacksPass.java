@@ -55,7 +55,6 @@ public final class StandardShaderpacksPass {
             program.putBindingImageTextureWriteOnly(0, preFiltering, GLWrapper.Texture.GL_RGBA8);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
             GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
         } else {
             for (byte i = 1; i < level; ++i) {
                 itemDimX = (int) Math.ceil(size[i][0] * divA);
@@ -66,10 +65,10 @@ public final class StandardShaderpacksPass {
                 GLWrapper.Shader.glUniform4f(program.location[2], 1.0f / size[lod][0], 1.0f / size[lod][1], lod, 1.0f / (step * 0.1111111f * TrigUtil.PI_F));
                 GLWrapper.Texture.glBindImageTexture(0, preFiltering, i, false, 0, GLWrapper.Texture.GL_WRITE_ONLY, GLWrapper.Texture.GL_RGBA8);
                 GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-                GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+                GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
                 GLWrapper.Shader.glUniform1i(program.location[1], 1);
                 GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-                GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+                GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
                 if (i == 1) program.bindTexture2D(0, preFiltering);
                 ++step;
             }
@@ -86,7 +85,7 @@ public final class StandardShaderpacksPass {
                 program.subroutineLocation[0][useDepthBasedAA ? 1 : 0],
                 program.subroutineLocation[0][BoxConfigs.isAAShowEdge() ? 3 : 2]
         };
-        BUtil_GLImpl.glScreenBlit();
+        BUtil_GLImpl.glCopyScreenToFBOTex();
         ShaderCore.getDefaultQuadObject().glBind();
         program.active();
         program.putUniformSubroutines(GLWrapper.Shader.Frag.GL_FRAGMENT_SHADER, 0, subroutines);
@@ -113,8 +112,8 @@ public final class StandardShaderpacksPass {
         if (withHighlightAdd) {
             GLWrapper.Shader.glUniform1i(bloomProgram.location[2], 1);
             bloomProgram.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 0);
-            bloomProgram.bindTexture2D(0, emissiveMap);
             bloomProgram.bindTexture2D(1, highlightMap);
+            bloomProgram.bindTexture2D(0, emissiveMap);
             bloomProgram.putBindingImageTextureWriteOnly(1, emissiveMap, GLWrapper.Texture.GL_RGB8);
             widthCurr = renderingBuffer.getScaleSize(0)[0];
             heightCurr = renderingBuffer.getScaleSize(0)[1];
@@ -122,7 +121,7 @@ public final class StandardShaderpacksPass {
             itemDimY = (int) Math.ceil(heightCurr * divB);
             GLWrapper.Shader.glUniform2i(bloomProgram.location[0], widthCurr, heightCurr);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         }
 
         // down
@@ -141,10 +140,10 @@ public final class StandardShaderpacksPass {
             itemDimY = (int) Math.ceil(heightNext * divB);
             GLWrapper.Shader.glUniform2i(bloomProgram.location[0], widthNext, heightNext);
             GLWrapper.Shader.glUniform4f(bloomProgram.location[1], 1.0f / (widthCurr - 1), 1.0f / (heightCurr - 1), 1.0f / (widthNext - 1), 1.0f / (heightNext - 1));
-            bloomProgram.bindTexture2D(0, i == 0 ? emissiveMap : renderingBuffer.getBloomPingPongTex(i));
+            bloomProgram.bindTexture2D(i == 0 ? emissiveMap : renderingBuffer.getBloomPingPongTex(i));
             bloomProgram.putBindingImageTextureWriteOnly(0, renderingBuffer.getBloomPingPongTex(nextI), GLWrapper.Texture.GL_RGB10_A2);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
             if (notAvg) {
                 notAvg = false;
                 bloomProgram.putUniformSubroutine(GLWrapper.Shader.Comp.GL_COMPUTE_SHADER, 0, 2);
@@ -169,7 +168,7 @@ public final class StandardShaderpacksPass {
             GLWrapper.Shader.glUniform4f(bloomProgram.location[1], 1.0f / (widthCurr - 1), 1.0f / (heightCurr - 1), 1.0f / (widthNext - 1), 1.0f / (heightNext - 1));
             bloomProgram.putBindingImageTextureWriteOnly(0, resultTex, GLWrapper.Texture.GL_RGB10_A2);
             GLWrapper.Shader.Comp.glDispatchCompute(itemDimX, itemDimY, 1);
-            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            GLWrapper.Operation.Sync.glMemoryBarrier(GLWrapper.Operation.Sync.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GLWrapper.Operation.Sync.GL_TEXTURE_FETCH_BARRIER_BIT);
         }
 
         ShaderCore.getDefaultQuadObject().glBind();

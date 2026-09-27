@@ -7,6 +7,7 @@ import org.boxutil.base.api.RenderDataAPI;
 import org.boxutil.define.InstanceType;
 import org.boxutil.units.standard.attribute.Instance2Data;
 import org.boxutil.units.standard.attribute.Instance3Data;
+import org.boxutil.util.CalculateUtil;
 import org.boxutil.util.TrigUtil;
 import org.boxutil.util.concurrent.ReentrantSpinLock;
 import de.unkrig.commons.nullanalysis.NotNull;
@@ -113,10 +114,11 @@ public class SimpleParticleControlData extends BaseControlData {
             this._sync_lock.unlock();
             return null;
         }
-        float c = (float) Math.cos(velAngRad), s = TrigUtil.sinFormCosRadiansF(c, velAngRad);
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(velAngRad, ptr);
         Instance2Data data = (Instance2Data) this.toAddAfter( Math.max(in + full + out, 0.0f) + 0.1f);
-        data.setLocation(c * spawnStartRadius, s * spawnStartRadius);
-        data.setVelocity(c * velocity, s * velocity);
+        data.setLocation(ptr[0] * spawnStartRadius, ptr[1] * spawnStartRadius);
+        data.setVelocity(ptr[0] * velocity, ptr[1] * velocity);
         data.setScale(scale, scale);
         data.setColor(basecolor);
         data.setEmissiveColor(emissive);
@@ -126,7 +128,7 @@ public class SimpleParticleControlData extends BaseControlData {
     }
 
     public Instance2Data addParticle(float spawnStartRadius, float velocity, float scale, Color basecolor, Color emissive, float in, float full, float out) {
-        return this.addParticle(spawnStartRadius, ThreadLocalRandom.current().nextFloat(TrigUtil.PI2_F), velocity, scale, basecolor, emissive, in, full, out);
+        return this.addParticle(spawnStartRadius, CalculateUtil.random(TrigUtil.PI2_F), velocity, scale, basecolor, emissive, in, full, out);
     }
 
     public Instance2Data addParticle(float spawnStartRadius, float velocity, float scale, float in, float full, float out) {

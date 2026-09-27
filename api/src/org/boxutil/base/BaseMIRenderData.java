@@ -12,6 +12,11 @@ public abstract class BaseMIRenderData extends BaseInstanceRenderData implements
         return 4;
     }
 
+    protected void _resetExc() {
+        super._resetExc();
+        if (this.material != null) this.material.reset();
+    }
+
     protected void _deleteExc() {
         super._deleteExc();
         this.material = null;

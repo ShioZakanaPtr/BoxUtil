@@ -168,9 +168,9 @@ public final class TransformUtil {
      */
     public static Quaternion rotationFacingOnly(float yaw, @Nullable Quaternion result) {
         if (result == null) result = new Quaternion();
-        float yawHalf = yaw * 0.5f;
-        float w = (float) Math.cos(Math.toRadians(yawHalf));
-        result.set(0.0f, 0.0f, TrigUtil.sinFormCosF(w, yawHalf), w);
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(yaw * 0.5f * 0.017453292519943295f, ptr);
+        result.set(0.0f, 0.0f, ptr[1], ptr[0]);
         return result;
     }
 
@@ -183,9 +183,9 @@ public final class TransformUtil {
 
     public static Quaternion rotationXOnly(float pitch, @Nullable Quaternion result) {
         if (result == null) result = new Quaternion();
-        float pitchHalf = pitch * 0.5f;
-        float w = (float) Math.cos(Math.toRadians(pitchHalf));
-        result.set(TrigUtil.sinFormCosF(w, pitchHalf), 0.0f, 0.0f, w);
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(pitch * 0.5f * 0.017453292519943295f, ptr);
+        result.set(ptr[1], 0.0f, 0.0f, ptr[0]);
         return result;
     }
 
@@ -195,9 +195,9 @@ public final class TransformUtil {
 
     public static Quaternion rotationYOnly(float roll, @Nullable Quaternion result) {
         if (result == null) result = new Quaternion();
-        float rollHalf = roll * 0.5f;
-        float w = (float) Math.cos(Math.toRadians(rollHalf));
-        result.set(0.0f,  TrigUtil.sinFormCosF(w, rollHalf), 0.0f, w);
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(roll * 0.5f * 0.017453292519943295f, ptr);
+        result.set(0.0f, ptr[1], 0.0f, ptr[0]);
         return result;
     }
 
@@ -214,18 +214,19 @@ public final class TransformUtil {
      */
     public static Quaternion rotationZXY(float yaw, float pitch, float roll, @Nullable Quaternion result) {
         if (result == null) result = new Quaternion();
-        final float pitchHalf = pitch * 0.5f,
-                cp = (float) Math.cos((float) Math.toRadians(pitchHalf)),
-                sp = TrigUtil.sinFormCosF(cp, pitchHalf);
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(pitch * 0.5f * 0.017453292519943295f, ptr);
+        final float cp = ptr[0],
+                sp = ptr[1];
 
         float sr, cr;
         if (roll == pitch) {
             cr = cp;
             sr = sp;
         } else {
-            float rollHalf = roll * 0.5f;
-            cr = (float) Math.cos((float) Math.toRadians(rollHalf));
-            sr = TrigUtil.sinFormCosF(cr, rollHalf);
+            TrigUtil.approxCosSinF(roll * 0.5f * 0.017453292519943295f, ptr);
+            cr = ptr[0];
+            sr = ptr[1];
         }
 
         float sy, cy;
@@ -236,9 +237,9 @@ public final class TransformUtil {
             cy = cr;
             sy = sr;
         } else {
-            float yawHalf = yaw * 0.5f;
-            cy = (float) Math.cos((float) Math.toRadians(yawHalf));
-            sy = TrigUtil.sinFormCosF(cy, yawHalf);
+            TrigUtil.approxCosSinF(yaw * 0.5f * 0.017453292519943295f, ptr);
+            cy = ptr[0];
+            sy = ptr[1];
         }
 
         result.set(sp * cr * cy - cp * sr * sy,
@@ -270,8 +271,7 @@ public final class TransformUtil {
 
     public static Vector2f getRadiansRotateBase(float angRad, @Nullable Vector2f result) {
         if (result == null) result = new Vector2f();
-        result.x = (float) Math.cos(angRad);
-        result.y = TrigUtil.sinFormCosRadiansF(result.x, angRad);
+        TrigUtil.approxCosSinF(angRad, result);
         return result;
     }
 
@@ -299,9 +299,7 @@ public final class TransformUtil {
 
     public static Matrix2f createSimpleRadiansRotateMatrix(float angRad, @Nullable Matrix2f result) {
         if (result == null) result = new Matrix2f();
-        result.m00 = result.m11 = (float) Math.cos(angRad);
-        result.m01 = TrigUtil.sinFormCosRadiansF(result.m00, angRad);
-        result.m10 = -result.m01;
+        TrigUtil.approxCosSinF(angRad, result);
         return result;
     }
 
@@ -505,12 +503,11 @@ public final class TransformUtil {
     public static Matrix4f createModelMatrixVanilla(final Vector3f location, float facing, final Vector3f scale, @Nullable Matrix4f result) {
         if (result == null) result = new Matrix4f();
 
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.m00 = scale.x - q22 * scale.x;
         result.m01 = q23 * scale.x;
@@ -529,12 +526,11 @@ public final class TransformUtil {
      * @param result the writable size must be 16 at least, and recommended to create it from an <b><i>identity matrix</i></b>.
      */
     public static FloatBuffer createModelMatrixVanilla(final Vector3f location, float facing, final Vector3f scale, final int writePosition, @NotNull final FloatBuffer result) {
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.put(writePosition, scale.x - q22 * scale.x);
         result.put(writePosition + 1, q23 * scale.x);
@@ -686,12 +682,11 @@ public final class TransformUtil {
     public static Matrix4f createModelMatrixVanilla(final Vector2f location, float facing, final Vector2f scale, @Nullable Matrix4f result) {
         if (result == null) result = new Matrix4f();
 
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.m00 = scale.x - q22 * scale.x;
         result.m01 = q23 * scale.x;
@@ -708,12 +703,11 @@ public final class TransformUtil {
      * @param result the writable size must be 16 at least, and recommended to create it from an <b><i>identity matrix</i></b>.
      */
     public static FloatBuffer createModelMatrixVanilla(final Vector2f location, float facing, final Vector2f scale, final int writePosition, @NotNull final FloatBuffer result) {
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.put(writePosition, scale.x - q22 * scale.x);
         result.put(writePosition + 1, q23 * scale.x);
@@ -730,12 +724,11 @@ public final class TransformUtil {
     public static Matrix4f createModelMatrixVanilla(final Vector2f location, float facing, @Nullable Matrix4f result) {
         if (result == null) result = new Matrix4f();
 
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.m00 = 1.0f - q22;
         result.m01 = q23;
@@ -753,12 +746,11 @@ public final class TransformUtil {
      * @param result the writable size must be 16 at least, and recommended to create it from an <b><i>identity matrix</i></b>.
      */
     public static FloatBuffer createModelMatrixVanilla(final Vector2f location, float facing, final int writePosition, @NotNull final FloatBuffer result) {
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.put(writePosition, 1.0f - q22);
         result.put(writePosition + 1, q23);
@@ -772,12 +764,11 @@ public final class TransformUtil {
     public static Matrix4f createModelMatrixVanilla(float facing, final Vector2f scale, @Nullable Matrix4f result) {
         if (result == null) result = new Matrix4f();
 
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.m00 = scale.x - q22 * scale.x;
         result.m01 = q23 * scale.x;
@@ -792,12 +783,11 @@ public final class TransformUtil {
      * @param result the writable size must be 16 at least, and recommended to create it from an <b><i>identity matrix</i></b>.
      */
     public static FloatBuffer createModelMatrixVanilla(float facing, final Vector2f scale, final int writePosition, @NotNull final FloatBuffer result) {
-        final float angle = facing * 0.5f,
-                w = (float) Math.cos(Math.toRadians(angle)),
-                z = TrigUtil.sinFormCosF(w, angle),
-                dqz = z + z,
-                q22 = dqz * z,
-                q23 = dqz * w;
+        final float[] ptr = new float[2];
+        TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+        final float dqz = ptr[1] + ptr[1],
+                q22 = dqz * ptr[1],
+                q23 = dqz * ptr[0];
 
         result.put(writePosition, scale.x - q22 * scale.x);
         result.put(writePosition + 1, q23 * scale.x);
@@ -844,12 +834,11 @@ public final class TransformUtil {
         }
 
         if (!notRotate) {
-            final float angle = facing * 0.5f,
-                    w = (float) Math.cos(Math.toRadians(angle)),
-                    z = TrigUtil.sinFormCosF(w, angle),
-                    dqz = z + z,
-                    q22 = dqz * z,
-                    q23 = dqz * w;
+            final float[] ptr = new float[2];
+            TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+            final float dqz = ptr[1] + ptr[1],
+                    q22 = dqz * ptr[1],
+                    q23 = dqz * ptr[0];
 
             if (notScale) {
                 result.m00 = 1.0f;
@@ -905,12 +894,11 @@ public final class TransformUtil {
         }
 
         if (withRotate) {
-            final float angle = facing * 0.5f,
-                    w = (float) Math.cos(Math.toRadians(angle)),
-                    z = TrigUtil.sinFormCosF(w, angle),
-                    dqz = z + z,
-                    q22 = dqz * z,
-                    q23 = dqz * w;
+            final float[] ptr = new float[2];
+            TrigUtil.approxCosSinF(facing * 0.5f * 0.017453292519943295f, ptr);
+            final float dqz = ptr[1] + ptr[1],
+                    q22 = dqz * ptr[1],
+                    q23 = dqz * ptr[0];
 
             result.put(writePosition + 1, q23 * m00);
             result.put(writePosition + 3, -q23 * m11);
@@ -938,19 +926,19 @@ public final class TransformUtil {
 
     @Deprecated
     public static float[] createModelMatrix(float[] state) {
-        float[] matrix = new float[16];
-        final float pitchHalf = state[3] * 0.5f,
-                cp = (float) Math.cos(Math.toRadians(pitchHalf)),
-                sp = TrigUtil.sinFormCosF(cp, pitchHalf);
+        final float[] matrix = new float[16], ptr = new float[2];
+        TrigUtil.approxCosSinF(state[3] * 0.5f * 0.017453292519943295f, ptr);
+        final float cp = ptr[0],
+                sp = ptr[1];
 
         float sr, cr;
         if (state[4] == state[3]) {
             cr = cp;
             sr = sp;
         } else {
-            float rollHalf = state[4] * 0.5f;
-            cr = (float) Math.cos(Math.toRadians(rollHalf));
-            sr = TrigUtil.sinFormCosF(cr, rollHalf);
+            TrigUtil.approxCosSinF(state[4] * 0.5f * 0.017453292519943295f, ptr);
+            cr = ptr[0];
+            sr = ptr[1];
         }
 
         float sy, cy;
@@ -961,9 +949,9 @@ public final class TransformUtil {
             cy = cr;
             sy = sr;
         } else {
-            float yawHalf = state[5] * 0.5f;
-            cy = (float) Math.cos(Math.toRadians(yawHalf));
-            sy = TrigUtil.sinFormCosF(cy, yawHalf);
+            TrigUtil.approxCosSinF(state[5] * 0.5f * 0.017453292519943295f, ptr);
+            cy = ptr[0];
+            sy = ptr[1];
         }
 
         final float w = cp * cr * cy - sp * sr * sy,
@@ -1181,10 +1169,8 @@ public final class TransformUtil {
         if (fovAngle == 0.0f) throw new IllegalArgumentException("If you really want to use '0.0f' for fov angle, just make an <b><i>identity matrix</i></b>.");
         if (result == null) result = new Matrix4f();
         final float width = viewport.getVisibleWidth(), height = viewport.getVisibleHeight(),
-                rad = (float) Math.toRadians(fovAngle * 0.5f),
-                sin = (float) Math.sin(rad),
-                cos = TrigUtil.cosFormSinRadiansF(sin, rad),
-                tanInv = cos / sin;
+                rad = fovAngle * 0.5f * 0.017453292519943295f,
+                tanInv = (float) (1.0d / Math.tan(rad));
 
         result.m00 = height / width * tanInv; // x
 

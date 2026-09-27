@@ -158,7 +158,7 @@ public final class CampaignRenderingManager {
     /**
      * Will auto cleanup after back to title.
      */
-    public static ConcurrentMap<String, Object> getCustomData() {
+    public static @NotNull ConcurrentMap<String, Object> getCustomData() {
         return BUtil_ResourceStorage.campaignLayered().getCustomData();
     }
 

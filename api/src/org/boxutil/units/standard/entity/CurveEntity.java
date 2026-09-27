@@ -136,6 +136,7 @@ public class CurveEntity extends BaseMIRenderData {
         this.state[6] = 0.0f;
         this.stateB[0] = false;
         this.stateB[1] = false;
+        if (this.material != null) this.material.reset();
     }
 
     /**

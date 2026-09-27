@@ -62,7 +62,7 @@ public final class BUtil_CampaignRenderingPlugin extends BaseCustomEntityPlugin 
         final int staticTrailLayerLoc = BUtil_StaticTrailMemoryPool.toLayerLoc(layer);
         final var meshMap =  BUtil_ResourceStorage.campaignLayered().getEntity(layer);
         final var pluginSet = BUtil_ResourceStorage.campaignLayered().getLayerPlugin(layer);
-        if (BUtil_SharedRenderingPass.checkSkipOrRemove(shaderEnable, this._highestLayer, this._lowestLayer, meshMap, pluginSet, staticTrailLayerLoc, this::onRemoveLayer)) return;
+        if (BUtil_SharedRenderingPass.checkSkipOrRemove(this._highestLayer, this._lowestLayer, meshMap, pluginSet, staticTrailLayerLoc, this::onRemoveLayer)) return;
 
         BUtil_SharedRenderingPass.drawEachLayer(shaderEnable, this._highestLayer, _layerBits, layer, staticTrailLayerLoc, notMultiPass, viewport, meshMap, pluginSet);
     }

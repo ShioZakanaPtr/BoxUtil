@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
  *
  *
  *
- * // When running
+ * // when running
  * // set uniform
  * GL20.glUniform1i(program.uniform("u_u00"), 2); // put 2 to "u_u00" that use GL13.GL_TEXTURE2, if "u_u00" is a 'sampler2D' type uniform
  * //GL20.glUniform1i(program.location[0], 2); // or use index
