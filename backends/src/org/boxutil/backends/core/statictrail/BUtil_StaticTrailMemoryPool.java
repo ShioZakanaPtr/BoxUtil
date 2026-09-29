@@ -407,32 +407,39 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
             int computeNode;
             BUtil_StaticTrailMemory trailMemory;
 
-            final boolean notPersistentMapping = pool.isNotPersistentMapping();
-            final IntBuffer writeBuffer = notPersistentMapping ? null : pool.getMappingBuffer().asIntBuffer(); // notnull
             final List<BUtil_StaticTrailMemory> toFreeList = new ArrayList<>(totalTrail);
             final var drawPiL = pool.drawPi;
+            final var l_gpuLock = pool.getGPULock();
+            l_gpuLock.lock();
+            try {
+                final boolean notPersistentMapping = pool.isNotPersistentMapping();
+                final IntBuffer writeBuffer = notPersistentMapping ? null : pool.getMappingBuffer().asIntBuffer(); // notnull
 
-            int idx;
-            if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, pool.getBufferID());
-            while ((idx = computeIdx.getAndIncrement()) < totalTrail) {
-                trailMemory = trailMemList.get(idx);
-                if (trailMemory.is_free()) continue;
-                layerLoc = trailMemory.meta().layerLoc();
-                if (bypassTrail(layerLoc, inCampaign)) continue;
+                int idx;
+                if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, pool.getBufferID());
+                while ((idx = computeIdx.getAndIncrement()) < totalTrail) {
+                    trailMemory = trailMemList.get(idx);
+                    if (trailMemory.is_free()) continue;
+                    layerLoc = trailMemory.meta().layerLoc();
+                    if (bypassTrail(layerLoc, inCampaign)) continue;
 
-                computeNode = trailMemory.computeData(pool, writeBuffer, notPersistentMapping, amount, elapsedTime);
-                if (computeNode < 1) {
-                    if (computeNode < 0) toFreeList.add(trailMemory);
-                    continue;
+                    computeNode = trailMemory.computeData(pool, writeBuffer, notPersistentMapping, amount, elapsedTime);
+                    if (computeNode < 1) {
+                        if (computeNode < 0) toFreeList.add(trailMemory);
+                        continue;
+                    }
+
+                    trailMemory.setCurrPiFirstBufPos(drawPiL[layerLoc].putDrawPi(pool, trailMemory.getPiFirstAddress(), computeNode + 2)); // 2 => ends fill node
                 }
-
-                trailMemory.setCurrPiFirstBufPos(drawPiL[layerLoc].putDrawPi(pool, trailMemory.getPiFirstAddress(), computeNode + 2)); // 2 => ends fill node
+                if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
+            } finally {
+                l_gpuLock.unlock();
             }
-            if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);
             barrier.barrier();
 
             DrawPi drawPiVar;
             final byte totalLayers = inCampaign ? MAX_LAYERS : MAX_COMBAT_LAYERS;
+            int idx;
             while ((idx = vertexBufIdx.getAndIncrement()) < totalLayers) {
                 if ((drawPiVar = drawPiL[idx]) != null) drawPiVar.finishVertexPtr();
             }
@@ -524,14 +531,20 @@ public final class BUtil_StaticTrailMemoryPool extends GPUMemoryPool<BUtil_Stati
             pool = entry.getKey();
             trailList = entry.getValue();
 
-            final boolean notPersistentMapping = pool.isNotPersistentMapping();
-            final IntBuffer writeBuffer = notPersistentMapping ? null : pool.getMappingBuffer().asIntBuffer(); // notnull
-            shouldUnbind |= notPersistentMapping;
+            final var l_gpuLock = pool.getGPULock();
+            l_gpuLock.lock();
+            try {
+                final boolean notPersistentMapping = pool.isNotPersistentMapping();
+                final IntBuffer writeBuffer = notPersistentMapping ? null : pool.getMappingBuffer().asIntBuffer(); // notnull
+                shouldUnbind |= notPersistentMapping;
 
-            if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, pool.getBufferID());
-            for (BUtil_StaticTrailMemory trailMemory : trailList) {
-                if (trailMemory.is_free()) continue;
-                trailMemory.cutTrail(pool, writeBuffer, notPersistentMapping);
+                if (notPersistentMapping) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, pool.getBufferID());
+                for (BUtil_StaticTrailMemory trailMemory : trailList) {
+                    if (trailMemory.is_free()) continue;
+                    trailMemory.cutTrail(pool, writeBuffer, notPersistentMapping);
+                }
+            } finally {
+                l_gpuLock.unlock();
             }
         }
         if (shouldUnbind) GLWrapper.Buffer.glBindBuffer(GLWrapper.Buffer.VBO.GL_ARRAY_BUFFER, 0);

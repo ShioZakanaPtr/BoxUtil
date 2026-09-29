@@ -190,6 +190,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             if (poolBehavior.glPoolDestroy != null) poolBehavior.glPoolDestroy.accept(this);
             this.init = false;
             this.invalid = true;
+            GLWrapper.Operation.Sync.glFinish();
         } finally {
             in_poolLock.unlock();
             in_clientLock.unlock();
@@ -336,6 +337,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             if (poolBehavior.glRebindBuffer != null) poolBehavior.glRebindBuffer.accept(this);
 
             this._eraseMemory(meta);
+            GLWrapper.Operation.Sync.glFinish();
             this.lastCompactTime = System.nanoTime();
         } finally {
             in_poolLock.unlock();
@@ -389,6 +391,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
                 GLWrapper.Buffer.glBufferSubData(poolBehavior.glTarget, realDstAddress, legacyCopyBuf);
                 GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
             }
+            GLWrapper.Operation.Sync.glFinish();
         } finally {
             in_poolLock.unlock();
         }
@@ -456,6 +459,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             this.glID = newBuffer;
 
             if (poolBehavior.glRebindBuffer != null) poolBehavior.glRebindBuffer.accept(this);
+            GLWrapper.Operation.Sync.glFinish();
         } finally {
             in_poolLock.unlock();
         }
@@ -782,6 +786,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
                         GLWrapper.Buffer.glBufferSubData(poolBehavior.glTarget, realWriteAddress, legacyCopyBuf);
                     }
                     GLWrapper.Buffer.glBindBuffer(poolBehavior.glTarget, 0);
+                    GLWrapper.Operation.Sync.glFinish();
                 } finally {
                     in_poolLock.unlock();
                 }
@@ -977,6 +982,7 @@ public class GPUMemoryPool<T extends GPUMemoryPool.InternalMemory<D>, D> {
             this.glID = newBuffer;
 
             if (poolBehavior.glRebindBuffer != null) poolBehavior.glRebindBuffer.accept(this);
+            GLWrapper.Operation.Sync.glFinish();
 
             final long ts = System.nanoTime();
             compactTime = ts - this.lastCompactTime;

@@ -10,6 +10,7 @@ import org.lwjgl.util.vector.*;
 import java.awt.*;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.random.RandomGenerator;
 
 @SuppressWarnings("UnusedReturnValue")
 public final class CalculateUtil {
@@ -366,7 +367,7 @@ public final class CalculateUtil {
     /**
      * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static int random(int a, int b, final ThreadLocalRandom rnd) {
+    public static int random(int a, int b, final RandomGenerator rnd) {
         if (a == b) return a;
         final int realMin = Math.min(a, b);
         return realMin + (Math.abs(rnd.nextInt()) % (Math.max(a, b) - realMin));
@@ -375,7 +376,7 @@ public final class CalculateUtil {
     /**
      * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static int random(int a, final ThreadLocalRandom rnd) {
+    public static int random(int a, final RandomGenerator rnd) {
         if (a == 0) return a;
         final int result = Math.abs(rnd.nextInt()) % a;
         return a < 0 ? -result : result;
@@ -384,104 +385,104 @@ public final class CalculateUtil {
     /**
      * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static long random(long a, long b, final ThreadLocalRandom rnd) {
+    public static long random(long a, long b, final RandomGenerator rnd) {
         if (a == b) return a;
         final long realMin = Math.min(a, b);
         return realMin + (Math.abs(rnd.nextLong()) % (Math.max(a, b) - realMin));
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static long random(long a, final ThreadLocalRandom rnd) {
+    public static long random(long a, final RandomGenerator rnd) {
         if (a == 0) return a;
-        final long result = rnd.nextLong() % a;
+        final long result = Math.abs(rnd.nextLong()) % a;
         return a < 0 ? -result : result;
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static float random(float a, float b, final ThreadLocalRandom rnd) {
+    public static float random(float a, float b, final RandomGenerator rnd) {
         if (a == b) return a;
         return mix(a, b, rnd.nextFloat());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static float random(float a, final ThreadLocalRandom rnd) {
+    public static float random(float a, final RandomGenerator rnd) {
         if (a == 0.0f) return a;
         return rnd.nextFloat() * a;
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static double random(double a, double b, final ThreadLocalRandom rnd) {
+    public static double random(double a, double b, final RandomGenerator rnd) {
         if (a == b) return a;
         return mix(a, b, rnd.nextDouble());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
      */
-    public static double random(double a, final ThreadLocalRandom rnd) {
+    public static double random(double a, final RandomGenerator rnd) {
         if (a == 0.0d) return a;
         return rnd.nextDouble() * a;
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static int random(int a, int b) {
         return random(a, b, ThreadLocalRandom.current());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static int random(int a) {
         return random(a, ThreadLocalRandom.current());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static long random(long a, long b) {
         return random(a, b, ThreadLocalRandom.current());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static long random(long a) {
         return random(a, ThreadLocalRandom.current());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static float random(float a, float b) {
         return random(a, b, ThreadLocalRandom.current());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static float random(float a) {
         return random(a, ThreadLocalRandom.current());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static double random(double a, double b) {
         return random(a, b, ThreadLocalRandom.current());
     }
 
     /**
-     * Faster multithreaded range random number generation for graphics usage, allowing the lower and upper bounds to be reversed.
+     * Faster multithreaded range random number generation for graphics usage via {@link ThreadLocalRandom}, allowing the lower and upper bounds to be reversed.
      */
     public static double random(double a) {
         return random(a, ThreadLocalRandom.current());
