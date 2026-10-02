@@ -7,7 +7,11 @@ v1.6.4 / 2026.09.32
     三角函数相关计算性能改进
     为每帧帧缓冲操作增加barrier，并略微减少绑定帧缓冲的固定开销
     修复 ShaderUtil 纹理相关生成或处理算法在部分Mesa平台上的问题
+    GPUMemoryPool 部分操作现在会使用 glFinish 强制确保后续操作安全
     现在渲染类在 hasDelete 返回 true 时，会从渲染专用列表中移除
+
+    于 org.boxutil.base.api.container 新增以原始类型为 key 或 key 与 value 皆为原始类型的相关哈希容器接口
+    于 org.boxutil.util.container 新增 IntRHSet / Int2ObjRHMap / Int2IntRHMap 原始类型哈希容器
 
     RenderDataAPI 现在reset调用后会对以往一些不受任何reset的设置起效，其他Entity类或功能接口同等
 
@@ -39,15 +43,15 @@ v1.6.4 / 2026.09.32
     CalculateUtil 新增方法：
         long mix(long, long, double);
         long[] mix(long[], long[], double);
-        int random(int, int, ThreadLocalRandom);
-        int random(int, ThreadLocalRandom);
-        long random(long, long, ThreadLocalRandom);
-        long random(long, ThreadLocalRandom);
-        float random(float, float, ThreadLocalRandom);
-        float random(float, ThreadLocalRandom);
-        double random(double, double, ThreadLocalRandom);
-        double random(double, ThreadLocalRandom);
-        int random(int, int, ThreadLocalRandom);
+        int random(int, int, RandomGenerator);
+        int random(int, RandomGenerator);
+        long random(long, long, RandomGenerator);
+        long random(long, RandomGenerator);
+        float random(float, float, RandomGenerator);
+        float random(float, RandomGenerator);
+        double random(double, double, RandomGenerator);
+        double random(double, RandomGenerator);
+        int random(int, int);
         int random(int);
         long random(long, long);
         long random(long);

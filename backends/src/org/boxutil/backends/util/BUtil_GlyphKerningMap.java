@@ -1,5 +1,6 @@
 package org.boxutil.backends.util;
 
+import org.boxutil.base.api.container.ContainerBehavior;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.util.CalculateUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class BUtil_GlyphKerningMap {
             this.key[0] = this.key[1] = -1;
             if (totalKerning != 0)  {
                 final var entry = src.entrySet().iterator().next();
-                final int pos = hashing_JDK_HashMap(entry.getKey()) & this.posMask;
+                final int pos = ContainerBehavior.hashing_HashMap(entry.getKey()) & this.posMask;
                 this.state[pos] = 0;
                 this.key[pos] = entry.getKey();
                 this.val[pos] = entry.getValue();
@@ -57,7 +58,7 @@ public class BUtil_GlyphKerningMap {
         final byte[] valL = this.val;
         final int[] keyL = this.key;
         int pos, currKey;
-        if ((currKey = keyL[pos = hashing_JDK_HashMap(key) & this.posMask]) == -1) {
+        if ((currKey = keyL[pos = ContainerBehavior.hashing_HashMap(key) & this.posMask]) == -1) {
             state[pos] = 0;
             keyL[pos] = key;
             valL[pos] = value;
@@ -85,7 +86,7 @@ public class BUtil_GlyphKerningMap {
             }
         } while ((currKey = keyL[pos = (pos + 1) & this.posMask]) != -1);
 
-        state[pos] = (byte) (currPsl - 1); // 126 max
+        state[pos] = currPsl; // 126 max
         valL[pos] = value;
         keyL[pos] = key;
     }
@@ -93,17 +94,15 @@ public class BUtil_GlyphKerningMap {
     public byte get(char first, char second) {
         final int key = fetchKey(first, second);
 
+        int pos = ContainerBehavior.hashing_HashMap(key), currKey;
         final int[] keyL = this.key;
-        int pos, currKey;
-        if ((currKey = keyL[pos = hashing_JDK_HashMap(key) & this.posMask]) == -1) return 0;
-        if (key == currKey) return this.val[pos];
-
         final byte[] state = this.state;
         byte currPsl = 0;
         while (true) {
-            if ((currKey = keyL[pos = (pos + 1) & this.posMask]) == -1) return 0;
+            if ((currKey = keyL[pos &= this.posMask]) == 0) return 0;
             if (key == currKey) return this.val[pos];
             if (++currPsl < -1 || state[pos] < currPsl) return 0;
+            pos++;
         }
     }
 
@@ -117,9 +116,5 @@ public class BUtil_GlyphKerningMap {
 
     public static int fetchKey(char first, char second) {
         return (first & 0xffff) << 16 | (second & 0xffff);
-    }
-
-    public static int hashing_JDK_HashMap(int key) {
-        return key ^ (key >>> 16);
     }
 }
