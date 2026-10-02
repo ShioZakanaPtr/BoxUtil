@@ -1,5 +1,6 @@
 package org.boxutil.base.api.container.objectt;
 
+import org.boxutil.base.api.container.ContainerBehavior;
 import org.boxutil.base.api.container.HashContainer;
 import org.boxutil.base.api.container.intt.IntHashSet;
 import org.boxutil.util.function.IntXBiConsumer;
@@ -68,9 +69,10 @@ public interface Obj2ObjHashMap<K, V> extends Map<K, V>, HashContainer<K> {
      * V currValue = get(key);
      * K newKey = remappingFunction.apply(key, currValue);
      *
-     * if (newKey == null || key != newKey)
+     * ContainerBehavior<K> behavior = this.getBehavior();
+     * if (newKey == null || !behavior.equals(key, newKey))
      *     remove(key);
-     * if (newKey != null && key != newKey) {
+     * if (newKey != null && !behavior.equals(key, newKey)) {
      *     if (containsKey(newKey)) {
      *         V oldValue = get(newKey);
      *         V newValue = (oldValue == null || oldValue == def) ? currValue
@@ -80,7 +82,7 @@ public interface Obj2ObjHashMap<K, V> extends Map<K, V>, HashContainer<K> {
      *         else
      *             return def;
      *     }
-     *     put(newKey.intValue(), currValue);
+     *     put(newKey, currValue);
      * }
      * return currValue;
      * }</pre>
@@ -120,8 +122,9 @@ public interface Obj2ObjHashMap<K, V> extends Map<K, V>, HashContainer<K> {
         V currValue = this.get(key);
         K newKey = remappingFunction.apply(key, currValue);
 
-        if (newKey == null || key != newKey) this.remove(key);
-        if (newKey != null && key != newKey) {
+        ContainerBehavior<K> behavior = this.getBehavior();
+        if (newKey == null || !behavior.equals(key, newKey)) this.remove(key);
+        if (newKey != null && !behavior.equals(key, newKey)) {
             if (this.containsKey(newKey)) {
                 V oldValue = this.get(newKey),
                         newValue = (oldValue == null || oldValue == def) ? currValue : mergeFunction.apply(oldValue, currValue);
