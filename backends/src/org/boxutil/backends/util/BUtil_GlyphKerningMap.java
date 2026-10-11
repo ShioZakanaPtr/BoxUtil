@@ -1,6 +1,6 @@
 package org.boxutil.backends.util;
 
-import org.boxutil.base.api.container.ContainerBehavior;
+import org.boxutil.base.api.container.HashBehavior;
 import org.boxutil.define.BoxEnum;
 import org.boxutil.util.CalculateUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class BUtil_GlyphKerningMap {
             this.key[0] = this.key[1] = -1;
             if (totalKerning != 0)  {
                 final var entry = src.entrySet().iterator().next();
-                final int pos = ContainerBehavior.hashing_HashMap(entry.getKey()) & this.posMask;
+                final int pos = HashBehavior.hashing_HashMap(entry.getKey()) & this.posMask;
                 this.state[pos] = 0;
                 this.key[pos] = entry.getKey();
                 this.val[pos] = entry.getValue();
@@ -54,12 +54,12 @@ public class BUtil_GlyphKerningMap {
     }
 
     private void init_put(int key, byte value) {
-        final byte[] state = this.state;
+        final byte[] stateL = this.state;
         final byte[] valL = this.val;
         final int[] keyL = this.key;
         int pos, currKey;
-        if ((currKey = keyL[pos = ContainerBehavior.hashing_HashMap(key) & this.posMask]) == -1) {
-            state[pos] = 0;
+        if ((currKey = keyL[pos = HashBehavior.hashing_HashMap(key) & this.posMask]) == -1) {
+            stateL[pos] = 0;
             keyL[pos] = key;
             valL[pos] = value;
             return;
@@ -71,10 +71,10 @@ public class BUtil_GlyphKerningMap {
                 valL[pos] = value;
                 return;
             }
-            if (currPsl > (currState = state[pos]) && currState > -1) {
-                final byte tmpState = state[pos], tmpValue = valL[pos];
+            if (currPsl > (currState = stateL[pos]) && currState > -1) {
+                final byte tmpState = stateL[pos], tmpValue = valL[pos];
 
-                state[pos] = currPsl;
+                stateL[pos] = currPsl;
                 currPsl = tmpState;
                 keyL[pos] = key;
                 key = currKey;
@@ -86,7 +86,7 @@ public class BUtil_GlyphKerningMap {
             }
         } while ((currKey = keyL[pos = (pos + 1) & this.posMask]) != -1);
 
-        state[pos] = currPsl; // 126 max
+        stateL[pos] = currPsl;
         valL[pos] = value;
         keyL[pos] = key;
     }
@@ -94,14 +94,14 @@ public class BUtil_GlyphKerningMap {
     public byte get(char first, char second) {
         final int key = fetchKey(first, second);
 
-        int pos = ContainerBehavior.hashing_HashMap(key), currKey;
+        int pos = HashBehavior.hashing_HashMap(key), currKey;
         final int[] keyL = this.key;
-        final byte[] state = this.state;
+        final byte[] stateL = this.state;
         byte currPsl = 0;
         while (true) {
             if ((currKey = keyL[pos &= this.posMask]) == 0) return 0;
             if (key == currKey) return this.val[pos];
-            if (++currPsl < -1 || state[pos] < currPsl) return 0;
+            if (++currPsl < -1 || stateL[pos] < currPsl) return 0;
             pos++;
         }
     }

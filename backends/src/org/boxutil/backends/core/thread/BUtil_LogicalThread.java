@@ -289,9 +289,11 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
 
         if (this.tryArrive(BoxThreadSync.Logical.beginInstanceCompute())) return;
         if (!this.checkExit() && BoxConfigs.isShaderEnable()) this.preComputeInstance();
-        if (!this.checkExit() && BoxConfigs.isTrailSystemEnable()) {
-            this.markAndGenProjectiles();
-            if (!BUtil_GLImpl.isPaused() && BUtil_GLImpl.doStaticTrailCompute()) BUtil_StaticTrailMemoryPool.computeTrailNode(this._isAux);
+        if (BoxConfigs.isTrailSystemEnable()) {
+            if (!this.checkExit()) this.markAndGenProjectiles();
+            if (!this.checkExit() && !BUtil_GLImpl.isPaused() && BUtil_GLImpl.doStaticTrailCompute()) BUtil_StaticTrailMemoryPool.computeTrailNode(this._isAux);
+            // with barrier in trail compute
+            if (!this.checkExit()) BUtil_StaticTrailMemoryPool.deferredAddTracker(this._isAux);
         }
         if (!(this._FAILED || this.checkExit())) {
             if (GLWrapper.Operation.Sync.valid_Barrier()) {
@@ -304,7 +306,6 @@ final class BUtil_LogicalThread extends BUtil_BoxUtilBackgroundThread.ThreadTemp
 
         if (this.tryArrive(BoxThreadSync.Logical.finishAdvance())) return;
         if (!this.checkExit()) this.runThreadPlugin(false);
-        if (!this.checkExit() && BoxConfigs.isTrailSystemEnable()) BUtil_StaticTrailMemoryPool.deferredAddTracker(this._isAux);
     }
 
     protected void logicalInit() {

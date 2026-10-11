@@ -3,6 +3,7 @@ package org.boxutil;
 import com.fs.starfarer.Version;
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
+import org.boxutil.backends.core.BUtil_InitWarmup;
 import org.boxutil.backends.core.gameloop.BUtil_CampaignEFS;
 import org.boxutil.backends.core.BUtil_ResourceStorage;
 import org.boxutil.config.BoxConfigGUI;
@@ -36,6 +37,7 @@ public final class BoxUtilModPlugin extends BaseModPlugin {
         BoxDatabase.initGLState();
         BoxConfigs.init();
         ShaderCore.initScreenSize();
+        BUtil_InitWarmup.warmup();
         ModelManager.loadModelDataCSV(BoxDatabase.BUILTIN_OBJ_CSV);
         EntityShadingDataManager.loadTextureData(BoxDatabase.BUILTIN_TEXTURE_CSV);
         EntityShadingDataManager.loadIlluminantData(BoxDatabase.BUILTIN_ILLUMINANT_CSV);
