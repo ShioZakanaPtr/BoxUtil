@@ -1,20 +1,16 @@
-package org.boxutil.base.api.container.objectt;
+package org.boxutil.base.api.container;
 
-import org.boxutil.base.api.container.ContainerBehavior;
-import org.boxutil.base.api.container.HashContainer;
-import org.boxutil.base.api.container.intt.IntHashSet;
-import org.boxutil.util.function.IntXBiConsumer;
-import org.boxutil.util.function.IntXBiFunction;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.IntFunction;
 
-public interface Obj2ObjHashMap<K, V> extends Map<K, V>, HashContainer<K> {
+/**
+ * For any key or value is {@code null}, it should be treated as {@code 0}
+ * if the key was specific primitive type that the Map implementation defined.
+ * <p>For any value is {@code 0}, it also be treated as {@code null} if the
+ * value was specific primitive type that the Map implementation defined.
+ */
+public interface MapExt<K, V> extends Map<K, V>, Container {
     /**
      * Returns the default return value used when a query does not find a mapping
      * in this container. By default, this value is {@code null}, but implementations
@@ -69,10 +65,9 @@ public interface Obj2ObjHashMap<K, V> extends Map<K, V>, HashContainer<K> {
      * V currValue = get(key);
      * K newKey = remappingFunction.apply(key, currValue);
      *
-     * ContainerBehavior<K> behavior = this.getBehavior();
-     * if (newKey == null || !behavior.equals(key, newKey))
+     * if (newKey == null || !Objects.equals(newKey, key))
      *     remove(key);
-     * if (newKey != null && !behavior.equals(key, newKey)) {
+     * if (newKey != null && !Objects.equals(newKey, key)) {
      *     if (containsKey(newKey)) {
      *         V oldValue = get(newKey);
      *         V newValue = (oldValue == null || oldValue == def) ? currValue
@@ -122,9 +117,8 @@ public interface Obj2ObjHashMap<K, V> extends Map<K, V>, HashContainer<K> {
         V currValue = this.get(key);
         K newKey = remappingFunction.apply(key, currValue);
 
-        ContainerBehavior<K> behavior = this.getBehavior();
-        if (newKey == null || !behavior.equals(key, newKey)) this.remove(key);
-        if (newKey != null && !behavior.equals(key, newKey)) {
+        if (newKey == null || !Objects.equals(newKey, key)) this.remove(key);
+        if (newKey != null && !Objects.equals(newKey, key)) {
             if (this.containsKey(newKey)) {
                 V oldValue = this.get(newKey),
                         newValue = (oldValue == null || oldValue == def) ? currValue : mergeFunction.apply(oldValue, currValue);

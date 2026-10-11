@@ -1,16 +1,15 @@
-package org.boxutil.base.api.container.objectt;
-
-import org.boxutil.base.api.container.HashContainer;
+package org.boxutil.base.api.container;
 
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
 /**
- * If any element is <code>null</code>, it should be treated as <code>0</code> or <code>Integer(0)</code>.<p>
- * For store float value, just using {@link Float#floatToRawIntBits(float)} and {@link Float#intBitsToFloat(int)} directly.
+ * For any element is {@code null}, it should be treated as {@code 0}
+ * or {@code Number(0)} if the element was specific primitive
+ * type that the Set implementation defined.
  */
-public interface ObjHashSet<E> extends Set<E>, HashContainer<E> {
+public interface SetExt<E> extends Set<E>, Container {
     /**
      * Remaps the specified element in this set. If this set does not contain the
      * specified element, returns {@code false} and leaves the set unchanged.
@@ -33,13 +32,13 @@ public interface ObjHashSet<E> extends Set<E>, HashContainer<E> {
      * for this set, then returning the result:
      *
      * <pre> {@code
-     * if (!contains(key)) return false;
+     * if (!contains(element)) return false;
      *
-     * E newKey = remappingFunction.apply(key);
-     * if (newKey != null && getBehavior().equal(key, newKey)) return false;
+     * E newElement = remappingFunction.apply(element);
+     * if (newElement != null && Objects.equal(newEle, element)) return false;
      *
-     * remove(key);
-     * if (newKey != null) add(newKey);
+     * remove(element);
+     * if (newElement != null) add(newElement);
      * return true;
      * }</pre>
      *
@@ -47,7 +46,7 @@ public interface ObjHashSet<E> extends Set<E>, HashContainer<E> {
      * atomicity properties of this method. Any implementation providing atomicity
      * guarantees must override this method and document its concurrency properties.
      *
-     * @param key the element to be remapped
+     * @param element the element to be remapped
      * @param remappingFunction the function to compute a new element from the
      *        specified element
      * @return {@code true} if the set was modified as a result of this operation,
@@ -63,15 +62,15 @@ public interface ObjHashSet<E> extends Set<E>, HashContainer<E> {
      *         prevents it from being stored in this set
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default boolean remapping(E key, Function<? super E, ? extends E> remappingFunction) {
+    default boolean remapping(E element, Function<? super E, ? extends E> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
 
-        if (!this.contains(key)) return false;
+        if (!this.contains(element)) return false;
 
-        E newKey = remappingFunction.apply(key);
-        if (newKey != null && this.getBehavior().equals(key, newKey)) return false;
-        this.remove(key);
-        if (newKey != null) this.add(newKey);
+        E newEle = remappingFunction.apply(element);
+        if (newEle != null && Objects.equals(newEle, element)) return false;
+        this.remove(element);
+        if (newEle != null) this.add(newEle);
         return true;
     }
 

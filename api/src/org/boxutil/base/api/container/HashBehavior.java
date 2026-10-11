@@ -1,5 +1,8 @@
 package org.boxutil.base.api.container;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -16,7 +19,11 @@ import java.util.Objects;
  * @param <K> the type of keys
  */
 @FunctionalInterface
-public interface ContainerBehavior<K> {
+public interface HashBehavior<K> extends Serializable {
+    int DEFAULT_INITIAL_CAPACITY = 1 << 5;
+    int MAXIMUM_CAPACITY = 1 << 30;
+    float DEFAULT_LOAD_FACTOR = 0.75f;
+
     /**
      * Computes the final hash value for the given integer. The input is
      * typically the result of {@link Object#hashCode()} for a key, or the
@@ -48,7 +55,7 @@ public interface ContainerBehavior<K> {
      * @param key the object key, possibly {@code null}
      * @return the computed hash value
      */
-    default int hashing(K key) {
+    default int hashing(@Nullable Object key) {
         return key == null ? 0 : this.hashing(key.hashCode());
     }
 
@@ -56,36 +63,36 @@ public interface ContainerBehavior<K> {
      * Determines whether two object keys are equal. The default implementation
      * uses {@link Objects#equals(Object, Object)}.
      *
-     * @param a the first key
-     * @param b the second key
+     * @param src the input query key
+     * @param dst the existed key in container or special value
      * @return {@code true} if the keys are equal; {@code false} otherwise
      */
-    default boolean equals(K a, K b) {
-        return Objects.equals(a, b);
+    default boolean equals(@Nullable Object src, @Nullable K dst) {
+        return Objects.equals(src, dst);
     }
 
     /**
      * Determines whether two {@code int} keys are equal. The default
      * implementation uses the {@code ==} operator.
      *
-     * @param a the first key
-     * @param b the second key
+     * @param src the input query key
+     * @param dst the existed key in container or special value
      * @return {@code true} if the keys are equal; {@code false} otherwise
      */
-    default boolean equals(int a, int b) {
-        return a == b;
+    default boolean equals(int src, int dst) {
+        return src == dst;
     }
 
     /**
      * Determines whether two {@code long} keys are equal. The default
      * implementation uses the {@code ==} operator.
      *
-     * @param a the first key
-     * @param b the second key
+     * @param src the input query key
+     * @param dst the existed key in container or special value
      * @return {@code true} if the keys are equal; {@code false} otherwise
      */
-    default boolean equals(long a, long b) {
-        return a == b;
+    default boolean equals(long src, long dst) {
+        return src == dst;
     }
 
     /**
@@ -106,8 +113,40 @@ public interface ContainerBehavior<K> {
      * @param key the object key, possibly {@code null}
      * @return the hash code of the key, or {@code 0} if the key is {@code null}
      */
-    static int hashing_Directly(final Object key) {
+    static int hashing_Directly(@Nullable final Object key) {
         return key == null ? 0 : key.hashCode();
+    }
+
+    /**
+     * A hash strategy that multiply by golden ratio to the input value.
+     *
+     * @param key the input value
+     * @return the mixed hash value
+     */
+    static int hashing_Fibonacci_32(int key) {
+        return key * 0x61c88647;
+    }
+
+    /**
+     * A hash strategy that multiply by golden ratio to the input value.
+     *
+     * @param key the input value
+     * @return the mixed hash value
+     */
+    static long hashing_Fibonacci_64(long key) {
+        return key * 0x61c8864680b583ebL;
+    }
+
+    /**
+     * A hash strategy that multiply by golden ratio to an object key.
+     * If the key is {@code null}, returns {@code 0}; otherwise,
+     * applies {@link #hashing_Fibonacci_32(int)} to the key's {@link Object#hashCode()}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the hash code of the key, or {@code 0} if the key is {@code null}
+     */
+    static int hashing_Fibonacci(@Nullable final Object key) {
+        return key == null ? 0 : hashing_Fibonacci_32(key.hashCode());
     }
 
     /**
@@ -130,7 +169,7 @@ public interface ContainerBehavior<K> {
      * @param key the object key, possibly {@code null}
      * @return the mixed hash value
      */
-    static int hashing_HashMap(Object key) {
+    static int hashing_HashMap(@Nullable final Object key) {
         return key == null ? 0 : hashing_HashMap(key.hashCode());
     }
 
@@ -141,7 +180,7 @@ public interface ContainerBehavior<K> {
      * @param key the input value
      * @return the mixed hash value
      */
-    static int hashing_MurmurHash3FMix(int key) {
+    static int hashing_MurmurHash3_32(int key) {
         key ^= key >>> 16;
         key *= 0x85ebca6b;
         key ^= key >>> 13;
@@ -151,15 +190,31 @@ public interface ContainerBehavior<K> {
     }
 
     /**
+     * A hash strategy that applies the MurmurHash3 finalization mix to the
+     * input value.
+     *
+     * @param key the input value
+     * @return the mixed hash value
+     */
+    static long hashing_MurmurHash3_64(long key) {
+        key ^= key >>> 33;
+        key *= 0xff51afd7ed558ccdL;
+        key ^= key >>> 33;
+        key *= 0xc4ceb9fe1a85ec53L;
+        key ^= key >>> 33;
+        return key;
+    }
+
+    /**
      * A hash strategy that applies the MurmurHash3 finalization mix to an
      * object key. If the key is {@code null}, returns {@code 0}; otherwise,
-     * applies {@link #hashing_MurmurHash3FMix(int)} to the key's
+     * applies {@link #hashing_MurmurHash3_32(int)} to the key's
      * {@link Object#hashCode()}.
      *
      * @param key the object key, possibly {@code null}
      * @return the mixed hash value
      */
-    static int hashing_MurmurHash3FMix(final Object key) {
-        return key == null ? 0 : hashing_MurmurHash3FMix(key.hashCode());
+    static int hashing_MurmurHash3(@Nullable final Object key) {
+        return key == null ? 0 : hashing_MurmurHash3_32(key.hashCode());
     }
 }
