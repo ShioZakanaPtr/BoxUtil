@@ -1,0 +1,11 @@
+package org.boxutil.util.function.shortt;
+
+import java.util.function.UnaryOperator;
+
+public interface ShortUnaryOperator extends UnaryOperator<Short> {
+    short apply(short t);
+
+    default Short apply(Short t) {
+        return this.apply(t == null ? (short) 0 : t);
+    }
+}

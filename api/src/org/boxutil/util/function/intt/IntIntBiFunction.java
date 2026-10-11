@@ -1,4 +1,4 @@
-package org.boxutil.util.function;
+package org.boxutil.util.function.intt;
 
 import java.util.function.BiFunction;
 
@@ -7,6 +7,6 @@ public interface IntIntBiFunction<R> extends BiFunction<Integer, Integer, R> {
     R apply(int t, int u);
 
     default R apply(Integer t, Integer u) {
-        return this.apply(t == null ? 0 : t, u == null ? 0 : u);
+        return this.apply(t == null ? (int) 0 : t, u == null ? (int) 0 : u);
     }
 }
