@@ -14,7 +14,8 @@ public interface ShortSet extends SetExt<Short>, ShortCollection {
      */
     @Deprecated
     default boolean contains(Object o) {
-        return this.contains(o instanceof Short number ? number.shortValue() : (short) 0);
+        if (o != null && !(o instanceof Short)) return false;
+        return this.contains(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
     boolean add(short e);
@@ -34,7 +35,8 @@ public interface ShortSet extends SetExt<Short>, ShortCollection {
      */
     @Deprecated
     default boolean remove(Object o) {
-        return this.remove(o instanceof Short number ? number.shortValue() : (short) 0);
+        if (o != null && !(o instanceof Short)) return false;
+        return this.remove(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
     boolean remapping(short element, @NotNull ShortFunction<? extends Short> remappingFunction);

@@ -18,7 +18,8 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
      */
     @Deprecated
     default boolean contains(Object o) {
-        return this.contains(o instanceof Long number ? number.longValue() : (long) 0);
+        if (o != null && !(o instanceof Long)) return false;
+        return this.contains(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
     boolean add(long e);
@@ -38,7 +39,8 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
      */
     @Deprecated
     default boolean remove(Object o) {
-        return this.remove(o instanceof Long number ? number.longValue() : (long) 0);
+        if (o != null && !(o instanceof Long)) return false;
+        return this.remove(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
     default boolean removeIf(@NotNull LongPredicate filter) {

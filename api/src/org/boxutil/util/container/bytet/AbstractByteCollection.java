@@ -31,7 +31,8 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
      */
     @Deprecated
     public boolean contains(final Object o) {
-        return this.contains(o instanceof Byte number ? number.byteValue() : (byte) 0);
+        if (o != null && !(o instanceof Byte)) return false;
+        return this.contains(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
     public boolean add(byte e) {
@@ -62,7 +63,8 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
      */
     @Deprecated
     public boolean remove(final Object o) {
-        return this.remove(o instanceof Byte number ? number.byteValue() : (byte) 0);
+        if (o != null && !(o instanceof Byte)) return false;
+        return this.remove(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
     public int getCapacity() {

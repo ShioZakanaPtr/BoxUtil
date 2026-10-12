@@ -18,7 +18,8 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
      */
     @Deprecated
     default boolean contains(Object o) {
-        return this.contains(o instanceof Integer number ? number.intValue() : (int) 0);
+        if (o != null && !(o instanceof Integer)) return false;
+        return this.contains(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
     boolean add(int e);
@@ -38,7 +39,8 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
      */
     @Deprecated
     default boolean remove(Object o) {
-        return this.remove(o instanceof Integer number ? number.intValue() : (int) 0);
+        if (o != null && !(o instanceof Integer)) return false;
+        return this.remove(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
     default boolean removeIf(@NotNull IntPredicate filter) {

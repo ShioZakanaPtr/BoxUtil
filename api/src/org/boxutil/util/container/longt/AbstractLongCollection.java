@@ -31,7 +31,8 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
      */
     @Deprecated
     public boolean contains(final Object o) {
-        return this.contains(o instanceof Long number ? number.longValue() : (long) 0);
+        if (o != null && !(o instanceof Long)) return false;
+        return this.contains(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
     public boolean add(long e) {
@@ -62,7 +63,8 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
      */
     @Deprecated
     public boolean remove(final Object o) {
-        return this.remove(o instanceof Long number ? number.longValue() : (long) 0);
+        if (o != null && !(o instanceof Long)) return false;
+        return this.remove(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
     public int getCapacity() {

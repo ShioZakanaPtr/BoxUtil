@@ -15,7 +15,8 @@ public interface ByteCollection extends CollectionExt<Byte>, ByteIterable {
      */
     @Deprecated
     default boolean contains(Object o) {
-        return this.contains(o instanceof Byte number ? number.byteValue() : (byte) 0);
+        if (o != null && !(o instanceof Byte)) return false;
+        return this.contains(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
     boolean add(byte e);
@@ -35,7 +36,8 @@ public interface ByteCollection extends CollectionExt<Byte>, ByteIterable {
      */
     @Deprecated
     default boolean remove(Object o) {
-        return this.remove(o instanceof Byte number ? number.byteValue() : (byte) 0);
+        if (o != null && !(o instanceof Byte)) return false;
+        return this.remove(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
     default boolean removeIf(@NotNull BytePredicate filter) {

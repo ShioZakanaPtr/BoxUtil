@@ -31,7 +31,8 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      */
     @Deprecated
     public boolean contains(final Object o) {
-        return this.contains(o instanceof Integer number ? number.intValue() : (int) 0);
+        if (o != null && !(o instanceof Integer)) return false;
+        return this.contains(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
     public boolean add(int e) {
@@ -62,7 +63,8 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      */
     @Deprecated
     public boolean remove(final Object o) {
-        return this.remove(o instanceof Integer number ? number.intValue() : (int) 0);
+        if (o != null && !(o instanceof Integer)) return false;
+        return this.remove(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
     public int getCapacity() {

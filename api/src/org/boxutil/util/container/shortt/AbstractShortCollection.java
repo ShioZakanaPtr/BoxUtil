@@ -31,7 +31,8 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
      */
     @Deprecated
     public boolean contains(final Object o) {
-        return this.contains(o instanceof Short number ? number.shortValue() : (short) 0);
+        if (o != null && !(o instanceof Short)) return false;
+        return this.contains(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
     public boolean add(short e) {
@@ -62,7 +63,8 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
      */
     @Deprecated
     public boolean remove(final Object o) {
-        return this.remove(o instanceof Short number ? number.shortValue() : (short) 0);
+        if (o != null && !(o instanceof Short)) return false;
+        return this.remove(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
     public int getCapacity() {

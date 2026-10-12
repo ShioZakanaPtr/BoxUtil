@@ -15,7 +15,8 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
      */
     @Deprecated
     default boolean contains(Object o) {
-        return this.contains(o instanceof Short number ? number.shortValue() : (short) 0);
+        if (o != null && !(o instanceof Short)) return false;
+        return this.contains(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
     boolean add(short e);
@@ -35,7 +36,8 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
      */
     @Deprecated
     default boolean remove(Object o) {
-        return this.remove(o instanceof Short number ? number.shortValue() : (short) 0);
+        if (o != null && !(o instanceof Short)) return false;
+        return this.remove(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
     default boolean removeIf(@NotNull ShortPredicate filter) {
