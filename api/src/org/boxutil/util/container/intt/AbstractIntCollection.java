@@ -1,0 +1,79 @@
+package org.boxutil.util.container.intt;
+
+import org.boxutil.base.api.container.intt.IntCollection;
+import org.boxutil.base.api.container.intt.IntIterator;
+import org.boxutil.base.api.container.intt.IntSpliterator;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+
+public abstract class AbstractIntCollection extends AbstractCollection<Integer> implements IntCollection {
+    protected AbstractIntCollection() {}
+
+    public boolean contains(int o) {
+        final IntIterator it = this.iterator();
+        while (it.hasNext()) {
+            if (it.nextInt() == o) return true;
+        }
+        return false;
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean contains(final Object o) {
+        return this.contains(o instanceof Integer number ? number.intValue() : (int) 0);
+    }
+
+    public boolean add(int e) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean add(final Integer e) {
+        return this.add(e != null ? e.intValue() : (int) 0);
+    }
+
+    public boolean remove(int o) {
+        final IntIterator it = this.iterator();
+        while (it.hasNext()) {
+            if (it.nextInt() == o) {
+                it.remove();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean remove(final Object o) {
+        return this.remove(o instanceof Integer number ? number.intValue() : (int) 0);
+    }
+
+    public abstract int size();
+
+    public boolean isEmpty() {
+        return this.size() < 1;
+    }
+
+    @NotNull
+    public abstract IntIterator iterator();
+
+    @NotNull
+    public abstract IntSpliterator spliterator();
+
+    public void clear() {
+        final IntIterator it = this.iterator();
+        while (it.hasNext()) {
+            it.nextInt();
+            it.remove();
+        }
+    }
+}

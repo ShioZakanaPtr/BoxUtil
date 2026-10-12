@@ -38,7 +38,7 @@ public interface LongComparator extends Comparator<Long> {
     @Deprecated
     @NotNull
     default Comparator<Long> thenComparing(Comparator<? super Long> other) {
-        return this.thenComparing(other instanceof LongComparator cast ? cast : other::compare);
+        return this.thenComparing(other::compare);
     }
 
     @NotNull

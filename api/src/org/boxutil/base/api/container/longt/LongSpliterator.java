@@ -10,7 +10,7 @@ public interface LongSpliterator extends Spliterator.OfLong {
      */
     @Deprecated
     default boolean tryAdvance(Consumer<? super Long> action) {
-        return this.tryAdvance(action instanceof LongConsumer cast ? cast : action::accept);
+        return this.tryAdvance((long l_value) -> action.accept(l_value));
     }
 
     /**
@@ -18,7 +18,7 @@ public interface LongSpliterator extends Spliterator.OfLong {
      */
     @Deprecated
     default void forEachRemaining(Consumer<? super Long> action) {
-        this.forEachRemaining(action instanceof LongConsumer cast ? cast : action::accept);
+        this.forEachRemaining((long l_value) -> action.accept(l_value));
     }
 
     LongSpliterator trySplit();

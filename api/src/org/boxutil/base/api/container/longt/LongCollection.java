@@ -11,25 +11,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public interface LongCollection extends Collection<Long>, LongIterable {
-    /**
-     * Returns the default return value used when a query does not find a mapping
-     * in this container. By default, this value is {@code 0}, but implementations
-     * may allow customization via {@link #setDefaultReturnValue(long)}.
-     *
-     * @return the default return value
-     */
-    long getDefaultReturnValue();
-
-    /**
-     * Sets the default return value used when a query does not find an element in
-     * this container. This value will be returned by query methods such
-     * as {@code get} when the key is absent.
-     *
-     * @param newDefault the new default return value
-     * @return the previous default return value
-     */
-    long setDefaultReturnValue(long newDefault);
-
     boolean contains(long o);
 
     /**
@@ -37,16 +18,8 @@ public interface LongCollection extends Collection<Long>, LongIterable {
      */
     @Deprecated
     default boolean contains(Object o) {
-        if (o == null) return this.contains(0);
-        if (!(o instanceof Number number)) return false;
-        return this.contains(number.longValue());
+        return this.contains(o instanceof Long number ? number.longValue() : (long) 0);
     }
-
-    @NotNull LongIterator iterator();
-
-    @NotNull long[] toRawArray();
-
-    @NotNull long[] toArray(@NotNull long[] a);
 
     boolean add(long e);
 
@@ -55,7 +28,7 @@ public interface LongCollection extends Collection<Long>, LongIterable {
      */
     @Deprecated
     default boolean add(Long e) {
-        return this.add(e == null ? 0 : e);
+        return this.add(e != null ? e.longValue() : (long) 0);
     }
 
     boolean remove(long o);
@@ -65,9 +38,7 @@ public interface LongCollection extends Collection<Long>, LongIterable {
      */
     @Deprecated
     default boolean remove(Object o) {
-        if (o == null) return this.remove(0);
-        if (!(o instanceof Number number)) return false;
-        return this.remove(number.longValue());
+        return this.remove(o instanceof Long number ? number.longValue() : (long) 0);
     }
 
     default boolean removeIf(@NotNull LongPredicate filter) {
@@ -89,11 +60,16 @@ public interface LongCollection extends Collection<Long>, LongIterable {
     @Deprecated
     default boolean removeIf(@NotNull Predicate<? super Long> filter) {
         Objects.requireNonNull(filter);
-        return this.removeIf(filter instanceof LongPredicate cast ? cast : filter::test);
+        return this.removeIf((long l_value) -> filter.test(l_value));
     }
 
-    @NotNull
-    LongSpliterator spliterator();
+    @NotNull LongIterator iterator();
+
+    @NotNull LongSpliterator spliterator();
+
+    @NotNull long[] toRawArray();
+
+    @NotNull long[] toArray(@NotNull long[] a);
 
     @NotNull
     default LongStream rawStream() {

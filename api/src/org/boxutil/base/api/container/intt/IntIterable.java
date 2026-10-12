@@ -15,7 +15,7 @@ public interface IntIterable extends Iterable<Integer> {
     @Deprecated
     default void forEach(Consumer<? super Integer> action) {
         Objects.requireNonNull(action);
-        forEach(action instanceof IntConsumer cast ? cast : action::accept);
+        this.forEach((int l_value) -> action.accept(l_value));
     }
 
     default void forEach(IntConsumer action) {

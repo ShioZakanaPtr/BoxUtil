@@ -15,7 +15,7 @@ public interface LongIterable extends Iterable<Long> {
     @Deprecated
     default void forEach(Consumer<? super Long> action) {
         Objects.requireNonNull(action);
-        forEach(action instanceof LongConsumer cast ? cast : action::accept);
+        this.forEach((long l_value) -> action.accept(l_value));
     }
 
     default void forEach(LongConsumer action) {

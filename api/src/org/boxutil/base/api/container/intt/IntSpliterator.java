@@ -10,7 +10,7 @@ public interface IntSpliterator extends Spliterator.OfInt {
      */
     @Deprecated
     default boolean tryAdvance(Consumer<? super Integer> action) {
-        return this.tryAdvance(action instanceof IntConsumer cast ? cast : action::accept);
+        return this.tryAdvance((int l_value) -> action.accept(l_value));
     }
 
     /**
@@ -18,7 +18,7 @@ public interface IntSpliterator extends Spliterator.OfInt {
      */
     @Deprecated
     default void forEachRemaining(Consumer<? super Integer> action) {
-        this.forEachRemaining(action instanceof IntConsumer cast ? cast : action::accept);
+        this.forEachRemaining((int l_value) -> action.accept(l_value));
     }
 
     IntSpliterator trySplit();

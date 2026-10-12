@@ -38,7 +38,7 @@ public interface IntComparator extends Comparator<Integer> {
     @Deprecated
     @NotNull
     default Comparator<Integer> thenComparing(Comparator<? super Integer> other) {
-        return this.thenComparing(other instanceof IntComparator cast ? cast : other::compare);
+        return this.thenComparing(other::compare);
     }
 
     @NotNull

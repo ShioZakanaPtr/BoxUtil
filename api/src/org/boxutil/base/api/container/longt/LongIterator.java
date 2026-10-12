@@ -8,10 +8,6 @@ import java.util.function.LongConsumer;
 public interface LongIterator extends PrimitiveIterator.OfLong {
     long nextLong();
 
-    default void forEachRemaining(LongConsumer action) {
-        OfLong.super.forEachRemaining(action);
-    }
-
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
@@ -26,6 +22,6 @@ public interface LongIterator extends PrimitiveIterator.OfLong {
     @Deprecated
     default void forEachRemaining(Consumer<? super Long> action) {
         Objects.requireNonNull(action);
-        this.forEachRemaining(action instanceof LongConsumer cast ? cast : action::accept);
+        this.forEachRemaining((long l_value) -> action.accept(l_value));
     }
 }

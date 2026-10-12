@@ -11,25 +11,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public interface IntCollection extends Collection<Integer>, IntIterable {
-    /**
-     * Returns the default return value used when a query does not find a mapping
-     * in this container. By default, this value is {@code 0}, but implementations
-     * may allow customization via {@link #setDefaultReturnValue(int)}.
-     *
-     * @return the default return value
-     */
-    int getDefaultReturnValue();
-
-    /**
-     * Sets the default return value used when a query does not find an element in
-     * this container. This value will be returned by query methods such
-     * as {@code get} when the key is absent.
-     *
-     * @param newDefault the new default return value
-     * @return the previous default return value
-     */
-    int setDefaultReturnValue(int newDefault);
-
     boolean contains(int o);
 
     /**
@@ -37,16 +18,8 @@ public interface IntCollection extends Collection<Integer>, IntIterable {
      */
     @Deprecated
     default boolean contains(Object o) {
-        if (o == null) return this.contains(0);
-        if (!(o instanceof Number number)) return false;
-        return this.contains(number.intValue());
+        return this.contains(o instanceof Integer number ? number.intValue() : (int) 0);
     }
-
-    @NotNull IntIterator iterator();
-
-    @NotNull int[] toRawArray();
-
-    @NotNull int[] toArray(@NotNull int[] a);
 
     boolean add(int e);
 
@@ -55,7 +28,7 @@ public interface IntCollection extends Collection<Integer>, IntIterable {
      */
     @Deprecated
     default boolean add(Integer e) {
-        return this.add(e == null ? 0 : e);
+        return this.add(e != null ? e.intValue() : (int) 0);
     }
 
     boolean remove(int o);
@@ -65,9 +38,7 @@ public interface IntCollection extends Collection<Integer>, IntIterable {
      */
     @Deprecated
     default boolean remove(Object o) {
-        if (o == null) return this.remove(0);
-        if (!(o instanceof Number number)) return false;
-        return this.remove(number.intValue());
+        return this.remove(o instanceof Integer number ? number.intValue() : (int) 0);
     }
 
     default boolean removeIf(@NotNull IntPredicate filter) {
@@ -89,11 +60,16 @@ public interface IntCollection extends Collection<Integer>, IntIterable {
     @Deprecated
     default boolean removeIf(@NotNull Predicate<? super Integer> filter) {
         Objects.requireNonNull(filter);
-        return this.removeIf(filter instanceof IntPredicate cast ? cast : filter::test);
+        return this.removeIf((int l_value) -> filter.test(l_value));
     }
 
-    @NotNull
-    IntSpliterator spliterator();
+    @NotNull IntIterator iterator();
+
+    @NotNull IntSpliterator spliterator();
+
+    @NotNull int[] toRawArray();
+
+    @NotNull int[] toArray(@NotNull int[] a);
 
     @NotNull
     default IntStream rawStream() {
