@@ -1,9 +1,5 @@
 package org.boxutil.base.api.container.shortt;
 
-import org.boxutil.util.function.bytet.ByteFunction;
-import org.boxutil.util.function.bytet.ByteToDoubleFunction;
-import org.boxutil.util.function.bytet.ByteToIntFunction;
-import org.boxutil.util.function.bytet.ByteToLongFunction;
 import org.boxutil.util.function.shortt.ShortFunction;
 import org.boxutil.util.function.shortt.ShortToDoubleFunction;
 import org.boxutil.util.function.shortt.ShortToIntFunction;

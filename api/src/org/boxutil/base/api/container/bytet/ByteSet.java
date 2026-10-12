@@ -4,7 +4,6 @@ import org.boxutil.base.api.container.SetExt;
 import org.boxutil.util.function.bytet.ByteFunction;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.function.Function;
 
 public interface ByteSet extends SetExt<Byte> {

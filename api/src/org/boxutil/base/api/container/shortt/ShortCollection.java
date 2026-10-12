@@ -1,14 +1,13 @@
 package org.boxutil.base.api.container.shortt;
 
-import org.boxutil.util.function.bytet.BytePredicate;
+import org.boxutil.base.api.container.CollectionExt;
 import org.boxutil.util.function.shortt.ShortPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public interface ShortCollection extends Collection<Short>, ShortIterable {
+public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
     boolean contains(short o);
 
     /**

@@ -164,4 +164,10 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
     default void swap(@NotNull Map<K, V> source) {
         throw new UnsupportedOperationException();
     }
+
+    @NotNull SetExt<K> keySet();
+
+    @NotNull CollectionExt<V> values();
+
+    @NotNull SetExt<Entry<K, V>> entrySet();
 }

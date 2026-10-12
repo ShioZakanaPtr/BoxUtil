@@ -1,8 +1,8 @@
 package org.boxutil.base.api.container.intt;
 
+import org.boxutil.base.api.container.CollectionExt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public interface IntCollection extends Collection<Integer>, IntIterable {
+public interface IntCollection extends CollectionExt<Integer>, IntIterable {
     boolean contains(int o);
 
     /**
@@ -82,7 +82,7 @@ public interface IntCollection extends Collection<Integer>, IntIterable {
     @Deprecated
     @NotNull
     default Stream<Integer> stream() {
-        return Collection.super.stream();
+        return CollectionExt.super.stream();
     }
 
     @NotNull
@@ -96,6 +96,6 @@ public interface IntCollection extends Collection<Integer>, IntIterable {
     @Deprecated
     @NotNull
     default Stream<Integer> parallelStream() {
-        return Collection.super.parallelStream();
+        return CollectionExt.super.parallelStream();
     }
 }

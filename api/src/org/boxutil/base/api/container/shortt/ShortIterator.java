@@ -1,6 +1,5 @@
 package org.boxutil.base.api.container.shortt;
 
-import org.boxutil.util.function.bytet.ByteConsumer;
 import org.boxutil.util.function.shortt.ShortConsumer;
 
 import java.util.Objects;

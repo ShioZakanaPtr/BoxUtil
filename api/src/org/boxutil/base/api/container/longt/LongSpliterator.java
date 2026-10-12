@@ -2,7 +2,6 @@ package org.boxutil.base.api.container.longt;
 
 import java.util.Spliterator;
 import java.util.function.Consumer;
-import java.util.function.LongConsumer;
 
 public interface LongSpliterator extends Spliterator.OfLong {
     /**

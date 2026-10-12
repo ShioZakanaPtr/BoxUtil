@@ -14,6 +14,14 @@ import java.util.Spliterator;
 public abstract class AbstractObjCollection<E> extends AbstractCollection<E> implements ObjCollection<E> {
     protected AbstractObjCollection() {}
 
+    public void resize(int newCapacity) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reserve(int newMaxSize) {
+        throw new UnsupportedOperationException();
+    }
+
     public boolean contains(final Object o) {
         final Iterator<E> it = this.iterator();
         while (it.hasNext()) {
@@ -35,6 +43,14 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
             }
         }
         return false;
+    }
+
+    public int getCapacity() {
+        return -1;
+    }
+
+    public int getRemainingSpace() {
+        return -1;
     }
 
     public abstract int size();

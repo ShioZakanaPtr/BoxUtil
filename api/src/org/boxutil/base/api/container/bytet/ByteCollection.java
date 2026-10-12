@@ -1,13 +1,13 @@
 package org.boxutil.base.api.container.bytet;
 
+import org.boxutil.base.api.container.CollectionExt;
 import org.boxutil.util.function.bytet.BytePredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public interface ByteCollection extends Collection<Byte>, ByteIterable {
+public interface ByteCollection extends CollectionExt<Byte>, ByteIterable {
     boolean contains(byte o);
 
     /**

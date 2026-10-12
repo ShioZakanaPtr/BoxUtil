@@ -3,7 +3,6 @@ package org.boxutil.base.api.container.intt;
 import org.boxutil.base.api.container.SetExt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 

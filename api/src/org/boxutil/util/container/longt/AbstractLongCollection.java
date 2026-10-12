@@ -10,6 +10,14 @@ import java.util.AbstractCollection;
 public abstract class AbstractLongCollection extends AbstractCollection<Long> implements LongCollection {
     protected AbstractLongCollection() {}
 
+    public void resize(int newCapacity) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reserve(int newMaxSize) {
+        throw new UnsupportedOperationException();
+    }
+
     public boolean contains(long o) {
         final LongIterator it = this.iterator();
         while (it.hasNext()) {
@@ -55,6 +63,14 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
     @Deprecated
     public boolean remove(final Object o) {
         return this.remove(o instanceof Long number ? number.longValue() : (long) 0);
+    }
+
+    public int getCapacity() {
+        return -1;
+    }
+
+    public int getRemainingSpace() {
+        return -1;
     }
 
     public abstract int size();

@@ -10,6 +10,14 @@ import java.util.AbstractCollection;
 public abstract class AbstractByteCollection extends AbstractCollection<Byte> implements ByteCollection {
     protected AbstractByteCollection() {}
 
+    public void resize(int newCapacity) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reserve(int newMaxSize) {
+        throw new UnsupportedOperationException();
+    }
+
     public boolean contains(byte o) {
         final ByteIterator it = this.iterator();
         while (it.hasNext()) {
@@ -55,6 +63,14 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
     @Deprecated
     public boolean remove(final Object o) {
         return this.remove(o instanceof Byte number ? number.byteValue() : (byte) 0);
+    }
+
+    public int getCapacity() {
+        return -1;
+    }
+
+    public int getRemainingSpace() {
+        return -1;
     }
 
     public abstract int size();

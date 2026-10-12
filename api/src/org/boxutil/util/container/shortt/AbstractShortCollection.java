@@ -10,6 +10,14 @@ import java.util.AbstractCollection;
 public abstract class AbstractShortCollection extends AbstractCollection<Short> implements ShortCollection {
     protected AbstractShortCollection() {}
 
+    public void resize(int newCapacity) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reserve(int newMaxSize) {
+        throw new UnsupportedOperationException();
+    }
+
     public boolean contains(short o) {
         final ShortIterator it = this.iterator();
         while (it.hasNext()) {
@@ -55,6 +63,14 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
     @Deprecated
     public boolean remove(final Object o) {
         return this.remove(o instanceof Short number ? number.shortValue() : (short) 0);
+    }
+
+    public int getCapacity() {
+        return -1;
+    }
+
+    public int getRemainingSpace() {
+        return -1;
     }
 
     public abstract int size();

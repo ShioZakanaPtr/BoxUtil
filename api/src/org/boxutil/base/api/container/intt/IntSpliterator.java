@@ -2,7 +2,6 @@ package org.boxutil.base.api.container.intt;
 
 import java.util.Spliterator;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 public interface IntSpliterator extends Spliterator.OfInt {
     /**

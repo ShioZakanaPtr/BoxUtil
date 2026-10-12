@@ -1,8 +1,8 @@
 package org.boxutil.base.api.container.longt;
 
+import org.boxutil.base.api.container.CollectionExt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.function.LongPredicate;
 import java.util.function.Predicate;
@@ -10,7 +10,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public interface LongCollection extends Collection<Long>, LongIterable {
+public interface LongCollection extends CollectionExt<Long>, LongIterable {
     boolean contains(long o);
 
     /**
@@ -82,7 +82,7 @@ public interface LongCollection extends Collection<Long>, LongIterable {
     @Deprecated
     @NotNull
     default Stream<Long> stream() {
-        return Collection.super.stream();
+        return CollectionExt.super.stream();
     }
 
     @NotNull
@@ -96,6 +96,6 @@ public interface LongCollection extends Collection<Long>, LongIterable {
     @Deprecated
     @NotNull
     default Stream<Long> parallelStream() {
-        return Collection.super.parallelStream();
+        return CollectionExt.super.parallelStream();
     }
 }

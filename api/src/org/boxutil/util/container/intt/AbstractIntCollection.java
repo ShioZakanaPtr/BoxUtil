@@ -10,6 +10,14 @@ import java.util.*;
 public abstract class AbstractIntCollection extends AbstractCollection<Integer> implements IntCollection {
     protected AbstractIntCollection() {}
 
+    public void resize(int newCapacity) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reserve(int newMaxSize) {
+        throw new UnsupportedOperationException();
+    }
+
     public boolean contains(int o) {
         final IntIterator it = this.iterator();
         while (it.hasNext()) {
@@ -55,6 +63,14 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
     @Deprecated
     public boolean remove(final Object o) {
         return this.remove(o instanceof Integer number ? number.intValue() : (int) 0);
+    }
+
+    public int getCapacity() {
+        return -1;
+    }
+
+    public int getRemainingSpace() {
+        return -1;
     }
 
     public abstract int size();
