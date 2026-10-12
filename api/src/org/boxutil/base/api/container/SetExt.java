@@ -1,5 +1,7 @@
 package org.boxutil.base.api.container;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -62,7 +64,7 @@ public interface SetExt<E> extends Set<E>, Container {
      *         prevents it from being stored in this set
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default boolean remapping(E element, Function<? super E, ? extends E> remappingFunction) {
+    default boolean remapping(E element, @NotNull Function<? super E, ? extends E> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
 
         if (!this.contains(element)) return false;
@@ -96,5 +98,7 @@ public interface SetExt<E> extends Set<E>, Container {
      *         specified set prevents it from being stored in this set, or vice
      *         versa
      */
-    void swap(Set<E> source);
+    default void swap(@NotNull Set<E> source) {
+        throw new UnsupportedOperationException();
+    }
 }

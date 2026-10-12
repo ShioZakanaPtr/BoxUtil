@@ -1,5 +1,8 @@
 package org.boxutil.base.api.container;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -18,7 +21,9 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      *
      * @return the default return value
      */
-    V getDefaultReturnValue();
+    default V getDefaultReturnValue() {
+        return null;
+    }
 
     /**
      * Sets the default return value used when a query does not find a mapping in
@@ -27,8 +32,12 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      *
      * @param newDefault the new default return value
      * @return the previous default return value
+     * @throws UnsupportedOperationException if this map using a fixed default
+     *         return value.
      */
-    V setDefaultReturnValue(V newDefault);
+    default V setDefaultReturnValue(@Nullable V newDefault) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Remaps the mapping for the specified key. If the specified key is not
@@ -107,7 +116,7 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      * @throws NullPointerException if {@code remappingFunction} or
      *         {@code mergeFunction} is {@code null}
      */
-    default V remapping(K key, BiFunction<? super K, ? super V, ? extends K> remappingFunction, BiFunction<? super V, ? super V, ? extends V> mergeFunction) {
+    default V remapping(K key, @NotNull BiFunction<? super K, ? super V, ? extends K> remappingFunction, @NotNull BiFunction<? super V, ? super V, ? extends V> mergeFunction) {
         Objects.requireNonNull(remappingFunction);
         Objects.requireNonNull(mergeFunction);
 
@@ -152,5 +161,7 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      *         specified map prevents it from being stored in this map, or vice
      *         versa
      */
-    void swap(Map<K, V> source);
+    default void swap(@NotNull Map<K, V> source) {
+        throw new UnsupportedOperationException();
+    }
 }
