@@ -18,6 +18,7 @@ public final class HashBehaviorFactory {
         DEFAULT[Strategy.DIRECTLY.ordinal()] = HashBehavior::hashing_Directly;
         DEFAULT[Strategy.FIBONACCI.ordinal()] = new DefaultFibonacci();
         DEFAULT[Strategy.HASH_MAP.ordinal()] = HashBehavior::hashing_HashMap;
+        DEFAULT[Strategy.FIBONACCI_MIX.ordinal()] = new DefaultFibonacciMix();
         DEFAULT[Strategy.MURMUR_HASH3.ordinal()] = new DefaultMurmurHash3();
     }
 
@@ -25,6 +26,7 @@ public final class HashBehaviorFactory {
         DIRECTLY,
         FIBONACCI,
         HASH_MAP,
+        FIBONACCI_MIX,
         MURMUR_HASH3
     }
 
@@ -32,8 +34,11 @@ public final class HashBehaviorFactory {
         return (HashBehavior<K>) DEFAULT[strategy.ordinal()];
     }
 
-    public static <K> HashBehavior<K> of(@NotNull IntUnaryOperator mixer) {
-        return (HashBehavior<K>) CUSTOM.computeIfAbsent(mixer, l_k -> mixer::applyAsInt);
+    /**
+     * @param hasher should be a shared static object.
+     */
+    public static <K> HashBehavior<K> of(@NotNull IntUnaryOperator hasher) {
+        return (HashBehavior<K>) CUSTOM.computeIfAbsent(hasher, l_k -> hasher::applyAsInt);
     }
 
     public static <K> HashBehavior<K> directly() {
@@ -46,6 +51,10 @@ public final class HashBehaviorFactory {
 
     public static <K> HashBehavior<K> hashMap() {
         return get(Strategy.HASH_MAP);
+    }
+
+    public static <K> HashBehavior<K> fibonacciMix() {
+        return get(Strategy.FIBONACCI_MIX);
     }
 
     public static <K> HashBehavior<K> murmurHash3() {
@@ -65,6 +74,20 @@ public final class HashBehaviorFactory {
 
         public int hashing(@Nullable Object key) {
             return HashBehavior.hashing_Fibonacci(key);
+        }
+    }
+
+    private final static class DefaultFibonacciMix implements HashBehavior<Object> {
+        public int hashing(int key) {
+            return HashBehavior.hashing_FibonacciMix_32(key);
+        }
+
+        public int hashing(long key) {
+            return Long.hashCode(HashBehavior.hashing_FibonacciMix_64(key));
+        }
+
+        public int hashing(@Nullable Object key) {
+            return HashBehavior.hashing_FibonacciMix(key);
         }
     }
 

@@ -174,6 +174,43 @@ public interface HashBehavior<K> extends Serializable {
     }
 
     /**
+     * A hash strategy that multiply by golden ratio to the input value, and
+     * then mix it as {@link java.util.HashMap}.
+     *
+     * @param key the input value
+     * @return the mixed hash value
+     */
+    static int hashing_FibonacciMix_32(int key) {
+        final int result = key * 0x61c88647;
+        return result ^ (result >>> 16);
+    }
+
+    /**
+     * A hash strategy that multiply by golden ratio to the input value, and
+     * then mix it as {@link java.util.HashMap}.
+     *
+     * @param key the input value
+     * @return the mixed hash value
+     */
+    static long hashing_FibonacciMix_64(long key) {
+        final long result = key * 0x61c8864680b583ebL;
+        return result ^ (result >>> 32);
+    }
+
+    /**
+     * A hash strategy that multiply by golden ratio to an object key, and
+     * then mix it as {@link java.util.HashMap}.
+     * If the key is {@code null}, returns {@code 0}; otherwise,
+     * applies {@link #hashing_Fibonacci_32(int)} to the key's {@link Object#hashCode()}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the hash code of the key, or {@code 0} if the key is {@code null}
+     */
+    static int hashing_FibonacciMix(@Nullable final Object key) {
+        return key == null ? 0 : hashing_FibonacciMix_32(key.hashCode());
+    }
+
+    /**
      * A hash strategy that applies the MurmurHash3 finalization mix to the
      * input value.
      *
@@ -181,12 +218,9 @@ public interface HashBehavior<K> extends Serializable {
      * @return the mixed hash value
      */
     static int hashing_MurmurHash3_32(int key) {
-        key ^= key >>> 16;
-        key *= 0x85ebca6b;
-        key ^= key >>> 13;
-        key *= 0xc2b2ae35;
-        key ^= key >>> 16;
-        return key;
+        key = (key ^ (key >>> 16)) * 0x85ebca6b;
+        key = (key ^ (key >>> 13)) * 0xc2b2ae35;
+        return key ^ (key >>> 16);
     }
 
     /**
@@ -197,12 +231,9 @@ public interface HashBehavior<K> extends Serializable {
      * @return the mixed hash value
      */
     static long hashing_MurmurHash3_64(long key) {
-        key ^= key >>> 33;
-        key *= 0xff51afd7ed558ccdL;
-        key ^= key >>> 33;
-        key *= 0xc4ceb9fe1a85ec53L;
-        key ^= key >>> 33;
-        return key;
+        key = (key ^ (key >>> 33)) * 0xff51afd7ed558ccdL;
+        key = (key ^ (key >>> 33)) * 0xc4ceb9fe1a85ec53L;
+        return key ^ (key >>> 33);
     }
 
     /**
