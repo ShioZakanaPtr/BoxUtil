@@ -48,4 +48,16 @@ public interface Container {
      *         resizing, infinite if returns {@code -1}
      */
     int getRemainingSpace();
+
+    /**
+     * Removes all the elements from this container (optional operation), and
+     * resize to {@code newCapacity} if not an infinite capacity container.
+     * The container will be empty after this method returns.
+     *
+     * @throws UnsupportedOperationException if the {@code clear} operation
+     *         is not supported by this container
+     * @throws IllegalArgumentException if {@code newCapacity} is negative or
+     *         otherwise invalid for this container
+     */
+    void clear(int newCapacity);
 }

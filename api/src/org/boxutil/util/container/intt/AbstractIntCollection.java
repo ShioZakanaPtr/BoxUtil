@@ -87,6 +87,11 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
     @NotNull
     public abstract IntSpliterator spliterator();
 
+    public void clear(int newCapacity) {
+        this.clear();
+        this.resize(newCapacity);
+    }
+
     public void clear() {
         final IntIterator it = this.iterator();
         while (it.hasNext()) {
