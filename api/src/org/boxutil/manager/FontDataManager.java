@@ -30,13 +30,18 @@ public final class FontDataManager {
 
     public static FontMapData loadFont(@NotNull final String file) {
         if (file.isBlank()) throw new IllegalArgumentException("Illegal file path: a white space");
-        FontMapData result = new FontMapData(file);
-        return result.isValid() ? _PATH_FONT.put(file, result) : null;
+        return _PATH_FONT.compute(file, (l_k, l_v) -> {
+            final FontMapData result = new FontMapData(file);
+            return result.isValid() ? result : null;
+        });
     }
 
     public static FontMapData tryFont(final String file) {
-        if (!haveFont(file)) loadFont(file);
-        return _PATH_FONT.get(file);
+        if (file.isBlank()) throw new IllegalArgumentException("Illegal file path: a white space");
+        return _PATH_FONT.computeIfAbsent(file, l_k -> {
+            final FontMapData result = new FontMapData(file);
+            return result.isValid() ? result : null;
+        });
     }
 
     private FontDataManager() {}

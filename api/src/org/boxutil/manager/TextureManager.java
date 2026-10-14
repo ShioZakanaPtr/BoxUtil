@@ -244,37 +244,38 @@ public final class TextureManager {
     }
 
     public static int tryTexture(@NotNull final String file, int channelNum, boolean is1DTexture, boolean uintTexture, boolean useTextureStorage, boolean nearestSampler, boolean potAligned) {
-        return haveTexture(file) ? _PATH_TEX.get(file) : loadTexture(file, channelNum, is1DTexture, uintTexture, useTextureStorage, nearestSampler, potAligned)[0];
+        return _PATH_TEX.computeIfAbsent(file, l_k -> loadTexture(l_k, channelNum, is1DTexture, uintTexture, useTextureStorage, nearestSampler, potAligned)[0]);
     }
 
     public static int tryTextureRGBA(@NotNull final String file, boolean alignForward) {
         final String realFile = BUtil_MiscUtil.fetchFilePostfix(file, alignForward ? ALIGN_FORWARD_SUFFIX : null);
-        return haveTexture(realFile) ? _PATH_TEX.get(realFile) : loadTextureRGBA8(file, alignForward, false, true, false, true)[0];
+        return _PATH_TEX.computeIfAbsent(realFile, l_k -> loadTextureRGBA8(file, alignForward, false, true, false, true)[0]);
     }
 
     public static int tryTexture(@NotNull final String file) {
-        return haveTexture(file) ? _PATH_TEX.get(file) : loadTexture(file)[0];
+        return _PATH_TEX.computeIfAbsent(file, l_k -> loadTexture(l_k)[0]);
     }
 
     public static int tryTextureChannel3(@NotNull final String file) {
-        return haveTexture(file) ? _PATH_TEX.get(file) : loadTextureChannel3(file)[0];
+        return _PATH_TEX.computeIfAbsent(file, l_k -> loadTextureChannel3(l_k)[0]);
     }
 
     public static int tryTangent(@NotNull final String file, boolean isAngleMap, boolean useTextureStorage, boolean potAligned) {
-        return haveTexture(file) ? _PATH_TEX.get(file) : loadTangentMap(file, isAngleMap, useTextureStorage, potAligned)[0];
+        return _PATH_TEX.computeIfAbsent(file, l_k -> loadTangentMap(l_k, isAngleMap, useTextureStorage, potAligned)[0]);
     }
 
     private static int genNormalForTextureCore(int srcTexture, int width, int height, boolean keyCheck, ShaderUtil.NormalMapGenParam param, boolean findSize) {
-        if (keyCheck && haveAutoGenNormal(srcTexture)) return getAutoGenNormal(srcTexture);
-        if (findSize) {
-            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, srcTexture);
-            width = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);
-            height = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
-            GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
-        }
-        int normal = ShaderUtil.genNormalMapFromRGB(srcTexture, width, height, param);
-        putAutoGenNormal(srcTexture, normal);
-        return normal;
+        return _AUTO_NORMAL.compute(srcTexture, (l_k, l_v) -> {
+            if (keyCheck && l_v != null) return l_v;
+            int l_width = width, l_height = height;
+            if (findSize) {
+                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, l_k);
+                l_width = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_WIDTH);
+                l_height = GLWrapper.Texture.glGetTexLevelParameteri(GLWrapper.Texture.GL_TEXTURE_2D, 0, GLWrapper.Texture.GL_TEXTURE_HEIGHT);
+                GLWrapper.Texture.glBindTexture(GLWrapper.Texture.GL_TEXTURE_2D, 0);
+            }
+            return ShaderUtil.genNormalMapFromRGB(l_k, l_width, l_height, param);
+        });
     }
 
     public static int genNormalForTexture(int srcTexture, int width, int height, boolean keyCheck, ShaderUtil.NormalMapGenParam param) {
@@ -286,7 +287,7 @@ public final class TextureManager {
     }
 
     public static int tryNormalForTexture(int srcTexture) {
-        return haveAutoGenNormal(srcTexture) ? getAutoGenNormal(srcTexture) : genNormalForTexture(srcTexture, true, DEFAULT_AUTO_NORMAL_PARAM);
+        return _AUTO_NORMAL.computeIfAbsent(srcTexture, l_k -> genNormalForTexture(srcTexture, true, DEFAULT_AUTO_NORMAL_PARAM));
     }
 
     private TextureManager() {}

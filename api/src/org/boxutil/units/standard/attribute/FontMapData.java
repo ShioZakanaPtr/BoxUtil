@@ -61,7 +61,7 @@ public class FontMapData {
         final byte[] stateInteger = new byte[7];
         final short[] mapSize = new short[2];
         final Set<BitMapGlyph> tmpFonts = new HashSet<>(256);
-        final HashMap<Integer, Byte> tmpKerning = new HashMap<>(128);
+        final Map<Integer, Byte> tmpKerning = new HashMap<>(128);
         BitMapGlyph tabGlyph = null, spaceGlyph = null;
         int charCountIn = 0, maxCharValue = Math.max('\t' & 0xffff, ' ' & 0xffff);
         try {
