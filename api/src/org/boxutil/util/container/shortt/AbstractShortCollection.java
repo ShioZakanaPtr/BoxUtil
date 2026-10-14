@@ -94,4 +94,9 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
             it.remove();
         }
     }
+
+    public void clear(int newCapacity) {
+        this.clear();
+        this.resize(newCapacity);
+    }
 }

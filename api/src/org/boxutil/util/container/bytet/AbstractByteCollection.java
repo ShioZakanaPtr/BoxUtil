@@ -87,16 +87,16 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
     @NotNull
     public abstract ByteSpliterator spliterator();
 
-    public void clear(int newCapacity) {
-        this.clear();
-        this.resize(newCapacity);
-    }
-
     public void clear() {
         final ByteIterator it = this.iterator();
         while (it.hasNext()) {
             it.nextByte();
             it.remove();
         }
+    }
+
+    public void clear(int newCapacity) {
+        this.clear();
+        this.resize(newCapacity);
     }
 }

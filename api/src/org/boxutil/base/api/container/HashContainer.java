@@ -30,7 +30,7 @@ public interface HashContainer<K> extends Container {
     HashBehavior<K> getBehavior();
 
     static int getTableCapacity(int elementSize, float loadFactor) {
-        long cap = CalculateUtil.getPOTMax((long) Math.floor(elementSize / (double) loadFactor));
+        long cap = CalculateUtil.getPOTMax((long) Math.ceil(elementSize / (double) loadFactor));
         if (cap < 0 || cap > (1 << 30)) throw new IllegalArgumentException("Capacity overflow");
         return (int) Math.max(cap, 2);
     }

@@ -65,16 +65,16 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
     @NotNull
     public abstract Spliterator<E> spliterator();
 
-    public void clear(int newCapacity) {
-        this.clear();
-        this.resize(newCapacity);
-    }
-
     public void clear() {
         final Iterator<E> it = this.iterator();
         while (it.hasNext()) {
             it.next();
             it.remove();
         }
+    }
+
+    public void clear(int newCapacity) {
+        this.clear();
+        this.resize(newCapacity);
     }
 }

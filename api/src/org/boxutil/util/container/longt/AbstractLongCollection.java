@@ -87,16 +87,16 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
     @NotNull
     public abstract LongSpliterator spliterator();
 
-    public void clear(int newCapacity) {
-        this.clear();
-        this.resize(newCapacity);
-    }
-
     public void clear() {
         final LongIterator it = this.iterator();
         while (it.hasNext()) {
             it.nextLong();
             it.remove();
         }
+    }
+
+    public void clear(int newCapacity) {
+        this.clear();
+        this.resize(newCapacity);
     }
 }
