@@ -39,7 +39,7 @@ public interface Container {
      *
      * @return the current capacity, infinite if returns {@code -1}
      */
-    int getCapacity();
+    int capacity();
 
     /**
      * Returns the remaining space in this hash container.
@@ -47,7 +47,7 @@ public interface Container {
      * @return the number of additional elements that can be added without
      *         resizing, infinite if returns {@code -1}
      */
-    int getRemainingSpace();
+    int remaining();
 
     /**
      * Removes all the elements from this container (optional operation), and

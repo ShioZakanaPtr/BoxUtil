@@ -67,11 +67,11 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
         return this.remove(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
-    public int getCapacity() {
+    public int capacity() {
         return -1;
     }
 
-    public int getRemainingSpace() {
+    public int remaining() {
         return -1;
     }
 

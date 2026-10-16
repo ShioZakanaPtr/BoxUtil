@@ -16,20 +16,37 @@ public abstract class AbstractIntSet extends AbstractIntCollection implements In
 
     public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
-        boolean result = false;
+        if (this.isEmpty()) return false;
 
-        if (this.size() > c.size()) {
-            for (Object e : c)
+        if (c instanceof List<?>) {
+            boolean result = false;
+            for (final Object e : c) {
                 result |= this.remove(e);
+            }
+            return result;
         } else {
-            for (IntIterator i = this.iterator(); i.hasNext(); ) {
-                if (c.contains(i.nextInt())) {
-                    i.remove();
-                    result = true;
+            if (this.size() > c.size()) {
+                boolean result = false;
+                for (final Object e : c) {
+                    result |= this.remove(e);
                 }
+                return result;
+            } else {
+                return this.removeIf((Integer e) -> c.contains(e));
             }
         }
-        return result;
+    }
+
+    public boolean containsAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        if (this.isEmpty()) return c.isEmpty();
+        if (c instanceof Set<?> && this.size() < c.size()) return false;
+        if (c == this) return true;
+
+        for (final Object e : c) {
+            if (!this.contains(e)) return false;
+        }
+        return true;
     }
 
     public int hashCode() {

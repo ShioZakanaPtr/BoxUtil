@@ -5,6 +5,7 @@ import org.boxutil.base.api.container.longt.LongSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.LongFunction;
@@ -18,20 +19,37 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
 
     public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
-        boolean result = false;
+        if (this.isEmpty()) return false;
 
-        if (this.size() > c.size()) {
-            for (Object e : c)
+        if (c instanceof List<?>) {
+            boolean result = false;
+            for (final Object e : c) {
                 result |= this.remove(e);
+            }
+            return result;
         } else {
-            for (LongIterator i = this.iterator(); i.hasNext(); ) {
-                if (c.contains(i.nextLong())) {
-                    i.remove();
-                    result = true;
+            if (this.size() > c.size()) {
+                boolean result = false;
+                for (final Object e : c) {
+                    result |= this.remove(e);
                 }
+                return result;
+            } else {
+                return this.removeIf((Long e) -> c.contains(e));
             }
         }
-        return result;
+    }
+
+    public boolean containsAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        if (this.isEmpty()) return c.isEmpty();
+        if (c instanceof Set<?> && this.size() < c.size()) return false;
+        if (c == this) return true;
+
+        for (final Object e : c) {
+            if (!this.contains(e)) return false;
+        }
+        return true;
     }
 
     public int hashCode() {

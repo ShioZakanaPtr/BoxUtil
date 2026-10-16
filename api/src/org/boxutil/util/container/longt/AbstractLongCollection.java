@@ -67,11 +67,11 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
         return this.remove(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
-    public int getCapacity() {
+    public int capacity() {
         return -1;
     }
 
-    public int getRemainingSpace() {
+    public int remaining() {
         return -1;
     }
 

@@ -45,11 +45,11 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
         return false;
     }
 
-    public int getCapacity() {
+    public int capacity() {
         return -1;
     }
 
-    public int getRemainingSpace() {
+    public int remaining() {
         return -1;
     }
 

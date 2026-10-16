@@ -48,16 +48,16 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      * merge function when necessary.
      *
      * <p>If the remapping function returns {@code null}, the mapping for the
-     * specified key is removed. If the remapping function returns the same key,
-     * the mapping is left unchanged. If the remapping function returns a different
-     * non-{@code null} key, the mapping for the specified key is removed and the
-     * current value is associated with the new key. If the new key already has a
-     * value, the existing value and the current value are combined using the merge
-     * function, unless the existing value is {@code null} or is the default return
-     * value, in which case the current value is used.
+     * specified key is removed and the default return value is returned. If the
+     * remapping function returns the same key, the mapping is left unchanged. If
+     * the remapping function returns a different non-{@code null} key, the mapping
+     * for the specified key is removed and the current value is associated with the
+     * new key. If the new key already has a value, the existing value and the
+     * current value are combined using the merge function, even if the existing
+     * value is {@code null}.
      *
-     * <p>If the merge function returns {@code null}, the default return value is
-     * returned and no mapping for the new key is created or updated. If either
+     * <p>If the merge function returns {@code null}, the mapping for the new key
+     * (if any) is removed and the default return value is returned. If either
      * function itself throws an (unchecked) exception, the exception is rethrown.
      *
      * <p>The remapping and merge functions should not modify this map during
@@ -76,15 +76,18 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      *
      * if (newKey == null || !Objects.equals(newKey, key))
      *     remove(key);
-     * if (newKey != null && !Objects.equals(newKey, key)) {
+     * if (newKey == null)
+     *     return def;
+     * if (!Objects.equals(newKey, key)) {
      *     if (containsKey(newKey)) {
      *         V oldValue = get(newKey);
-     *         V newValue = (oldValue == null || oldValue == def) ? currValue
-     *                 : mergeFunction.apply(oldValue, currValue);
-     *         if (newValue != null)
+     *         V newValue = mergeFunction.apply(oldValue, currValue);
+     *         if (newValue != null) {
      *             currValue = newValue;
-     *         else
+     *         } else {
+     *             remove(newKey);
      *             return def;
+     *         }
      *     }
      *     put(newKey, currValue);
      * }
@@ -102,8 +105,8 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      * @param mergeFunction the function to merge an existing value at the new key
      *        with the current value
      * @return the resulting value for the specified key, or the default return
-     *         value if the specified key is not present or the merge function
-     *         returns {@code null}
+     *         value if the specified key is not present, the remapping function
+     *         returns {@code null}, or the merge function returns {@code null}
      * @throws UnsupportedOperationException if the {@code put} or {@code remove}
      *         operation is not supported by this map
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
@@ -127,12 +130,18 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
         K newKey = remappingFunction.apply(key, currValue);
 
         if (newKey == null || !Objects.equals(newKey, key)) this.remove(key);
-        if (newKey != null && !Objects.equals(newKey, key)) {
+        if (newKey == null) return def;
+        if (!Objects.equals(newKey, key)) {
             if (this.containsKey(newKey)) {
                 V oldValue = this.get(newKey),
-                        newValue = (oldValue == null || oldValue == def) ? currValue : mergeFunction.apply(oldValue, currValue);
-                if (newValue != null) currValue = newValue;
-                else return def;
+                        // if the `get` method also can return a default value, should check it here and use null for result, because it means "not found"
+                        newValue = mergeFunction.apply(oldValue == def ? null : oldValue, currValue);
+                if (newValue != null) {
+                    currValue = newValue;
+                } else {
+                    this.remove(newKey);
+                    return def;
+                }
             }
             this.put(newKey, currValue);
         }

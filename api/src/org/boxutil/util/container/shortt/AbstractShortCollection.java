@@ -67,11 +67,11 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
         return this.remove(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
-    public int getCapacity() {
+    public int capacity() {
         return -1;
     }
 
-    public int getRemainingSpace() {
+    public int remaining() {
         return -1;
     }
 

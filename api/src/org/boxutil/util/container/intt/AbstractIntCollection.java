@@ -67,11 +67,11 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
         return this.remove(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
-    public int getCapacity() {
+    public int capacity() {
         return -1;
     }
 
-    public int getRemainingSpace() {
+    public int remaining() {
         return -1;
     }
 
