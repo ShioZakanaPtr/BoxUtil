@@ -2,7 +2,7 @@ package org.boxutil.util.function.shortt;
 
 import java.util.function.BinaryOperator;
 
-public interface ShortBinaryOperator extends BinaryOperator<Short> {
+public interface ShortShortBiOperator extends BinaryOperator<Short> {
     short apply(short t, short u);
 
     default Short apply(Short t, Short u) {

@@ -2,7 +2,7 @@ package org.boxutil.util.function.bytet;
 
 import java.util.function.BinaryOperator;
 
-public interface ByteBinaryOperator extends BinaryOperator<Byte> {
+public interface ByteByteBiOperator extends BinaryOperator<Byte> {
     byte apply(byte t, byte u);
 
     default Byte apply(Byte t, Byte u) {

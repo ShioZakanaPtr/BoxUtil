@@ -10,7 +10,7 @@ import java.util.function.IntUnaryOperator;
 
 @SuppressWarnings("unchecked")
 public final class HashBehaviorFactory {
-    private final static ConcurrentMap<IntUnaryOperator, HashBehavior<Object>> CUSTOM = new ConcurrentHashMap<>();
+    private final static ConcurrentMap<String, HashBehavior<Object>> CUSTOM = new ConcurrentHashMap<>();
     private final static HashBehavior<Object>[] DEFAULT;
 
     static {
@@ -34,11 +34,9 @@ public final class HashBehaviorFactory {
         return (HashBehavior<K>) DEFAULT[strategy.ordinal()];
     }
 
-    /**
-     * @param hasher should be a shared static object.
-     */
-    public static <K> HashBehavior<K> of(@NotNull IntUnaryOperator hasher) {
-        return (HashBehavior<K>) CUSTOM.computeIfAbsent(hasher, l_k -> hasher::applyAsInt);
+    public static <K> HashBehavior<K> of(@NotNull String name, @NotNull HashBehavior<K> behavior) {
+        if (name.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        return (HashBehavior<K>) CUSTOM.computeIfAbsent(name, l_k -> (HashBehavior<Object>) behavior);
     }
 
     public static <K> HashBehavior<K> directly() {
