@@ -17,8 +17,8 @@ import java.util.function.UnaryOperator;
 public interface MapExt<K, V> extends Map<K, V>, Container {
     /**
      * Returns the default return value used when a query does not find a mapping
-     * in this container. By default, this value is {@code null}, but implementations
-     * may allow customization via {@link #setDefaultReturnValue(V)}.
+     * in this container. By default, this value is {@code null} or {@code 0}, but
+     * implementations may allow customization via {@link #setDefaultReturnValue(V)}.
      *
      * @return the default return value
      */
