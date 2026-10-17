@@ -33,7 +33,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      */
     @Deprecated
     default Long getOrDefault(Object key, Long defaultValue) {
-        return this.getOrDefault(key, defaultValue != null ? defaultValue : (long) 0);
+        return this.getOrDefault(key, defaultValue != null ? defaultValue.longValue() : (long) 0);
     }
 
     long put(K key, long value);
@@ -43,7 +43,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      */
     @Deprecated
     default @Nullable Long put(K key, Long value) {
-        return this.put(key, value != null ? value : (long) 0);
+        return this.put(key, value != null ? value.longValue() : (long) 0);
     }
 
     long putIfAbsent(K key, long value);
@@ -53,7 +53,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      */
     @Deprecated
     default Long putIfAbsent(K key, Long value) {
-        return this.putIfAbsent(key, value != null ? value : (long) 0);
+        return this.putIfAbsent(key, value != null ? value.longValue() : (long) 0);
     }
 
     long removeRaw(Object key);
@@ -66,6 +66,13 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
         return this.removeRaw(key);
     }
 
+    boolean remove(Object key, long value);
+
+    default boolean remove(Object key, Object value) {
+        if (value != null && !(value instanceof Long)) return false;
+        return this.remove(key, value != null ? ((Long) value).longValue() : (long) 0);
+    }
+
     long replace(K key, long value);
 
     /**
@@ -73,7 +80,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      */
     @Deprecated
     default Long replace(K key, Long value) {
-        return this.replace(key, value != null ? value : (long) 0);
+        return this.replace(key, value != null ? value.longValue() : (long) 0);
     }
 
     boolean replace(K key, long oldValue, long newValue);
@@ -83,7 +90,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      */
     @Deprecated
     default boolean replace(K key, Long oldValue, Long newValue) {
-        return this.replace(key, oldValue != null ? oldValue : (long) 0, newValue != null ? newValue : (long) 0);
+        return this.replace(key, oldValue != null ? oldValue.longValue() : (long) 0, newValue != null ? newValue.longValue() : (long) 0);
     }
 
     long computeIfAbsentRaw(K key, @NotNull Function<? super K, ? extends Long> mappingFunction);
@@ -121,6 +128,13 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     long merge(K key, long value, @NotNull LongLongBiFunction<? extends Long> remappingFunction);
 
+    long update(K key, @NotNull LongUnaryOperator updateFunction);
+
+    @Nullable
+    default Long update(K key, @NotNull UnaryOperator<Long> updateFunction) {
+        return this.update(key, (long l_t) -> updateFunction.apply(l_t));
+    }
+
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
@@ -128,7 +142,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
     default Long merge(K key, @NotNull Long value, @NotNull BiFunction<? super Long, ? super Long, ? extends Long> remappingFunction) {
         Objects.requireNonNull(value);
         Objects.requireNonNull(remappingFunction);
-        return this.merge(key, value, (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key, value.longValue(), (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     long remapping(K key, @NotNull ObjLongBiFunction<? super K, ? extends K> remappingFunction, LongLongBiFunction<? extends Long> mergeFunction);
@@ -193,7 +207,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      */
     @Deprecated
     default Long setDefaultReturnValue(Long newDefault) {
-        return this.setDefaultReturnValue(newDefault != null ? newDefault : (long) 0);
+        return this.setDefaultReturnValue(newDefault != null ? newDefault.longValue() : (long) 0);
     }
 
     @NotNull LongCollection values();
@@ -211,7 +225,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
     interface Entry<K> extends Map.Entry<K, Long> {
         long getRawValue();
 
-        long setValue(long value);
+        long setValue(long newValue);
 
         /**
          * @deprecated Please use the corresponding method that using primitive type.
@@ -226,7 +240,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
          */
         @Deprecated
         default Long setValue(Long value) {
-            return this.setValue(value != null ? value : (long) 0);
+            return this.setValue(value != null ? value.longValue() : (long) 0);
         }
     }
 }

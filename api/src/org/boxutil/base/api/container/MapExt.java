@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 
 /**
  * For any key or value is {@code null}, it should be treated as {@code 0}
@@ -37,6 +38,76 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      */
     default V setDefaultReturnValue(@Nullable V newDefault) {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Updates the mapping for the specified key using the given update function.
+     * If the specified key is not already associated with a value, the update
+     * function is applied to {@code null}; otherwise, it is applied to the
+     * current value. The resulting value is then associated with the specified
+     * key, regardless of whether it is {@code null}.
+     *
+     * <p>If the update function returns {@code null}, the mapping for the
+     * specified key is set to {@code null} (if this map permits null values);
+     * the mapping is not removed. This differs from
+     * {@link Map#compute(Object, java.util.function.BiFunction)}, which removes
+     * the mapping when the remapping function returns {@code null}.
+     *
+     * <p>If the specified key is not present, and this map can also return a
+     * default return value, the update function receives that value instead
+     * of {@code null}.
+     *
+     * <p>If the update function itself throws an (unchecked) exception, the
+     * exception is rethrown, and the mapping is left unchanged.
+     *
+     * <p>The update function should not modify this map during computation.
+     *
+     * @implSpec
+     * The default implementation is equivalent to performing the following steps
+     * for this map, then returning the resulting value:
+     *
+     * <pre> {@code
+     * V oldValue = get(key);
+     * V newValue = updateFunction.apply(oldValue);
+     * put(key, newValue);
+     * return newValue;
+     * }</pre>
+     *
+     * <p>The default implementation makes no guarantees about synchronization
+     * or atomicity properties of this method. Any implementation providing
+     * atomicity guarantees must override this method and document its
+     * concurrency properties.
+     *
+     * @param key key whose mapping is to be updated
+     * @param updateFunction the function to compute a new value from the current
+     *        value, or from {@code null} if the specified key is not present
+     * @return the new value associated with the specified key, which may be
+     *         {@code null}
+     * @throws UnsupportedOperationException if the {@code put} operation is not
+     *         supported by this map
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws ClassCastException if the class of the specified key or value
+     *         prevents it from being stored in this map
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws IllegalArgumentException if some property of the specified key
+     *         or value prevents it from being stored in this map
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws NullPointerException if {@code updateFunction} is {@code null},
+     *         or if the specified key is {@code null} and this map does not
+     *         permit null keys
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>),
+     *         or if the new value is {@code null} and this map does not permit
+     *         null values
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     */
+    default @Nullable V update(K key, @NotNull UnaryOperator<V> updateFunction) {
+        Objects.requireNonNull(updateFunction);
+
+        V oldValue = this.get(key);
+        // if the `get` method also can return a default value, directly use it
+        V newValue = updateFunction.apply(oldValue);
+        this.put(key, newValue);
+        return newValue;
     }
 
     /**
