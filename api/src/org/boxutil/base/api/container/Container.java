@@ -34,6 +34,29 @@ public interface Container {
     void reserve(int newMaxSize);
 
     /**
+     * Shrinks the capacity of this container to the smallest capacity that is
+     * sufficient to hold its current elements without requiring a resize. This
+     * operation releases unused internal storage and does not remove or change
+     * any elements. The exact resulting capacity is implementation-dependent
+     * and may be greater than or equal to the current number of elements.
+     *
+     * <p>If this container is a hash container, this operation might recompute
+     * the hash values of all keys and redistribute them among the buckets of the
+     * new table.
+     *
+     * <p>If the container is already at its minimum capacity, this method may
+     * have no effect.
+     *
+     * @throws UnsupportedOperationException if capacity is fixed or operation
+     *         is not supported by this container
+     * @see #resize(int)
+     * @see #reserve(int)
+     */
+    default void shrink() {
+        this.resize(2);
+    }
+
+    /**
      * Returns the current internal capacity of this container,
      * not the max store space.
      *
