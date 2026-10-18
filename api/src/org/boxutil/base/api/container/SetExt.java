@@ -78,25 +78,51 @@ public interface SetExt<E> extends Set<E>, Container {
 
     /**
      * Swaps the elements between this set and the specified set. After this
-     * operation, this set contains the elements previously held by the specified
-     * set, and the specified set contains the elements previously held by this
-     * set. If the specified set is the same as this set, the operation has no
-     * effect.
+     * operation, this set contains the elements previously held by the
+     * specified set, and the specified set contains the elements previously
+     * held by this set. If the specified set is the same as this set, the
+     * operation has no effect.
      *
      * <p>The specified set must be compatible with this set such that all
      * elements can be exchanged without altering their values.
      *
-     * @param source the set whose elements are to be exchanged with the elements
-     *        of this set
-     * @throws NullPointerException if the specified set is null
-     * @throws UnsupportedOperationException if the {@code add}, {@code remove},
-     *         or {@code clear} operation is not supported by this set or the
-     *         specified set
-     * @throws ClassCastException if the class of an element in the specified set
-     *         prevents it from being stored in this set, or vice versa
+     * <p>Unless {@code source} is this set, this operation is a structural
+     * modification. Iterators, spliterators, and other traversal objects
+     * previously obtained from either set are considered invalid after this
+     * operation; their subsequent behavior is unspecified, and they may throw
+     * {@link java.util.ConcurrentModificationException}. Previously obtained
+     * views may remain associated with the set object, but their validity,
+     * contents, and binding relationship after the swap are
+     * implementation-specific.
+     *
+     * <p><b>Implementation Note:</b> Implementations may perform the swap by
+     * exchanging internal data structures directly instead of transferring
+     * elements one by one. In that case, references to internal data obtained
+     * through implementation-specific means (if any) may observe the contents
+     * now held by the other set, and previously obtained views or iterators
+     * may be invalidated. This interface does not specify the identity,
+     * validity, or fail-fast behavior of such views, iterators, or internal
+     * references after a swap.
+     *
+     * @implSpec
+     * The default implementation always throws
+     * {@link UnsupportedOperationException}.
+     *
+     * @param source the set whose elements are to be exchanged with the
+     *        elements of this set
+     * @throws NullPointerException if the specified set is {@code null}
+     * @throws UnsupportedOperationException if the swap operation is not
+     *         supported by this set or the specified set; an implementation
+     *         that performs the swap using basic mutation operations may also
+     *         throw if those operations are unsupported
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws ClassCastException if the class of an element in the specified
+     *         set prevents it from being stored in this set, or vice versa
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      * @throws IllegalArgumentException if some property of an element in the
-     *         specified set prevents it from being stored in this set, or vice
-     *         versa
+     *         specified set prevents it from being stored in this set, or
+     *         vice versa
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
     default void swap(@NotNull Set<E> source) {
         throw new UnsupportedOperationException();

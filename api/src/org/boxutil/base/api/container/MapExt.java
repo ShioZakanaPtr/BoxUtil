@@ -221,25 +221,52 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
 
     /**
      * Swaps the mappings between this map and the specified map. After this
-     * operation, this map contains the mappings previously held by the specified
-     * map, and the specified map contains the mappings previously held by this
-     * map. If the specified map is the same as this map, the operation has no
-     * effect.
+     * operation, this map contains the mappings previously held by the
+     * specified map, and the specified map contains the mappings previously
+     * held by this map. If the specified map is the same as this map, the
+     * operation has no effect.
      *
      * <p>The specified map must be compatible with this map such that all
      * mappings can be exchanged without altering their keys or values.
      *
-     * @param source the map whose mappings are to be exchanged with the mappings
-     *        of this map
-     * @throws NullPointerException if the specified map is null
-     * @throws UnsupportedOperationException if the {@code put}, {@code remove},
-     *         or {@code clear} operation is not supported by this map or the
-     *         specified map
-     * @throws ClassCastException if the class of a key or value in the specified
-     *         map prevents it from being stored in this map, or vice versa
-     * @throws IllegalArgumentException if some property of a key or value in the
-     *         specified map prevents it from being stored in this map, or vice
-     *         versa
+     * <p>Unless {@code source} is this map, this operation is a structural
+     * modification. Iterators, spliterators, and other traversal objects
+     * previously obtained from either map are considered invalid after this
+     * operation; their subsequent behavior is unspecified, and they may throw
+     * {@link java.util.ConcurrentModificationException}. For maps, previously
+     * obtained {@code keySet}, {@code values}, and {@code entrySet} views may
+     * remain associated with the map object, but their iterators and contents
+     * after the swap are implementation-specific.
+     *
+     * <p><b>Implementation Note:</b> Implementations may perform the swap by
+     * exchanging internal data structures directly instead of transferring
+     * mappings one by one. In that case, references to internal data obtained
+     * through implementation-specific means (if any) may observe the contents
+     * now held by the other map, and previously obtained views or iterators
+     * may be invalidated. This interface does not specify the identity,
+     * validity, or fail-fast behavior of such views, iterators, or internal
+     * references after a swap.
+     *
+     * @implSpec
+     * The default implementation always throws
+     * {@link UnsupportedOperationException}.
+     *
+     * @param source the map whose mappings are to be exchanged with the
+     *        mappings of this map
+     * @throws NullPointerException if the specified map is {@code null}
+     * @throws UnsupportedOperationException if the swap operation is not
+     *         supported by this map or the specified map; an implementation
+     *         that performs the swap using basic mutation operations may also
+     *         throw if those operations are unsupported
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws ClassCastException if the class of a key or value in the
+     *         specified map prevents it from being stored in this map, or
+     *         vice versa
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws IllegalArgumentException if some property of a key or value in
+     *         the specified map prevents it from being stored in this map, or
+     *         vice versa
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
     default void swap(@NotNull Map<K, V> source) {
         throw new UnsupportedOperationException();

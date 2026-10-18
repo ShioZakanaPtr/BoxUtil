@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/BoxUtil.iml" filepath="$PROJECT_DIR$/BoxUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/api/api.iml" filepath="$PROJECT_DIR$/api/api.iml" />
       <module fileurl="file://$PROJECT_DIR$/backends/backends.iml" filepath="$PROJECT_DIR$/backends/backends.iml" />
+      <module fileurl="file://$PROJECT_DIR$/boxutil-collections/boxutil-collections.iml" filepath="$PROJECT_DIR$/boxutil-collections/boxutil-collections.iml" />
     </modules>
   </component>
 </project>

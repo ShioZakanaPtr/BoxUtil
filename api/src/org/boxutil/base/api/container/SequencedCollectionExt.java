@@ -2,6 +2,9 @@ package org.boxutil.base.api.container;
 
 import java.util.NoSuchElementException;
 
+/**
+ * From JDK 21
+ */
 public interface SequencedCollectionExt<E> extends CollectionExt<E> {
     /**
      * Gets the first element of this collection.
