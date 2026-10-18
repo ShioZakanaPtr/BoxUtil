@@ -36,6 +36,30 @@ public interface HashBehavior<K> extends Serializable {
     int hashing(int key);
 
     /**
+     * Computes the hash value for the given {@code byte} key by converting it
+     * to an {@code int} via {@link Byte#hashCode(byte)} and delegating to
+     * {@link #hashing(int)}.
+     *
+     * @param key the {@code byte} key
+     * @return the computed hash value
+     */
+    default int hashing(byte key) {
+        return this.hashing(Byte.hashCode(key));
+    }
+
+    /**
+     * Computes the hash value for the given {@code short} key by converting it
+     * to an {@code int} via {@link Short#hashCode(short)} and delegating to
+     * {@link #hashing(int)}.
+     *
+     * @param key the {@code short} key
+     * @return the computed hash value
+     */
+    default int hashing(short key) {
+        return this.hashing(Short.hashCode(key));
+    }
+
+    /**
      * Computes the hash value for the given {@code long} key by converting it
      * to an {@code int} via {@link Long#hashCode(long)} and delegating to
      * {@link #hashing(int)}.
@@ -45,6 +69,42 @@ public interface HashBehavior<K> extends Serializable {
      */
     default int hashing(long key) {
         return this.hashing(Long.hashCode(key));
+    }
+
+    /**
+     * Computes the hash value for the given {@code char} key by converting it
+     * to an {@code int} via {@link Character#hashCode(char)} and delegating to
+     * {@link #hashing(int)}.
+     *
+     * @param key the {@code char} key
+     * @return the computed hash value
+     */
+    default int hashing(char key) {
+        return this.hashing(Character.hashCode(key));
+    }
+
+    /**
+     * Computes the hash value for the given {@code float} key by converting it
+     * to an {@code int} via {@link Float#hashCode(float)} and delegating to
+     * {@link #hashing(int)}.
+     *
+     * @param key the {@code float} key
+     * @return the computed hash value
+     */
+    default int hashing(float key) {
+        return this.hashing(Float.hashCode(key));
+    }
+
+    /**
+     * Computes the hash value for the given {@code double} key by converting it
+     * to an {@code int} via {@link Double#hashCode(double)} and delegating to
+     * {@link #hashing(int)}.
+     *
+     * @param key the {@code double} key
+     * @return the computed hash value
+     */
+    default int hashing(double key) {
+        return this.hashing(Double.hashCode(key));
     }
 
     /**
@@ -72,6 +132,30 @@ public interface HashBehavior<K> extends Serializable {
     }
 
     /**
+     * Determines whether two {@code byte} keys are equal. The default
+     * implementation uses the {@code ==} operator.
+     *
+     * @param src the input query key
+     * @param dst the existed key in container or special value
+     * @return {@code true} if the keys are equal; {@code false} otherwise
+     */
+    default boolean equals(byte src, byte dst) {
+        return src == dst;
+    }
+
+    /**
+     * Determines whether two {@code short} keys are equal. The default
+     * implementation uses the {@code ==} operator.
+     *
+     * @param src the input query key
+     * @param dst the existed key in container or special value
+     * @return {@code true} if the keys are equal; {@code false} otherwise
+     */
+    default boolean equals(short src, short dst) {
+        return src == dst;
+    }
+
+    /**
      * Determines whether two {@code int} keys are equal. The default
      * implementation uses the {@code ==} operator.
      *
@@ -92,6 +176,42 @@ public interface HashBehavior<K> extends Serializable {
      * @return {@code true} if the keys are equal; {@code false} otherwise
      */
     default boolean equals(long src, long dst) {
+        return src == dst;
+    }
+
+    /**
+     * Determines whether two {@code char} keys are equal. The default
+     * implementation uses the {@code ==} operator.
+     *
+     * @param src the input query key
+     * @param dst the existed key in container or special value
+     * @return {@code true} if the keys are equal; {@code false} otherwise
+     */
+    default boolean equals(char src, char dst) {
+        return src == dst;
+    }
+
+    /**
+     * Determines whether two {@code float} keys are equal. The default
+     * implementation uses the {@code ==} operator.
+     *
+     * @param src the input query key
+     * @param dst the existed key in container or special value
+     * @return {@code true} if the keys are equal; {@code false} otherwise
+     */
+    default boolean equals(float src, float dst) {
+        return src == dst;
+    }
+
+    /**
+     * Determines whether two {@code double} keys are equal. The default
+     * implementation uses the {@code ==} operator.
+     *
+     * @param src the input query key
+     * @param dst the existed key in container or special value
+     * @return {@code true} if the keys are equal; {@code false} otherwise
+     */
+    default boolean equals(double src, double dst) {
         return src == dst;
     }
 

@@ -70,6 +70,10 @@ public final class HashBehaviorFactory {
             return Long.hashCode(HashBehavior.hashing_Fibonacci_64(key));
         }
 
+        public int hashing(double key) {
+            return Long.hashCode(HashBehavior.hashing_Fibonacci_64(Double.doubleToLongBits(key)));
+        }
+
         public int hashing(@Nullable Object key) {
             return HashBehavior.hashing_Fibonacci(key);
         }
@@ -84,6 +88,10 @@ public final class HashBehaviorFactory {
             return Long.hashCode(HashBehavior.hashing_FibonacciMix_64(key));
         }
 
+        public int hashing(double key) {
+            return Long.hashCode(HashBehavior.hashing_FibonacciMix_64(Double.doubleToLongBits(key)));
+        }
+
         public int hashing(@Nullable Object key) {
             return HashBehavior.hashing_FibonacciMix(key);
         }
@@ -96,6 +104,10 @@ public final class HashBehaviorFactory {
 
         public int hashing(long key) {
             return Long.hashCode(HashBehavior.hashing_MurmurHash3_64(key));
+        }
+
+        public int hashing(double key) {
+            return Long.hashCode(HashBehavior.hashing_MurmurHash3_64(Double.doubleToLongBits(key)));
         }
 
         public int hashing(@Nullable Object key) {
