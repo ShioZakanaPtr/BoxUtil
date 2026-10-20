@@ -66,7 +66,7 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     @NotNull ShortSpliterator spliterator();
 
-    @NotNull short[] toRawArray();
+    @NotNull short[] toArrayRaw();
 
     @NotNull short[] toArray(@NotNull short[] a);
 }

@@ -144,7 +144,10 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     V update(byte key, @NotNull UnaryOperator<V> updateFunction);
 
-    @Nullable
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
     default V update(Byte key, @NotNull UnaryOperator<V> updateFunction) {
         return this.update(key != null ? key.byteValue() : (byte) 0, updateFunction);
     }
@@ -161,6 +164,16 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
         return this.remapping(key != null ? key.byteValue() : (byte) 0, (byte l_t, V l_u) -> remappingFunction.apply(l_t, l_u), (V l_t, V l_u) -> mergeFunction.apply(l_t, l_u));
     }
 
+    boolean swapAt(byte from, byte to);
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default boolean swapAt(Byte from, Byte to) {
+        return this.swapAt(from != null ? from.byteValue() : (byte) 0, to != null ? to.byteValue() : (byte) 0);
+    }
+
     boolean containsKey(byte key);
 
     /**
@@ -172,49 +185,49 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
         return this.containsKey(key != null ? ((Byte) key).byteValue() : (byte) 0);
     }
 
-    void forEach(ByteObjBiConsumer<? super V> action);
+    void forEach(@NotNull ByteObjBiConsumer<? super V> action);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default void forEach(BiConsumer<? super Byte, ? super V> action) {
+    default void forEach(@NotNull BiConsumer<? super Byte, ? super V> action) {
         Objects.requireNonNull(action);
         this.forEach((byte l_t, V l_u) -> action.accept(l_t, l_u));
     }
 
-    void replaceAll(ByteObjBiFunction<? super V, ? extends V> function);
+    void replaceAll(@NotNull ByteObjBiFunction<? super V, ? extends V> function);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default void replaceAll(BiFunction<? super Byte, ? super V, ? extends V> function) {
+    default void replaceAll(@NotNull BiFunction<? super Byte, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
         this.replaceAll((byte l_t, V l_u) -> function.apply(l_t, l_u));
     }
 
     @NotNull ByteSet keySet();
 
-    @NotNull SetExt<ByteObjMap.Entry<V>> rawEntrySet();
+    @NotNull SetExt<ByteObjMap.Entry<V>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
     default @NotNull SetExt<Map.Entry<Byte, V>> entrySet() {
-        return (SetExt) this.rawEntrySet();
+        return (SetExt) this.entrySetRaw();
     }
 
     interface Entry<V> extends Map.Entry<Byte, V> {
-        byte getRawKey();
+        byte getKeyRaw();
 
         /**
          * @deprecated Please use the corresponding method that using primitive type.
          */
         @Deprecated
         default Byte getKey() {
-            return this.getRawKey();
+            return this.getKeyRaw();
         }
     }
 }

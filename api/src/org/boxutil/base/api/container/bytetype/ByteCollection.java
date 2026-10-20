@@ -66,7 +66,7 @@ public interface ByteCollection extends CollectionExt<Byte>, ByteIterable {
 
     @NotNull ByteSpliterator spliterator();
 
-    @NotNull byte[] toRawArray();
+    @NotNull byte[] toArrayRaw();
 
     @NotNull byte[] toArray(@NotNull byte[] a);
 }

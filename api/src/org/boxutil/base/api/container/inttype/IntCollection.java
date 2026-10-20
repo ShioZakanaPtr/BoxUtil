@@ -69,12 +69,12 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     @NotNull IntSpliterator spliterator();
 
-    @NotNull int[] toRawArray();
+    @NotNull int[] toArrayRaw();
 
     @NotNull int[] toArray(@NotNull int[] a);
 
     @NotNull
-    default IntStream rawStream() {
+    default IntStream streamRaw() {
         return StreamSupport.intStream(this.spliterator(), false);
     }
 
@@ -88,7 +88,7 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
     }
 
     @NotNull
-    default IntStream rawParallelStream() {
+    default IntStream parallelStreamRaw() {
         return StreamSupport.intStream(this.spliterator(), true);
     }
 

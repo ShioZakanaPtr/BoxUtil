@@ -69,12 +69,12 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     @NotNull LongSpliterator spliterator();
 
-    @NotNull long[] toRawArray();
+    @NotNull long[] toArrayRaw();
 
     @NotNull long[] toArray(@NotNull long[] a);
 
     @NotNull
-    default LongStream rawStream() {
+    default LongStream streamRaw() {
         return StreamSupport.longStream(this.spliterator(), false);
     }
 
@@ -88,7 +88,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
     }
 
     @NotNull
-    default LongStream rawParallelStream() {
+    default LongStream parallelStreamRaw() {
         return StreamSupport.longStream(this.spliterator(), true);
     }
 

@@ -44,7 +44,7 @@ public interface ByteLongMap extends MapExt<Byte, Long> {
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @Nullable Long put(Byte key, Long value) {
+    default Long put(Byte key, Long value) {
         return this.put(key != null ? key.byteValue() : (byte) 0, value != null ? value.longValue() : (long) 0);
     }
 
@@ -148,9 +148,15 @@ public interface ByteLongMap extends MapExt<Byte, Long> {
 
     long update(byte key, @NotNull LongUnaryOperator updateFunction);
 
-    @Nullable
-    default Long update(Byte key, @NotNull UnaryOperator<Long> updateFunction) {
-        return this.update(key, (long l_t) -> updateFunction.apply(l_t));
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default Long update(Byte key, @NotNull Function<? super Long, ? extends Long> updateFunction) {
+        return this.update(key, (long l_t) -> {
+            final Long result = updateFunction.apply(l_t);
+            return result != null ? result : (long) 0;
+        });
     }
 
     long remapping(byte key, @NotNull ByteLongBiFunction<? extends Byte> remappingFunction, LongLongBiFunction<? extends Long> mergeFunction);
@@ -165,6 +171,16 @@ public interface ByteLongMap extends MapExt<Byte, Long> {
         return this.remapping(key != null ? key.byteValue() : (byte) 0, (byte l_t, long l_u) -> remappingFunction.apply(l_t, l_u), (long l_t, long l_u) -> mergeFunction.apply(l_t, l_u));
     }
 
+    boolean swapAt(byte from, byte to);
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default boolean swapAt(Byte from, Byte to) {
+        return this.swapAt(from != null ? from.byteValue() : (byte) 0, to != null ? to.byteValue() : (byte) 0);
+    }
+
     boolean containsKey(byte key);
 
     /**
@@ -176,7 +192,7 @@ public interface ByteLongMap extends MapExt<Byte, Long> {
         return this.containsKey(key != null ? ((Byte) key).byteValue() : (byte) 0);
     }
 
-    boolean containsValue(byte value);
+    boolean containsValue(long value);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
@@ -233,28 +249,28 @@ public interface ByteLongMap extends MapExt<Byte, Long> {
 
     @NotNull LongCollection values();
 
-    @NotNull SetExt<Entry> rawEntrySet();
+    @NotNull SetExt<Entry> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
     default @NotNull SetExt<Map.Entry<Byte, Long>> entrySet() {
-        return (SetExt) this.rawEntrySet();
+        return (SetExt) this.entrySetRaw();
     }
 
     interface Entry extends Map.Entry<Byte, Long> {
-        byte getRawKey();
+        byte getKeyRaw();
 
         /**
          * @deprecated Please use the corresponding method that using primitive type.
          */
         @Deprecated
         default Byte getKey() {
-            return this.getRawKey();
+            return this.getKeyRaw();
         }
 
-        long getRawValue();
+        long getValueRaw();
 
         long setValue(long newValue);
 
@@ -263,7 +279,7 @@ public interface ByteLongMap extends MapExt<Byte, Long> {
          */
         @Deprecated
         default Long getValue() {
-            return this.getRawValue();
+            return this.getValueRaw();
         }
 
         /**

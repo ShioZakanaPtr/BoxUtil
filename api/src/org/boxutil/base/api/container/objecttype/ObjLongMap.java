@@ -41,7 +41,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @Nullable Long put(K key, Long value) {
+    default Long put(K key, Long value) {
         return this.put(key, value != null ? value.longValue() : (long) 0);
     }
 
@@ -127,13 +127,6 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     long merge(K key, long value, @NotNull LongLongBiFunction<? extends Long> remappingFunction);
 
-    long update(K key, @NotNull LongUnaryOperator updateFunction);
-
-    @Nullable
-    default Long update(K key, @NotNull UnaryOperator<Long> updateFunction) {
-        return this.update(key, (long l_t) -> updateFunction.apply(l_t));
-    }
-
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
@@ -142,6 +135,19 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
         Objects.requireNonNull(value);
         Objects.requireNonNull(remappingFunction);
         return this.merge(key, value.longValue(), (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
+    }
+
+    long update(K key, @NotNull LongUnaryOperator updateFunction);
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default Long update(K key, @NotNull Function<? super Long, ? extends Long> updateFunction) {
+        return this.update(key, (long l_t) -> {
+            final Long result = updateFunction.apply(l_t);
+            return result != null ? result : (long) 0;
+        });
     }
 
     long remapping(K key, @NotNull ObjLongBiFunction<? super K, ? extends K> remappingFunction, LongLongBiFunction<? extends Long> mergeFunction);
@@ -167,24 +173,24 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
         return this.containsValue(value != null ? ((Long) value).longValue() : (long) 0);
     }
 
-    void forEach(ObjLongBiConsumer<? super K> action);
+    void forEach(@NotNull ObjLongBiConsumer<? super K> action);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default void forEach(BiConsumer<? super K, ? super Long> action) {
+    default void forEach(@NotNull BiConsumer<? super K, ? super Long> action) {
         Objects.requireNonNull(action);
         this.forEach((K l_t, long l_u) -> action.accept(l_t, l_u));
     }
 
-    void replaceAll(ObjLongBiOperator<? super K> function);
+    void replaceAll(@NotNull ObjLongBiOperator<? super K> function);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default void replaceAll(BiFunction<? super K, ? super Long, ? extends Long> function) {
+    default void replaceAll(@NotNull BiFunction<? super K, ? super Long, ? extends Long> function) {
         Objects.requireNonNull(function);
         this.replaceAll((K l_t, long l_u) -> function.apply(l_t, l_u));
     }
@@ -211,18 +217,18 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     @NotNull LongCollection values();
 
-    @NotNull SetExt<ObjLongMap.Entry<K>> rawEntrySet();
+    @NotNull SetExt<ObjLongMap.Entry<K>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
     default @NotNull SetExt<Map.Entry<K, Long>> entrySet() {
-        return (SetExt) this.rawEntrySet();
+        return (SetExt) this.entrySetRaw();
     }
 
     interface Entry<K> extends Map.Entry<K, Long> {
-        long getRawValue();
+        long getValueRaw();
 
         long setValue(long newValue);
 
@@ -231,7 +237,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
          */
         @Deprecated
         default Long getValue() {
-            return this.getRawValue();
+            return this.getValueRaw();
         }
 
         /**

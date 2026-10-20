@@ -20,8 +20,7 @@ import java.util.Objects;
  */
 @FunctionalInterface
 public interface HashBehavior<K> extends Serializable {
-    int DEFAULT_INITIAL_CAPACITY = 1 << 5;
-    int MAXIMUM_CAPACITY = 1 << 30;
+    int DEFAULT_INITIAL_CAPACITY = 1 << 4;
     float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
@@ -213,6 +212,21 @@ public interface HashBehavior<K> extends Serializable {
      */
     default boolean equals(double src, double dst) {
         return src == dst;
+    }
+
+    /**
+     * Mix the hash value of two {@code double} keys. The default implementation
+     * is {@code left + right * 31}.
+     *
+     * <p>For multi key such as {@link BiMap}, will only use the first behavior
+     * to mix the two keys.
+     *
+     * @param left the first input hash
+     * @param right the second input hash
+     * @return the mixed hash about input keys
+     */
+    default int mix(int left, int right) {
+        return left + right * 31;
     }
 
     /**

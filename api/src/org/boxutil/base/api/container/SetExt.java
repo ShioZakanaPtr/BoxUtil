@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * For any element is {@code null}, it should be treated as {@code 0}
+ * Typically, for any element is {@code null}, it should be treated as {@code 0}
  * or {@code Number(0)} if the element was specific primitive
  * type that the Set implementation defined.
  */

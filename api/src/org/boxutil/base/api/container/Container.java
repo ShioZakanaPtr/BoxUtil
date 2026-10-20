@@ -5,6 +5,8 @@ package org.boxutil.base.api.container;
  * resizing function that can be control it.
  */
 public interface Container {
+    int MAXIMUM_CAPACITY = 1 << 30;
+
     /**
      * Resizing this container to have the specified new capacity. If this
      * container is a hash container, this operation might recompute the hash

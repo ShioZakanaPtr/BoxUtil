@@ -6,40 +6,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
 /**
- * For any key or value is {@code null}, it should be treated as {@code 0}
+ * Typically, for any key or value is {@code null}, it should be treated as {@code 0}
  * if the key was specific primitive type that the Map implementation defined.
- * <p>For any value is {@code 0}, it also be treated as {@code null} if the
- * value was specific primitive type that the Map implementation defined.
+ * <p>However, for any value is {@code 0}, it not be treated as {@code null}
+ * if the value was specific primitive type that the Map implementation defined.
  */
 public interface MapExt<K, V> extends Map<K, V>, Container {
-    /**
-     * Returns the default return value used when a query does not find a mapping
-     * in this container. By default, this value is {@code null} or {@code 0}, but
-     * implementations may allow customization via {@link #setDefaultReturnValue(V)}.
-     *
-     * @return the default return value
-     */
-    default V getDefaultReturnValue() {
-        return null;
-    }
-
-    /**
-     * Sets the default return value used when a query does not find a mapping in
-     * this container. This value will be returned by query methods such
-     * as {@code get} when the key is absent.
-     *
-     * @param newDefault the new default return value
-     * @return the previous default return value
-     * @throws UnsupportedOperationException if this map using a fixed default
-     *         return value.
-     */
-    default V setDefaultReturnValue(@Nullable V newDefault) {
-        throw new UnsupportedOperationException();
-    }
-
     /**
      * Updates the mapping for the specified key using the given update function.
      * If the specified key is not already associated with a value, the update
@@ -100,7 +75,7 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      *         null values
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default @Nullable V update(K key, @NotNull UnaryOperator<V> updateFunction) {
+    default V update(K key, @NotNull Function<? super V, ? extends V> updateFunction) {
         Objects.requireNonNull(updateFunction);
 
         V oldValue = this.get(key);
@@ -269,6 +244,103 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
     default void swap(@NotNull Map<K, V> source) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Swaps the values associated with the specified keys. If both keys are
+     * present in this map, the value associated with {@code from} is associated
+     * with {@code to}, and the value associated with {@code to} is associated
+     * with {@code from}; then {@code true} is returned. If either key is not
+     * present, this map is left unchanged and {@code false} is returned. If
+     * {@code from} and {@code to} are equal, this operation has no effect; it
+     * returns {@code true} if that key is present, and {@code false}
+     * otherwise.
+     *
+     * <p>This operation does not change the set of keys in this map, nor does
+     * it add or remove any mapping. If both keys are present, only the values
+     * associated with them are exchanged. If {@code from} and {@code to} are
+     * equal, no mapping is changed.
+     *
+     * <p>If the {@code put} operation throws an exception after the first
+     * value has been stored, the mappings may be left in an inconsistent
+     * state. The default implementation makes no guarantees about
+     * synchronization or atomicity properties of this method. Any
+     * implementation providing atomicity guarantees must override this method
+     * and document its concurrency properties.
+     *
+     * @implSpec
+     * The default implementation is equivalent to performing the following
+     * steps for this map, then returning the resulting value:
+     *
+     * <pre> {@code
+     * if (!(containsKey(from) && containsKey(to))) {
+     *     return false;
+     * }
+     * V left = get(from);
+     * V right = get(to);
+     * put(to, left);
+     * put(from, right);
+     * return true;
+     * }</pre>
+     *
+     * <p>The default implementation makes no guarantees about synchronization
+     * or atomicity properties of this method. Any implementation providing
+     * atomicity guarantees must override this method and document its
+     * concurrency properties.
+     *
+     * @param from the key whose value is to be exchanged with the value of
+     *        {@code to}
+     * @param to the key whose value is to be exchanged with the value of
+     *        {@code from}
+     * @return {@code true} if both keys were present and their values were
+     *         exchanged, or if {@code from} equals {@code to} and that key is
+     *         present; {@code false} if at least one key was not present
+     * @throws NullPointerException if {@code from} or {@code to} is
+     *         {@code null} and this map does not permit null keys
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws UnsupportedOperationException if the {@code put} operation is not
+     *         supported by this map and both keys are present, including the
+     *         case where {@code from} equals {@code to} and that key is present
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws ClassCastException if the class of a key or value prevents it
+     *         from being stored in this map
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws IllegalArgumentException if some property of a key or value
+     *         prevents it from being stored in this map
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     */
+    default boolean swapAt(K from, K to) {
+        if (!(this.containsKey(from) && this.containsKey(to))) return false;
+        V left = this.get(from);
+        V right = this.get(to);
+        this.put(from, right);
+        this.put(to, left);
+        return true;
+    }
+
+    /**
+     * Returns the default return value used when a query does not find a mapping
+     * in this container. By default, this value is {@code null} or {@code 0}, but
+     * implementations may allow customization via {@link #setDefaultReturnValue(V)}.
+     *
+     * @return the default return value
+     */
+    default V getDefaultReturnValue() {
+        return null;
+    }
+
+    /**
+     * Sets the default return value used when a query does not find a mapping in
+     * this container. This value will be returned by query methods such
+     * as {@code get} when the key is absent.
+     *
+     * @param newDefault the new default return value
+     * @return the previous default return value
+     * @throws UnsupportedOperationException if this map using a fixed default
+     *         return value.
+     */
+    default V setDefaultReturnValue(@Nullable V newDefault) {
         throw new UnsupportedOperationException();
     }
 
