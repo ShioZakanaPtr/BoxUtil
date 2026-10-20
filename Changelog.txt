@@ -10,8 +10,8 @@ v1.6.4 / 2026.10.32
     GPUMemoryPool 部分操作现在会使用 glFinish 强制确保后续操作安全
     现在渲染类在 hasDelete 返回 true 时，会从渲染专用列表中移除
 
-    于 org.boxutil.base.api.container 新增以原始类型为 key 或 value，且拓展了功能的相关容器接口
-    于 org.boxutil.util.container 新增原始类型为 key 的容器实现类，与相较于JDK实现改进的 value 为原始类型的容器实现类
+    于 org.boxutil.base.api.container 新增 key 或 value 为原始类型，且拓展了功能的相关容器接口
+    于 org.boxutil.util.container 新增该次更新对应接口的容器实现类
     于 org.boxutil.util.function 新增原始类型相关的特化函数式接口
 
     RenderDataAPI 现在reset调用后会对以往一些不受任何reset的设置起效，其他Entity类或功能接口同等
