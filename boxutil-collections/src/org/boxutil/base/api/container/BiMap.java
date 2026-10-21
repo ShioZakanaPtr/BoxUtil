@@ -203,11 +203,11 @@ public interface BiMap<X, Y, V> extends Container {
 
     boolean isEmpty();
 
-    CollectionExt<X> firstKeySet();
+    CollectionExt<X> firstKeyCollection();
 
-    CollectionExt<Y> secondKeySet();
+    CollectionExt<Y> secondKeyCollection();
 
-    CollectionExt<V> values();
+    CollectionExt<V> valueCollection();
 
     SetExt<BiEntry<X, Y, V>> entrySet();
 

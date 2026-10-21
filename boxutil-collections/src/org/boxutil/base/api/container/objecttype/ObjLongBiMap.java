@@ -219,7 +219,7 @@ public interface ObjLongBiMap<X, Y> extends BiMap<X, Y, Long> {
         return this.setDefaultReturnValue(newDefault != null ? newDefault.longValue() : (long) 0);
     }
 
-    LongCollection values();
+    LongCollection valueCollection();
 
     SetExt<ObjLongBiMap.BiEntry<X, Y>> entrySetRaw();
 
