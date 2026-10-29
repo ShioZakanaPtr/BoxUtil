@@ -1,113 +1,63 @@
 package org.boxutil.backends.util;
 
-import org.boxutil.base.api.container.HashBehavior;
-import org.boxutil.define.BoxEnum;
-import org.boxutil.util.CalculateUtil;
+import org.boxutil.base.api.container.inttype.IntByteMap;
+import org.boxutil.util.CollectionUtil;
+import org.boxutil.util.HashingUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Map;
-
 public class BUtil_GlyphKerningMap {
-    protected final int capacity;
+    protected final boolean withNullKey;
     protected final int size;
     protected final int posMask;
-    protected final byte[] state;
-    protected final byte[] val;
-    protected final int[] key;
+    protected final byte[] valueTable;
+    protected final int[] keyTable;
 
     /**
      * @param loadFactor 0.7~0.8
      */
-    public BUtil_GlyphKerningMap(@NotNull final Map<Integer, Byte> src, float loadFactor) {
-        final int totalKerning = src.size();
-        if (totalKerning < 2) {
-            this.size = totalKerning;
-            this.capacity = 2;
-            this.posMask = 1;
-            this.state = new byte[2];
-            this.val = new byte[2];
-            this.key = new int[2];
-            this.state[0] = this.state[1] = BoxEnum.NEG_ONE;
-            this.key[0] = this.key[1] = -1;
-            if (totalKerning != 0)  {
-                final var entry = src.entrySet().iterator().next();
-                final int pos = HashBehavior.hashing_HashMap(entry.getKey()) & this.posMask;
-                this.state[pos] = 0;
-                this.key[pos] = entry.getKey();
-                this.val[pos] = entry.getValue();
-            }
+    public BUtil_GlyphKerningMap(@NotNull final IntByteMap src, float loadFactor, boolean withZeroKerning) {
+        final int totalKerning = this.size = src.size();
+        this.withNullKey = withZeroKerning;
+        if (totalKerning < 1) {
+            this.posMask = 0;
+            this.valueTable = null;
+            this.keyTable = null;
         } else {
-            final int potCap = CalculateUtil.getPOTMax(totalKerning);
-            this.size = totalKerning;
-            this.capacity = ((float) this.size / (float) potCap) > Math.max(Math.min(loadFactor, 0.8f), 0.2f) ? (potCap << 1) : potCap;
-            this.posMask = this.capacity - 1;
+            final int capacity = CollectionUtil.getHashTableCapacity(Math.max(totalKerning, 2), loadFactor);
+            this.posMask = capacity - 1;
 
-            this.state = new byte[this.capacity];
-            this.val = new byte[this.capacity];
-            this.key = new int[this.capacity];
-            Arrays.fill(this.state, BoxEnum.NEG_ONE);
-            Arrays.fill(this.key, -1);
+            this.valueTable = new byte[capacity + 1];
+            this.keyTable = new int[capacity];
+            src.forEach((int l_key, byte l_value) -> {
+                if (l_key == 0) {
+                    this.valueTable[capacity] = l_value;
+                    return;
+                }
 
-            src.forEach(this::init_put);
+                final int[] keyL = this.keyTable;
+                int pos = HashingUtil.fibonacciBit32(l_key);
+                for (int currKey; (currKey = keyL[pos &= this.posMask]) != 0; pos++) {
+                    if (l_key == currKey) {
+                        this.valueTable[pos] = l_value;
+                        return;
+                    }
+                }
+                keyL[pos] = l_key;
+                this.valueTable[pos] = l_value;
+            });
         }
-    }
-
-    private void init_put(int key, byte value) {
-        final byte[] stateL = this.state;
-        final byte[] valL = this.val;
-        final int[] keyL = this.key;
-        int pos, currKey;
-        if ((currKey = keyL[pos = HashBehavior.hashing_HashMap(key) & this.posMask]) == -1) {
-            stateL[pos] = 0;
-            keyL[pos] = key;
-            valL[pos] = value;
-            return;
-        }
-
-        byte currPsl = 0, currState;
-        do {
-            if (currKey == key) {
-                valL[pos] = value;
-                return;
-            }
-            if (currPsl > (currState = stateL[pos]) && currState > -1) {
-                final byte tmpState = stateL[pos], tmpValue = valL[pos];
-
-                stateL[pos] = currPsl;
-                currPsl = tmpState;
-                keyL[pos] = key;
-                key = currKey;
-                valL[pos] = value;
-                value = tmpValue;
-            }
-            if (++currPsl < -1) {
-                return; // got next psl and check => -1 bug, discard it
-            }
-        } while ((currKey = keyL[pos = (pos + 1) & this.posMask]) != -1);
-
-        stateL[pos] = currPsl;
-        valL[pos] = value;
-        keyL[pos] = key;
     }
 
     public byte get(char first, char second) {
+        if (this.size < 1) return 0;
         final int key = fetchKey(first, second);
+        if (key == 0) return this.withNullKey ? this.valueTable[this.valueTable.length - 1] : 0;
 
-        int pos = HashBehavior.hashing_HashMap(key), currKey;
-        final int[] keyL = this.key;
-        final byte[] stateL = this.state;
-        byte currPsl = 0;
-        while (true) {
-            if ((currKey = keyL[pos &= this.posMask]) == 0) return 0;
-            if (key == currKey) return this.val[pos];
-            if (++currPsl < -1 || stateL[pos] < currPsl) return 0;
-            pos++;
+        int currKey;
+        for (int pos = HashingUtil.fibonacciBit32(key); (currKey = this.keyTable[pos &= this.posMask]) != 0; pos++) {
+            if (key == currKey) return this.valueTable[pos];
         }
-    }
-
-    public int capacity() {
-        return this.capacity;
+        return 0;
     }
 
     public int size() {

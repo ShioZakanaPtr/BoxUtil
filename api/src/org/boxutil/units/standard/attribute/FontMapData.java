@@ -5,9 +5,13 @@ import com.fs.starfarer.api.graphics.SpriteAPI;
 import org.boxutil.backends.util.BUtil_GlyphKerningMap;
 import org.boxutil.backends.util.BUtil_GlyphSet;
 import org.boxutil.backends.util.BUtil_Glyph;
+import org.boxutil.base.api.container.inttype.IntByteMap;
+import org.boxutil.base.api.container.objecttype.ObjSet;
 import org.boxutil.manager.FontDataManager;
 import org.boxutil.manager.TextureManager;
 import org.boxutil.units.standard.entity.TextFieldEntity;
+import org.boxutil.util.collection.inttype.IntByteLinearProbingHashMap;
+import org.boxutil.util.collection.objecttype.ObjLinearProbingHashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -60,9 +64,10 @@ public class FontMapData {
         final boolean[] stateBool = new boolean[4];
         final byte[] stateInteger = new byte[7];
         final short[] mapSize = new short[2];
-        final Set<BitMapGlyph> tmpFonts = new HashSet<>(256);
-        final Map<Integer, Byte> tmpKerning = new HashMap<>(128);
+        final ObjSet<BitMapGlyph> tmpFonts = new ObjLinearProbingHashSet<>(256);
+        final IntByteMap tmpKerning = new IntByteLinearProbingHashMap(128);
         BitMapGlyph tabGlyph = null, spaceGlyph = null;
+        boolean withZeroKerning = false;
         int charCountIn = 0, maxCharValue = Math.max('\t' & 0xffff, ' ' & 0xffff);
         try {
             fontFile = Global.getSettings().loadText(fontPath);
@@ -175,6 +180,7 @@ public class FontMapData {
                     final int fetchKerningKey = BUtil_GlyphKerningMap.fetchKey(first, second);
                     if (!kerningSpace.contains(first) && second == ' ') kerningSpace.add(first);
                     final byte finalAmount = amount;
+                    withZeroKerning |= fetchKerningKey == 0;
                     tmpKerning.computeIfAbsent(fetchKerningKey, k -> finalAmount);
                 }
             }
@@ -191,8 +197,8 @@ public class FontMapData {
                 tmpFonts.add(tabGlyph);
                 if (!kerningSpace.isEmpty()) {
                     for (final Character character : kerningSpace) {
-                        final Byte kerningValue = tmpKerning.get(BUtil_GlyphKerningMap.fetchKey(character, ' '));
-                        if (kerningValue != null && kerningValue != 0) {
+                        final byte kerningValue = tmpKerning.get(BUtil_GlyphKerningMap.fetchKey(character, ' '));
+                        if (kerningValue != 0) {
                             tmpKerning.put(BUtil_GlyphKerningMap.fetchKey(character, '\t'), kerningValue);
                         }
                     }
@@ -205,7 +211,7 @@ public class FontMapData {
         } finally {
             tmpFonts.add(_RESERVED_FONT);
             this.glyphs = new BUtil_GlyphSet<>(tmpFonts, maxCharValue, (byte) 3);
-            this.kerning = new BUtil_GlyphKerningMap(tmpKerning, 0.8f);
+            this.kerning = new BUtil_GlyphKerningMap(tmpKerning, 0.75f, withZeroKerning);
             this.fontSize = stateInteger[0];
             this.stretchH = stateInteger[1];
             this.aaLevel = stateInteger[2];
