@@ -8,12 +8,30 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * For any element is {@code null}, it should be treated as {@code 0}
- * or {@code Number(0)} if the element was specific primitive
- * type that the List implementation defined.
+ * For any element is {@code null}, it should be treated as {@code 0} or
+ * {@code Number(0)} if the element was specific primitive type that the
+ * List implementation defined.
  */
-public interface ListExt<E> extends List<E>, SequencedCollectionExt<E>, Container {
-    int DEFAULT_INITIAL_CAPACITY = 1 << 3;
+public interface ListExt<E> extends List<E>, Container {
+    // For compatibility
+    default E getFirst() {
+        return this.get(0);
+    }
+
+    // For compatibility
+    default E getLast() {
+        return this.get(this.size() - 1);
+    }
+
+    // For compatibility
+    default void addFirst(E e) {
+        this.add(0, e);
+    }
+
+    // For compatibility
+    default void addLast(E e) {
+        this.add(e);
+    }
 
     /**
      * Removes the element at the specified position in this list (optional
@@ -187,6 +205,16 @@ public interface ListExt<E> extends List<E>, SequencedCollectionExt<E>, Containe
         return this.removeElement(o);
     }
 
+    // For compatibility
+    default E removeFirst() {
+        return this.removeAt(0);
+    }
+
+    // For compatibility
+    default E removeLast() {
+        return this.removeAt(this.size() - 1);
+    }
+
     /**
      * Updates the element at the specified index using the given update
      * function. The current value is obtained from {@code get(index)}; no
@@ -296,9 +324,10 @@ public interface ListExt<E> extends List<E>, SequencedCollectionExt<E>, Containe
      *        elements of this list
      * @throws NullPointerException if the specified list is {@code null}
      * @throws UnsupportedOperationException if the swap operation is not
-     *         supported by this list or the specified list; an implementation
-     *         that performs the swap using basic mutation operations may also
-     *         throw if those operations are unsupported
+     *         supported by this list or the specified list, or this list was
+     *         a sub list; an implementation that performs the swap using basic
+     *         mutation operations may also throw if those operations are
+     *         unsupported
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      * @throws ClassCastException if the class of an element in the specified
      *         list prevents it from being stored in this list, or vice versa
@@ -440,6 +469,11 @@ public interface ListExt<E> extends List<E>, SequencedCollectionExt<E>, Containe
      * processed is the element that moves into the current position. If
      * {@code fromIndex == toIndex}, this operation has no effect.
      *
+     * <p>Returns {@code true} if this operation removed at least one element
+     * from this list, i.e. if it caused a structural modification by removal.
+     * Replacing an element with a non-null value via {@code set} is not a
+     * structural modification.
+     *
      * <p>Unless the interval is empty or the operator returns a non-null value
      * for every element in the interval, this operation is a structural
      * modification. Iterators and other traversal objects previously obtained
@@ -457,12 +491,19 @@ public interface ListExt<E> extends List<E>, SequencedCollectionExt<E>, Containe
      * interval in order from {@code fromIndex} to {@code toIndex - 1}, applying
      * the operator to each element and either replacing or removing it
      * according to the result, while adjusting the current position after a
-     * removal so that no original element in the interval is skipped.
+     * removal so that no original element in the interval is skipped. The
+     * implementation must return {@code true} if and only if it removed at
+     * least one element while processing the interval.
      *
      * @param fromIndex the inclusive lower bound of the range to compute
      * @param toIndex the exclusive upper bound of the range to compute
      * @param operator the function to compute a new value for each element in
      *        the range; returning {@code null} causes the element to be removed
+     * @return {@code true} if at least one element was removed from this list by
+     *         this operation, i.e. the operation caused a structural
+     *         modification by removal; {@code false} if no element was removed,
+     *         including when the interval is empty or every element in the
+     *         interval was replaced with a non-null value
      * @throws NullPointerException if {@code operator} is {@code null}
      * @throws IndexOutOfBoundsException if {@code fromIndex < 0} or
      *         {@code toIndex > size()}
@@ -478,7 +519,8 @@ public interface ListExt<E> extends List<E>, SequencedCollectionExt<E>, Containe
      *         prevents it from being stored in this list
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default void computeRange(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+    default boolean computeRange(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+        boolean result = false;
         ListIterator<E> it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
             E newValue = operator.apply(it.next());
@@ -486,60 +528,68 @@ public interface ListExt<E> extends List<E>, SequencedCollectionExt<E>, Containe
                 it.set(newValue);
             } else {
                 it.remove();
+                result = true;
             }
         }
+        return result;
     }
 
     /**
-     * Inserts the elements from the specified range of {@code source} into this
-     * list at the specified position. The inserted elements are the elements
-     * {@code source[srcIndex]} through
-     * {@code source[srcIndex + length - 1]}, in that order. The element
-     * currently at {@code dstIndex}, if any, and any subsequent elements are
-     * shifted to the right. If {@code dstIndex == size()}, the elements are
-     * appended to the end of this list.
+     * Inserts the elements in the specified range of the specified array into
+     * this list at the specified position (optional operation). Shifts the
+     * element currently at that position (if any) and any subsequent elements
+     * to the right (increases their indices). The new elements appear in this
+     * list in the order they appear in the specified range of the array, with
+     * the element at {@code elements[srcIndex]} becoming the element at index
+     * {@code dstIndex} in this list.
      *
-     * <p>The size of this list is increased by {@code length}. If
-     * {@code length == 0}, this operation has no effect.
+     * <p>This method is equivalent in effect to
+     * {@link #addAll(int, java.util.Collection)} with the elements of the
+     * specified range of the array as its argument. The behavior of this
+     * operation is undefined if the specified array is modified while the
+     * operation is in progress.
      *
-     * <p>Unless {@code length} is zero, this operation is a structural
-     * modification. Iterators and other traversal objects previously obtained
-     * from this list are considered invalid after this operation; their
-     * subsequent behavior is unspecified, and they may throw
-     * {@link java.util.ConcurrentModificationException}.
+     * <p>If {@code length} is zero, this method returns {@code false}. If
+     * {@code length} is negative, this method inserts no elements and returns
+     * {@code false}. In either case, {@code dstIndex} must still be within the
+     * range {@code [0, size()]}.
      *
-     * @param dstIndex the index at which the first inserted element is to be
-     *        placed; must be between {@code 0} and {@code size()}, inclusive
-     * @param source the array containing the elements to insert
-     * @param srcIndex the inclusive lower bound of the range in {@code source}
-     * @param length the number of elements to insert from {@code source}
-     * @throws NullPointerException if {@code source} is {@code null}
-     * @throws IndexOutOfBoundsException if {@code dstIndex < 0} or
-     *         {@code dstIndex > size()}, or if {@code srcIndex < 0},
-     *         {@code length < 0}, or
-     *         {@code srcIndex + length > source.length}
+     * <p>If this list does not permit {@code null} elements and the specified
+     * range contains a {@code null} element, this method may throw
+     * {@link NullPointerException} when that element is inserted.
+     *
+     * @param dstIndex index at which to insert the first element from the
+     *        specified range; must be between {@code 0} (inclusive) and
+     *        {@code size()} (inclusive)
+     * @param elements the array containing the elements to be inserted into this
+     *        list
+     * @param srcIndex the index of the first element in {@code elements} to
+     *        insert
+     * @param length the number of elements to insert; if zero or negative, no
+     *        elements are inserted
+     * @return {@code true} if this list changed as a result of the call
+     * @throws NullPointerException if {@code elements} is {@code null}, or if the
+     *         specified range contains a {@code null} element and this list
+     *         does not permit {@code null} elements
+     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
+     * @throws IndexOutOfBoundsException if {@code dstIndex} is out of range
+     *         ({@code dstIndex < 0 || dstIndex > size()})
+     * @throws ArrayIndexOutOfBoundsException if {@code length} is positive and
+     *         {@code srcIndex} is negative, or {@code srcIndex + length} is
+     *         greater than the length of {@code elements}
      * @throws UnsupportedOperationException if the {@code add} operation is not
      *         supported by this list
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      * @throws ClassCastException if the class of an element in the specified
-     *         range prevents it from being stored in this list
+     *         range prevents it from being added to this list
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      * @throws IllegalArgumentException if some property of an element in the
-     *         specified range prevents it from being stored in this list
+     *         specified range prevents it from being added to this list
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws NullPointerException if an element in the specified range is
-     *         {@code null} and this list does not permit {@code null} elements
+     * @throws IllegalStateException if not all the elements can be added at
+     *         this time due to insertion restrictions
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default void addAll(int dstIndex, E[] source, int srcIndex, int length) {
-        for (int i = 0; i < length; i++) {
-            this.add(dstIndex + i, source[srcIndex + i]);
-        }
-    }
+    <T extends E> boolean addAll(int dstIndex, @NotNull T[] elements, int srcIndex, int length);
 
-    static void rangeCheck(int fromIndex, int toIndex, int size) {
-        if (fromIndex < 0) throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
-        if (toIndex > size) throw new IndexOutOfBoundsException("toIndex = " + toIndex);
-        if (fromIndex > toIndex) throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
-    }
+    @NotNull ListExt<E> subList(int fromIndex, int toIndex);
 }

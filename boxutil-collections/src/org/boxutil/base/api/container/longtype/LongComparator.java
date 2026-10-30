@@ -15,7 +15,7 @@ public interface LongComparator extends Comparator<Long> {
      */
     @Deprecated
     default int compare(Long o1, Long o2) {
-        return this.compare(o1.intValue(), o2.intValue());
+        return this.compare(o1 != null ? o1.longValue() : (long) 0, o2 != null ? o2.longValue() : (long) 0);
     }
 
     @NotNull
@@ -26,8 +26,8 @@ public interface LongComparator extends Comparator<Long> {
     @NotNull
     default LongComparator thenComparing(LongComparator other) {
         Objects.requireNonNull(other);
-        return (LongComparator & Serializable) (l_c1, l_c2) -> {
-            int res = compare(l_c1, l_c2);
+        return (LongComparator & Serializable) (long l_c1, long l_c2) -> {
+            int res = this.compare(l_c1, l_c2);
             return (res != 0) ? res : other.compare(l_c1, l_c2);
         };
     }
@@ -80,7 +80,7 @@ public interface LongComparator extends Comparator<Long> {
     @Deprecated
     @NotNull
     default Comparator<Long> thenComparingInt(ToIntFunction<? super Long> keyExtractor) {
-        return this.thenComparingInt(keyExtractor instanceof LongToIntFunction cast ? cast : keyExtractor::applyAsInt);
+        return this.thenComparingInt((long l_value) -> keyExtractor.applyAsInt(l_value));
     }
 
     @NotNull
@@ -94,7 +94,7 @@ public interface LongComparator extends Comparator<Long> {
     @Deprecated
     @NotNull
     default Comparator<Long> thenComparingLong(ToLongFunction<? super Long> keyExtractor) {
-        return this.thenComparingLong(keyExtractor instanceof LongUnaryOperator cast ? cast : keyExtractor::applyAsLong);
+        return this.thenComparingLong((long l_value) -> keyExtractor.applyAsLong(l_value));
     }
 
     @NotNull
@@ -108,7 +108,7 @@ public interface LongComparator extends Comparator<Long> {
     @Deprecated
     @NotNull
     default Comparator<Long> thenComparingDouble(ToDoubleFunction<? super Long> keyExtractor) {
-        return this.thenComparingDouble(keyExtractor instanceof LongToDoubleFunction cast ? cast : keyExtractor::applyAsDouble);
+        return this.thenComparingDouble((long l_value) -> keyExtractor.applyAsDouble(l_value));
     }
 
     static <U> LongComparator comparing(

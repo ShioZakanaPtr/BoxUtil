@@ -11,7 +11,7 @@ import java.util.function.Function;
 /**
  * Typically, for any key or value is {@code null}, it should be treated as {@code 0}
  * if the key was specific primitive type that the Map implementation defined.
- * <p>However, for any value is {@code 0}, it not be treated as {@code null}
+ * <p>However, for any value is {@code 0}, usually it not be treated as {@code null}
  * if the value was specific primitive type that the Map implementation defined.
  */
 public interface MapExt<K, V> extends Map<K, V>, Container {
@@ -348,5 +348,5 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
 
     @NotNull CollectionExt<V> values();
 
-    @NotNull SetExt<Entry<K, V>> entrySet();
+    @NotNull EntrySetExt<Map.Entry<K, V>> entrySet();
 }

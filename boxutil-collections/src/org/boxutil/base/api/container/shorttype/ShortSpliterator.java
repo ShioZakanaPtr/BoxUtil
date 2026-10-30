@@ -1,11 +1,15 @@
 package org.boxutil.base.api.container.shorttype;
 
+import org.boxutil.base.api.container.inttype.IntSpliterator;
 import org.boxutil.util.function.shorttype.ShortConsumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
 public interface ShortSpliterator extends Spliterator.OfPrimitive<Short, ShortConsumer, ShortSpliterator> {
+    ShortSpliterator trySplit();
+
     boolean tryAdvance(ShortConsumer action);
 
     /**
@@ -24,9 +28,11 @@ public interface ShortSpliterator extends Spliterator.OfPrimitive<Short, ShortCo
         this.forEachRemaining(action::accept);
     }
 
-    ShortSpliterator trySplit();
-
     default ShortComparator getComparator() {
         throw new IllegalStateException();
+    }
+
+    static @NotNull IntSpliterator wrap(final @NotNull ShortSpliterator source) {
+        return new ShortWrapSpliterator(source);
     }
 }

@@ -15,7 +15,7 @@ public interface IntComparator extends Comparator<Integer> {
      */
     @Deprecated
     default int compare(Integer o1, Integer o2) {
-        return this.compare(o1.intValue(), o2.intValue());
+        return this.compare(o1 != null ? o1.intValue() : (int) 0, o2 != null ? o2.intValue() : (int) 0);
     }
 
     @NotNull
@@ -26,8 +26,8 @@ public interface IntComparator extends Comparator<Integer> {
     @NotNull
     default IntComparator thenComparing(IntComparator other) {
         Objects.requireNonNull(other);
-        return (IntComparator & Serializable) (l_c1, l_c2) -> {
-            int res = compare(l_c1, l_c2);
+        return (IntComparator & Serializable) (int l_c1, int l_c2) -> {
+            int res = this.compare(l_c1, l_c2);
             return (res != 0) ? res : other.compare(l_c1, l_c2);
         };
     }
@@ -80,7 +80,7 @@ public interface IntComparator extends Comparator<Integer> {
     @Deprecated
     @NotNull
     default Comparator<Integer> thenComparingInt(ToIntFunction<? super Integer> keyExtractor) {
-        return this.thenComparingInt(keyExtractor instanceof IntUnaryOperator cast ? cast : keyExtractor::applyAsInt);
+        return this.thenComparingInt((int l_value) -> keyExtractor.applyAsInt(l_value));
     }
 
     @NotNull
@@ -94,7 +94,7 @@ public interface IntComparator extends Comparator<Integer> {
     @Deprecated
     @NotNull
     default Comparator<Integer> thenComparingLong(ToLongFunction<? super Integer> keyExtractor) {
-        return this.thenComparingLong(keyExtractor instanceof IntToLongFunction cast ? cast : keyExtractor::applyAsLong);
+        return this.thenComparingLong((int l_value) -> keyExtractor.applyAsLong(l_value));
     }
 
     @NotNull
@@ -108,7 +108,7 @@ public interface IntComparator extends Comparator<Integer> {
     @Deprecated
     @NotNull
     default Comparator<Integer> thenComparingDouble(ToDoubleFunction<? super Integer> keyExtractor) {
-        return this.thenComparingDouble(keyExtractor instanceof IntToDoubleFunction cast ? cast : keyExtractor::applyAsDouble);
+        return this.thenComparingDouble((int l_value) -> keyExtractor.applyAsDouble(l_value));
     }
 
     static <U> IntComparator comparing(

@@ -1,9 +1,8 @@
-package org.boxutil.util.container.shorttype;
+package org.boxutil.util.collection.shorttype;
 
 import org.boxutil.base.api.container.shorttype.ShortCollection;
 import org.boxutil.base.api.container.shorttype.ShortIterator;
 import org.boxutil.base.api.container.shorttype.ShortSpliterator;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
 
@@ -81,10 +80,8 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
         return this.size() < 1;
     }
 
-    @NotNull
     public abstract ShortIterator iterator();
 
-    @NotNull
     public abstract ShortSpliterator spliterator();
 
     public void clear() {

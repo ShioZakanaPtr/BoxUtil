@@ -1,15 +1,18 @@
-package org.boxutil.util.container.objecttype;
+package org.boxutil.util.collection.longtype;
 
-import org.boxutil.base.api.container.SetExt;
-import org.jetbrains.annotations.NotNull;
+import org.boxutil.base.api.container.longtype.LongIterator;
+import org.boxutil.base.api.container.longtype.LongSet;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.LongFunction;
 
-public abstract class AbstractObjSet<E> extends AbstractObjCollection<E> implements SetExt<E> {
-    protected AbstractObjSet() {}
+public abstract class AbstractLongSet extends AbstractLongCollection implements LongSet {
+    protected AbstractLongSet() {}
 
-    public boolean remapping(E element, @NotNull Function<? super E, ? extends E> remappingFunction) {
+    public boolean remapping(long element, LongFunction<? extends Long> remappingFunction) {
         throw new UnsupportedOperationException();
     }
 
@@ -31,16 +34,16 @@ public abstract class AbstractObjSet<E> extends AbstractObjCollection<E> impleme
                 }
                 return result;
             } else {
-                return this.removeIf((E e) -> c.contains(e));
+                return this.removeIf((Long e) -> c.contains(e));
             }
         }
     }
 
     public boolean containsAll(Collection<?> c) {
         Objects.requireNonNull(c);
+        if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         if (c instanceof Set<?> && this.size() < c.size()) return false;
-        if (c == this) return true;
 
         for (final Object e : c) {
             if (!this.contains(e)) return false;
@@ -50,10 +53,9 @@ public abstract class AbstractObjSet<E> extends AbstractObjCollection<E> impleme
 
     public int hashCode() {
         int result = 0;
-        Iterator<E> it = this.iterator();
+        LongIterator it = this.iterator();
         while (it.hasNext()) {
-            final E nextObj = it.next();
-            if (nextObj != null) result += Objects.hashCode(nextObj);
+            result += Long.hashCode(it.nextLong());
         }
         return result;
     }
@@ -62,7 +64,6 @@ public abstract class AbstractObjSet<E> extends AbstractObjCollection<E> impleme
         if (o == this) return true;
 
         if (o instanceof Set<?> cast) {
-            if (cast.isEmpty()) return this.isEmpty();
             if (cast.size() != this.size()) return false;
             try {
                 return this.containsAll(cast);

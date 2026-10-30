@@ -3,6 +3,7 @@ package org.boxutil.base.api.container.longtype;
 import org.boxutil.base.api.container.SetExt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.LongFunction;
 
@@ -52,4 +53,20 @@ public interface LongSet extends SetExt<Long>, LongCollection {
     @NotNull LongIterator iterator();
 
     @NotNull LongSpliterator spliterator();
+
+    static LongSet of() {
+        return ImmutableLongCollections.ofSet();
+    }
+
+    static LongSet of(long element) {
+        return ImmutableLongCollections.ofSet(element);
+    }
+
+    static LongSet of(@NotNull long... elements) {
+        return ImmutableLongCollections.ofSet(elements);
+    }
+
+    static LongSet copyOf(@NotNull Collection<? extends Long> source) {
+        return ImmutableLongCollections.copyOfSet(source);
+    }
 }

@@ -4,6 +4,8 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 
 public interface IntSpliterator extends Spliterator.OfInt {
+    IntSpliterator trySplit();
+
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
@@ -19,8 +21,6 @@ public interface IntSpliterator extends Spliterator.OfInt {
     default void forEachRemaining(Consumer<? super Integer> action) {
         this.forEachRemaining((int l_value) -> action.accept(l_value));
     }
-
-    IntSpliterator trySplit();
 
     default IntComparator getComparator() {
         throw new IllegalStateException();

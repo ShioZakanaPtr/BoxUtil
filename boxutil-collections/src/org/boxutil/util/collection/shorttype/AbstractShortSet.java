@@ -1,19 +1,18 @@
-package org.boxutil.util.container.longtype;
+package org.boxutil.util.collection.shorttype;
 
-import org.boxutil.base.api.container.longtype.LongIterator;
-import org.boxutil.base.api.container.longtype.LongSet;
-import org.jetbrains.annotations.NotNull;
+import org.boxutil.base.api.container.shorttype.ShortIterator;
+import org.boxutil.base.api.container.shorttype.ShortSet;
+import org.boxutil.util.function.shorttype.ShortFunction;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.LongFunction;
 
-public abstract class AbstractLongSet extends AbstractLongCollection implements LongSet {
-    protected AbstractLongSet() {}
+public abstract class AbstractShortSet extends AbstractShortCollection implements ShortSet {
+    protected AbstractShortSet() {}
 
-    public boolean remapping(long element, @NotNull LongFunction<? extends Long> remappingFunction) {
+    public boolean remapping(short element, ShortFunction<? extends Short> remappingFunction) {
         throw new UnsupportedOperationException();
     }
 
@@ -35,16 +34,16 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
                 }
                 return result;
             } else {
-                return this.removeIf((Long e) -> c.contains(e));
+                return this.removeIf((Short e) -> c.contains(e));
             }
         }
     }
 
     public boolean containsAll(Collection<?> c) {
         Objects.requireNonNull(c);
+        if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         if (c instanceof Set<?> && this.size() < c.size()) return false;
-        if (c == this) return true;
 
         for (final Object e : c) {
             if (!this.contains(e)) return false;
@@ -54,9 +53,9 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
 
     public int hashCode() {
         int result = 0;
-        LongIterator it = this.iterator();
+        ShortIterator it = this.iterator();
         while (it.hasNext()) {
-            result += Long.hashCode(it.nextLong());
+            result += Short.hashCode(it.nextShort());
         }
         return result;
     }
@@ -65,7 +64,6 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
         if (o == this) return true;
 
         if (o instanceof Set<?> cast) {
-            if (cast.isEmpty()) return this.isEmpty();
             if (cast.size() != this.size()) return false;
             try {
                 return this.containsAll(cast);

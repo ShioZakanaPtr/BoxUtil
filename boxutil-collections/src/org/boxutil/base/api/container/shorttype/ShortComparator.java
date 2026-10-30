@@ -1,5 +1,6 @@
 package org.boxutil.base.api.container.shorttype;
 
+import org.boxutil.base.api.container.inttype.IntComparator;
 import org.boxutil.util.function.shorttype.ShortFunction;
 import org.boxutil.util.function.shorttype.ShortToDoubleFunction;
 import org.boxutil.util.function.shorttype.ShortToIntFunction;
@@ -22,7 +23,7 @@ public interface ShortComparator extends Comparator<Short> {
      */
     @Deprecated
     default int compare(Short o1, Short o2) {
-        return this.compare(o1.shortValue(), o2.shortValue());
+        return this.compare(o1 != null ? o1.shortValue() : (short) 0, o2 != null ? o2.shortValue() : (short) 0);
     }
 
     @NotNull
@@ -59,7 +60,7 @@ public interface ShortComparator extends Comparator<Short> {
     @Deprecated
     @NotNull
     default <U> Comparator<Short> thenComparing(Function<? super Short, ? extends U> keyExtractor, Comparator<? super U> keyComparator) {
-        return this.thenComparing(keyExtractor::apply, keyComparator);
+        return this.thenComparing((short l_value) -> keyExtractor.apply(l_value), keyComparator);
     }
 
     @NotNull
@@ -73,7 +74,7 @@ public interface ShortComparator extends Comparator<Short> {
     @Deprecated
     @NotNull
     default <U extends Comparable<? super U>> Comparator<Short> thenComparing(Function<? super Short, ? extends U> keyExtractor) {
-        return this.thenComparing(keyExtractor::apply);
+        return this.thenComparing((short l_value) -> keyExtractor.apply(l_value));
     }
 
     @NotNull
@@ -152,5 +153,9 @@ public interface ShortComparator extends Comparator<Short> {
         Objects.requireNonNull(keyExtractor);
         return (ShortComparator & Serializable)
                 (l_c1, l_c2) -> Double.compare(keyExtractor.apply(l_c1), keyExtractor.apply(l_c2));
+    }
+
+    static @NotNull IntComparator wrap(final @NotNull ShortComparator source) {
+        return new ShortWrapComparator(source);
     }
 }

@@ -1,16 +1,8 @@
-package org.boxutil.util.container.longtype;
+package org.boxutil.util.collection.longtype;
 
 import org.boxutil.base.api.container.longtype.LongIterator;
 import org.boxutil.base.api.container.longtype.LongList;
 import org.boxutil.base.api.container.longtype.LongListIterator;
-import org.boxutil.base.api.container.longtype.LongSpliterator;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ListIterator;
-import java.util.Objects;
-import java.util.function.LongFunction;
-import java.util.function.LongPredicate;
-import java.util.function.LongUnaryOperator;
 
 public abstract class AbstractLongList extends AbstractLongCollection implements LongList {
     protected AbstractLongList() {}
@@ -19,6 +11,11 @@ public abstract class AbstractLongList extends AbstractLongCollection implements
 
     public long set(int index, long element) {
         throw new UnsupportedOperationException();
+    }
+
+    public boolean add(long e) {
+        this.add(this.size(), e);
+        return true;
     }
 
     public void add(int index, long element) {
@@ -38,6 +35,10 @@ public abstract class AbstractLongList extends AbstractLongCollection implements
             }
         }
         return false;
+    }
+
+    public boolean remove(long o) {
+        return this.removeElement(o);
     }
 
     public int indexOf(long o) {

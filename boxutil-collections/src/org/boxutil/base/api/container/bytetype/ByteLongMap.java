@@ -1,7 +1,7 @@
 package org.boxutil.base.api.container.bytetype;
 
+import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.MapExt;
-import org.boxutil.base.api.container.SetExt;
 import org.boxutil.base.api.container.longtype.LongCollection;
 import org.boxutil.util.function.bytetype.ByteFunction;
 import org.boxutil.util.function.bytetype.ByteLongBiConsumer;
@@ -9,7 +9,6 @@ import org.boxutil.util.function.bytetype.ByteLongBiFunction;
 import org.boxutil.util.function.bytetype.ByteLongBiOperator;
 import org.boxutil.util.function.longtype.LongLongBiFunction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -249,14 +248,14 @@ public interface ByteLongMap extends MapExt<Byte, Long> {
 
     @NotNull LongCollection values();
 
-    @NotNull SetExt<Entry> entrySetRaw();
+    @NotNull EntrySetExt<ByteLongMap.Entry> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @NotNull SetExt<Map.Entry<Byte, Long>> entrySet() {
-        return (SetExt) this.entrySetRaw();
+    default @NotNull EntrySetExt<Map.Entry<Byte, Long>> entrySet() {
+        return (EntrySetExt) this.entrySetRaw();
     }
 
     interface Entry extends Map.Entry<Byte, Long> {

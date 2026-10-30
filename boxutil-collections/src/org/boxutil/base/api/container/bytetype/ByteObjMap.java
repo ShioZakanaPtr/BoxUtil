@@ -1,7 +1,7 @@
 package org.boxutil.base.api.container.bytetype;
 
+import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.MapExt;
-import org.boxutil.base.api.container.SetExt;
 import org.boxutil.util.function.bytetype.ByteFunction;
 import org.boxutil.util.function.bytetype.ByteObjBiConsumer;
 import org.boxutil.util.function.bytetype.ByteObjBiFunction;
@@ -142,14 +142,14 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
         return this.merge(key != null ? key.byteValue() : (byte) 0, value, (V l_t, V l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
-    V update(byte key, @NotNull UnaryOperator<V> updateFunction);
+    V update(byte key, @NotNull Function<? super V, ? extends V> updateFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default V update(Byte key, @NotNull UnaryOperator<V> updateFunction) {
-        return this.update(key != null ? key.byteValue() : (byte) 0, updateFunction);
+    default V update(Byte key, @NotNull Function<? super V, ? extends V> updateFunction) {
+        return this.update(key != null ? key.byteValue() : (byte) 0, (V l_t) -> updateFunction.apply(l_t));
     }
 
     V remapping(byte key, ByteObjBiFunction<? super V, ? extends Byte> remappingFunction, BiFunction<? super V, ? super V, ? extends V> mergeFunction);
@@ -209,14 +209,14 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     @NotNull ByteSet keySet();
 
-    @NotNull SetExt<ByteObjMap.Entry<V>> entrySetRaw();
+    @NotNull EntrySetExt<ByteObjMap.Entry<V>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @NotNull SetExt<Map.Entry<Byte, V>> entrySet() {
-        return (SetExt) this.entrySetRaw();
+    default @NotNull EntrySetExt<Map.Entry<Byte, V>> entrySet() {
+        return (EntrySetExt) this.entrySetRaw();
     }
 
     interface Entry<V> extends Map.Entry<Byte, V> {

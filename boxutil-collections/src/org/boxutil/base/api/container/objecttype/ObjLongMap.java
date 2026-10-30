@@ -1,14 +1,13 @@
 package org.boxutil.base.api.container.objecttype;
 
+import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.MapExt;
-import org.boxutil.base.api.container.SetExt;
 import org.boxutil.base.api.container.longtype.LongCollection;
 import org.boxutil.util.function.longtype.LongLongBiFunction;
 import org.boxutil.util.function.objecttype.ObjLongBiConsumer;
 import org.boxutil.util.function.objecttype.ObjLongBiFunction;
 import org.boxutil.util.function.objecttype.ObjLongBiOperator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -217,14 +216,14 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     @NotNull LongCollection values();
 
-    @NotNull SetExt<ObjLongMap.Entry<K>> entrySetRaw();
+    @NotNull EntrySetExt<ObjLongMap.Entry<K>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @NotNull SetExt<Map.Entry<K, Long>> entrySet() {
-        return (SetExt) this.entrySetRaw();
+    default @NotNull EntrySetExt<Map.Entry<K, Long>> entrySet() {
+        return (EntrySetExt) this.entrySetRaw();
     }
 
     interface Entry<K> extends Map.Entry<K, Long> {

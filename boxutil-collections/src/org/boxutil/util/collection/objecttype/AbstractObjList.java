@@ -1,13 +1,10 @@
-package org.boxutil.util.container.objecttype;
+package org.boxutil.util.collection.objecttype;
 
-import org.boxutil.base.api.container.longtype.LongIterator;
 import org.boxutil.base.api.container.objecttype.ObjList;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Objects;
-import java.util.Spliterator;
 
 public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implements ObjList<E> {
     protected AbstractObjList() {}
@@ -34,12 +31,16 @@ public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implem
     public boolean removeElement(Object o) {
         final Iterator<E> it = this.iterator();
         while (it.hasNext()) {
-            if (it.next() == o) {
+            if (Objects.equals(o, it.next())) {
                 it.remove();
                 return true;
             }
         }
         return false;
+    }
+
+    public boolean remove(Object o) {
+        return this.removeElement(o);
     }
 
     public int indexOf(Object o) {

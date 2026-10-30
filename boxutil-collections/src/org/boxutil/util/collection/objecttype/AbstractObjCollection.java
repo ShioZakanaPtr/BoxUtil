@@ -1,7 +1,6 @@
-package org.boxutil.util.container.objecttype;
+package org.boxutil.util.collection.objecttype;
 
 import org.boxutil.base.api.container.objecttype.ObjCollection;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
 import java.util.Iterator;
@@ -56,10 +55,8 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
         return this.size() < 1;
     }
 
-    @NotNull
     public abstract Iterator<E> iterator();
 
-    @NotNull
     public abstract Spliterator<E> spliterator();
 
     public void clear() {

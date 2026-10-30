@@ -65,6 +65,42 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
         return this.removeIf((int l_value) -> filter.test(l_value));
     }
 
+    default boolean addAll(@NotNull int[] elements) {
+        Objects.requireNonNull(elements);
+
+        boolean result = false;
+        for (int element : elements) {
+            result |= this.add(element);
+        }
+        return result;
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default <T extends Integer> boolean addAll(@NotNull T[] elements) {
+        return CollectionExt.super.addAll(elements);
+    }
+
+    default boolean addAll(@NotNull int[] elements, int srcIndex, int length) {
+        Objects.requireNonNull(elements);
+
+        boolean result = false;
+        for (int i = srcIndex, limit = srcIndex + length; i < limit; i++) {
+            result |= this.add(elements[i]);
+        }
+        return result;
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default <T extends Integer> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
+        return CollectionExt.super.addAll(elements, srcIndex, length);
+    }
+
     @NotNull IntIterator iterator();
 
     @NotNull IntSpliterator spliterator();

@@ -20,9 +20,6 @@ import java.util.Objects;
  */
 @FunctionalInterface
 public interface HashBehavior<K> extends Serializable {
-    int DEFAULT_INITIAL_CAPACITY = 1 << 4;
-    float DEFAULT_LOAD_FACTOR = 0.75f;
-
     /**
      * Computes the final hash value for the given integer. The input is
      * typically the result of {@link Object#hashCode()} for a key, or the
@@ -91,7 +88,7 @@ public interface HashBehavior<K> extends Serializable {
      * @return the computed hash value
      */
     default int hashing(float key) {
-        return this.hashing(Float.hashCode(key));
+        return this.hashing(Float.floatToRawIntBits(key));
     }
 
     /**
@@ -103,7 +100,7 @@ public interface HashBehavior<K> extends Serializable {
      * @return the computed hash value
      */
     default int hashing(double key) {
-        return this.hashing(Double.hashCode(key));
+        return this.hashing(Double.doubleToRawLongBits(key));
     }
 
     /**
@@ -215,11 +212,11 @@ public interface HashBehavior<K> extends Serializable {
     }
 
     /**
-     * Mix the hash value of two {@code double} keys. The default implementation
+     * Mix the hash value of two input keys. The default implementation
      * is {@code left + right * 31}.
      *
      * <p>For multi key such as {@link BiMap}, will only use the first behavior
-     * to mix the two keys.
+     * to mix all the keys.
      *
      * @param left the first input hash
      * @param right the second input hash
@@ -227,159 +224,5 @@ public interface HashBehavior<K> extends Serializable {
      */
     default int mix(int left, int right) {
         return left + right * 31;
-    }
-
-    /**
-     * A hash strategy that uses the input parameter value directly as the
-     * final hash, without any mixing.
-     *
-     * @param key the input value
-     * @return the same value as {@code key}
-     */
-    static int hashing_Directly(int key) {
-        return key;
-    }
-
-    /**
-     * A hash strategy that uses {@link Object#hashCode()} as the final hash.
-     * If the key is {@code null}, returns {@code 0}.
-     *
-     * @param key the object key, possibly {@code null}
-     * @return the hash code of the key, or {@code 0} if the key is {@code null}
-     */
-    static int hashing_Directly(@Nullable final Object key) {
-        return key == null ? 0 : key.hashCode();
-    }
-
-    /**
-     * A hash strategy that multiply by golden ratio to the input value.
-     *
-     * @param key the input value
-     * @return the mixed hash value
-     */
-    static int hashing_Fibonacci_32(int key) {
-        return key * 0x61c88647;
-    }
-
-    /**
-     * A hash strategy that multiply by golden ratio to the input value.
-     *
-     * @param key the input value
-     * @return the mixed hash value
-     */
-    static long hashing_Fibonacci_64(long key) {
-        return key * 0x61c8864680b583ebL;
-    }
-
-    /**
-     * A hash strategy that multiply by golden ratio to an object key.
-     * If the key is {@code null}, returns {@code 0}; otherwise,
-     * applies {@link #hashing_Fibonacci_32(int)} to the key's {@link Object#hashCode()}.
-     *
-     * @param key the object key, possibly {@code null}
-     * @return the hash code of the key, or {@code 0} if the key is {@code null}
-     */
-    static int hashing_Fibonacci(@Nullable final Object key) {
-        return key == null ? 0 : hashing_Fibonacci_32(key.hashCode());
-    }
-
-    /**
-     * A hash strategy that applies the same supplemental hash function as
-     * {@link java.util.HashMap}: {@code key ^ (key >>> 16)}.
-     *
-     * @param key the input value
-     * @return the mixed hash value
-     */
-    static int hashing_HashMap(int key) {
-        return key ^ (key >>> 16);
-    }
-
-    /**
-     * A hash strategy that applies the same supplemental hash function as
-     * {@link java.util.HashMap} to an object key. If the key is {@code null},
-     * returns {@code 0}; otherwise, applies {@link #hashing_HashMap(int)} to
-     * the key's {@link Object#hashCode()}.
-     *
-     * @param key the object key, possibly {@code null}
-     * @return the mixed hash value
-     */
-    static int hashing_HashMap(@Nullable final Object key) {
-        return key == null ? 0 : hashing_HashMap(key.hashCode());
-    }
-
-    /**
-     * A hash strategy that multiply by golden ratio to the input value, and
-     * then mix it as {@link java.util.HashMap}.
-     *
-     * @param key the input value
-     * @return the mixed hash value
-     */
-    static int hashing_FibonacciMix_32(int key) {
-        final int result = key * 0x61c88647;
-        return result ^ (result >>> 16);
-    }
-
-    /**
-     * A hash strategy that multiply by golden ratio to the input value, and
-     * then mix it as {@link java.util.HashMap}.
-     *
-     * @param key the input value
-     * @return the mixed hash value
-     */
-    static long hashing_FibonacciMix_64(long key) {
-        final long result = key * 0x61c8864680b583ebL;
-        return result ^ (result >>> 32);
-    }
-
-    /**
-     * A hash strategy that multiply by golden ratio to an object key, and
-     * then mix it as {@link java.util.HashMap}.
-     * If the key is {@code null}, returns {@code 0}; otherwise,
-     * applies {@link #hashing_Fibonacci_32(int)} to the key's {@link Object#hashCode()}.
-     *
-     * @param key the object key, possibly {@code null}
-     * @return the hash code of the key, or {@code 0} if the key is {@code null}
-     */
-    static int hashing_FibonacciMix(@Nullable final Object key) {
-        return key == null ? 0 : hashing_FibonacciMix_32(key.hashCode());
-    }
-
-    /**
-     * A hash strategy that applies the MurmurHash3 finalization mix to the
-     * input value.
-     *
-     * @param key the input value
-     * @return the mixed hash value
-     */
-    static int hashing_MurmurHash3_32(int key) {
-        key = (key ^ (key >>> 16)) * 0x85ebca6b;
-        key = (key ^ (key >>> 13)) * 0xc2b2ae35;
-        return key ^ (key >>> 16);
-    }
-
-    /**
-     * A hash strategy that applies the MurmurHash3 finalization mix to the
-     * input value.
-     *
-     * @param key the input value
-     * @return the mixed hash value
-     */
-    static long hashing_MurmurHash3_64(long key) {
-        key = (key ^ (key >>> 33)) * 0xff51afd7ed558ccdL;
-        key = (key ^ (key >>> 33)) * 0xc4ceb9fe1a85ec53L;
-        return key ^ (key >>> 33);
-    }
-
-    /**
-     * A hash strategy that applies the MurmurHash3 finalization mix to an
-     * object key. If the key is {@code null}, returns {@code 0}; otherwise,
-     * applies {@link #hashing_MurmurHash3_32(int)} to the key's
-     * {@link Object#hashCode()}.
-     *
-     * @param key the object key, possibly {@code null}
-     * @return the mixed hash value
-     */
-    static int hashing_MurmurHash3(@Nullable final Object key) {
-        return key == null ? 0 : hashing_MurmurHash3_32(key.hashCode());
     }
 }

@@ -11,7 +11,7 @@ import java.util.function.Function;
  * or {@code Number(0)} if the element was specific primitive
  * type that the Set implementation defined.
  */
-public interface SetExt<E> extends Set<E>, Container {
+public interface SetExt<E> extends Set<E>, CollectionExt<E>, Container {
     /**
      * Remaps the specified element in this set. If this set does not contain the
      * specified element, returns {@code false} and leaves the set unchanged.

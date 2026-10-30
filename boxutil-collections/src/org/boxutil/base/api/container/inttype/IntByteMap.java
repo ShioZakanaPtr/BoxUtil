@@ -1,7 +1,7 @@
 package org.boxutil.base.api.container.inttype;
 
+import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.MapExt;
-import org.boxutil.base.api.container.SetExt;
 import org.boxutil.base.api.container.bytetype.ByteCollection;
 import org.boxutil.util.function.bytetype.ByteByteBiFunction;
 import org.boxutil.util.function.bytetype.ByteUnaryOperator;
@@ -9,7 +9,6 @@ import org.boxutil.util.function.inttype.IntByteBiConsumer;
 import org.boxutil.util.function.inttype.IntByteBiFunction;
 import org.boxutil.util.function.inttype.IntByteBiOperator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -249,14 +248,14 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     @NotNull ByteCollection values();
 
-    @NotNull SetExt<Entry> entrySetRaw();
+    @NotNull EntrySetExt<IntByteMap.Entry> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @NotNull SetExt<Map.Entry<Integer, Byte>> entrySet() {
-        return (SetExt) this.entrySetRaw();
+    default @NotNull EntrySetExt<Map.Entry<Integer, Byte>> entrySet() {
+        return (EntrySetExt) this.entrySetRaw();
     }
 
     interface Entry extends Map.Entry<Integer, Byte> {

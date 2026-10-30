@@ -2,12 +2,9 @@ package org.boxutil.base.api.container.longtype;
 
 import org.boxutil.base.api.container.ListExt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.ListIterator;
+import java.util.Collection;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.function.*;
 
 public interface LongList extends ListExt<Long>, LongCollection {
@@ -123,6 +120,14 @@ public interface LongList extends ListExt<Long>, LongCollection {
     default boolean removeElement(Object o) {
         if (o != null && !(o instanceof Long)) return false;
         return this.removeElement(o != null ? ((Long) o).longValue() : (long) 0);
+    }
+
+    /**
+     * @see ListExt#remove(Object)
+     */
+    @Deprecated
+    default boolean remove(long o) {
+        return this.removeElement(o);
     }
 
     /**
@@ -251,7 +256,8 @@ public interface LongList extends ListExt<Long>, LongCollection {
         });
     }
 
-    default void computeRange(int fromIndex, int toIndex, LongFunction<? extends Long> operator) {
+    default boolean computeRange(int fromIndex, int toIndex, LongFunction<? extends Long> operator) {
+        boolean result = false;
         LongListIterator it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
             Long newValue = operator.apply(it.nextLong());
@@ -259,38 +265,80 @@ public interface LongList extends ListExt<Long>, LongCollection {
                 it.set(newValue.longValue());
             } else {
                 it.remove();
+                result = true;
             }
         }
+        return result;
     }
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default void computeRange(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
-        this.computeRange(fromIndex, toIndex, (long l_t) -> operator.apply(l_t));
+    default boolean computeRange(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
+        return this.computeRange(fromIndex, toIndex, (long l_t) -> operator.apply(l_t));
     }
 
-    default void addAll(int dstIndex, long[] source, int srcIndex, int length) {
+    default boolean addAll(@NotNull long[] elements) {
+        return this.addAll(elements, 0, elements.length);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default <T extends Long> boolean addAll(@NotNull T[] elements) {
+        return LongCollection.super.addAll(elements);
+    }
+
+    default boolean addAll(@NotNull long[] elements, int srcIndex, int length) {
+        return this.addAll(0, elements, srcIndex, length);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default <T extends Long> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
+        return LongCollection.super.addAll(elements, srcIndex, length);
+    }
+
+    boolean addAll(int dstIndex, @NotNull long[] elements, int srcIndex, int length);
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default <T extends Long> boolean addAll(int dstIndex, @NotNull T[] elements, int srcIndex, int length) {
+        if (length == 0) return false;
         for (int i = 0; i < length; i++) {
-            this.add(dstIndex + i, source[srcIndex + i]);
+            this.add(dstIndex + i, elements[srcIndex + i]);
         }
-    }
-
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
-    default void addAll(int dstIndex, Long[] source, int srcIndex, int length) {
-        ListExt.super.addAll(dstIndex, source, srcIndex, length);
+        return true;
     }
 
     @NotNull LongListIterator listIterator();
 
     @NotNull LongListIterator listIterator(int index);
 
+    @NotNull LongList subList(int fromIndex, int toIndex);
+
     @NotNull
     LongSpliterator spliterator();
 
-    @NotNull LongList subList(int fromIndex, int toIndex);
+    static LongList of() {
+        return ImmutableLongCollections.ofList();
+    }
+
+    static LongList of(long element) {
+        return ImmutableLongCollections.ofList(element);
+    }
+
+    static LongList of(@NotNull long... elements) {
+        return ImmutableLongCollections.ofList(elements);
+    }
+
+    static LongList copyOf(@NotNull Collection<? extends Long> source) {
+        return ImmutableLongCollections.copyOfList(source);
+    }
 }

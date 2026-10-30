@@ -1,7 +1,5 @@
 package org.boxutil.base.api.container;
 
-import org.boxutil.util.CalculateUtil;
-
 /**
  * A generic interface for hash-based containers that use closed/open addressing
  * or similar hashing strategies. It exposes load factor, and delegates key
@@ -10,6 +8,9 @@ import org.boxutil.util.CalculateUtil;
  * @param <K> the type of keys maintained by this container
  */
 public interface HashContainer<K> extends Container {
+    int MAXIMUM_CAPACITY = 1 << 30;
+    int DEFAULT_INITIAL_CAPACITY = 1 << 4;
+    float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
      * Returns the load factor of this hash container. The load factor determines
@@ -28,17 +29,4 @@ public interface HashContainer<K> extends Container {
      * @return the container behavior
      */
     HashBehavior<K> getBehavior();
-
-    static int getTableCapacity(int elementSize, float loadFactor) {
-        long cap = CalculateUtil.getPOTMax((long) Math.ceil(elementSize / (double) loadFactor));
-        if (cap < 0 || cap > (1 << 30)) throw new IllegalArgumentException("Capacity overflow");
-        return (int) Math.max(cap, 2);
-    }
-
-    static int getTableMaxRemaining(int capacity, float loadFactor, boolean reservedNull) {
-        int remaining = (int) Math.floor(capacity * (double) loadFactor);
-        if (remaining < 0 || remaining > (1 << 30)) throw new IllegalArgumentException("Remaining overflow");
-        remaining = Math.max(remaining, 1);
-        return reservedNull ? remaining + 1 : remaining;
-    }
 }

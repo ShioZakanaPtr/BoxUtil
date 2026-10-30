@@ -13,7 +13,7 @@ import java.util.function.Function;
 /**
  * Typically, for any key or value is {@code null}, it should be treated as {@code 0}
  * if the key was specific primitive type that the Map implementation defined.
- * <p>However, for any value is {@code 0}, it not be treated as {@code null}
+ * <p>However, for any value is {@code 0}, usually it not be treated as {@code null}
  * if the value was specific primitive type that the Map implementation defined.
  */
 public interface BiMap<X, Y, V> extends Container {
@@ -209,7 +209,7 @@ public interface BiMap<X, Y, V> extends Container {
 
     CollectionExt<V> valueCollection();
 
-    SetExt<BiEntry<X, Y, V>> entrySet();
+    EntrySetExt<BiEntry<X, Y, V>> entrySet();
 
     void clear();
 

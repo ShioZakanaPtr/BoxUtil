@@ -2,7 +2,7 @@ package org.boxutil.base.api.container.objecttype;
 
 import com.fs.starfarer.api.util.Pair;
 import org.boxutil.base.api.container.BiMap;
-import org.boxutil.base.api.container.SetExt;
+import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.longtype.LongCollection;
 import org.boxutil.util.function.longtype.LongLongBiFunction;
 import org.boxutil.util.function.objecttype.*;
@@ -221,14 +221,14 @@ public interface ObjLongBiMap<X, Y> extends BiMap<X, Y, Long> {
 
     LongCollection valueCollection();
 
-    SetExt<ObjLongBiMap.BiEntry<X, Y>> entrySetRaw();
+    EntrySetExt<ObjLongBiMap.BiEntry<X, Y>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default SetExt<BiMap.BiEntry<X, Y, Long>> entrySet() {
-        return (SetExt) this.entrySetRaw();
+    default EntrySetExt<BiMap.BiEntry<X, Y, Long>> entrySet() {
+        return (EntrySetExt) this.entrySetRaw();
     }
 
     interface BiEntry<X, Y> extends BiMap.BiEntry<X, Y, Long> {

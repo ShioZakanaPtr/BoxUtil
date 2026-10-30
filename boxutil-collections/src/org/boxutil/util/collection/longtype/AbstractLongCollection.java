@@ -1,14 +1,13 @@
-package org.boxutil.util.container.inttype;
+package org.boxutil.util.collection.longtype;
 
-import org.boxutil.base.api.container.inttype.IntCollection;
-import org.boxutil.base.api.container.inttype.IntIterator;
-import org.boxutil.base.api.container.inttype.IntSpliterator;
-import org.jetbrains.annotations.NotNull;
+import org.boxutil.base.api.container.longtype.LongCollection;
+import org.boxutil.base.api.container.longtype.LongIterator;
+import org.boxutil.base.api.container.longtype.LongSpliterator;
 
-import java.util.*;
+import java.util.AbstractCollection;
 
-public abstract class AbstractIntCollection extends AbstractCollection<Integer> implements IntCollection {
-    protected AbstractIntCollection() {}
+public abstract class AbstractLongCollection extends AbstractCollection<Long> implements LongCollection {
+    protected AbstractLongCollection() {}
 
     public void resize(int newCapacity) {
         throw new UnsupportedOperationException();
@@ -18,10 +17,10 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
         throw new UnsupportedOperationException();
     }
 
-    public boolean contains(int o) {
-        final IntIterator it = this.iterator();
+    public boolean contains(long o) {
+        final LongIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextInt() == o) return true;
+            if (it.nextLong() == o) return true;
         }
         return false;
     }
@@ -31,11 +30,11 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      */
     @Deprecated
     public boolean contains(final Object o) {
-        if (o != null && !(o instanceof Integer)) return false;
-        return this.contains(o != null ? ((Integer) o).intValue() : (int) 0);
+        if (o != null && !(o instanceof Long)) return false;
+        return this.contains(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
-    public boolean add(int e) {
+    public boolean add(long e) {
         throw new UnsupportedOperationException();
     }
 
@@ -43,14 +42,14 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean add(final Integer e) {
-        return this.add(e != null ? e.intValue() : (int) 0);
+    public boolean add(final Long e) {
+        return this.add(e != null ? e.longValue() : (int) 0);
     }
 
-    public boolean remove(int o) {
-        final IntIterator it = this.iterator();
+    public boolean remove(long o) {
+        final LongIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextInt() == o) {
+            if (it.nextLong() == o) {
                 it.remove();
                 return true;
             }
@@ -63,8 +62,8 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      */
     @Deprecated
     public boolean remove(final Object o) {
-        if (o != null && !(o instanceof Integer)) return false;
-        return this.remove(o != null ? ((Integer) o).intValue() : (int) 0);
+        if (o != null && !(o instanceof Long)) return false;
+        return this.remove(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
     public int capacity() {
@@ -81,16 +80,14 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
         return this.size() < 1;
     }
 
-    @NotNull
-    public abstract IntIterator iterator();
+    public abstract LongIterator iterator();
 
-    @NotNull
-    public abstract IntSpliterator spliterator();
+    public abstract LongSpliterator spliterator();
 
     public void clear() {
-        final IntIterator it = this.iterator();
+        final LongIterator it = this.iterator();
         while (it.hasNext()) {
-            it.nextInt();
+            it.nextLong();
             it.remove();
         }
     }

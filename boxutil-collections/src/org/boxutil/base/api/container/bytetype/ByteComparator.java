@@ -1,5 +1,6 @@
 package org.boxutil.base.api.container.bytetype;
 
+import org.boxutil.base.api.container.inttype.IntComparator;
 import org.boxutil.util.function.bytetype.ByteFunction;
 import org.boxutil.util.function.bytetype.ByteToDoubleFunction;
 import org.boxutil.util.function.bytetype.ByteToIntFunction;
@@ -19,7 +20,7 @@ public interface ByteComparator extends Comparator<Byte> {
      */
     @Deprecated
     default int compare(Byte o1, Byte o2) {
-        return this.compare(o1.byteValue(), o2.byteValue());
+        return this.compare(o1 != null ? o1.byteValue() : (byte) 0, o2 != null ? o2.byteValue() : (byte) 0);
     }
 
     @NotNull
@@ -30,8 +31,8 @@ public interface ByteComparator extends Comparator<Byte> {
     @NotNull
     default ByteComparator thenComparing(ByteComparator other) {
         Objects.requireNonNull(other);
-        return (ByteComparator & Serializable) (l_c1, l_c2) -> {
-            int res = compare(l_c1, l_c2);
+        return (ByteComparator & Serializable) (byte l_c1, byte l_c2) -> {
+            int res = this.compare(l_c1, l_c2);
             return (res != 0) ? res : other.compare(l_c1, l_c2);
         };
     }
@@ -56,7 +57,7 @@ public interface ByteComparator extends Comparator<Byte> {
     @Deprecated
     @NotNull
     default <U> Comparator<Byte> thenComparing(Function<? super Byte, ? extends U> keyExtractor, Comparator<? super U> keyComparator) {
-        return this.thenComparing(keyExtractor::apply, keyComparator);
+        return this.thenComparing((byte l_value) -> keyExtractor.apply(l_value), keyComparator);
     }
 
     @NotNull
@@ -70,7 +71,7 @@ public interface ByteComparator extends Comparator<Byte> {
     @Deprecated
     @NotNull
     default <U extends Comparable<? super U>> Comparator<Byte> thenComparing(Function<? super Byte, ? extends U> keyExtractor) {
-        return this.thenComparing(keyExtractor::apply);
+        return this.thenComparing((byte l_value) -> keyExtractor.apply(l_value));
     }
 
     @NotNull
@@ -149,5 +150,9 @@ public interface ByteComparator extends Comparator<Byte> {
         Objects.requireNonNull(keyExtractor);
         return (ByteComparator & Serializable)
                 (l_c1, l_c2) -> Double.compare(keyExtractor.apply(l_c1), keyExtractor.apply(l_c2));
+    }
+
+    static @NotNull IntComparator wrap(final @NotNull ByteComparator source) {
+        return new ByteWrapComparator(source);
     }
 }

@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
     boolean contains(short o);
@@ -62,6 +65,42 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
         return this.removeIf(filter::test);
     }
 
+    default boolean addAll(@NotNull short[] elements) {
+        Objects.requireNonNull(elements);
+
+        boolean result = false;
+        for (short element : elements) {
+            result |= this.add(element);
+        }
+        return result;
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default <T extends Short> boolean addAll(@NotNull T[] elements) {
+        return CollectionExt.super.addAll(elements);
+    }
+
+    default boolean addAll(@NotNull short[] elements, int srcIndex, int length) {
+        Objects.requireNonNull(elements);
+
+        boolean result = false;
+        for (int i = srcIndex, limit = srcIndex + length; i < limit; i++) {
+            result |= this.add(elements[i]);
+        }
+        return result;
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default <T extends Short> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
+        return CollectionExt.super.addAll(elements, srcIndex, length);
+    }
+
     @NotNull ShortIterator iterator();
 
     @NotNull ShortSpliterator spliterator();
@@ -69,4 +108,32 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
     @NotNull short[] toArrayRaw();
 
     @NotNull short[] toArray(@NotNull short[] a);
+
+    @NotNull
+    default IntStream streamRaw() {
+        return StreamSupport.intStream(ShortSpliterator.wrap(this.spliterator()), false);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    @NotNull
+    default Stream<Short> stream() {
+        return CollectionExt.super.stream();
+    }
+
+    @NotNull
+    default IntStream parallelStreamRaw() {
+        return StreamSupport.intStream(ShortSpliterator.wrap(this.spliterator()), true);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    @NotNull
+    default Stream<Short> parallelStream() {
+        return CollectionExt.super.parallelStream();
+    }
 }

@@ -1,9 +1,8 @@
-package org.boxutil.util.container.bytetype;
+package org.boxutil.util.collection.bytetype;
 
 import org.boxutil.base.api.container.bytetype.ByteCollection;
 import org.boxutil.base.api.container.bytetype.ByteIterator;
 import org.boxutil.base.api.container.bytetype.ByteSpliterator;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
 
@@ -81,10 +80,8 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
         return this.size() < 1;
     }
 
-    @NotNull
     public abstract ByteIterator iterator();
 
-    @NotNull
     public abstract ByteSpliterator spliterator();
 
     public void clear() {

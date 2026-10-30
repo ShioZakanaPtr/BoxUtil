@@ -1,7 +1,7 @@
 package org.boxutil.base.api.container.longtype;
 
+import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.MapExt;
-import org.boxutil.base.api.container.SetExt;
 import org.boxutil.util.function.longtype.LongObjBiConsumer;
 import org.boxutil.util.function.longtype.LongObjBiFunction;
 import org.jetbrains.annotations.NotNull;
@@ -141,14 +141,14 @@ public interface LongObjMap<V> extends MapExt<Long, V> {
         return this.merge(key != null ? key.longValue() : (long) 0, value, (V l_t, V l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
-    V update(long key, @NotNull UnaryOperator<V> updateFunction);
+    V update(long key, @NotNull Function<? super V, ? extends V> updateFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default V update(Long key, @NotNull UnaryOperator<V> updateFunction) {
-        return this.update(key != null ? key.longValue() : (long) 0, updateFunction);
+    default V update(Long key, @NotNull Function<? super V, ? extends V> updateFunction) {
+        return this.update(key != null ? key.longValue() : (long) 0, (V l_t) -> updateFunction.apply(l_t));
     }
 
     V remapping(long key, LongObjBiFunction<? super V, ? extends Long> remappingFunction, BiFunction<? super V, ? super V, ? extends V> mergeFunction);
@@ -208,14 +208,14 @@ public interface LongObjMap<V> extends MapExt<Long, V> {
 
     @NotNull LongSet keySet();
 
-    @NotNull SetExt<Entry<V>> rawEntrySet();
+    @NotNull EntrySetExt<LongObjMap.Entry<V>> rawEntrySet();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @NotNull SetExt<Map.Entry<Long, V>> entrySet() {
-        return (SetExt) this.rawEntrySet();
+    default @NotNull EntrySetExt<Map.Entry<Long, V>> entrySet() {
+        return (EntrySetExt) this.rawEntrySet();
     }
 
     interface Entry<V> extends Map.Entry<Long, V> {
