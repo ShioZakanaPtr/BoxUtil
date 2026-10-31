@@ -789,7 +789,7 @@ public final class BUtil_ShaderProgramManager {
         } else if (useFullFeatures) {
             bitEncodeEXTName = "GL_ARB_shader_bit_encoding";
         } else return;
-        if (cap.GL_ARB_uniform_buffer_object || useFullFeatures) {
+        if ((cap.GL_ARB_uniform_buffer_object && cap.GL_ARB_vertex_buffer_object) || useFullFeatures) {
             uboEXTName = "GL_ARB_uniform_buffer_object";
         } else return;
         if (cap.GL_ARB_geometry_shader4) {
