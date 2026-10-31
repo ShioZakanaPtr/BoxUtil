@@ -592,4 +592,60 @@ public interface ListExt<E> extends List<E>, Container {
     <T extends E> boolean addAll(int dstIndex, @NotNull T[] elements, int srcIndex, int length);
 
     @NotNull ListExt<E> subList(int fromIndex, int toIndex);
+
+    /**
+     * Returns a Jumbo list iterator over the elements in this list in proper
+     * sequence.
+     *
+     * <p>This method is intended for Jumbo lists, that is, lists whose index
+     * range and size may exceed {@link Integer#MAX_VALUE}. The returned
+     * iterator exposes long-valued positions through
+     * {@link JumboListIterator}.
+     *
+     * @implSpec The default implementation throws
+     *         {@link UnsupportedOperationException}.
+     *
+     * @return a Jumbo list iterator over the elements in this list
+     * @throws UnsupportedOperationException if long-indexed iteration is not
+     *         supported by this list
+     * @see #listIterator64(long)
+     * @see JumboListIterator
+     * @see JumboContainer
+     */
+    default JumboListIterator<E> listIterator64() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns a Jumbo list iterator over the elements in this list in proper
+     * sequence, starting at the specified position in the list.
+     *
+     * <p>The specified index indicates the first element that would be
+     * returned by an initial call to {@code next}. An initial call to
+     * {@code previous} would return the element with the specified index
+     * minus one.
+     *
+     * <p>This method is intended for Jumbo lists, that is, lists whose index
+     * range and size may exceed {@link Integer#MAX_VALUE}. The returned
+     * iterator exposes long-valued positions through
+     * {@link JumboListIterator}.
+     *
+     * @implSpec The default implementation throws
+     *         {@link UnsupportedOperationException}.
+     *
+     * @param index index of the first element to be returned from the list
+     *        iterator (by a call to {@code next})
+     * @return a Jumbo list iterator over the elements in this list, starting
+     *         at the specified position
+     * @throws IndexOutOfBoundsException if {@code index} is less than zero or
+     *         greater than the list size
+     * @throws UnsupportedOperationException if long-indexed iteration is not
+     *         supported by this list
+     * @see #listIterator64()
+     * @see JumboListIterator
+     * @see JumboContainer
+     */
+    default JumboListIterator<E> listIterator64(long index) {
+        throw new UnsupportedOperationException();
+    }
 }

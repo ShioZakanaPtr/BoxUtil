@@ -1,5 +1,6 @@
 package org.boxutil.base.api.container.longtype;
 
+import org.boxutil.base.api.container.JumboListIterator;
 import org.boxutil.base.api.container.ListExt;
 import org.jetbrains.annotations.NotNull;
 
@@ -320,6 +321,14 @@ public interface LongList extends ListExt<Long>, LongCollection {
     @NotNull LongListIterator listIterator();
 
     @NotNull LongListIterator listIterator(int index);
+
+    default LongJumboListIterator listIterator64() {
+        throw new UnsupportedOperationException();
+    }
+
+    default LongJumboListIterator listIterator64(long index) {
+        throw new UnsupportedOperationException();
+    }
 
     @NotNull LongList subList(int fromIndex, int toIndex);
 
