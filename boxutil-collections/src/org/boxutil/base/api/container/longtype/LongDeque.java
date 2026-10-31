@@ -17,7 +17,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
      */
     @Deprecated
     default Long peek() {
-        return this.peekRaw();
+        return this.peekFirstRaw();
     }
 
     long peekFirstRaw();
@@ -49,7 +49,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
      */
     @Deprecated
     default Long element() {
-        return LongQueue.super.elementRaw();
+        return this.getFirstRaw();
     }
 
     default long getFirstRaw() {
@@ -90,7 +90,8 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
      */
     @Deprecated
     default boolean add(Long e) {
-        return LongQueue.super.add(e);
+        this.addLast(e != null ? e.longValue() : (long) 0);
+        return true;
     }
 
     void addFirst(long e);
@@ -114,7 +115,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
     }
 
     default boolean offer(long e) {
-        this.addFirst(e);
+        this.addLast(e);
         return true;
     }
 
@@ -123,7 +124,8 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
      */
     @Deprecated
     default boolean offer(Long e) {
-        return LongQueue.super.offer(e);
+        this.addLast(e != null ? e.longValue() : (long) 0);
+        return true;
     }
 
     default boolean offerFirstRaw(long e) {
@@ -163,7 +165,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
      */
     @Deprecated
     default Long poll() {
-        return this.pollRaw();
+        return this.pollFirstRaw();
     }
 
     long pollFirstRaw();
@@ -195,7 +197,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
      */
     @Deprecated
     default Long remove() {
-        return this.removeRaw();
+        return this.removeFirstRaw();
     }
 
     default long removeFirstRaw() {
@@ -265,7 +267,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
      */
     @Deprecated
     default void push(Long e) {
-        this.push(e != null ? e.longValue() : (long) 0);
+        this.addFirst(e != null ? e.longValue() : (long) 0);
     }
 
     default long popRaw() {

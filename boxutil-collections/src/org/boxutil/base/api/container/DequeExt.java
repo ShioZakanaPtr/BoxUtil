@@ -29,6 +29,11 @@ public interface DequeExt<E> extends Deque<E>, QueueExt<E> {
         return result;
     }
 
+    default boolean add(E e) {
+        this.addLast(e);
+        return true;
+    }
+
     // For compatibility
     default void addFirst(E e) {
         throw new UnsupportedOperationException();
@@ -40,7 +45,8 @@ public interface DequeExt<E> extends Deque<E>, QueueExt<E> {
     }
 
     default boolean offer(E e) {
-        return this.add(e);
+        this.addLast(e);
+        return true;
     }
 
     default boolean offerFirst(E e) {
@@ -78,7 +84,7 @@ public interface DequeExt<E> extends Deque<E>, QueueExt<E> {
     }
 
     default E pop() {
-        return this.removeFirst();
+        return this.pollFirst();
     }
 
     /**
