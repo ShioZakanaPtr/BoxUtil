@@ -9,9 +9,13 @@ import java.util.Queue;
 import java.util.function.Consumer;
 
 public interface DequeExt<E> extends Deque<E>, QueueExt<E> {
+    default E peek() {
+        return this.peekFirst();
+    }
+
     default E element() {
         E result;
-        if ((result = this.peek()) == this.getNullElement()) throw new NoSuchElementException();
+        if ((result = this.peekFirst()) == this.getNullElement()) throw new NoSuchElementException();
         return result;
     }
 
@@ -59,9 +63,13 @@ public interface DequeExt<E> extends Deque<E>, QueueExt<E> {
         return true;
     }
 
+    default E poll() {
+        return this.pollFirst();
+    }
+
     default E remove() {
         E result;
-        if ((result = this.poll()) == this.getNullElement()) throw new NoSuchElementException();
+        if ((result = this.pollFirst()) == this.getNullElement()) throw new NoSuchElementException();
         return result;
     }
 
