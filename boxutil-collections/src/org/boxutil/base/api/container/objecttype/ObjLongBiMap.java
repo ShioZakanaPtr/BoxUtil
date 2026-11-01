@@ -1,8 +1,8 @@
 package org.boxutil.base.api.container.objecttype;
 
-import com.fs.starfarer.api.util.Pair;
 import org.boxutil.base.api.container.BiMap;
 import org.boxutil.base.api.container.EntrySetExt;
+import org.boxutil.base.api.container.Pair;
 import org.boxutil.base.api.container.longtype.LongCollection;
 import org.boxutil.util.function.longtype.LongLongBiFunction;
 import org.boxutil.util.function.objecttype.*;

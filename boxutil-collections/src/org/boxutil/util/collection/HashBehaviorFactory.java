@@ -5,7 +5,6 @@ import org.boxutil.util.HashingUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,7 +37,7 @@ public final class HashBehaviorFactory {
     }
 
     public static <K> HashBehavior<K> of(@NotNull String name, @NotNull Supplier<HashBehavior<K>> behavior) {
-        if (name.isBlank()) throw new IllegalArgumentException("Illegal id: a white space");
+        if (name.isEmpty() || " ".contentEquals(name)) throw new IllegalArgumentException("Illegal id: a white space");
         return (HashBehavior<K>) CUSTOM.computeIfAbsent(name, l_k -> (HashBehavior<Object>) behavior.get());
     }
 
@@ -63,7 +62,6 @@ public final class HashBehaviorFactory {
     }
 
     private final static class DefaultDirectly implements HashBehavior<Object>, Serializable {
-        @Serial
         private static final long serialVersionUID = 1L;
 
         public int hashing(int key) {
@@ -88,7 +86,6 @@ public final class HashBehaviorFactory {
     }
 
     private final static class DefaultFibonacci implements HashBehavior<Object>, Serializable {
-        @Serial
         private static final long serialVersionUID = 1L;
 
         public int hashing(int key) {
@@ -113,7 +110,6 @@ public final class HashBehaviorFactory {
     }
 
     private final static class DefaultBitMix implements HashBehavior<Object>, Serializable {
-        @Serial
         private static final long serialVersionUID = 1L;
 
         public int hashing(int key) {
@@ -138,7 +134,6 @@ public final class HashBehaviorFactory {
     }
 
     private final static class DefaultFibonacciMix implements HashBehavior<Object>, Serializable {
-        @Serial
         private static final long serialVersionUID = 1L;
 
         public int hashing(int key) {
@@ -163,7 +158,6 @@ public final class HashBehaviorFactory {
     }
 
     private final static class DefaultMurmurHash3 implements HashBehavior<Object>, Serializable {
-        @Serial
         private static final long serialVersionUID = 1L;
 
         public int hashing(int key) {

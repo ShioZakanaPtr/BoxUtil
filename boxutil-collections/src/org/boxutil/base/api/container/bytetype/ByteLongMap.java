@@ -8,11 +8,14 @@ import org.boxutil.util.function.bytetype.ByteLongBiConsumer;
 import org.boxutil.util.function.bytetype.ByteLongBiFunction;
 import org.boxutil.util.function.bytetype.ByteLongBiOperator;
 import org.boxutil.util.function.longtype.LongLongBiFunction;
+import org.boxutil.util.function.longtype.LongUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public interface ByteLongMap extends MapExt<Byte, Long> {
     long get(byte key);

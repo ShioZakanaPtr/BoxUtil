@@ -1,11 +1,14 @@
 package org.boxutil.base.api.container.longtype;
 
 import org.boxutil.base.api.container.ListExt;
+import org.boxutil.util.function.longtype.LongUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.LongFunction;
+import java.util.function.UnaryOperator;
 
 public interface LongList extends ListExt<Long>, LongCollection {
     long getRaw(int index);
@@ -197,7 +200,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
     }
 
     default long update(int index, @NotNull LongUnaryOperator updateFunction) {
-        long newValue = updateFunction.applyAsLong(this.getRaw(index));
+        long newValue = updateFunction.apply(this.getRaw(index));
         this.set(index, newValue);
         return newValue;
     }
@@ -223,7 +226,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
     default void replaceAll(@NotNull LongUnaryOperator operator) {
         final LongListIterator li = this.listIterator();
         while (li.hasNext()) {
-            li.set(operator.applyAsLong(li.nextLong()));
+            li.set(operator.apply(li.nextLong()));
         }
     }
 
@@ -241,7 +244,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
     default void replaceRange(int fromIndex, int toIndex, LongUnaryOperator operator) {
         LongListIterator it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
-            it.set(operator.applyAsLong(it.nextLong()));
+            it.set(operator.apply(it.nextLong()));
         }
     }
 

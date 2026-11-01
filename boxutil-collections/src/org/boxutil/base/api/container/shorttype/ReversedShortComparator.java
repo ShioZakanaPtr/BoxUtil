@@ -2,13 +2,13 @@ package org.boxutil.base.api.container.shorttype;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-record ReversedShortComparator(ShortComparator comparator) implements ShortComparator, Serializable {
-    @Serial
+final class ReversedShortComparator implements ShortComparator, Serializable {
     private static final long serialVersionUID = 1L;
+
+    private final ShortComparator comparator;
 
     public ReversedShortComparator(ShortComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);

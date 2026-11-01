@@ -2,13 +2,13 @@ package org.boxutil.base.api.container.longtype;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-record ReversedLongComparator(LongComparator comparator) implements LongComparator, Serializable {
-    @Serial
+final class ReversedLongComparator implements LongComparator, Serializable {
     private static final long serialVersionUID = 1L;
+
+    private final LongComparator comparator;
 
     public ReversedLongComparator(LongComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);

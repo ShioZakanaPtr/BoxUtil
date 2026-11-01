@@ -63,7 +63,8 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
     public boolean equals(Object o) {
         if (o == this) return true;
 
-        if (o instanceof Set<?> cast) {
+        if (o instanceof Set<?>) {
+            Set<?> cast = (Set<?>) o;
             if (cast.size() != this.size()) return false;
             try {
                 return this.containsAll(cast);

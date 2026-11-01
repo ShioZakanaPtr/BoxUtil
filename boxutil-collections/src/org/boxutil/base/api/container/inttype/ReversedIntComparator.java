@@ -2,13 +2,13 @@ package org.boxutil.base.api.container.inttype;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-record ReversedIntComparator(IntComparator comparator) implements IntComparator, Serializable {
-    @Serial
+final class ReversedIntComparator implements IntComparator, Serializable {
     private static final long serialVersionUID = 1L;
+
+    private final IntComparator comparator;
 
     public ReversedIntComparator(IntComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);

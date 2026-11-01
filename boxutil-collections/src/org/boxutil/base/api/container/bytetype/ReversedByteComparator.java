@@ -2,13 +2,13 @@ package org.boxutil.base.api.container.bytetype;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-record ReversedByteComparator(ByteComparator comparator) implements ByteComparator, Serializable {
-    @Serial
+final class ReversedByteComparator implements ByteComparator, Serializable {
     private static final long serialVersionUID = 1L;
+
+    private final ByteComparator comparator;
 
     public ReversedByteComparator(ByteComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);

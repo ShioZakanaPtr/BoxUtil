@@ -1,5 +1,8 @@
 package org.boxutil.base.api.container.longtype;
 
+import org.boxutil.util.function.longtype.LongToDoubleFunction;
+import org.boxutil.util.function.longtype.LongToIntFunction;
+import org.boxutil.util.function.longtype.LongUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -132,18 +135,18 @@ public interface LongComparator extends Comparator<Long> {
     static LongComparator comparingInt(LongToIntFunction keyExtractor) {
         Objects.requireNonNull(keyExtractor);
         return (LongComparator & Serializable)
-                (l_c1, l_c2) -> Integer.compare(keyExtractor.applyAsInt(l_c1), keyExtractor.applyAsInt(l_c2));
+                (l_c1, l_c2) -> Integer.compare(keyExtractor.apply(l_c1), keyExtractor.apply(l_c2));
     }
 
     static LongComparator comparingLong(LongUnaryOperator keyExtractor) {
         Objects.requireNonNull(keyExtractor);
         return (LongComparator & Serializable)
-                (l_c1, l_c2) -> Long.compare(keyExtractor.applyAsLong(l_c1), keyExtractor.applyAsLong(l_c2));
+                (l_c1, l_c2) -> Long.compare(keyExtractor.apply(l_c1), keyExtractor.apply(l_c2));
     }
 
     static LongComparator comparingDouble(LongToDoubleFunction keyExtractor) {
         Objects.requireNonNull(keyExtractor);
         return (LongComparator & Serializable)
-                (l_c1, l_c2) -> Double.compare(keyExtractor.applyAsDouble(l_c1), keyExtractor.applyAsDouble(l_c2));
+                (l_c1, l_c2) -> Double.compare(keyExtractor.apply(l_c1), keyExtractor.apply(l_c2));
     }
 }

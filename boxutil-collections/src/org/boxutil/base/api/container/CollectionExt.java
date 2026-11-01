@@ -7,7 +7,7 @@ import java.util.Objects;
 
 public interface CollectionExt<E> extends Collection<E>, Container {
     /**
-     * Adds all of the elements in the specified array to this collection
+     * Adds all the elements in the specified array to this collection
      * (optional operation). The elements are added in the order they appear in
      * the array, as if by invoking {@link #add(Object)} on each element.
      *

@@ -213,4 +213,34 @@ public interface Container {
     default void clear64(long newCapacity) {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * Returns whether this container is a Jumbo container, that is, a
+     * container whose capacity, remaining space, and size may exceed
+     * {@link Integer#MAX_VALUE}.
+     *
+     * <p>A container for which this method returns {@code true} is expected
+     * to implement {@link JumboContainer} and to provide meaningful
+     * long-valued semantics for the {@code *64} methods inherited from this
+     * interface, including {@link #resize64(long)}, {@link #reserve64(long)},
+     * {@link #capacity64()}, {@link #remaining64()}, {@link #size64()}, and
+     * {@link #clear64(long)}.
+     *
+     * <p>This method is intended to allow callers to distinguish Jumbo
+     * containers from ordinary containers at run time, for example when the
+     * static type of the container is {@code Container} or a non-Jumbo
+     * subtype.
+     *
+     * @implSpec The default implementation returns {@code false}.
+     *
+     * @return {@code true} if this container is a Jumbo container;
+     *         {@code false} otherwise
+     * @see JumboContainer
+     * @see #capacity64()
+     * @see #remaining64()
+     * @see #size64()
+     */
+    default boolean isJumbo() {
+        return false;
+    }
 }

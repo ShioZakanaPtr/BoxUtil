@@ -1,6 +1,5 @@
 package org.boxutil.base.api.container;
 
-import com.fs.starfarer.api.util.Pair;
 import org.boxutil.util.function.objecttype.TeConsumer;
 import org.boxutil.util.function.objecttype.TeFunction;
 import org.jetbrains.annotations.NotNull;
@@ -145,21 +144,21 @@ public interface BiMap<X, Y, V> extends Container {
         V currValue = this.get(keyA, keyB);
         Pair<? extends X, ? extends Y> newKeyPair = remappingFunction.apply(keyA, keyB, currValue);
 
-        if (newKeyPair == null || !(Objects.equals(newKeyPair.one, keyA) && Objects.equals(newKeyPair.two, keyB))) this.remove(keyA, keyB);
+        if (newKeyPair == null || !(Objects.equals(newKeyPair.left(), keyA) && Objects.equals(newKeyPair.right(), keyB))) this.remove(keyA, keyB);
         if (newKeyPair == null) return def;
-        if (!(Objects.equals(newKeyPair.one, keyA) && Objects.equals(newKeyPair.two, keyB))) {
-            if (this.containsKey(newKeyPair.one, newKeyPair.two)) {
-                V oldValue = this.get(newKeyPair.one, newKeyPair.two),
+        if (!(Objects.equals(newKeyPair.left(), keyA) && Objects.equals(newKeyPair.right(), keyB))) {
+            if (this.containsKey(newKeyPair.left(), newKeyPair.right())) {
+                V oldValue = this.get(newKeyPair.left(), newKeyPair.right()),
                         // if the `get` method also can return a default value, should check it here and use null for result, because it means "not found"
                         newValue = mergeFunction.apply(oldValue == def ? null : oldValue, currValue);
                 if (newValue != null) {
                     currValue = newValue;
                 } else {
-                    this.remove(newKeyPair.one, newKeyPair.two);
+                    this.remove(newKeyPair.left(), newKeyPair.right());
                     return def;
                 }
             }
-            this.put(newKeyPair.one, newKeyPair.two, currValue);
+            this.put(newKeyPair.left(), newKeyPair.right(), currValue);
         }
         return currValue;
     }
