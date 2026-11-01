@@ -3,6 +3,7 @@ package org.boxutil.util.collection.longtype;
 import org.boxutil.base.api.container.longtype.LongIterator;
 import org.boxutil.base.api.container.longtype.LongList;
 import org.boxutil.base.api.container.longtype.LongListIterator;
+import org.boxutil.base.api.container.longtype.LongSpliterator;
 
 public abstract class AbstractLongList extends AbstractLongCollection implements LongList {
     protected AbstractLongList() {}
@@ -64,4 +65,8 @@ public abstract class AbstractLongList extends AbstractLongCollection implements
         }
         return -1;
     }
+
+    public abstract LongIterator iterator();
+
+    public abstract LongSpliterator spliterator();
 }

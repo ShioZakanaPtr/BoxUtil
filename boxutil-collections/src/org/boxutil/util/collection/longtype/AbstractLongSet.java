@@ -2,6 +2,7 @@ package org.boxutil.util.collection.longtype;
 
 import org.boxutil.base.api.container.longtype.LongIterator;
 import org.boxutil.base.api.container.longtype.LongSet;
+import org.boxutil.base.api.container.longtype.LongSpliterator;
 
 import java.util.Collection;
 import java.util.List;
@@ -50,6 +51,10 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
         }
         return true;
     }
+
+    public abstract LongIterator iterator();
+
+    public abstract LongSpliterator spliterator();
 
     public int hashCode() {
         int result = 0;

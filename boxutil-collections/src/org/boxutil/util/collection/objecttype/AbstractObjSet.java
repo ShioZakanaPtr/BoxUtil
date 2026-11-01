@@ -47,6 +47,10 @@ public abstract class AbstractObjSet<E> extends AbstractObjCollection<E> impleme
         return true;
     }
 
+    public abstract Iterator<E> iterator();
+
+    public abstract Spliterator<E> spliterator();
+
     public int hashCode() {
         int result = 0;
         Iterator<E> it = this.iterator();

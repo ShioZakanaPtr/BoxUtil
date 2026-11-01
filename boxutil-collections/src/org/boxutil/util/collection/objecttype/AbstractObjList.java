@@ -5,6 +5,7 @@ import org.boxutil.base.api.container.objecttype.ObjList;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Objects;
+import java.util.Spliterator;
 
 public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implements ObjList<E> {
     protected AbstractObjList() {}
@@ -66,4 +67,8 @@ public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implem
         }
         return -1;
     }
+
+    public abstract Iterator<E> iterator();
+
+    public abstract Spliterator<E> spliterator();
 }

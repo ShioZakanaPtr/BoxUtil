@@ -2,6 +2,7 @@ package org.boxutil.util.collection.inttype;
 
 import org.boxutil.base.api.container.inttype.IntIterator;
 import org.boxutil.base.api.container.inttype.IntSet;
+import org.boxutil.base.api.container.inttype.IntSpliterator;
 
 import java.util.*;
 import java.util.function.IntFunction;
@@ -47,6 +48,10 @@ public abstract class AbstractIntSet extends AbstractIntCollection implements In
         }
         return true;
     }
+
+    public abstract IntIterator iterator();
+
+    public abstract IntSpliterator spliterator();
 
     public int hashCode() {
         int result = 0;

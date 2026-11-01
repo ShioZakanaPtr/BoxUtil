@@ -2,6 +2,7 @@ package org.boxutil.util.collection.bytetype;
 
 import org.boxutil.base.api.container.bytetype.ByteIterator;
 import org.boxutil.base.api.container.bytetype.ByteSet;
+import org.boxutil.base.api.container.bytetype.ByteSpliterator;
 import org.boxutil.util.function.bytetype.ByteFunction;
 
 import java.util.Collection;
@@ -50,6 +51,10 @@ public abstract class AbstractByteSet extends AbstractByteCollection implements 
         }
         return true;
     }
+
+    public abstract ByteIterator iterator();
+
+    public abstract ByteSpliterator spliterator();
 
     public int hashCode() {
         int result = 0;

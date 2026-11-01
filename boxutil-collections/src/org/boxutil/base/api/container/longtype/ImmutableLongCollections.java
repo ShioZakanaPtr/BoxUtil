@@ -158,6 +158,10 @@ final class ImmutableLongCollections {
         public boolean addAll(int dstIndex, long[] elements, int srcIndex, int length) {
             throw new UnsupportedOperationException();
         }
+
+        public abstract LongIterator iterator();
+
+        public abstract LongSpliterator spliterator();
     }
 
     interface ImmutableLongIterator extends LongIterator {
@@ -1068,6 +1072,10 @@ final class ImmutableLongCollections {
         public boolean remapping(long element, LongFunction<? extends Long> remappingFunction) {
             throw new UnsupportedOperationException();
         }
+
+        public abstract LongIterator iterator();
+
+        public abstract LongSpliterator spliterator();
     }
 
     static class ImmutableLongSetEmpty extends AbstractImmutableLongSet implements Cloneable, Serializable {

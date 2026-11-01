@@ -2,6 +2,7 @@ package org.boxutil.util.collection.shorttype;
 
 import org.boxutil.base.api.container.shorttype.ShortIterator;
 import org.boxutil.base.api.container.shorttype.ShortSet;
+import org.boxutil.base.api.container.shorttype.ShortSpliterator;
 import org.boxutil.util.function.shorttype.ShortFunction;
 
 import java.util.Collection;
@@ -50,6 +51,10 @@ public abstract class AbstractShortSet extends AbstractShortCollection implement
         }
         return true;
     }
+
+    public abstract ShortIterator iterator();
+
+    public abstract ShortSpliterator spliterator();
 
     public int hashCode() {
         int result = 0;
