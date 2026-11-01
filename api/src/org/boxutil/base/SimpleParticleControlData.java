@@ -16,7 +16,6 @@ import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <strong>Very^32</strong> simple particle dynamic resource manager.<p>
@@ -164,6 +163,7 @@ public class SimpleParticleControlData extends BaseControlData {
         this.state[0] = 0;
         this.state[1] = 0;
         this.state[2] = 0;
+        this.state[4] = 0;
         this._sync_lock.unlock();
     }
 
