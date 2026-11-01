@@ -24,6 +24,14 @@ final class ImmutableLongCollections {
     private final static LongList EMPTY_LIST = new ImmutableLongListEmpty();
     final static LongSet EMPTY_SET = new ImmutableLongSetEmpty();
 
+    private static long[] newTable(int cap) {
+        return new long[cap];
+    }
+
+    private static long[] newFillTable(long element) {
+        return new long[]{element};
+    }
+
     static abstract class AbstractImmutableLongCollection extends AbstractLongCollection {
         public void resize(int newCapacity) {
             throw new UnsupportedOperationException();
@@ -224,7 +232,7 @@ final class ImmutableLongCollections {
         }
 
         public long[] toArrayRaw() {
-            return new long[0];
+            return newTable(0);
         }
 
         public long[] toArray(long[] a) {
@@ -257,7 +265,7 @@ final class ImmutableLongCollections {
 
         @Serial
         private Object writeReplace() {
-            return new ProxyStorage(false, new long[0]);
+            return new ProxyStorage(false, newTable(0));
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -381,7 +389,7 @@ final class ImmutableLongCollections {
         }
 
         public long[] toArrayRaw() {
-            return new long[]{this.element};
+            return newFillTable(this.element);
         }
 
         public long[] toArray(long[] a) {
@@ -426,7 +434,7 @@ final class ImmutableLongCollections {
 
         @Serial
         private Object writeReplace() {
-            return new ProxyStorage(false, new long[]{this.element});
+            return new ProxyStorage(false, newFillTable(this.element));
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -523,7 +531,7 @@ final class ImmutableLongCollections {
 
         public ImmutableLongListN(Long[] element) {
             final int limit = element.length;
-            final long[] eleL = this.element = new long[limit];
+            final long[] eleL = this.element = newTable(limit);
             for (int i = 0; i < limit; i++) {
                 final Long currEle = element[i];
                 eleL[i++] = currEle != null ? currEle : (long) 0;
@@ -616,10 +624,10 @@ final class ImmutableLongCollections {
 
         public long[] toArray(long[] a) {
             final long[] eleL;
-            final int size = (eleL = this.element).length;
-            if (a.length < size) return Arrays.copyOf(eleL, size);
-            System.arraycopy(eleL, 0, a, 0, size);
-            if (a.length > size) a[size] = 0;
+            final int sizeL = (eleL = this.element).length;
+            if (a.length < sizeL) return Arrays.copyOf(eleL, sizeL);
+            System.arraycopy(eleL, 0, a, 0, sizeL);
+            if (a.length > sizeL) a[sizeL] = 0;
             return a;
         }
 
@@ -760,7 +768,7 @@ final class ImmutableLongCollections {
 
             public LongSpliterator trySplit() {
                 final int newLimit = this.getLimitCap(), newIndex = this.index, midIndex = (newIndex + newLimit) >>> 1;
-                return (newIndex >= midIndex) ? null : new CollectionSpliterator(newIndex, this.index = midIndex);
+                return newIndex < midIndex ? new CollectionSpliterator(newIndex, this.index = midIndex) : null;
             }
 
             public boolean tryAdvance(LongConsumer action) {
@@ -899,9 +907,10 @@ final class ImmutableLongCollections {
 
             public long[] toArray(long[] a) {
                 final long[] eleL = this.rootArray();
-                if (a.length < this.size) return Arrays.copyOfRange(eleL, this.offset, this.offset + this.size);
-                System.arraycopy(eleL, this.offset, a, 0, this.size);
-                if (a.length > this.size) a[this.size] = 0;
+                final int sizeL = this.size;
+                if (a.length < sizeL) return Arrays.copyOfRange(eleL, this.offset, this.offset + sizeL);
+                System.arraycopy(eleL, this.offset, a, 0, sizeL);
+                if (a.length > sizeL) a[sizeL] = 0;
                 return a;
             }
 
@@ -1105,7 +1114,7 @@ final class ImmutableLongCollections {
         }
 
         public long[] toArrayRaw() {
-            return new long[0];
+            return newTable(0);
         }
 
         public long[] toArray(long[] a) {
@@ -1138,7 +1147,7 @@ final class ImmutableLongCollections {
 
         @Serial
         private Object writeReplace() {
-            return new ProxyStorage(true, new long[0]);
+            return new ProxyStorage(true, newTable(0));
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -1221,7 +1230,7 @@ final class ImmutableLongCollections {
         }
 
         public long[] toArrayRaw() {
-            return new long[]{this.element};
+            return newFillTable(this.element);
         }
 
         public long[] toArray(long[] a) {
@@ -1266,7 +1275,7 @@ final class ImmutableLongCollections {
 
         @Serial
         private Object writeReplace() {
-            return new ProxyStorage(true, new long[]{this.element});
+            return new ProxyStorage(true, newFillTable(this.element));
         }
 
         static class CollectionLongIterator implements ImmutableLongIterator {
@@ -1392,9 +1401,9 @@ final class ImmutableLongCollections {
         }
 
         protected long[] prepareArray(final long[] a) {
-            final int size = this.withNullEle ? this.size + 1 : this.size;
-            if (a.length < size) return new long[size];
-            if (a.length > size) a[size] = 0;
+            final int sizeL = this.withNullEle ? this.size + 1 : this.size;
+            if (a.length < sizeL) return newTable(sizeL);
+            if (a.length > sizeL) a[sizeL] = 0;
             return a;
         }
 
@@ -1412,7 +1421,7 @@ final class ImmutableLongCollections {
         }
 
         public long[] toArrayRaw() {
-            return this.slotToArray(new long[this.size]);
+            return this.slotToArray(newTable(this.size));
         }
 
         public long[] toArray(long[] a) {
@@ -1587,7 +1596,7 @@ final class ImmutableLongCollections {
 
             public LongSpliterator trySplit() {
                 final int newLimit = this.getLimitCap(), newIndex = this.index, midIndex = (newIndex + newLimit) >>> 1;
-                return (newIndex >= midIndex) ? null : new CollectionSpliterator(newIndex, this.index = midIndex, this.estSize >>>= 1);
+                return newIndex < midIndex ? new CollectionSpliterator(newIndex, this.index = midIndex, this.estSize >>>= 1) : null;
             }
 
             public boolean tryAdvance(LongConsumer action) {
@@ -1669,12 +1678,12 @@ final class ImmutableLongCollections {
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             in.defaultReadObject();
 
-            final int size = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(size, 0, this.isSet ? HashContainer.MAXIMUM_CAPACITY : Container.MAXIMUM_CAPACITY);
-            if (this.isSet) CollectionUtil.SerialCheck.ioGetHashTableCapacity(size, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+            final int sizeL = in.readInt();
+            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 0, this.isSet ? HashContainer.MAXIMUM_CAPACITY : Container.MAXIMUM_CAPACITY);
+            if (this.isSet) CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
 
-            final long[] eleL = this.element = new long[size];
-            for (int i = 0; i < size;) {
+            final long[] eleL = this.element = newTable(sizeL);
+            for (int i = 0; i < sizeL;) {
                 eleL[i++] = in.readLong();
             }
         }

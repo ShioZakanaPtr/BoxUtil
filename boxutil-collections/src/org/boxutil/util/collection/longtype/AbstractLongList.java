@@ -7,6 +7,10 @@ import org.boxutil.base.api.container.longtype.LongListIterator;
 public abstract class AbstractLongList extends AbstractLongCollection implements LongList {
     protected AbstractLongList() {}
 
+    public void shrink() {
+        this.resize(0);
+    }
+
     public abstract long getRaw(int index);
 
     public long set(int index, long element) {

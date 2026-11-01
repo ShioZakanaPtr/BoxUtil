@@ -7,6 +7,10 @@ import org.boxutil.base.api.container.HashContainer;
 import java.io.StreamCorruptedException;
 
 public final class CollectionUtil {
+    public static void throwCapacityOverflowTips() {
+        throw new IllegalStateException("The capacity of container overflow; should split to different ones");
+    }
+
     public static void checkCapacity(long cap) {
         if (!(cap >= 0 && cap <= Container.MAXIMUM_CAPACITY)) throw new IllegalArgumentException("Capacity overflow " + cap);
     }
@@ -19,6 +23,13 @@ public final class CollectionUtil {
         if (fromIndex < fromLimit) throw new IndexOutOfBoundsException("Out of bounds '" + fromIndex + '\'');
         if (toIndex > toLimit) throw new IndexOutOfBoundsException("Out of bounds '" + toIndex + '\'');
         if (fromIndex > toIndex) throw new IllegalArgumentException("Inverted index range [" + fromIndex + ',' + toIndex + ')');
+    }
+
+    public static int expandArray(int length) {
+        int reqCap = length < 64 ? length << 1 : length + (length >>> 1) + 1;
+        if (length < Container.MAXIMUM_CAPACITY) reqCap = Math.min(reqCap, Container.MAXIMUM_CAPACITY);
+        else CollectionUtil.throwCapacityOverflowTips();
+        return reqCap;
     }
 
     public static int getCapacityPOT(int rawCap) {
@@ -52,6 +63,12 @@ public final class CollectionUtil {
 
     public static void checkHashLoadFactor(float loadFactor, float min, float max) {
         if (!(Float.isFinite(loadFactor) && loadFactor >= min && loadFactor <= max)) throw new IllegalArgumentException("Illegal load factor '" + loadFactor + "' out of range [" + min + ',' + max + ']');
+    }
+
+    public static int expandHashArray(int length) {
+        final int reqCap;
+        if (!((reqCap = length << 1) >= 0 && reqCap <= HashContainer.MAXIMUM_CAPACITY)) CollectionUtil.throwCapacityOverflowTips();
+        return reqCap;
     }
 
     public final static class SerialCheck {

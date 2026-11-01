@@ -9,6 +9,10 @@ import java.util.Objects;
 public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implements ObjList<E> {
     protected AbstractObjList() {}
 
+    public void shrink() {
+        this.resize(0);
+    }
+
     public abstract E get(int index);
 
     public E set(int index, E element) {
