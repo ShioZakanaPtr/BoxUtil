@@ -39,8 +39,9 @@ public final class HashBehaviorFactory {
     private static boolean isInvalidID(String src) {
         if (src == null) return true;
         final int limit = src.length();
-        for (int i = 0; i < limit;)
+        for (int i = 0; i < limit;) {
             if (!Character.isWhitespace(src.charAt(i++))) return false;
+        }
         return true;
     }
 
