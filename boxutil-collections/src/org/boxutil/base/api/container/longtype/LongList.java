@@ -345,7 +345,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
         return ImmutableLongCollections.ofList(element);
     }
 
-    static LongList of(@NotNull long... elements) {
+    static LongList of(long... elements) {
         return ImmutableLongCollections.ofList(elements);
     }
 

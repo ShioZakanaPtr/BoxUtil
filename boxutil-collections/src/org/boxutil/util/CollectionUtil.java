@@ -5,6 +5,7 @@ import org.boxutil.base.api.container.HashBehavior;
 import org.boxutil.base.api.container.HashContainer;
 
 import java.io.StreamCorruptedException;
+import java.util.Arrays;
 import java.util.Objects;
 
 public final class CollectionUtil {
@@ -107,6 +108,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(byte[] src, int srcFrom, int srcTo, byte[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;
@@ -117,6 +119,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(short[] src, int srcFrom, int srcTo, short[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;
@@ -127,6 +130,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(int[] src, int srcFrom, int srcTo, int[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;
@@ -137,6 +141,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(long[] src, int srcFrom, int srcTo, long[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;
@@ -147,6 +152,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(char[] src, int srcFrom, int srcTo, char[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;
@@ -157,6 +163,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(float[] src, int srcFrom, int srcTo, float[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;
@@ -167,6 +174,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(double[] src, int srcFrom, int srcTo, double[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;
@@ -177,6 +185,7 @@ public final class CollectionUtil {
     }
 
     public static boolean arrayEquals(Object[] src, int srcFrom, int srcTo, Object[] dst, int dstFrom, int dstTo) {
+//        return Arrays.equals(src, srcFrom, srcTo, dst, dstFrom, dstTo); // JDK 14+
         if (src == dst) return true;
         if (src == null || dst == null) return false;
         if (srcTo - srcFrom != dstTo - dstFrom) return false;

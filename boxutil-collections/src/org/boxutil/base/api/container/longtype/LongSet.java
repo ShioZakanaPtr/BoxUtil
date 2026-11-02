@@ -62,7 +62,7 @@ public interface LongSet extends SetExt<Long>, LongCollection {
         return ImmutableLongCollections.ofSet(element);
     }
 
-    static LongSet of(@NotNull long... elements) {
+    static LongSet of(long... elements) {
         return ImmutableLongCollections.ofSet(elements);
     }
 

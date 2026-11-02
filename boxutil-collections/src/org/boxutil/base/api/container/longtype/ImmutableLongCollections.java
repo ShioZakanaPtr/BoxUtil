@@ -231,7 +231,7 @@ final class ImmutableLongCollections {
         }
 
         public LongSpliterator spliterator() {
-            return new CollectionSpliterator();
+            return new CollectionLongSpliterator();
         }
 
         public long[] toArrayRaw() {
@@ -299,7 +299,7 @@ final class ImmutableLongCollections {
             }
         }
 
-        private final static class CollectionSpliterator implements LongSpliterator {
+        private final static class CollectionLongSpliterator implements LongSpliterator {
             public LongSpliterator trySplit() {
                 return null;
             }
@@ -315,7 +315,7 @@ final class ImmutableLongCollections {
             }
 
             public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
+                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
             }
         }
     }
@@ -385,7 +385,7 @@ final class ImmutableLongCollections {
         }
 
         public LongSpliterator spliterator() {
-            return new CollectionSpliterator(this.element);
+            return new CollectionLongSpliterator(this.element);
         }
 
         public long[] toArrayRaw() {
@@ -483,11 +483,11 @@ final class ImmutableLongCollections {
             }
         }
 
-        private final static class CollectionSpliterator implements LongSpliterator {
+        private final static class CollectionLongSpliterator implements LongSpliterator {
             private boolean toggle = true;
             private final long element;
 
-            public CollectionSpliterator(long element) {
+            public CollectionLongSpliterator(long element) {
                 this.element = element;
             }
 
@@ -516,7 +516,7 @@ final class ImmutableLongCollections {
             }
 
             public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
+                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
             }
         }
     }
@@ -611,7 +611,7 @@ final class ImmutableLongCollections {
         }
 
         public LongSpliterator spliterator() {
-            return new CollectionSpliterator(0, -1);
+            return new CollectionLongSpliterator(0, -1);
         }
 
         public long[] toArrayRaw() {
@@ -646,10 +646,10 @@ final class ImmutableLongCollections {
                 if (castList.size() != this.size()) return false;
                 try {
                     if (castList instanceof ImmutableLongListN) {
-                        final ImmutableLongListN cast = ((ImmutableLongListN) o);
+                        final ImmutableLongListN cast = (ImmutableLongListN) o;
                         return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
                     } else if (castList instanceof ImmutableLongSubList) {
-                        final ImmutableLongSubList cast = ((ImmutableLongSubList) o);
+                        final ImmutableLongSubList cast = (ImmutableLongSubList) o;
                         return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
                     } else {
                         final Iterator<?> oit = castList.iterator();
@@ -744,11 +744,11 @@ final class ImmutableLongCollections {
             }
         }
 
-        private final class CollectionSpliterator implements LongSpliterator {
+        private final class CollectionLongSpliterator implements LongSpliterator {
             private int index;
             private int limit;
 
-            public CollectionSpliterator(int index, int limit) {
+            public CollectionLongSpliterator(int index, int limit) {
                 this.index = index;
                 this.limit = limit;
             }
@@ -763,7 +763,7 @@ final class ImmutableLongCollections {
 
             public LongSpliterator trySplit() {
                 final int newLimit = this.getLimitCap(), newIndex = this.index, midIndex = (newIndex + newLimit) >>> 1;
-                return newIndex < midIndex ? new CollectionSpliterator(newIndex, this.index = midIndex) : null;
+                return newIndex < midIndex ? new CollectionLongSpliterator(newIndex, this.index = midIndex) : null;
             }
 
             public boolean tryAdvance(LongConsumer action) {
@@ -789,7 +789,7 @@ final class ImmutableLongCollections {
             }
 
             public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
+                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
             }
         }
 
@@ -864,11 +864,11 @@ final class ImmutableLongCollections {
             }
 
             public LongListIterator listIterator() {
-                return new CollectionSubListIterator(0);
+                return new CollectionLongSubListIterator(0);
             }
 
             public LongListIterator listIterator(int index) {
-                return new CollectionSubListIterator(index);
+                return new CollectionLongSubListIterator(index);
             }
 
             public LongList subList(int fromIndex, int toIndex) {
@@ -889,11 +889,11 @@ final class ImmutableLongCollections {
             }
 
             public LongIterator iterator() {
-                return new CollectionSubIterator();
+                return new CollectionLongSubIterator();
             }
 
             public LongSpliterator spliterator() {
-                return new CollectionSubSpliterator(0, -1);
+                return new CollectionLongSubSpliterator(0, -1);
             }
 
             public long[] toArrayRaw() {
@@ -928,10 +928,10 @@ final class ImmutableLongCollections {
                     if (castList.size() != this.size()) return false;
                     try {
                         if (castList instanceof ImmutableLongListN) {
-                            final ImmutableLongListN cast = ((ImmutableLongListN) o);
+                            final ImmutableLongListN cast = (ImmutableLongListN) o;
                             return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
                         } else if (castList instanceof ImmutableLongSubList) {
-                            final ImmutableLongSubList cast = ((ImmutableLongSubList) o);
+                            final ImmutableLongSubList cast = (ImmutableLongSubList) o;
                             return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
                         } else {
                             final Iterator<?> oit = castList.iterator();
@@ -966,7 +966,7 @@ final class ImmutableLongCollections {
                 return sb.toString();
             }
 
-            protected class CollectionSubIterator implements ImmutableLongIterator {
+            protected class CollectionLongSubIterator implements ImmutableLongIterator {
                 protected int pos = 0;
 
                 public boolean hasNext() {
@@ -988,8 +988,8 @@ final class ImmutableLongCollections {
                 }
             }
 
-            protected class CollectionSubListIterator extends CollectionSubIterator implements ImmutableLongListIterator {
-                protected CollectionSubListIterator(int index) {
+            protected class CollectionLongSubListIterator extends CollectionLongSubIterator implements ImmutableLongListIterator {
+                protected CollectionLongSubListIterator(int index) {
                     super();
                     this.pos = index;
                 }
@@ -1012,11 +1012,11 @@ final class ImmutableLongCollections {
                 }
             }
 
-            protected class CollectionSubSpliterator implements LongSpliterator {
+            protected class CollectionLongSubSpliterator implements LongSpliterator {
                 protected int index;
                 protected int limit;
 
-                protected CollectionSubSpliterator(int index, int limit) {
+                protected CollectionLongSubSpliterator(int index, int limit) {
                     this.index = index;
                     this.limit = limit;
                 }
@@ -1031,7 +1031,7 @@ final class ImmutableLongCollections {
 
                 public LongSpliterator trySplit() {
                     final int newLimit = this.getLimitCap(), newIndex = this.index, midIndex = (newIndex + newLimit) >>> 1;
-                    return (newIndex >= midIndex) ? null : new CollectionSubSpliterator(newIndex, this.index = midIndex);
+                    return (newIndex >= midIndex) ? null : new CollectionLongSubSpliterator(newIndex, this.index = midIndex);
                 }
 
                 public boolean tryAdvance(LongConsumer action) {
@@ -1058,7 +1058,7 @@ final class ImmutableLongCollections {
                 }
 
                 public int characteristics() {
-                    return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;
+                    return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
                 }
             }
         }
@@ -1108,7 +1108,7 @@ final class ImmutableLongCollections {
         }
 
         public LongSpliterator spliterator() {
-            return new CollectionSpliterator();
+            return new CollectionLongSpliterator();
         }
 
         public long[] toArrayRaw() {
@@ -1158,7 +1158,7 @@ final class ImmutableLongCollections {
             public void forEachRemaining(LongConsumer action) {}
         }
 
-        private final static class CollectionSpliterator implements LongSpliterator {
+        private final static class CollectionLongSpliterator implements LongSpliterator {
             public LongSpliterator trySplit() {
                 return null;
             }
@@ -1174,7 +1174,7 @@ final class ImmutableLongCollections {
             }
 
             public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
+                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
             }
         }
     }
@@ -1221,7 +1221,7 @@ final class ImmutableLongCollections {
         }
 
         public LongSpliterator spliterator() {
-            return new CollectionSpliterator(this.element);
+            return new CollectionLongSpliterator(this.element);
         }
 
         public long[] toArrayRaw() {
@@ -1294,11 +1294,11 @@ final class ImmutableLongCollections {
             }
         }
 
-        static class CollectionSpliterator implements LongSpliterator {
+        static class CollectionLongSpliterator implements LongSpliterator {
             private boolean toggle = true;
             private final long element;
 
-            public CollectionSpliterator(long element) {
+            public CollectionLongSpliterator(long element) {
                 this.element = element;
             }
 
@@ -1327,7 +1327,7 @@ final class ImmutableLongCollections {
             }
 
             public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
+                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
             }
         }
     }
@@ -1350,11 +1350,11 @@ final class ImmutableLongCollections {
         }
 
         public boolean contains(long o) {
-            if (o == 0) return this.withNullEle;
+            if (DEFAULT_HASHER.equals(o, 0)) return this.withNullEle;
 
             long currEle;
-            for (int pos = DEFAULT_HASHER.hashing(o); (currEle = this.element[pos &= this.posMask]) != NULL_SLOT; pos++) {
-                if (o == currEle) return true;
+            for (int pos = DEFAULT_HASHER.hashing(o); (currEle = this.element[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
+                if (DEFAULT_HASHER.equals(o, currEle)) return true;
             }
             return false;
         }
@@ -1364,7 +1364,7 @@ final class ImmutableLongCollections {
             final long[] eleL = this.element;
             for (int pos = 0; pos < capL;) {
                 final long currEle;
-                if ((currEle = eleL[pos++]) != NULL_SLOT) {
+                if ((currEle = eleL[pos++]) != ((long) NULL_SLOT)) {
                     action.accept(currEle);
                 }
             }
@@ -1389,7 +1389,7 @@ final class ImmutableLongCollections {
         }
 
         public LongSpliterator spliterator() {
-            return new CollectionSpliterator(0, -1, 0);
+            return new CollectionLongSpliterator(0, -1, 0);
         }
 
         protected long[] prepareArray(final long[] a) {
@@ -1406,7 +1406,7 @@ final class ImmutableLongCollections {
             int idx = 0;
             for (int pos = 0; pos < this.capacity;) {
                 final long currEle;
-                if ((currEle = eleL[pos++]) != NULL_SLOT) a[idx++] = currEle;
+                if ((currEle = eleL[pos++]) != ((long) NULL_SLOT)) a[idx++] = currEle;
             }
             if (this.withNullEle) a[idx] = eleL[this.capacity];
             return a;
@@ -1426,7 +1426,7 @@ final class ImmutableLongCollections {
             final long[] eleL = this.element;
             for (int pos = 0; pos < capL;) {
                 final long currEle;
-                if ((currEle = eleL[pos++]) != NULL_SLOT) {
+                if ((currEle = eleL[pos++]) != ((long) NULL_SLOT)) {
                     result += Long.hashCode(currEle);
                 }
             }
@@ -1449,7 +1449,7 @@ final class ImmutableLongCollections {
                         final int capacity = srcEleL.length;
                         for (int srcPos = 0; srcPos < capacity;) {
                             final long srcEle;
-                            if ((srcEle = srcEleL[srcPos++]) != NULL_SLOT) {
+                            if ((srcEle = srcEleL[srcPos++]) != ((long) NULL_SLOT)) {
                                 if (!this.contains(srcEle)) return false;
                             }
                         }
@@ -1475,7 +1475,7 @@ final class ImmutableLongCollections {
             final long[] eleL = this.element;
             for (int pos = 0; pos < capL;) {
                 final long currEle;
-                if ((currEle = eleL[pos++]) != NULL_SLOT) {
+                if ((currEle = eleL[pos++]) != ((long) NULL_SLOT)) {
                     if (sb.length() > 1) sb.append(',').append(' ');
                     sb.append(currEle);
                 }
@@ -1521,7 +1521,7 @@ final class ImmutableLongCollections {
                 final int capL = ImmutableLongSetN.this.capacity;
                 int findPos = -1, findPosNext = -1;
                 for (int i = start; i < capL; i++) {
-                    if (eleL[i] != NULL_SLOT) {
+                    if (eleL[i] != ((long) NULL_SLOT)) {
                         if (findPos < 0) findPos = i;
                         else if (findPosNext < 0) findPosNext = i;
                         else break;
@@ -1551,7 +1551,7 @@ final class ImmutableLongCollections {
                     final int capL = ImmutableLongSetN.this.capacity;
                     int i;
                     for (i = posL + 1; i < capL; i++) {
-                        if (eleL[i] != NULL_SLOT) {
+                        if (eleL[i] != ((long) NULL_SLOT)) {
                             this.posNext = i;
                             break;
                         }
@@ -1562,14 +1562,32 @@ final class ImmutableLongCollections {
                 }
                 return eleL[current];
             }
+
+            public void forEachRemaining(LongConsumer action) {
+                final int current;
+                if ((current = this.pos) < 0) return;
+                final long[] eleL = ImmutableLongSetN.this.element;
+                final int capL = ImmutableLongSetN.this.capacity;
+                int i;
+                for (i = current; i < capL; i++) {
+                    final long currEle;
+                    if ((currEle = eleL[i]) != ((long) NULL_SLOT)) {
+                        action.accept(currEle);
+                    }
+                }
+                if (i == capL && ImmutableLongSetN.this.withNullEle) {
+                    action.accept(eleL[capL]);
+                }
+                this.pos = -1;
+            }
         }
 
-        class CollectionSpliterator implements LongSpliterator {
+        class CollectionLongSpliterator implements LongSpliterator {
             protected int index;
             protected int limitCap;
             protected int estSize;
 
-            protected CollectionSpliterator(int index, int limitCap, int estSize) {
+            protected CollectionLongSpliterator(int index, int limitCap, int estSize) {
                 this.index = index;
                 this.limitCap = limitCap;
                 this.estSize = estSize;
@@ -1586,7 +1604,7 @@ final class ImmutableLongCollections {
 
             public LongSpliterator trySplit() {
                 final int newLimit = this.getLimitCap(), newIndex = this.index, midIndex = (newIndex + newLimit) >>> 1;
-                return newIndex < midIndex ? new CollectionSpliterator(newIndex, this.index = midIndex, this.estSize >>>= 1) : null;
+                return newIndex < midIndex ? new CollectionLongSpliterator(newIndex, this.index = midIndex, this.estSize >>>= 1) : null;
             }
 
             public boolean tryAdvance(LongConsumer action) {
@@ -1596,7 +1614,7 @@ final class ImmutableLongCollections {
                 final long[] eleL = ImmutableLongSetN.this.element;
                 while (idxL < currLimit) {
                     final long currEle;
-                    if ((currEle = eleL[idxL++]) != NULL_SLOT) {
+                    if ((currEle = eleL[idxL++]) != ((long) NULL_SLOT)) {
                         this.index = idxL;
                         action.accept(currEle);
                         return true;
@@ -1619,7 +1637,7 @@ final class ImmutableLongCollections {
                 final long[] eleL = ImmutableLongSetN.this.element;
                 while (idxL < currLimit) {
                     final long currEle;
-                    if ((currEle = eleL[idxL++]) != NULL_SLOT) action.accept(currEle);
+                    if ((currEle = eleL[idxL++]) != ((long) NULL_SLOT)) action.accept(currEle);
                 }
                 final int capL = ImmutableLongSetN.this.capacity;
                 if (idxL == currLimit && idxL == capL && ImmutableLongSetN.this.withNullEle) {
@@ -1635,7 +1653,7 @@ final class ImmutableLongCollections {
             }
 
             public int characteristics() {
-                return (this.limitCap < 0 || this.estSize == ImmutableLongSetN.this.size ? Spliterator.SIZED : 0) | Spliterator.DISTINCT | Spliterator.NONNULL;
+                return (this.limitCap < 0 || this.estSize == ImmutableLongSetN.this.size ? Spliterator.SIZED : 0) | Spliterator.DISTINCT | Spliterator.IMMUTABLE | Spliterator.NONNULL;
             }
         }
     }
@@ -1702,11 +1720,10 @@ final class ImmutableLongCollections {
         if (source instanceof AbstractImmutableLongList) {
             return (LongList) source;
         }
-        final int size;
-        switch ((size = source.size())) {
+        switch (source.size()) {
             case 0: return EMPTY_LIST;
-            case 1: return new ImmutableLongListOne(source.toArray(new Long[1])[0]);
-            default: return new ImmutableLongListN(source.toArray(new Long[size]));
+            case 1: return new ImmutableLongListOne((Long) source.toArray()[0]);
+            default: return new ImmutableLongListN((Long[]) source.toArray());
         }
     }
 
@@ -1719,7 +1736,7 @@ final class ImmutableLongCollections {
     }
 
     static LongSet ofSetSerial(long... elements) throws StreamCorruptedException {
-        LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, DEFAULT_HASHER);
+        LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_HASHER);
         collect.shrink();
         final boolean withNullEleL = collect.contains((long) 0);
         final int sizeL = collect.size(), capacityL = collect.capacity();
@@ -1734,7 +1751,7 @@ final class ImmutableLongCollections {
     }
 
     static LongSet ofSet(long... elements) {
-        LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, DEFAULT_HASHER);
+        LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_HASHER);
         collect.shrink();
         final boolean withNullEleL = collect.contains((long) 0);
         final int sizeL = collect.size(), capacityL = collect.capacity();
@@ -1754,14 +1771,14 @@ final class ImmutableLongCollections {
 
         switch (source.size()) {
             case 0: return EMPTY_SET;
-            case 1: return new ImmutableLongSetOne(source.toArray(new Long[1])[0]);
+            case 1: return new ImmutableLongSetOne((Long) source.toArray()[0]);
             default: {
-                LongLinearProbingHashSet collect = new LongLinearProbingHashSet(source, DEFAULT_LOAD_FACTOR, DEFAULT_HASHER);
+                LongLinearProbingHashSet collect = new LongLinearProbingHashSet(source, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_HASHER);
                 collect.shrink();
                 final boolean withNullEleL = collect.contains((long) 0);
                 final int sizeL = collect.size(), capacityL = collect.capacity();
                 final long[] eleL = collect.table();
-                return sizeL != 1 ? new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL) : new ImmutableLongSetOne(source.toArray(new Long[1])[0]);
+                return sizeL != 1 ? new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL) : new ImmutableLongSetOne((Long) source.toArray()[0]);
             }
         }
     }
