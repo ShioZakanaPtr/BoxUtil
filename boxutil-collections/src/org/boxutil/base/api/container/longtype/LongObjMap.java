@@ -229,4 +229,65 @@ public interface LongObjMap<V> extends MapExt<Long, V> {
             return this.getKeyRaw();
         }
     }
+
+    static <V> LongObjMap<V> of() {
+        return ImmutableLongObjMaps.of();
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1) {
+        return ImmutableLongObjMaps.of(k1, v1);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7, long k8, V v8) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7, long k8, V v8, long k9, V v9) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8, k9, v9);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7, long k8, V v8, long k9, V v9, long k10, V v10) {
+        return ImmutableLongObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8, k9, v9, k10, v10);
+    }
+
+    static <V> LongObjMap.Entry<V> entry(long k, V v) {
+        return ImmutableLongObjMaps.entry(k, v);
+    }
+
+    @SafeVarargs
+    static <V> LongObjMap<V> ofEntries(Map.Entry<? extends Long, ? extends V>... entries) {
+        return ImmutableLongObjMaps.ofEntries(entries);
+    }
+
+    static <V> LongObjMap<V> ofArrays(long[] keys, V[] values) {
+        return ImmutableLongObjMaps.ofArrays(keys, values);
+    }
+
+    static <V> LongObjMap<V> copyOf(@NotNull Map<? extends Long, ? extends V> source) {
+        return ImmutableLongObjMaps.copyOf(source);
+    }
 }

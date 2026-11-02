@@ -5,7 +5,6 @@ import org.boxutil.base.api.container.HashBehavior;
 import org.boxutil.base.api.container.HashContainer;
 
 import java.io.StreamCorruptedException;
-import java.util.Arrays;
 import java.util.Objects;
 
 public final class CollectionUtil {

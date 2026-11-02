@@ -1,12 +1,14 @@
 package org.boxutil.base.api.container.longtype;
 
 import org.boxutil.base.api.container.*;
+import org.boxutil.base.api.container.objecttype.ObjList;
+import org.boxutil.base.api.container.objecttype.ObjSet;
 import org.boxutil.util.CollectionUtil;
 import org.boxutil.util.collection.HashBehaviorFactory;
+import org.boxutil.util.collection.longtype.LongObjLinearProbingHashMap;
+import org.boxutil.util.collection.longtype.LongObjMutablePair;
 import org.boxutil.util.function.longtype.LongObjBiConsumer;
 import org.boxutil.util.function.longtype.LongObjBiFunction;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Map;
@@ -19,7 +21,7 @@ import java.util.function.LongFunction;
 final class ImmutableLongObjMaps {
     final static float DEFAULT_LOAD_FACTOR = 0.75f;
     private final static long NULL_SLOT = (long) 0;
-    private final static HashBehavior<Long> DEFAULT_HASHER = HashBehaviorFactory.fibonacciMix();
+    private final static HashBehavior<Long> DEFAULT_BEHAVIOR = HashBehaviorFactory.fibonacciMix();
     private final static LongObjMap<?> EMPTY_MAP = new ImmutableLongObjMapEmpty<>();
 
     private static long[] newKeyTable(int cap) {
@@ -75,23 +77,23 @@ final class ImmutableLongObjMaps {
             throw new UnsupportedOperationException();
         }
 
-        public V computeIfAbsent(long key, @NotNull LongFunction<? extends V> mappingFunction) {
+        public V computeIfAbsent(long key, LongFunction<? extends V> mappingFunction) {
             throw new UnsupportedOperationException();
         }
 
-        public V computeIfPresent(long key, @NotNull LongObjBiFunction<? super V, ? extends V> remappingFunction) {
+        public V computeIfPresent(long key, LongObjBiFunction<? super V, ? extends V> remappingFunction) {
             throw new UnsupportedOperationException();
         }
 
-        public V compute(long key, @NotNull LongObjBiFunction<? super V, ? extends V> remappingFunction) {
+        public V compute(long key, LongObjBiFunction<? super V, ? extends V> remappingFunction) {
             throw new UnsupportedOperationException();
         }
 
-        public V merge(long key, @NotNull V value, @NotNull BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+        public V merge(long key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
             throw new UnsupportedOperationException();
         }
 
-        public V update(long key, @NotNull Function<? super V, ? extends V> updateFunction) {
+        public V update(long key, Function<? super V, ? extends V> updateFunction) {
             throw new UnsupportedOperationException();
         }
 
@@ -99,7 +101,7 @@ final class ImmutableLongObjMaps {
             throw new UnsupportedOperationException();
         }
 
-        public void swap(@NotNull Map<Long, V> source) {
+        public void swap(Map<Long, V> source) {
             throw new UnsupportedOperationException();
         }
 
@@ -107,11 +109,11 @@ final class ImmutableLongObjMaps {
             throw new UnsupportedOperationException();
         }
 
-        public void putAll(@NotNull Map<? extends Long, ? extends V> m) {
+        public void putAll(Map<? extends Long, ? extends V> m) {
             throw new UnsupportedOperationException();
         }
 
-        public void replaceAll(@NotNull LongObjBiFunction<? super V, ? extends V> function) {
+        public void replaceAll(LongObjBiFunction<? super V, ? extends V> function) {
             throw new UnsupportedOperationException();
         }
 
@@ -119,7 +121,7 @@ final class ImmutableLongObjMaps {
             return null;
         }
 
-        public V setDefaultReturnValue(@Nullable V newDefault) {
+        public V setDefaultReturnValue(V newDefault) {
             throw new UnsupportedOperationException();
         }
 
@@ -155,7 +157,7 @@ final class ImmutableLongObjMaps {
             return false;
         }
 
-        public void forEach(@NotNull LongObjBiConsumer<? super V> action) {}
+        public void forEach(LongObjBiConsumer<? super V> action) {}
 
         public int capacity() {
             return 2;
@@ -169,19 +171,16 @@ final class ImmutableLongObjMaps {
             return true;
         }
 
-        @NotNull
         public LongSet keySet() {
-            return ImmutableLongCollections.EMPTY_SET;
+            return LongSet.of();
         }
 
-        @NotNull
         public CollectionExt<V> values() {
-            return null;
+            return ObjSet.of();
         }
 
-        @NotNull
-        public EntrySetExt<Entry<V>> rawEntrySet() {
-            return null;
+        public EntrySetExt<LongObjMap.Entry<V>> rawEntrySet() {
+            return new ImmutableLongCollections.ImmutableMapEntrySet<>();
         }
 
         public int hashCode() {
@@ -199,7 +198,7 @@ final class ImmutableLongObjMaps {
         }
 
         public Object clone() {
-            return EMPTY_MAP;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -208,6 +207,382 @@ final class ImmutableLongObjMaps {
 
         private Object writeReplace() {
             return new ProxyStorage<>(newKeyTable(0), newValueTable(0));
+        }
+    }
+
+    private final static class ImmutableLongObjMapOne<V> extends AbstractImmutableLongObjMap<V> implements Cloneable, Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final long key;
+        private final V value;
+
+        private transient LongSet keySet = null;
+        private transient CollectionExt<V> valueCollection = null;
+        private transient EntrySetExt<LongObjMap.Entry<V>> entrySet = null;
+
+        public ImmutableLongObjMapOne(long key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public V get(long key) {
+            return key == this.key ? this.value : null;
+        }
+
+        public V getOrDefault(long key, V defaultValue) {
+            return key == this.key ? this.value : defaultValue;
+        }
+
+        public boolean containsKey(long key) {
+            return key == this.key;
+        }
+
+        public boolean containsValue(Object value) {
+            return Objects.equals(value, this.value);
+        }
+
+        public void forEach(LongObjBiConsumer<? super V> action) {
+            action.accept(this.key, this.value);
+        }
+
+        public int capacity() {
+            return 2;
+        }
+
+        public int size() {
+            return 1;
+        }
+
+        public boolean isEmpty() {
+            return false;
+        }
+
+        public LongSet keySet() {
+            LongSet result;
+            if ((result = this.keySet) == null) {
+                result = this.keySet = LongSet.of(this.key);
+            }
+            return result;
+        }
+
+        public CollectionExt<V> values() {
+            CollectionExt<V> result;
+            if ((result = this.valueCollection) == null) {
+                result = this.valueCollection = ObjList.of(this.value);
+            }
+            return result;
+        }
+
+        public EntrySetExt<LongObjMap.Entry<V>> rawEntrySet() {
+            EntrySetExt<LongObjMap.Entry<V>> result;
+            if ((result = this.entrySet) == null) {
+                result = this.entrySet = new ImmutableLongCollections.ImmutableMapEntrySet<>(new SimpleEntry<>(this.key, this.value));
+            }
+            return result;
+        }
+
+        public int hashCode() {
+            return Long.hashCode(this.key) ^ Objects.hashCode(this.value);
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o instanceof Map<?, ?>) {
+                final Map<?, ?> castMap = (Map<?, ?>) o;
+                if (castMap.size() != 1) return false;
+                return castMap.containsKey(this.key) && Objects.equals(this.value, castMap.get(this.key));
+            }
+            return false;
+        }
+
+        public String toString() {
+            return "{" + this.key + '=' + (this.value != this ? this.value : "(this Map)") + '}';
+        }
+
+        public Object clone() {
+            return this;
+        }
+
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorage<>(newFillKeyTable(this.key), newFillValueTable(this.value));
+        }
+    }
+
+    private final static class ImmutableLongObjMapN<V> extends AbstractImmutableLongObjMap<V> implements Cloneable, Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final boolean withNullKey;
+        private final int size;
+        private final int capacity;
+        private final int posMask;
+        private final transient long[] keyTable;
+        private final transient V[] valueTable;
+
+        private transient LongSet keySet = null;
+        private transient CollectionExt<V> valueCollection = null;
+        private transient EntrySetExt<LongObjMap.Entry<V>> entrySet = null;
+
+        public ImmutableLongObjMapN(boolean withNullKey, int size, int capacity, long[] keys, V[] values) {
+            this.withNullKey = withNullKey;
+            this.size = size;
+            this.capacity = capacity;
+            this.posMask = capacity - 1;
+            this.keyTable = keys;
+            this.valueTable = values;
+        }
+
+        public int find(long key) {
+            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) {
+                return this.withNullKey ? this.capacity : ~this.capacity;
+            }
+
+            int pos = DEFAULT_BEHAVIOR.hashing(key);
+            for (long currKey; (currKey = this.keyTable[pos &= this.posMask]) != 0; pos++) {
+                if (DEFAULT_BEHAVIOR.equals(key, currKey)) {
+                    return pos;
+                }
+            }
+            return ~pos;
+        }
+
+        public V get(long key) {
+            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) return this.withNullKey ? this.valueTable[this.capacity] : null;
+
+            long currKey;
+            for (int pos = DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
+                if (DEFAULT_BEHAVIOR.equals(key, currKey)) return this.valueTable[pos];
+            }
+            return null;
+        }
+
+        public V getOrDefault(long key, V defaultValue) {
+            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) return this.withNullKey ? this.valueTable[this.capacity] : defaultValue;
+
+            long currKey;
+            for (int pos = DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
+                if (DEFAULT_BEHAVIOR.equals(key, currKey)) return this.valueTable[pos];
+            }
+            return defaultValue;
+        }
+
+        public boolean containsKey(long key) {
+            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) return this.withNullKey;
+
+            long currKey;
+            for (int pos = DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
+                if (DEFAULT_BEHAVIOR.equals(key, currKey)) return true;
+            }
+            return false;
+        }
+
+        public boolean containsValue(Object value) {
+            final int capL = this.capacity;
+            final V[] valueL = this.valueTable;
+            for (int pos = 0; pos < capL; pos++) {
+                if (this.keyTable[pos] != ((long) NULL_SLOT) && Objects.equals(value, valueL[pos])) return true;
+            }
+
+            return this.withNullKey && Objects.equals(value, valueL[capL]);
+        }
+
+        public void forEach(LongObjBiConsumer<? super V> action) {
+            final int capL = this.capacity;
+            final long[] keyL = this.keyTable;
+            final V[] valueL = this.valueTable;
+            for (int pos = 0; pos < capL; pos++) {
+                final long currKey;
+                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                    action.accept(currKey, valueL[pos]);
+                }
+            }
+
+            if (this.withNullKey) action.accept(keyL[capL], valueL[capL]);
+        }
+
+        public int capacity() {
+            return this.capacity;
+        }
+
+        public int size() {
+            return this.size;
+        }
+
+        public boolean isEmpty() {
+            return false;
+        }
+
+        public LongSet keySet() {
+            LongSet result;
+            if ((result = this.keySet) == null) {
+                result = this.keySet = LongSet.of(this.keyTable);
+            }
+            return result;
+        }
+
+        public CollectionExt<V> values() {
+            CollectionExt<V> result;
+            if ((result = this.valueCollection) == null) {
+                result = this.valueCollection = ObjList.of(this.valueTable);
+            }
+            return result;
+        }
+
+        public EntrySetExt<LongObjMap.Entry<V>> rawEntrySet() {
+            EntrySetExt<LongObjMap.Entry<V>> result;
+            if ((result = this.entrySet) == null) {
+                result = this.entrySet = new ImmutableLongCollections.ImmutableMapEntrySet<>(this.toEntryArray());
+            }
+            return result;
+        }
+
+        public int hashCode() {
+            int result = 0;
+            final int capL = this.capacity;
+            final long[] keyL = this.keyTable;
+            final V[] valueL = this.valueTable;
+            for (int pos = 0; pos < capL; pos++) {
+                final long currKey;
+                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                    result += Long.hashCode(currKey) ^ Objects.hashCode(valueL[pos]);
+                }
+            }
+
+            if (this.withNullKey) result += Long.hashCode(keyL[capL]) ^ Objects.hashCode(valueL[capL]);
+            return result;
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) return true;
+
+            if (o instanceof Map<?, ?>) {
+                final Map<?, ?> castMap = (Map<?, ?>) o;
+                if (castMap.size() != this.size()) return false;
+                try {
+                    if (castMap instanceof ImmutableLongObjMapN<?>) {
+                        final ImmutableLongObjMapN<?> cast = (ImmutableLongObjMapN<?>) castMap;
+                        if (this.withNullKey != cast.withNullKey) return false;
+                        final long[] srcKeyL = cast.keyTable;
+                        final V[] currValueL = this.valueTable, srcValueL = (V[]) cast.valueTable;
+
+                        final int capacity = srcKeyL.length;
+                        for (int srcPos = 0; srcPos < capacity; srcPos++) {
+                            final long srcKey;
+                            if ((srcKey = srcKeyL[srcPos]) != ((long) NULL_SLOT)) {
+                                final int currPos = this.find(srcKey);
+                                if (currPos < 0) return false;
+
+                                final V currValue = currValueL[currPos], srcValue = srcValueL[srcPos];
+                                if (srcValue == null && currValue != null || srcValue != null && !srcValue.equals(currValue)) return false;
+                            }
+                        }
+                        if (this.withNullKey) return this.keyTable[this.capacity] == srcKeyL[cast.capacity] && Objects.equals(currValueL[this.capacity], srcValueL[cast.capacity]);
+                    } else {
+                        for (Map.Entry<?, ?> entry : castMap.entrySet()) {
+                            final Long srcKey = (Long) entry.getKey();
+                            final V srcValue = (V) entry.getValue();
+                            final int currPos = this.find(srcKey);
+                            if (currPos < 0) return false;
+
+                            final V currValue = this.valueTable[currPos];
+                            if (srcValue == null && currValue != null || srcValue != null && !srcValue.equals(currValue)) return false;
+                        }
+                    }
+                    return true;
+                } catch (ClassCastException | NullPointerException unused) {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        public String toString() {
+            final StringBuilder sb = new StringBuilder();
+            sb.append('{');
+            final int capL = this.capacity;
+            final long[] keyL = this.keyTable;
+            final V[] valueL = this.valueTable;
+            for (int pos = 0; pos < capL; pos++) {
+                final long currKey;
+                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                    final V currValue;
+                    if (sb.length() > 1) sb.append(',').append(' ');
+                    sb.append(currKey)
+                            .append('=')
+                            .append((currValue = valueL[pos]) != this ? currValue : "(this Map)");
+                }
+            }
+
+            if (this.withNullKey) {
+                final V currValue;
+                if (sb.length() > 1) sb.append(',').append(' ');
+                sb.append(keyL[capL])
+                        .append('=')
+                        .append((currValue = valueL[capL]) != this ? currValue : "(this Map)");
+            }
+            sb.append('}');
+            return sb.toString();
+        }
+
+        private long[] toKeyArray() {
+            int idx = 0;
+            final int capL = this.capacity;
+            final long[] keyL = this.keyTable, result = newKeyTable(this.size);
+            for (int pos = 0; pos < capL;) {
+                final long currKey;
+                if ((currKey = keyL[pos++]) != ((long) NULL_SLOT)) {
+                    result[idx++] = currKey;
+                }
+            }
+
+            if (this.withNullKey) result[idx] = keyL[capL];
+            return result;
+        }
+
+        private V[] toValueArray() {
+            int idx = 0;
+            final int capL = this.capacity;
+            final V[] valueL = this.valueTable, result = newValueTable(this.size);
+            for (int pos = 0; pos < capL; pos++) {
+                if (this.keyTable[pos] != ((long) NULL_SLOT)) {
+                    result[idx++] = valueL[pos];
+                }
+            }
+
+            if (this.withNullKey) result[idx] = valueL[capL];
+            return result;
+        }
+
+        private LongObjMap.Entry<V>[] toEntryArray() {
+            int idx = 0;
+            final int capL = this.capacity;
+            final long[] keyL = this.keyTable;
+            final V[] valueL = this.valueTable;
+            final LongObjMap.Entry<V>[] result = newValueTable(this.size);
+            for (int pos = 0; pos < capL; pos++) {
+                final long currKey;
+                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                    result[idx++] = new SimpleEntry<>(currKey, valueL[pos]);
+                }
+            }
+
+            if (this.withNullKey) result[idx] = new SimpleEntry<>(keyL[capL], valueL[capL]);
+            return result;
+        }
+
+        public Object clone() {
+            return this;
+        }
+
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorage<>(this.toKeyArray(), this.toValueArray());
         }
     }
 
@@ -293,7 +668,7 @@ final class ImmutableLongObjMaps {
             final long[] keyL;
             final V[] valueL;
             if (!((keyL = this.keyCollect) != null && (valueL = this.valueCollect) != null)) throw new StreamCorruptedException("Illegal array 'NULL'");
-            return null;
+            return ofArraysSerial(keyL, valueL);
         }
     }
 
@@ -302,50 +677,295 @@ final class ImmutableLongObjMaps {
     }
 
     static <V> LongObjMap<V> of(long k1, V v1) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        return new ImmutableLongObjMapOne<>(k1, v1);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(2);
+        final V[] v = newValueTable(2);
+        k[0] = k1;
+        k[1] = k2;
+        v[0] = v1;
+        v[1] = v2;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(3);
+        final V[] v = newValueTable(3);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(4);
+        final V[] v = newValueTable(4);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        k[3] = k4;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        v[3] = v4;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(5);
+        final V[] v = newValueTable(5);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        k[3] = k4;
+        k[4] = k5;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        v[3] = v4;
+        v[4] = v5;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(6);
+        final V[] v = newValueTable(6);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        k[3] = k4;
+        k[4] = k5;
+        k[5] = k6;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        v[3] = v4;
+        v[4] = v5;
+        v[5] = v6;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(7);
+        final V[] v = newValueTable(7);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        k[3] = k4;
+        k[4] = k5;
+        k[5] = k6;
+        k[6] = k7;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        v[3] = v4;
+        v[4] = v5;
+        v[5] = v6;
+        v[6] = v7;
+        return ofArrays(k, v);
+    }
+
+    static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7, long k8, V v8) {
+        final long[] k = newKeyTable(8);
+        final V[] v = newValueTable(8);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        k[3] = k4;
+        k[4] = k5;
+        k[5] = k6;
+        k[6] = k7;
+        k[7] = k8;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        v[3] = v4;
+        v[4] = v5;
+        v[5] = v6;
+        v[6] = v7;
+        v[7] = v8;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7, long k8, V v8, long k9, V v9) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(9);
+        final V[] v = newValueTable(9);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        k[3] = k4;
+        k[4] = k5;
+        k[5] = k6;
+        k[6] = k7;
+        k[7] = k8;
+        k[8] = k9;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        v[3] = v4;
+        v[4] = v5;
+        v[5] = v6;
+        v[6] = v7;
+        v[7] = v8;
+        v[8] = v9;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap<V> of(long k1, V v1, long k2, V v2, long k3, V v3, long k4, V v4, long k5, V v5, long k6, V v6, long k7, V v7, long k8, V v8, long k9, V v9, long k10, V v10) {
-        return (LongObjMap<V>) EMPTY_MAP;
+        final long[] k = newKeyTable(10);
+        final V[] v = newValueTable(10);
+        k[0] = k1;
+        k[1] = k2;
+        k[2] = k3;
+        k[3] = k4;
+        k[4] = k5;
+        k[5] = k6;
+        k[6] = k7;
+        k[7] = k8;
+        k[8] = k9;
+        k[9] = k10;
+        v[0] = v1;
+        v[1] = v2;
+        v[2] = v3;
+        v[3] = v4;
+        v[4] = v5;
+        v[5] = v6;
+        v[6] = v7;
+        v[7] = v8;
+        v[8] = v9;
+        v[9] = v10;
+        return ofArrays(k, v);
     }
 
     static <V> LongObjMap.Entry<V> entry(long k, V v) {
         return new SimpleEntry<>(k, v);
     }
 
-    static <V> LongObjMap<V> copyOf(LongObjMap<? extends V> source) {
+    @SafeVarargs
+    static <V> LongObjMap<V> ofEntries(Map.Entry<? extends Long, ? extends V>... entries) {
+        if (entries == null) throw new IllegalArgumentException();
+        final int limit;
+        switch (limit = entries.length) {
+            case 0: return (LongObjMap<V>) EMPTY_MAP;
+            case 1: {
+                final Long rawKey;
+                return new ImmutableLongObjMapOne<>((rawKey = entries[0].getKey()) != null ? rawKey.longValue() : (long) 0, entries[0].getValue());
+            }
+        }
+
+        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+        for (Map.Entry<? extends Long, ? extends V> entry : entries) {
+            collect.put(entry.getKey(), entry.getValue());
+        }
+        collect.shrink();
+        final boolean withNullEleL = collect.containsKey((long) 0);
+        final int sizeL = collect.size(), capacityL = collect.capacity();
+        final long[] keyL = collect.keyTable();
+        final V[] valueL = collect.valueTable();
+
+        switch (sizeL) {
+            case 0: return (LongObjMap<V>) EMPTY_MAP;
+            case 1: {
+                final Long rawKey;
+                return new ImmutableLongObjMapOne<>((rawKey = entries[0].getKey()) != null ? rawKey.longValue() : (long) 0, entries[0].getValue());
+            }
+            default: return new ImmutableLongObjMapN<>(withNullEleL, sizeL, capacityL, keyL, valueL);
+        }
+    }
+
+    static <V> LongObjMap<V> ofArraysSerial(long[] keys, V[] values) throws StreamCorruptedException {
+        final int limit;
+        if (!(keys != null && values != null && (limit = keys.length) == values.length)) throw new IllegalArgumentException();
+        switch (limit) {
+            case 0: return (LongObjMap<V>) EMPTY_MAP;
+            case 1: return new ImmutableLongObjMapOne<>(keys[0], values[0]);
+        }
+
+        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+        for (int i = 0; i < limit; i++) {
+            collect.put(keys[i], values[i]);
+        }
+        collect.shrink();
+        final boolean withNullEleL = collect.containsKey((long) 0);
+        final int sizeL = collect.size(), capacityL = collect.capacity();
+        final long[] keyL = collect.keyTable();
+        final V[] valueL = collect.valueTable();
+        CollectionUtil.SerialCheck.ioCheckElementCount(keys.length, sizeL);
+
+        switch (sizeL) {
+            case 0: return (LongObjMap<V>) EMPTY_MAP;
+            case 1: return new ImmutableLongObjMapOne<>(keys[0], values[0]);
+            default: return new ImmutableLongObjMapN<>(withNullEleL, sizeL, capacityL, keyL, valueL);
+        }
+    }
+
+    static <V> LongObjMap<V> ofArrays(long[] keys, V[] values) {
+        final int limit;
+        if (!(keys != null && values != null && (limit = keys.length) == values.length)) throw new IllegalArgumentException();
+        switch (limit) {
+            case 0: return (LongObjMap<V>) EMPTY_MAP;
+            case 1: return new ImmutableLongObjMapOne<>(keys[0], values[0]);
+        }
+
+        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+        for (int i = 0; i < limit; i++) {
+            collect.put(keys[i], values[i]);
+        }
+        collect.shrink();
+        final boolean withNullEleL = collect.containsKey((long) 0);
+        final int sizeL = collect.size(), capacityL = collect.capacity();
+        final long[] keyL = collect.keyTable();
+        final V[] valueL = collect.valueTable();
+
+        switch (sizeL) {
+            case 0: return (LongObjMap<V>) EMPTY_MAP;
+            case 1: return new ImmutableLongObjMapOne<>(keys[0], values[0]);
+            default: return new ImmutableLongObjMapN<>(withNullEleL, sizeL, capacityL, keyL, valueL);
+        }
+    }
+
+    static <V> LongObjMap<V> copyOf(Map<? extends Long, ? extends V> source) {
         if (source instanceof AbstractImmutableLongObjMap) {
             return (LongObjMap<V>) source;
         }
-        return null;
+
+        switch (source.size()) {
+            case 0: return (LongObjMap<V>) EMPTY_MAP;
+            case 1: {
+                final LongObjPair<V> tmp = new LongObjMutablePair<>();
+                source.forEach((l_k, l_v) -> {
+                    tmp.left(l_k);
+                    tmp.right(l_v);
+                });
+                return new ImmutableLongObjMapOne<>(tmp.leftRaw(), tmp.right());
+            }
+            default: {
+                final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(source, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+                collect.shrink();
+                final boolean withNullEleL = collect.containsKey((long) 0);
+                final int sizeL = collect.size(), capacityL = collect.capacity();
+                final long[] keyL = collect.keyTable();
+                final V[] valueL = collect.valueTable();
+
+                switch (sizeL) {
+                    case 0: return (LongObjMap<V>) EMPTY_MAP;
+                    case 1: {
+                        final LongObjPair<V> tmp = new LongObjMutablePair<>();
+                        source.forEach((l_k, l_v) -> {
+                            tmp.left(l_k);
+                            tmp.right(l_v);
+                        });
+                        return new ImmutableLongObjMapOne<>(tmp.leftRaw(), tmp.right());
+                    }
+                    default: return new ImmutableLongObjMapN<>(withNullEleL, sizeL, capacityL, keyL, valueL);
+                }
+            }
+        }
     }
 
     private ImmutableLongObjMaps() {}

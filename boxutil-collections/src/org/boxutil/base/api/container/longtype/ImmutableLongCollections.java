@@ -1,26 +1,23 @@
 package org.boxutil.base.api.container.longtype;
 
-import org.boxutil.base.api.container.Container;
-import org.boxutil.base.api.container.HashBehavior;
-import org.boxutil.base.api.container.HashContainer;
+import org.boxutil.base.api.container.*;
+import org.boxutil.base.api.container.objecttype.ObjSet;
 import org.boxutil.util.CollectionUtil;
 import org.boxutil.util.collection.HashBehaviorFactory;
 import org.boxutil.util.collection.longtype.AbstractLongCollection;
 import org.boxutil.util.collection.longtype.LongLinearProbingHashSet;
+import org.boxutil.util.collection.objecttype.AbstractObjSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.LongConsumer;
-import java.util.function.LongFunction;
-import java.util.function.LongPredicate;
-import java.util.function.LongUnaryOperator;
+import java.util.function.*;
 
 @SuppressWarnings({"UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
 final class ImmutableLongCollections {
     final static float DEFAULT_LOAD_FACTOR = 0.75f;
     private final static long NULL_SLOT = (long) 0;
-    private final static HashBehavior<Long> DEFAULT_HASHER = HashBehaviorFactory.fibonacciMix();
+    private final static HashBehavior<Long> DEFAULT_BEHAVIOR = HashBehaviorFactory.fibonacciMix();
     private final static LongList EMPTY_LIST = new ImmutableLongListEmpty();
     final static LongSet EMPTY_SET = new ImmutableLongSetEmpty();
 
@@ -258,7 +255,7 @@ final class ImmutableLongCollections {
         }
 
         public Object clone() {
-            return EMPTY_LIST;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -418,13 +415,7 @@ final class ImmutableLongCollections {
         }
 
         public Object clone() {
-            ImmutableLongListOne result;
-            try {
-                result = (ImmutableLongListOne) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -681,13 +672,7 @@ final class ImmutableLongCollections {
         }
 
         public Object clone() {
-            ImmutableLongListN result;
-            try {
-                result = (ImmutableLongListN) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -1065,11 +1050,11 @@ final class ImmutableLongCollections {
     }
 
     static abstract class AbstractImmutableLongSet extends AbstractImmutableLongCollection implements LongSet {
-        public void swap(Set<Long> source) {
+        public boolean remapping(long element, LongFunction<? extends Long> remappingFunction) {
             throw new UnsupportedOperationException();
         }
 
-        public boolean remapping(long element, LongFunction<? extends Long> remappingFunction) {
+        public void swap(Set<Long> source) {
             throw new UnsupportedOperationException();
         }
 
@@ -1135,7 +1120,7 @@ final class ImmutableLongCollections {
         }
 
         public Object clone() {
-            return EMPTY_SET;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -1254,13 +1239,7 @@ final class ImmutableLongCollections {
         }
 
         public Object clone() {
-            ImmutableLongSetOne result;
-            try {
-                result = (ImmutableLongSetOne) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -1350,11 +1329,11 @@ final class ImmutableLongCollections {
         }
 
         public boolean contains(long o) {
-            if (DEFAULT_HASHER.equals(o, 0)) return this.withNullEle;
+            if (DEFAULT_BEHAVIOR.equals(o, 0)) return this.withNullEle;
 
             long currEle;
-            for (int pos = DEFAULT_HASHER.hashing(o); (currEle = this.element[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
-                if (DEFAULT_HASHER.equals(o, currEle)) return true;
+            for (int pos = DEFAULT_BEHAVIOR.hashing(o); (currEle = this.element[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
+                if (DEFAULT_BEHAVIOR.equals(o, currEle)) return true;
             }
             return false;
         }
@@ -1490,13 +1469,7 @@ final class ImmutableLongCollections {
         }
 
         public Object clone() {
-            ImmutableLongSetN result;
-            try {
-                result = (ImmutableLongSetN) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -1658,6 +1631,151 @@ final class ImmutableLongCollections {
         }
     }
 
+    static class ImmutableMapEntrySet<E> extends AbstractObjSet<E> implements EntrySetExt<E> {
+        private final ObjSet<E> storage;
+
+        public ImmutableMapEntrySet() {
+            this.storage = ObjSet.of();
+        }
+
+        public ImmutableMapEntrySet(E entry) {
+            this.storage = ObjSet.of(entry);
+        }
+
+        @SafeVarargs
+        public ImmutableMapEntrySet(E... entries) {
+            switch (entries.length) {
+                case 0: {
+                    this.storage = ObjSet.of();
+                    break;
+                }
+                case 1: {
+                    this.storage = ObjSet.of(entries[0]);
+                    break;
+                }
+                default: {
+                    this.storage = ObjSet.of(entries);
+                }
+            }
+        }
+
+        public void resize(int newCapacity) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void reserve(int newMaxSize) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void shrink() {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean contains(Object o) {
+            return this.storage.contains(o);
+        }
+
+        public boolean add(E e) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean remove(Object o) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean remapping(E element, Function<? super E, ? extends E> remappingFunction) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void swap(@NotNull Set<E> source) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void forEach(Consumer<? super E> action) {
+            this.storage.forEach(action);
+        }
+
+        public void viewForEach(Consumer<? super E> action) {
+            this.storage.forEach(action);
+        }
+
+        public boolean addAll(Collection<? extends E> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public <T extends E> boolean addAll(T[] elements) {
+            throw new UnsupportedOperationException();
+        }
+
+        public <T extends E> boolean addAll(T[] elements, int srcIndex, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean removeIf(Predicate<? super E> filter) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean retainAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public int capacity() {
+            return this.storage.capacity();
+        }
+
+        public int remaining() {
+            return 0;
+        }
+
+        public int size() {
+            return this.storage.size();
+        }
+
+        public boolean isEmpty() {
+            return this.storage.isEmpty();
+        }
+
+        public Iterator<E> iterator() {
+            return this.storage.iterator();
+        }
+
+        public Spliterator<E> spliterator() {
+            return this.storage.spliterator();
+        }
+
+        public Iterator<E> viewIterator() {
+            return this.storage.iterator();
+        }
+
+        public Spliterator<E> viewSpliterator() {
+            return this.storage.spliterator();
+        }
+
+        public void clear() {
+            throw new UnsupportedOperationException();
+        }
+
+        public void clear(int newCapacity) {
+            throw new UnsupportedOperationException();
+        }
+
+        public int hashCode() {
+            return this.storage.hashCode();
+        }
+
+        public boolean equals(Object o) {
+            return this.storage.equals(o);
+        }
+
+        public String toString() {
+            return this.storage.toString();
+        }
+    }
+
     private final static class ProxyStorage implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -1701,7 +1819,7 @@ final class ImmutableLongCollections {
     }
 
     static LongList ofList() {
-        return EMPTY_LIST;
+        return (LongList) EMPTY_LIST;
     }
 
     static LongList ofList(long element) {
@@ -1710,7 +1828,7 @@ final class ImmutableLongCollections {
 
     static LongList ofList(long... elements) {
         switch (elements.length) {
-            case 0: return EMPTY_LIST;
+            case 0: return (LongList) EMPTY_LIST;
             case 1: return new ImmutableLongListOne(elements[0]);
             default: return new ImmutableLongListN(elements);
         }
@@ -1721,14 +1839,14 @@ final class ImmutableLongCollections {
             return (LongList) source;
         }
         switch (source.size()) {
-            case 0: return EMPTY_LIST;
+            case 0: return (LongList) EMPTY_LIST;
             case 1: return new ImmutableLongListOne((Long) source.toArray()[0]);
             default: return new ImmutableLongListN((Long[]) source.toArray());
         }
     }
 
     static LongSet ofSet() {
-        return EMPTY_SET;
+        return (LongSet) EMPTY_SET;
     }
 
     static LongSet ofSet(long element) {
@@ -1736,7 +1854,12 @@ final class ImmutableLongCollections {
     }
 
     static LongSet ofSetSerial(long... elements) throws StreamCorruptedException {
-        LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_HASHER);
+        switch (elements.length) {
+            case 0: return (LongSet) EMPTY_SET;
+            case 1: return new ImmutableLongSetOne(elements[0]);
+        }
+
+        final LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
         collect.shrink();
         final boolean withNullEleL = collect.contains((long) 0);
         final int sizeL = collect.size(), capacityL = collect.capacity();
@@ -1744,21 +1867,26 @@ final class ImmutableLongCollections {
         CollectionUtil.SerialCheck.ioCheckElementCount(elements.length, sizeL);
 
         switch (sizeL) {
-            case 0: return EMPTY_SET;
+            case 0: return (LongSet) EMPTY_SET;
             case 1: return new ImmutableLongSetOne(elements[0]);
             default: return new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL);
         }
     }
 
     static LongSet ofSet(long... elements) {
-        LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_HASHER);
+        switch (elements.length) {
+            case 0: return (LongSet) EMPTY_SET;
+            case 1: return new ImmutableLongSetOne(elements[0]);
+        }
+
+        final LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
         collect.shrink();
         final boolean withNullEleL = collect.contains((long) 0);
         final int sizeL = collect.size(), capacityL = collect.capacity();
         final long[] eleL = collect.table();
 
         switch (sizeL) {
-            case 0: return EMPTY_SET;
+            case 0: return (LongSet) EMPTY_SET;
             case 1: return new ImmutableLongSetOne(elements[0]);
             default: return new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL);
         }
@@ -1770,15 +1898,20 @@ final class ImmutableLongCollections {
         }
 
         switch (source.size()) {
-            case 0: return EMPTY_SET;
+            case 0: return (LongSet) EMPTY_SET;
             case 1: return new ImmutableLongSetOne((Long) source.toArray()[0]);
             default: {
-                LongLinearProbingHashSet collect = new LongLinearProbingHashSet(source, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_HASHER);
+                final LongLinearProbingHashSet collect = new LongLinearProbingHashSet(source, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
                 collect.shrink();
                 final boolean withNullEleL = collect.contains((long) 0);
                 final int sizeL = collect.size(), capacityL = collect.capacity();
                 final long[] eleL = collect.table();
-                return sizeL != 1 ? new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL) : new ImmutableLongSetOne((Long) source.toArray()[0]);
+
+                switch (sizeL) {
+                    case 0: return (LongSet) EMPTY_SET;
+                    case 1: return new ImmutableLongSetOne((Long) source.toArray()[0]);
+                    default: return new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL);
+                }
             }
         }
     }

@@ -1005,11 +1005,11 @@ final class ImmutableObjCollections {
     }
 
     static abstract class AbstractImmutableObjSet<E> extends AbstractImmutableObjCollection<E> implements ObjSet<E> {
-        public void swap(Set<E> source) {
+        public boolean remapping(E element, Function<? super E, ? extends E> remappingFunction) {
             throw new UnsupportedOperationException();
         }
 
-        public boolean remapping(E element, Function<? super E, ? extends E> remappingFunction) {
+        public void swap(Set<E> source) {
             throw new UnsupportedOperationException();
         }
 
@@ -1636,7 +1636,12 @@ final class ImmutableObjCollections {
 
     @SafeVarargs
     static <E> ObjSet<E> ofSetSerial(E... elements) throws StreamCorruptedException {
-        ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
+        switch (elements.length) {
+            case 0: return (ObjSet<E>) EMPTY_SET;
+            case 1: return new ImmutableObjSetOne<>(elements[0]);
+        }
+
+        final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
         collect.shrink();
         final boolean withNullEleL = collect.contains(null);
         final int sizeL = collect.size(), capacityL = collect.capacity();
@@ -1652,7 +1657,12 @@ final class ImmutableObjCollections {
 
     @SafeVarargs
     static <E> ObjSet<E> ofSet(E... elements) {
-        ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
+        switch (elements.length) {
+            case 0: return (ObjSet<E>) EMPTY_SET;
+            case 1: return new ImmutableObjSetOne<>(elements[0]);
+        }
+
+        final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
         collect.shrink();
         final boolean withNullEleL = collect.contains(null);
         final int sizeL = collect.size(), capacityL = collect.capacity();
@@ -1674,12 +1684,17 @@ final class ImmutableObjCollections {
             case 0: return (ObjSet<E>) EMPTY_SET;
             case 1: return new ImmutableObjSetOne<>((E) source.toArray()[0]);
             default: {
-                ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(source, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
+                final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(source, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
                 collect.shrink();
                 final boolean withNullEleL = collect.contains(null);
                 final int sizeL = collect.size(), capacityL = collect.capacity();
                 final E[] eleL = collect.table();
-                return sizeL != 1 ? new ImmutableObjSetN<>(withNullEleL, sizeL, capacityL, eleL) : new ImmutableObjSetOne<>((E) source.toArray()[0]);
+
+                switch (sizeL) {
+                    case 0: return (ObjSet<E>) EMPTY_SET;
+                    case 1: return new ImmutableObjSetOne<>((E) source.toArray()[0]);
+                    default: return new ImmutableObjSetN<>(withNullEleL, sizeL, capacityL, eleL);
+                }
             }
         }
     }
