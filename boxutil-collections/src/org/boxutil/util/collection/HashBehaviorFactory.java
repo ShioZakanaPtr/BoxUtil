@@ -36,8 +36,16 @@ public final class HashBehaviorFactory {
         return (HashBehavior<K>) DEFAULT[strategy.ordinal()];
     }
 
+    private static boolean isInvalidID(String src) {
+        if (src == null) return true;
+        final int limit = src.length();
+        for (int i = 0; i < limit;)
+            if (!Character.isWhitespace(src.charAt(i++))) return false;
+        return true;
+    }
+
     public static <K> HashBehavior<K> of(@NotNull String name, @NotNull Supplier<HashBehavior<K>> behavior) {
-        if (name.isEmpty() || " ".contentEquals(name)) throw new IllegalArgumentException("Illegal id: a white space");
+        if (isInvalidID(name)) throw new IllegalArgumentException("Illegal id: a white space or null");
         return (HashBehavior<K>) CUSTOM.computeIfAbsent(name, l_k -> (HashBehavior<Object>) behavior.get());
     }
 
