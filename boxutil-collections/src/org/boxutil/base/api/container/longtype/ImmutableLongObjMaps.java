@@ -19,25 +19,14 @@ import java.util.function.LongFunction;
 
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
 final class ImmutableLongObjMaps {
-    final static float DEFAULT_LOAD_FACTOR = 0.75f;
-    private final static long NULL_SLOT = (long) 0;
-    private final static HashBehavior<Long> DEFAULT_BEHAVIOR = HashBehaviorFactory.fibonacciMix();
     private final static LongObjMap<?> EMPTY_MAP = new ImmutableLongObjMapEmpty<>();
 
     private static long[] newKeyTable(int cap) {
         return new long[cap];
     }
 
-    private static long[] newFillKeyTable(long element) {
-        return new long[]{element};
-    }
-
     private static <T> T[] newValueTable(int cap) {
         return (T[]) new Object[cap];
-    }
-
-    private static <T> T[] newFillValueTable(T element) {
-        return (T[]) new Object[]{element};
     }
 
     private static abstract class AbstractImmutableLongObjMap<V> implements LongObjMap<V> {
@@ -201,12 +190,8 @@ final class ImmutableLongObjMaps {
             return this;
         }
 
-        private void readObject(ObjectInputStream in) throws InvalidObjectException {
-            throw new InvalidObjectException("Proxy required");
-        }
-
-        private Object writeReplace() {
-            return new ProxyStorage<>(newKeyTable(0), newValueTable(0));
+        private Object readResolve() {
+            return EMPTY_MAP;
         }
     }
 
@@ -308,7 +293,7 @@ final class ImmutableLongObjMaps {
         }
 
         private Object writeReplace() {
-            return new ProxyStorage<>(newFillKeyTable(this.key), newFillValueTable(this.value));
+            return new ProxyStorageOne<>(this.key, this.value);
         }
     }
 
@@ -336,13 +321,13 @@ final class ImmutableLongObjMaps {
         }
 
         public int find(long key) {
-            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) {
+            if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, ((long) ImmutableLongCollections.NULL_SLOT))) {
                 return this.withNullKey ? this.capacity : ~this.capacity;
             }
 
-            int pos = DEFAULT_BEHAVIOR.hashing(key);
+            int pos = ImmutableLongCollections.DEFAULT_BEHAVIOR.hashing(key);
             for (long currKey; (currKey = this.keyTable[pos &= this.posMask]) != 0; pos++) {
-                if (DEFAULT_BEHAVIOR.equals(key, currKey)) {
+                if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, currKey)) {
                     return pos;
                 }
             }
@@ -350,31 +335,31 @@ final class ImmutableLongObjMaps {
         }
 
         public V get(long key) {
-            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) return this.withNullKey ? this.valueTable[this.capacity] : null;
+            if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, ((long) ImmutableLongCollections.NULL_SLOT))) return this.withNullKey ? this.valueTable[this.capacity] : null;
 
             long currKey;
-            for (int pos = DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
-                if (DEFAULT_BEHAVIOR.equals(key, currKey)) return this.valueTable[pos];
+            for (int pos = ImmutableLongCollections.DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) ImmutableLongCollections.NULL_SLOT); pos++) {
+                if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, currKey)) return this.valueTable[pos];
             }
             return null;
         }
 
         public V getOrDefault(long key, V defaultValue) {
-            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) return this.withNullKey ? this.valueTable[this.capacity] : defaultValue;
+            if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, ((long) ImmutableLongCollections.NULL_SLOT))) return this.withNullKey ? this.valueTable[this.capacity] : defaultValue;
 
             long currKey;
-            for (int pos = DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
-                if (DEFAULT_BEHAVIOR.equals(key, currKey)) return this.valueTable[pos];
+            for (int pos = ImmutableLongCollections.DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) ImmutableLongCollections.NULL_SLOT); pos++) {
+                if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, currKey)) return this.valueTable[pos];
             }
             return defaultValue;
         }
 
         public boolean containsKey(long key) {
-            if (DEFAULT_BEHAVIOR.equals(key, ((long) NULL_SLOT))) return this.withNullKey;
+            if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, ((long) ImmutableLongCollections.NULL_SLOT))) return this.withNullKey;
 
             long currKey;
-            for (int pos = DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {
-                if (DEFAULT_BEHAVIOR.equals(key, currKey)) return true;
+            for (int pos = ImmutableLongCollections.DEFAULT_BEHAVIOR.hashing(key); (currKey = this.keyTable[pos &= this.posMask]) != ((long) ImmutableLongCollections.NULL_SLOT); pos++) {
+                if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, currKey)) return true;
             }
             return false;
         }
@@ -383,7 +368,7 @@ final class ImmutableLongObjMaps {
             final int capL = this.capacity;
             final V[] valueL = this.valueTable;
             for (int pos = 0; pos < capL; pos++) {
-                if (this.keyTable[pos] != ((long) NULL_SLOT) && Objects.equals(value, valueL[pos])) return true;
+                if (this.keyTable[pos] != ((long) ImmutableLongCollections.NULL_SLOT) && Objects.equals(value, valueL[pos])) return true;
             }
 
             return this.withNullKey && Objects.equals(value, valueL[capL]);
@@ -395,7 +380,7 @@ final class ImmutableLongObjMaps {
             final V[] valueL = this.valueTable;
             for (int pos = 0; pos < capL; pos++) {
                 final long currKey;
-                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                if ((currKey = keyL[pos]) != ((long) ImmutableLongCollections.NULL_SLOT)) {
                     action.accept(currKey, valueL[pos]);
                 }
             }
@@ -446,7 +431,7 @@ final class ImmutableLongObjMaps {
             final V[] valueL = this.valueTable;
             for (int pos = 0; pos < capL; pos++) {
                 final long currKey;
-                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                if ((currKey = keyL[pos]) != ((long) ImmutableLongCollections.NULL_SLOT)) {
                     result += Long.hashCode(currKey) ^ Objects.hashCode(valueL[pos]);
                 }
             }
@@ -471,7 +456,7 @@ final class ImmutableLongObjMaps {
                         final int capacity = srcKeyL.length;
                         for (int srcPos = 0; srcPos < capacity; srcPos++) {
                             final long srcKey;
-                            if ((srcKey = srcKeyL[srcPos]) != ((long) NULL_SLOT)) {
+                            if ((srcKey = srcKeyL[srcPos]) != ((long) ImmutableLongCollections.NULL_SLOT)) {
                                 final int currPos = this.find(srcKey);
                                 if (currPos < 0) return false;
 
@@ -507,7 +492,7 @@ final class ImmutableLongObjMaps {
             final V[] valueL = this.valueTable;
             for (int pos = 0; pos < capL; pos++) {
                 final long currKey;
-                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                if ((currKey = keyL[pos]) != ((long) ImmutableLongCollections.NULL_SLOT)) {
                     final V currValue;
                     if (sb.length() > 1) sb.append(',').append(' ');
                     sb.append(currKey)
@@ -533,7 +518,7 @@ final class ImmutableLongObjMaps {
             final long[] keyL = this.keyTable, result = newKeyTable(this.size);
             for (int pos = 0; pos < capL;) {
                 final long currKey;
-                if ((currKey = keyL[pos++]) != ((long) NULL_SLOT)) {
+                if ((currKey = keyL[pos++]) != ((long) ImmutableLongCollections.NULL_SLOT)) {
                     result[idx++] = currKey;
                 }
             }
@@ -547,7 +532,7 @@ final class ImmutableLongObjMaps {
             final int capL = this.capacity;
             final V[] valueL = this.valueTable, result = newValueTable(this.size);
             for (int pos = 0; pos < capL; pos++) {
-                if (this.keyTable[pos] != ((long) NULL_SLOT)) {
+                if (this.keyTable[pos] != ((long) ImmutableLongCollections.NULL_SLOT)) {
                     result[idx++] = valueL[pos];
                 }
             }
@@ -564,7 +549,7 @@ final class ImmutableLongObjMaps {
             final LongObjMap.Entry<V>[] result = newValueTable(this.size);
             for (int pos = 0; pos < capL; pos++) {
                 final long currKey;
-                if ((currKey = keyL[pos]) != ((long) NULL_SLOT)) {
+                if ((currKey = keyL[pos]) != ((long) ImmutableLongCollections.NULL_SLOT)) {
                     result[idx++] = new SimpleEntry<>(currKey, valueL[pos]);
                 }
             }
@@ -625,6 +610,22 @@ final class ImmutableLongObjMaps {
         }
     }
 
+    private final static class ProxyStorageOne<V> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final long keyCollect;
+        private final V valueCollect;
+
+        public ProxyStorageOne(long keyCollect, V valueCollect) {
+            this.keyCollect = keyCollect;
+            this.valueCollect = valueCollect;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new ImmutableLongObjMapOne<>(this.keyCollect, this.valueCollect);
+        }
+    }
+
     private final static class ProxyStorage<V> implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -653,8 +654,8 @@ final class ImmutableLongObjMaps {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 0, HashContainer.MAXIMUM_CAPACITY);
-            CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
+            CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, ImmutableLongCollections.DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
 
             final long[] keyL = this.keyCollect = newKeyTable(sizeL);
             final V[] valueL = this.valueCollect = newValueTable(sizeL);
@@ -858,7 +859,7 @@ final class ImmutableLongObjMaps {
             }
         }
 
-        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, ImmutableLongCollections.DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) ImmutableLongCollections.DEFAULT_BEHAVIOR);
         for (Map.Entry<? extends Long, ? extends V> entry : entries) {
             collect.put(entry.getKey(), entry.getValue());
         }
@@ -879,14 +880,8 @@ final class ImmutableLongObjMaps {
     }
 
     static <V> LongObjMap<V> ofArraysSerial(long[] keys, V[] values) throws StreamCorruptedException {
-        final int limit;
-        if (!(keys != null && values != null && (limit = keys.length) == values.length)) throw new IllegalArgumentException();
-        switch (limit) {
-            case 0: return (LongObjMap<V>) EMPTY_MAP;
-            case 1: return new ImmutableLongObjMapOne<>(keys[0], values[0]);
-        }
-
-        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+        final int limit = keys.length;
+        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, ImmutableLongCollections.DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) ImmutableLongCollections.DEFAULT_BEHAVIOR);
         for (int i = 0; i < limit; i++) {
             collect.put(keys[i], values[i]);
         }
@@ -896,12 +891,7 @@ final class ImmutableLongObjMaps {
         final long[] keyL = collect.keyTable();
         final V[] valueL = collect.valueTable();
         CollectionUtil.SerialCheck.ioCheckElementCount(keys.length, sizeL);
-
-        switch (sizeL) {
-            case 0: return (LongObjMap<V>) EMPTY_MAP;
-            case 1: return new ImmutableLongObjMapOne<>(keys[0], values[0]);
-            default: return new ImmutableLongObjMapN<>(withNullEleL, sizeL, capacityL, keyL, valueL);
-        }
+        return new ImmutableLongObjMapN<>(withNullEleL, sizeL, capacityL, keyL, valueL);
     }
 
     static <V> LongObjMap<V> ofArrays(long[] keys, V[] values) {
@@ -912,7 +902,7 @@ final class ImmutableLongObjMaps {
             case 1: return new ImmutableLongObjMapOne<>(keys[0], values[0]);
         }
 
-        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+        final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(limit, ImmutableLongCollections.DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) ImmutableLongCollections.DEFAULT_BEHAVIOR);
         for (int i = 0; i < limit; i++) {
             collect.put(keys[i], values[i]);
         }
@@ -945,7 +935,7 @@ final class ImmutableLongObjMaps {
                 return new ImmutableLongObjMapOne<>(tmp.leftRaw(), tmp.right());
             }
             default: {
-                final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(source, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
+                final LongObjLinearProbingHashMap<V> collect = new LongObjLinearProbingHashMap<>(source, ImmutableLongCollections.DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) ImmutableLongCollections.DEFAULT_BEHAVIOR);
                 collect.shrink();
                 final boolean withNullEleL = collect.containsKey((long) 0);
                 final int sizeL = collect.size(), capacityL = collect.capacity();

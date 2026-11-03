@@ -16,10 +16,10 @@ import java.util.function.*;
 @SuppressWarnings({"UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
 final class ImmutableLongCollections {
     final static float DEFAULT_LOAD_FACTOR = 0.75f;
-    private final static long NULL_SLOT = (long) 0;
-    private final static HashBehavior<Long> DEFAULT_BEHAVIOR = HashBehaviorFactory.fibonacciMix();
+    final static long NULL_SLOT = (long) 0;
+    final static HashBehavior<Long> DEFAULT_BEHAVIOR = HashBehaviorFactory.fibonacciMix();
     private final static LongList EMPTY_LIST = new ImmutableLongListEmpty();
-    final static LongSet EMPTY_SET = new ImmutableLongSetEmpty();
+    private final static LongSet EMPTY_SET = new ImmutableLongSetEmpty();
 
     private static long[] newTable(int cap) {
         return new long[cap];
@@ -29,7 +29,7 @@ final class ImmutableLongCollections {
         return new long[]{element};
     }
 
-    static abstract class AbstractImmutableLongCollection extends AbstractLongCollection {
+    private static abstract class AbstractImmutableLongCollection extends AbstractLongCollection {
         public void resize(int newCapacity) {
             throw new UnsupportedOperationException();
         }
@@ -161,7 +161,7 @@ final class ImmutableLongCollections {
         public abstract LongSpliterator spliterator();
     }
 
-    interface ImmutableLongIterator extends LongIterator {
+    private interface ImmutableLongIterator extends LongIterator {
         default void remove() {
             throw new UnsupportedOperationException();
         }
@@ -258,12 +258,8 @@ final class ImmutableLongCollections {
             return this;
         }
 
-        private void readObject(ObjectInputStream in) throws InvalidObjectException {
-            throw new InvalidObjectException("Proxy required");
-        }
-
-        private Object writeReplace() {
-            return new ProxyStorage(false, newTable(0));
+        private Object readResolve() {
+            return EMPTY_LIST;
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -423,7 +419,7 @@ final class ImmutableLongCollections {
         }
 
         private Object writeReplace() {
-            return new ProxyStorage(false, newFillTable(this.element));
+            return new ProxyStorageListOne(this.element);
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -570,8 +566,8 @@ final class ImmutableLongCollections {
         }
 
         public boolean containsAll(Collection<?> c) {
-            if (this.isEmpty()) return c.isEmpty();
             if (c == this) return true;
+            if (c.isEmpty()) return false;
             return super.containsAll(c);
         }
 
@@ -633,14 +629,14 @@ final class ImmutableLongCollections {
             if (o == this) return true;
             if (o instanceof List<?>) {
                 final List<?> castList = ((List<?>) o);
-                if (castList.isEmpty()) return this.isEmpty();
+                if (castList.isEmpty()) return false;
                 if (castList.size() != this.size()) return false;
                 try {
                     if (castList instanceof ImmutableLongListN) {
                         final ImmutableLongListN cast = (ImmutableLongListN) o;
                         return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
-                    } else if (castList instanceof ImmutableLongSubList) {
-                        final ImmutableLongSubList cast = (ImmutableLongSubList) o;
+                    } else if (castList instanceof ImmutableLongListN.ImmutableLongSubList) {
+                        final ImmutableLongListN.ImmutableLongSubList cast = (ImmutableLongListN.ImmutableLongSubList) o;
                         return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
                     } else {
                         final Iterator<?> oit = castList.iterator();
@@ -680,7 +676,7 @@ final class ImmutableLongCollections {
         }
 
         private Object writeReplace() {
-            return new ProxyStorage(false, this.element);
+            return new ProxyStorageListN(this.element);
         }
 
         private class CollectionLongIterator implements ImmutableLongIterator {
@@ -915,8 +911,8 @@ final class ImmutableLongCollections {
                         if (castList instanceof ImmutableLongListN) {
                             final ImmutableLongListN cast = (ImmutableLongListN) o;
                             return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
-                        } else if (castList instanceof ImmutableLongSubList) {
-                            final ImmutableLongSubList cast = (ImmutableLongSubList) o;
+                        } else if (castList instanceof ImmutableLongListN.ImmutableLongSubList) {
+                            final ImmutableLongListN.ImmutableLongSubList cast = (ImmutableLongListN.ImmutableLongSubList) o;
                             return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
                         } else {
                             final Iterator<?> oit = castList.iterator();
@@ -1049,7 +1045,7 @@ final class ImmutableLongCollections {
         }
     }
 
-    static abstract class AbstractImmutableLongSet extends AbstractImmutableLongCollection implements LongSet {
+    private static abstract class AbstractImmutableLongSet extends AbstractImmutableLongCollection implements LongSet {
         public boolean remapping(long element, LongFunction<? extends Long> remappingFunction) {
             throw new UnsupportedOperationException();
         }
@@ -1058,12 +1054,24 @@ final class ImmutableLongCollections {
             throw new UnsupportedOperationException();
         }
 
+        public boolean containsAll(Collection<?> c) {
+            Objects.requireNonNull(c);
+            if (c == this) return true;
+            if (this.isEmpty()) return c.isEmpty();
+            if (c instanceof Set<?> && this.size() < c.size()) return false;
+
+            for (final Object e : c) {
+                if (!this.contains(e)) return false;
+            }
+            return true;
+        }
+
         public abstract LongIterator iterator();
 
         public abstract LongSpliterator spliterator();
     }
 
-    static class ImmutableLongSetEmpty extends AbstractImmutableLongSet implements Cloneable, Serializable {
+    private static class ImmutableLongSetEmpty extends AbstractImmutableLongSet implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
         public boolean contains(long o) {
@@ -1123,12 +1131,8 @@ final class ImmutableLongCollections {
             return this;
         }
 
-        private void readObject(ObjectInputStream in) throws InvalidObjectException {
-            throw new InvalidObjectException("Proxy required");
-        }
-
-        private Object writeReplace() {
-            return new ProxyStorage(true, newTable(0));
+        private Object readResolve() {
+            return EMPTY_SET;
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -1164,7 +1168,7 @@ final class ImmutableLongCollections {
         }
     }
 
-    static class ImmutableLongSetOne extends AbstractImmutableLongSet implements Cloneable, Serializable {
+    private static class ImmutableLongSetOne extends AbstractImmutableLongSet implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
         private final long element;
@@ -1247,7 +1251,7 @@ final class ImmutableLongCollections {
         }
 
         private Object writeReplace() {
-            return new ProxyStorage(true, newFillTable(this.element));
+            return new ProxyStorageSetOne(this.element);
         }
 
         static class CollectionLongIterator implements ImmutableLongIterator {
@@ -1311,7 +1315,7 @@ final class ImmutableLongCollections {
         }
     }
 
-    static class ImmutableLongSetN extends AbstractImmutableLongSet implements Cloneable, Serializable {
+    private static class ImmutableLongSetN extends AbstractImmutableLongSet implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
         private final boolean withNullEle;
@@ -1379,8 +1383,6 @@ final class ImmutableLongCollections {
         }
 
         protected long[] slotToArray(final long[] a) {
-            if (this.isEmpty()) return a;
-
             final long[] eleL = this.element;
             int idx = 0;
             for (int pos = 0; pos < this.capacity;) {
@@ -1477,7 +1479,7 @@ final class ImmutableLongCollections {
         }
 
         private Object writeReplace() {
-            return new ProxyStorage(true, this.toArrayRaw());
+            return new ProxyStorageSetN(this.toArrayRaw());
         }
 
         class CollectionLongIterator implements ImmutableLongIterator {
@@ -1776,14 +1778,40 @@ final class ImmutableLongCollections {
         }
     }
 
-    private final static class ProxyStorage implements Serializable {
+    private final static class ProxyStorageListOne implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final boolean isSet;
+        private final long element;
+
+        public ProxyStorageListOne(long element) {
+            this.element = element;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new ImmutableLongListOne(this.element);
+        }
+    }
+
+    private final static class ProxyStorageSetOne implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final long element;
+
+        public ProxyStorageSetOne(long element) {
+            this.element = element;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new ImmutableLongSetOne(this.element);
+        }
+    }
+
+    private final static class ProxyStorageListN implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private transient long[] element;
 
-        public ProxyStorage(boolean isSet, long[] element) {
-            this.isSet = isSet;
+        public ProxyStorageListN(long[] element) {
             this.element = element;
         }
 
@@ -1802,8 +1830,7 @@ final class ImmutableLongCollections {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 0, this.isSet ? HashContainer.MAXIMUM_CAPACITY : Container.MAXIMUM_CAPACITY);
-            if (this.isSet) CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
 
             final long[] eleL = this.element = newTable(sizeL);
             for (int i = 0; i < sizeL;) {
@@ -1814,7 +1841,47 @@ final class ImmutableLongCollections {
         private Object readResolve() throws ObjectStreamException {
             final long[] eleL;
             if ((eleL = this.element) == null) throw new StreamCorruptedException("Illegal array 'NULL'");
-            return this.isSet ? ofSetSerial(eleL) : ofList(eleL);
+            return new ImmutableLongListN(eleL);
+        }
+    }
+
+    private final static class ProxyStorageSetN implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private transient long[] element;
+
+        public ProxyStorageSetN(long[] element) {
+            this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+
+            final long[] eleL = this.element;
+            final int size = eleL.length;
+            out.writeInt(size);
+            for (int i = 0; i < size;) {
+                out.writeLong(eleL[i++]);
+            }
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
+
+            final int sizeL = in.readInt();
+            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
+            CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+
+            final long[] eleL = this.element = newTable(sizeL);
+            for (int i = 0; i < sizeL;) {
+                eleL[i++] = in.readLong();
+            }
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            final long[] eleL;
+            if ((eleL = this.element) == null) throw new StreamCorruptedException("Illegal array 'NULL'");
+            return ofSetSerial(eleL);
         }
     }
 
@@ -1840,8 +1907,8 @@ final class ImmutableLongCollections {
         }
         switch (source.size()) {
             case 0: return (LongList) EMPTY_LIST;
-            case 1: return new ImmutableLongListOne((Long) source.toArray()[0]);
-            default: return new ImmutableLongListN((Long[]) source.toArray());
+            case 1: return new ImmutableLongListOne((Long) source.toArray(new Long[0])[0]);
+            default: return new ImmutableLongListN((Long[]) source.toArray(new Long[0]));
         }
     }
 
@@ -1854,23 +1921,13 @@ final class ImmutableLongCollections {
     }
 
     static LongSet ofSetSerial(long... elements) throws StreamCorruptedException {
-        switch (elements.length) {
-            case 0: return (LongSet) EMPTY_SET;
-            case 1: return new ImmutableLongSetOne(elements[0]);
-        }
-
         final LongLinearProbingHashSet collect = new LongLinearProbingHashSet(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
         collect.shrink();
         final boolean withNullEleL = collect.contains((long) 0);
         final int sizeL = collect.size(), capacityL = collect.capacity();
         final long[] eleL = collect.table();
         CollectionUtil.SerialCheck.ioCheckElementCount(elements.length, sizeL);
-
-        switch (sizeL) {
-            case 0: return (LongSet) EMPTY_SET;
-            case 1: return new ImmutableLongSetOne(elements[0]);
-            default: return new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL);
-        }
+        return new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL);
     }
 
     static LongSet ofSet(long... elements) {
@@ -1899,7 +1956,7 @@ final class ImmutableLongCollections {
 
         switch (source.size()) {
             case 0: return (LongSet) EMPTY_SET;
-            case 1: return new ImmutableLongSetOne((Long) source.toArray()[0]);
+            case 1: return new ImmutableLongSetOne((Long) source.toArray(new Long[0])[0]);
             default: {
                 final LongLinearProbingHashSet collect = new LongLinearProbingHashSet(source, DEFAULT_LOAD_FACTOR, (HashBehavior<Long>) DEFAULT_BEHAVIOR);
                 collect.shrink();
@@ -1909,7 +1966,7 @@ final class ImmutableLongCollections {
 
                 switch (sizeL) {
                     case 0: return (LongSet) EMPTY_SET;
-                    case 1: return new ImmutableLongSetOne((Long) source.toArray()[0]);
+                    case 1: return new ImmutableLongSetOne((Long) source.toArray(new Long[0])[0]);
                     default: return new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL);
                 }
             }

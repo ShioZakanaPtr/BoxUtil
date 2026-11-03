@@ -1,12 +1,14 @@
 package org.boxutil.base.api.container.objecttype;
 
 import org.boxutil.base.api.container.Container;
+import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.HashBehavior;
 import org.boxutil.base.api.container.HashContainer;
 import org.boxutil.base.api.container.longtype.*;
 import org.boxutil.util.CollectionUtil;
 import org.boxutil.util.collection.HashBehaviorFactory;
 import org.boxutil.util.collection.objecttype.AbstractObjCollection;
+import org.boxutil.util.collection.objecttype.AbstractObjSet;
 import org.boxutil.util.collection.objecttype.ObjLinearProbingHashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,10 +19,10 @@ import java.util.function.*;
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
 final class ImmutableObjCollections {
     final static float DEFAULT_LOAD_FACTOR = 0.75f;
-    private final static Object NULL_SLOT = null;
-    private final static HashBehavior<Object> DEFAULT_HASHER = HashBehaviorFactory.fibonacciMix();
+    final static Object NULL_SLOT = null;
+    final static HashBehavior<Object> DEFAULT_HASHER = HashBehaviorFactory.fibonacciMix();
     private final static ObjList<Object> EMPTY_LIST = new ImmutableObjListEmpty<>();
-    final static ObjSet<Object> EMPTY_SET = new ImmutableObjSetEmpty<>();
+    private final static ObjSet<Object> EMPTY_SET = new ImmutableObjSetEmpty<>();
 
     private static <T> T[] newTable(int cap) {
         return (T[]) new Object[cap];
@@ -30,7 +32,7 @@ final class ImmutableObjCollections {
         return (T[]) new Object[]{element};
     }
 
-    static abstract class AbstractImmutableObjCollection<E> extends AbstractObjCollection<E> {
+    private static abstract class AbstractImmutableObjCollection<E> extends AbstractObjCollection<E> {
         public void resize(int newCapacity) {
             throw new UnsupportedOperationException();
         }
@@ -162,7 +164,7 @@ final class ImmutableObjCollections {
         public abstract Spliterator<E> spliterator();
     }
 
-    interface ImmutableObjIterator<E> extends Iterator<E> {
+    private interface ImmutableObjIterator<E> extends Iterator<E> {
         default void remove() {
             throw new UnsupportedOperationException();
         }
@@ -247,15 +249,11 @@ final class ImmutableObjCollections {
         }
 
         public Object clone() {
+            return this;
+        }
+
+        private Object readResolve() {
             return EMPTY_LIST;
-        }
-
-        private void readObject(ObjectInputStream in) throws InvalidObjectException {
-            throw new InvalidObjectException("Proxy required");
-        }
-
-        private Object writeReplace() {
-            return new ProxyStorage<>(false, newTable(0));
         }
 
         private static class CollectionObjIterator<E> implements ImmutableObjIterator<E> {
@@ -392,21 +390,11 @@ final class ImmutableObjCollections {
         }
 
         public Object clone() {
-            ImmutableObjListOne<E> result;
-            try {
-                result = (ImmutableObjListOne<E>) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
-        private void readObject(ObjectInputStream in) throws InvalidObjectException {
-            throw new InvalidObjectException("Proxy required");
-        }
-
-        private Object writeReplace() {
-            return new ProxyStorage<>(false, newFillTable(this.element));
+        private Object readResolve() {
+            return new ProxyStorageListOne<>(this.element);
         }
 
         private static class CollectionObjIterator<E> implements ImmutableObjIterator<E> {
@@ -544,8 +532,8 @@ final class ImmutableObjCollections {
         }
 
         public boolean containsAll(Collection<?> c) {
-            if (this.isEmpty()) return c.isEmpty();
             if (c == this) return true;
+            if (c.isEmpty()) return false;
             return super.containsAll(c);
         }
 
@@ -593,7 +581,7 @@ final class ImmutableObjCollections {
             if (o == this) return true;
             if (o instanceof List<?>) {
                 final List<?> castList = ((List<?>) o);
-                if (castList.isEmpty()) return this.isEmpty();
+                if (castList.isEmpty()) return false;
                 if (castList.size() != this.size()) return false;
                 try {
                     if (castList instanceof ImmutableObjListN) {
@@ -633,13 +621,7 @@ final class ImmutableObjCollections {
         }
 
         public Object clone() {
-            ImmutableObjListN<E> result;
-            try {
-                result = (ImmutableObjListN<E>) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -647,7 +629,7 @@ final class ImmutableObjCollections {
         }
 
         private Object writeReplace() {
-            return new ProxyStorage<>(false, this.element);
+            return new ProxyStorageListN<>(this.element);
         }
 
         private class CollectionObjIterator implements ImmutableObjIterator<E> {
@@ -1004,7 +986,7 @@ final class ImmutableObjCollections {
         }
     }
 
-    static abstract class AbstractImmutableObjSet<E> extends AbstractImmutableObjCollection<E> implements ObjSet<E> {
+    private static abstract class AbstractImmutableObjSet<E> extends AbstractImmutableObjCollection<E> implements ObjSet<E> {
         public boolean remapping(E element, Function<? super E, ? extends E> remappingFunction) {
             throw new UnsupportedOperationException();
         }
@@ -1013,12 +995,24 @@ final class ImmutableObjCollections {
             throw new UnsupportedOperationException();
         }
 
+        public boolean containsAll(Collection<?> c) {
+            Objects.requireNonNull(c);
+            if (c == this) return true;
+            if (this.isEmpty()) return c.isEmpty();
+            if (c instanceof Set<?> && this.size() < c.size()) return false;
+
+            for (final Object e : c) {
+                if (!this.contains(e)) return false;
+            }
+            return true;
+        }
+
         public abstract Iterator<E> iterator();
 
         public abstract Spliterator<E> spliterator();
     }
 
-    static class ImmutableObjSetEmpty<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
+    private static class ImmutableObjSetEmpty<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
         public boolean contains(Object o) {
@@ -1066,15 +1060,11 @@ final class ImmutableObjCollections {
         }
 
         public Object clone() {
+            return this;
+        }
+
+        private Object readResolve() {
             return EMPTY_SET;
-        }
-
-        private void readObject(ObjectInputStream in) throws InvalidObjectException {
-            throw new InvalidObjectException("Proxy required");
-        }
-
-        private Object writeReplace() {
-            return new ProxyStorage<>(true, newTable(0));
         }
 
         private static class CollectionObjIterator<E> implements ImmutableObjIterator<E> {
@@ -1110,7 +1100,7 @@ final class ImmutableObjCollections {
         }
     }
 
-    static class ImmutableObjSetOne<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
+    private static class ImmutableObjSetOne<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
         private final E element;
@@ -1170,21 +1160,11 @@ final class ImmutableObjCollections {
         }
 
         public Object clone() {
-            ImmutableObjSetOne<E> result;
-            try {
-                result = (ImmutableObjSetOne<E>) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
-        private void readObject(ObjectInputStream in) throws InvalidObjectException {
-            throw new InvalidObjectException("Proxy required");
-        }
-
-        private Object writeReplace() {
-            return new ProxyStorage<>(true, newFillTable(this.element));
+        private Object readResolve() {
+            return new ProxyStorageSetOne<>(this.element);
         }
 
         static class CollectionObjIterator<E> implements ImmutableObjIterator<E> {
@@ -1248,7 +1228,7 @@ final class ImmutableObjCollections {
         }
     }
 
-    static class ImmutableObjSetN<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
+    private static class ImmutableObjSetN<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
         private final boolean withNullEle;
@@ -1388,13 +1368,7 @@ final class ImmutableObjCollections {
         }
 
         public Object clone() {
-            ImmutableObjSetN<E> result;
-            try {
-                result = (ImmutableObjSetN<E>) super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e);
-            }
-            return result;
+            return this;
         }
 
         private void readObject(ObjectInputStream in) throws InvalidObjectException {
@@ -1402,7 +1376,7 @@ final class ImmutableObjCollections {
         }
 
         private Object writeReplace() {
-            return new ProxyStorage<>(true, this.toArrayRaw());
+            return new ProxyStorageSetN<>(this.toArrayRaw());
         }
 
         class CollectionObjIterator implements ImmutableObjIterator<E> {
@@ -1556,14 +1530,185 @@ final class ImmutableObjCollections {
         }
     }
 
-    private final static class ProxyStorage<E> implements Serializable {
+    static class ImmutableMapEntrySet<E> extends AbstractObjSet<E> implements EntrySetExt<E> {
+        private final ObjSet<E> storage;
+
+        public ImmutableMapEntrySet() {
+            this.storage = ObjSet.of();
+        }
+
+        public ImmutableMapEntrySet(E entry) {
+            this.storage = ObjSet.of(entry);
+        }
+
+        @SafeVarargs
+        public ImmutableMapEntrySet(E... entries) {
+            switch (entries.length) {
+                case 0: {
+                    this.storage = ObjSet.of();
+                    break;
+                }
+                case 1: {
+                    this.storage = ObjSet.of(entries[0]);
+                    break;
+                }
+                default: {
+                    this.storage = ObjSet.of(entries);
+                }
+            }
+        }
+
+        public void resize(int newCapacity) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void reserve(int newMaxSize) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void shrink() {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean contains(Object o) {
+            return this.storage.contains(o);
+        }
+
+        public boolean add(E e) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean remove(Object o) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean remapping(E element, Function<? super E, ? extends E> remappingFunction) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void swap(@NotNull Set<E> source) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void forEach(Consumer<? super E> action) {
+            this.storage.forEach(action);
+        }
+
+        public void viewForEach(Consumer<? super E> action) {
+            this.storage.forEach(action);
+        }
+
+        public boolean addAll(Collection<? extends E> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public <T extends E> boolean addAll(T[] elements) {
+            throw new UnsupportedOperationException();
+        }
+
+        public <T extends E> boolean addAll(T[] elements, int srcIndex, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean removeIf(Predicate<? super E> filter) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean retainAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public int capacity() {
+            return this.storage.capacity();
+        }
+
+        public int remaining() {
+            return 0;
+        }
+
+        public int size() {
+            return this.storage.size();
+        }
+
+        public boolean isEmpty() {
+            return this.storage.isEmpty();
+        }
+
+        public Iterator<E> iterator() {
+            return this.storage.iterator();
+        }
+
+        public Spliterator<E> spliterator() {
+            return this.storage.spliterator();
+        }
+
+        public Iterator<E> viewIterator() {
+            return this.storage.iterator();
+        }
+
+        public Spliterator<E> viewSpliterator() {
+            return this.storage.spliterator();
+        }
+
+        public void clear() {
+            throw new UnsupportedOperationException();
+        }
+
+        public void clear(int newCapacity) {
+            throw new UnsupportedOperationException();
+        }
+
+        public int hashCode() {
+            return this.storage.hashCode();
+        }
+
+        public boolean equals(Object o) {
+            return this.storage.equals(o);
+        }
+
+        public String toString() {
+            return this.storage.toString();
+        }
+    }
+
+    private final static class ProxyStorageListOne<E> implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final boolean isSet;
+        private final E element;
+
+        public ProxyStorageListOne(E element) {
+            this.element = element;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new ImmutableObjListOne<>(this.element);
+        }
+    }
+
+    private final static class ProxyStorageSetOne<E> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final E element;
+
+        public ProxyStorageSetOne(E element) {
+            this.element = element;
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            return new ImmutableObjSetOne<>(this.element);
+        }
+    }
+
+    private final static class ProxyStorageListN<E> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private transient E[] element;
 
-        public ProxyStorage(boolean isSet, E[] element) {
-            this.isSet = isSet;
+        public ProxyStorageListN(E[] element) {
             this.element = element;
         }
 
@@ -1582,8 +1727,7 @@ final class ImmutableObjCollections {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 0, this.isSet ? HashContainer.MAXIMUM_CAPACITY : Container.MAXIMUM_CAPACITY);
-            if (this.isSet) CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
 
             final E[] eleL = this.element = newTable(sizeL);
             for (int i = 0; i < sizeL;) {
@@ -1594,7 +1738,47 @@ final class ImmutableObjCollections {
         private Object readResolve() throws ObjectStreamException {
             final E[] eleL;
             if ((eleL = this.element) == null) throw new StreamCorruptedException("Illegal array 'NULL'");
-            return this.isSet ? ofSetSerial(eleL) : ofList(eleL);
+            return new ImmutableObjListN<>(eleL);
+        }
+    }
+
+    private final static class ProxyStorageSetN<E> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private transient E[] element;
+
+        public ProxyStorageSetN(E[] element) {
+            this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+
+            final E[] eleL = this.element;
+            final int size = eleL.length;
+            out.writeInt(size);
+            for (int i = 0; i < size;) {
+                out.writeObject(eleL[i++]);
+            }
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
+
+            final int sizeL = in.readInt();
+            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
+            CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+
+            final E[] eleL = this.element = newTable(sizeL);
+            for (int i = 0; i < sizeL;) {
+                eleL[i++] = (E) in.readObject();
+            }
+        }
+
+        private Object readResolve() throws ObjectStreamException {
+            final E[] eleL;
+            if ((eleL = this.element) == null) throw new StreamCorruptedException("Illegal array 'NULL'");
+            return ofSetSerial(eleL);
         }
     }
 
@@ -1621,8 +1805,8 @@ final class ImmutableObjCollections {
         }
         switch (source.size()) {
             case 0: return (ObjList<E>) EMPTY_LIST;
-            case 1: return new ImmutableObjListOne<>((E) source.toArray()[0]);
-            default: return new ImmutableObjListN<>((E[]) source.toArray());
+            case 1: return new ImmutableObjListOne<>((E) source.toArray(new Object[0])[0]);
+            default: return new ImmutableObjListN<>((E[]) source.toArray(new Object[0]));
         }
     }
 
@@ -1636,23 +1820,13 @@ final class ImmutableObjCollections {
 
     @SafeVarargs
     static <E> ObjSet<E> ofSetSerial(E... elements) throws StreamCorruptedException {
-        switch (elements.length) {
-            case 0: return (ObjSet<E>) EMPTY_SET;
-            case 1: return new ImmutableObjSetOne<>(elements[0]);
-        }
-
         final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
         collect.shrink();
         final boolean withNullEleL = collect.contains(null);
         final int sizeL = collect.size(), capacityL = collect.capacity();
         final E[] eleL = collect.table();
         CollectionUtil.SerialCheck.ioCheckElementCount(elements.length, sizeL);
-
-        switch (sizeL) {
-            case 0: return (ObjSet<E>) EMPTY_SET;
-            case 1: return new ImmutableObjSetOne<>(elements[0]);
-            default: return new ImmutableObjSetN<>(withNullEleL, sizeL, capacityL, eleL);
-        }
+        return new ImmutableObjSetN<>(withNullEleL, sizeL, capacityL, eleL);
     }
 
     @SafeVarargs
@@ -1682,7 +1856,7 @@ final class ImmutableObjCollections {
 
         switch (source.size()) {
             case 0: return (ObjSet<E>) EMPTY_SET;
-            case 1: return new ImmutableObjSetOne<>((E) source.toArray()[0]);
+            case 1: return new ImmutableObjSetOne<>((E) source.toArray(new Object[0])[0]);
             default: {
                 final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(source, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
                 collect.shrink();
@@ -1692,7 +1866,7 @@ final class ImmutableObjCollections {
 
                 switch (sizeL) {
                     case 0: return (ObjSet<E>) EMPTY_SET;
-                    case 1: return new ImmutableObjSetOne<>((E) source.toArray()[0]);
+                    case 1: return new ImmutableObjSetOne<>((E) source.toArray(new Object[0])[0]);
                     default: return new ImmutableObjSetN<>(withNullEleL, sizeL, capacityL, eleL);
                 }
             }
