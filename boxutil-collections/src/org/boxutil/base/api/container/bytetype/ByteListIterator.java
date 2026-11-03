@@ -1,7 +1,5 @@
 package org.boxutil.base.api.container.bytetype;
 
-import org.boxutil.base.api.container.longtype.LongIterator;
-
 import java.util.ListIterator;
 
 public interface ByteListIterator extends ListIterator<Byte>, ByteIterator {

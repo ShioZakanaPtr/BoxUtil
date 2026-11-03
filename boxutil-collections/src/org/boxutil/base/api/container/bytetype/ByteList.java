@@ -4,13 +4,11 @@ import org.boxutil.base.api.container.ListExt;
 import org.boxutil.base.api.container.longtype.*;
 import org.boxutil.util.function.bytetype.ByteFunction;
 import org.boxutil.util.function.bytetype.ByteUnaryOperator;
-import org.boxutil.util.function.longtype.LongUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
-import java.util.function.LongFunction;
 import java.util.function.UnaryOperator;
 
 public interface ByteList extends ListExt<Byte>, ByteCollection {

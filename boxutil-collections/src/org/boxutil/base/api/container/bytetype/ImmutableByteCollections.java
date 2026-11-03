@@ -2,13 +2,11 @@ package org.boxutil.base.api.container.bytetype;
 
 import org.boxutil.base.api.container.Container;
 import org.boxutil.base.api.container.EntrySetExt;
-import org.boxutil.base.api.container.HashBehavior;
 import org.boxutil.base.api.container.longtype.*;
 import org.boxutil.base.api.container.objecttype.ObjSet;
 import org.boxutil.util.CollectionUtil;
 import org.boxutil.util.collection.bytetype.AbstractByteCollection;
 import org.boxutil.util.collection.bytetype.ByteBitSet;
-import org.boxutil.util.collection.longtype.LongLinearProbingHashSet;
 import org.boxutil.util.collection.objecttype.AbstractObjSet;
 import org.boxutil.util.function.bytetype.ByteConsumer;
 import org.boxutil.util.function.bytetype.ByteFunction;
