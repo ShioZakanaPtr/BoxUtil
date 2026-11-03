@@ -5,6 +5,8 @@ import org.boxutil.base.api.container.shorttype.ShortIterator;
 import org.boxutil.base.api.container.shorttype.ShortSpliterator;
 
 import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Objects;
 
 public abstract class AbstractShortCollection extends AbstractCollection<Short> implements ShortCollection {
     protected AbstractShortCollection() {}
@@ -64,6 +66,13 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
     public boolean remove(final Object o) {
         if (o != null && !(o instanceof Short)) return false;
         return this.remove(o != null ? ((Short) o).shortValue() : (short) 0);
+    }
+
+    public boolean containsAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        if (c == this) return true;
+        if (this.isEmpty()) return c.isEmpty();
+        return super.containsAll(c);
     }
 
     public int capacity() {

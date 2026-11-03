@@ -2,10 +2,7 @@ package org.boxutil.util.collection.objecttype;
 
 import org.boxutil.base.api.container.objecttype.ObjCollection;
 
-import java.util.AbstractCollection;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Spliterator;
+import java.util.*;
 
 public abstract class AbstractObjCollection<E> extends AbstractCollection<E> implements ObjCollection<E> {
     protected AbstractObjCollection() {}
@@ -39,6 +36,13 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
             }
         }
         return false;
+    }
+
+    public boolean containsAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        if (c == this) return true;
+        if (this.isEmpty()) return c.isEmpty();
+        return super.containsAll(c);
     }
 
     public int capacity() {

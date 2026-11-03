@@ -5,6 +5,8 @@ import org.boxutil.base.api.container.bytetype.ByteIterator;
 import org.boxutil.base.api.container.bytetype.ByteSpliterator;
 
 import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Objects;
 
 public abstract class AbstractByteCollection extends AbstractCollection<Byte> implements ByteCollection {
     protected AbstractByteCollection() {}
@@ -64,6 +66,13 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
     public boolean remove(final Object o) {
         if (o != null && !(o instanceof Byte)) return false;
         return this.remove(o != null ? ((Byte) o).byteValue() : (byte) 0);
+    }
+
+    public boolean containsAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        if (c == this) return true;
+        if (this.isEmpty()) return c.isEmpty();
+        return super.containsAll(c);
     }
 
     public int capacity() {

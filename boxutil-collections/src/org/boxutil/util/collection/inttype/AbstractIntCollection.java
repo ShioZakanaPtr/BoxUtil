@@ -66,6 +66,13 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
         return this.remove(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
+    public boolean containsAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        if (c == this) return true;
+        if (this.isEmpty()) return c.isEmpty();
+        return super.containsAll(c);
+    }
+
     public int capacity() {
         return -1;
     }

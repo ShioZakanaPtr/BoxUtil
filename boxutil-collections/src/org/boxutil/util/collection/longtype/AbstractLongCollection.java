@@ -5,6 +5,8 @@ import org.boxutil.base.api.container.longtype.LongIterator;
 import org.boxutil.base.api.container.longtype.LongSpliterator;
 
 import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Objects;
 
 public abstract class AbstractLongCollection extends AbstractCollection<Long> implements LongCollection {
     protected AbstractLongCollection() {}
@@ -64,6 +66,13 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
     public boolean remove(final Object o) {
         if (o != null && !(o instanceof Long)) return false;
         return this.remove(o != null ? ((Long) o).longValue() : (long) 0);
+    }
+
+    public boolean containsAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        if (c == this) return true;
+        if (this.isEmpty()) return c.isEmpty();
+        return super.containsAll(c);
     }
 
     public int capacity() {
