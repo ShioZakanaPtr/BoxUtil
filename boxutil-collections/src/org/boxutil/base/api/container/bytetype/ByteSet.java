@@ -4,6 +4,7 @@ import org.boxutil.base.api.container.SetExt;
 import org.boxutil.util.function.bytetype.ByteFunction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.function.Function;
 
 public interface ByteSet extends SetExt<Byte>, ByteCollection {
@@ -52,4 +53,20 @@ public interface ByteSet extends SetExt<Byte>, ByteCollection {
     @NotNull ByteIterator iterator();
 
     @NotNull ByteSpliterator spliterator();
+
+    static ByteSet of() {
+        return ImmutableByteCollections.ofSet();
+    }
+
+    static ByteSet of(byte element) {
+        return ImmutableByteCollections.ofSet(element);
+    }
+
+    static ByteSet of(byte... elements) {
+        return ImmutableByteCollections.ofSet(elements);
+    }
+
+    static ByteSet copyOf(@NotNull Collection<? extends Byte> source) {
+        return ImmutableByteCollections.copyOfSet(source);
+    }
 }
