@@ -168,7 +168,7 @@ final class ImmutableLongObjMaps {
             return ObjSet.of();
         }
 
-        public EntrySetExt<LongObjMap.Entry<V>> rawEntrySet() {
+        public EntrySetExt<LongObjMap.Entry<V>> entrySetRaw() {
             return new ImmutableLongCollections.ImmutableMapEntrySet<>();
         }
 
@@ -198,8 +198,8 @@ final class ImmutableLongObjMaps {
     private final static class ImmutableLongObjMapOne<V> extends AbstractImmutableLongObjMap<V> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final long key;
-        private final V value;
+        private final transient long key;
+        private final transient V value;
 
         private transient LongSet keySet = null;
         private transient CollectionExt<V> valueCollection = null;
@@ -258,7 +258,7 @@ final class ImmutableLongObjMaps {
             return result;
         }
 
-        public EntrySetExt<LongObjMap.Entry<V>> rawEntrySet() {
+        public EntrySetExt<LongObjMap.Entry<V>> entrySetRaw() {
             EntrySetExt<LongObjMap.Entry<V>> result;
             if ((result = this.entrySet) == null) {
                 result = this.entrySet = new ImmutableLongCollections.ImmutableMapEntrySet<>(new SimpleEntry<>(this.key, this.value));
@@ -300,10 +300,10 @@ final class ImmutableLongObjMaps {
     private final static class ImmutableLongObjMapN<V> extends AbstractImmutableLongObjMap<V> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final boolean withNullKey;
-        private final int size;
-        private final int capacity;
-        private final int posMask;
+        private final transient boolean withNullKey;
+        private final transient int size;
+        private final transient int capacity;
+        private final transient int posMask;
         private final transient long[] keyTable;
         private final transient V[] valueTable;
 
@@ -416,7 +416,7 @@ final class ImmutableLongObjMaps {
             return result;
         }
 
-        public EntrySetExt<LongObjMap.Entry<V>> rawEntrySet() {
+        public EntrySetExt<LongObjMap.Entry<V>> entrySetRaw() {
             EntrySetExt<LongObjMap.Entry<V>> result;
             if ((result = this.entrySet) == null) {
                 result = this.entrySet = new ImmutableLongCollections.ImmutableMapEntrySet<>(this.toEntryArray());

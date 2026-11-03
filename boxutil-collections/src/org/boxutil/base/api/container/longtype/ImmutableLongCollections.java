@@ -316,7 +316,7 @@ final class ImmutableLongCollections {
     private final static class ImmutableLongListOne extends AbstractImmutableLongList implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final long element;
+        private final transient long element;
 
         public ImmutableLongListOne(Long element) {
             this.element = element != null ? element : 0;
@@ -511,7 +511,7 @@ final class ImmutableLongCollections {
     private final static class ImmutableLongListN extends AbstractImmutableLongList implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final long[] element;
+        private final transient long[] element;
 
         public ImmutableLongListN(Long[] element) {
             final int limit = element.length;
@@ -1171,7 +1171,7 @@ final class ImmutableLongCollections {
     private static class ImmutableLongSetOne extends AbstractImmutableLongSet implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final long element;
+        private final transient long element;
 
         public ImmutableLongSetOne(Long element) {
             this.element = element != null ? element : 0;
@@ -1318,11 +1318,11 @@ final class ImmutableLongCollections {
     private static class ImmutableLongSetN extends AbstractImmutableLongSet implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final boolean withNullEle;
-        private final int size;
-        private final int capacity;
-        private final int posMask;
-        private final long[] element;
+        private final transient boolean withNullEle;
+        private final transient int size;
+        private final transient int capacity;
+        private final transient int posMask;
+        private final transient long[] element;
 
         public ImmutableLongSetN(boolean withNullEle, int size, int capacity, long[] element) {
             this.withNullEle = withNullEle;

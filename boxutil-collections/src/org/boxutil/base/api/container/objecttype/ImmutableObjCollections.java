@@ -310,7 +310,7 @@ final class ImmutableObjCollections {
     private final static class ImmutableObjListOne<E> extends AbstractImmutableObjList<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final E element;
+        private final transient E element;
 
         public ImmutableObjListOne(E element) {
             this.element = element;
@@ -486,7 +486,7 @@ final class ImmutableObjCollections {
     private final static class ImmutableObjListN<E> extends AbstractImmutableObjList<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final E[] element;
+        private final transient E[] element;
 
         public ImmutableObjListN(E[] element) {
             this.element = element;
@@ -1103,7 +1103,7 @@ final class ImmutableObjCollections {
     private static class ImmutableObjSetOne<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final E element;
+        private final transient E element;
 
         public ImmutableObjSetOne(E element) {
             this.element = element;
@@ -1231,11 +1231,11 @@ final class ImmutableObjCollections {
     private static class ImmutableObjSetN<E> extends AbstractImmutableObjSet<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final boolean withNullEle;
-        private final int size;
-        private final int capacity;
-        private final int posMask;
-        private final E[] element;
+        private final transient boolean withNullEle;
+        private final transient int size;
+        private final transient int capacity;
+        private final transient int posMask;
+        private final transient E[] element;
 
         public ImmutableObjSetN(boolean withNullEle, int size, int capacity, E[] element) {
             this.withNullEle = withNullEle;

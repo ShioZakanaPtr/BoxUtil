@@ -230,4 +230,65 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
             return this.getKeyRaw();
         }
     }
+
+    static <V> ByteObjMap<V> of() {
+        return ImmutableByteObjMaps.of();
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1) {
+        return ImmutableByteObjMaps.of(k1, v1);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7, byte k8, V v8) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7, byte k8, V v8, byte k9, V v9) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8, k9, v9);
+    }
+
+    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7, byte k8, V v8, byte k9, V v9, byte k10, V v10) {
+        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8, k9, v9, k10, v10);
+    }
+
+    static <V> ByteObjMap.Entry<V> entry(byte k, V v) {
+        return ImmutableByteObjMaps.entry(k, v);
+    }
+
+    @SafeVarargs
+    static <V> ByteObjMap<V> ofEntries(Map.Entry<? extends Byte, ? extends V>... entries) {
+        return ImmutableByteObjMaps.ofEntries(entries);
+    }
+
+    static <V> ByteObjMap<V> ofArrays(byte[] keys, V[] values) {
+        return ImmutableByteObjMaps.ofArrays(keys, values);
+    }
+
+    static <V> ByteObjMap<V> copyOf(@NotNull Map<? extends Byte, ? extends V> source) {
+        return ImmutableByteObjMaps.copyOf(source);
+    }
 }

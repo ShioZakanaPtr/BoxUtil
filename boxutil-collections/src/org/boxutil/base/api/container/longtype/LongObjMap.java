@@ -208,14 +208,14 @@ public interface LongObjMap<V> extends MapExt<Long, V> {
 
     @NotNull LongSet keySet();
 
-    @NotNull EntrySetExt<LongObjMap.Entry<V>> rawEntrySet();
+    @NotNull EntrySetExt<LongObjMap.Entry<V>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
     default @NotNull EntrySetExt<Map.Entry<Long, V>> entrySet() {
-        return (EntrySetExt) this.rawEntrySet();
+        return (EntrySetExt) this.entrySetRaw();
     }
 
     interface Entry<V> extends Map.Entry<Long, V> {

@@ -323,7 +323,7 @@ final class ImmutableByteCollections {
     private final static class ImmutableByteListOne extends AbstractImmutableByteList implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final byte element;
+        private final transient byte element;
 
         public ImmutableByteListOne(Byte element) {
             this.element = element != null ? element : 0;
@@ -518,7 +518,7 @@ final class ImmutableByteCollections {
     private final static class ImmutableByteListN extends AbstractImmutableByteList implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final byte[] element;
+        private final transient byte[] element;
 
         public ImmutableByteListN(Byte[] element) {
             final int limit = element.length;
@@ -1178,7 +1178,7 @@ final class ImmutableByteCollections {
     private static class ImmutableByteSetOne extends AbstractImmutableByteSet implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final byte element;
+        private final transient byte element;
 
         public ImmutableByteSetOne(Byte element) {
             this.element = element != null ? element : 0;
@@ -1322,11 +1322,11 @@ final class ImmutableByteCollections {
         }
     }
 
-    private static class ImmutableByteSetN extends AbstractImmutableByteSet implements Cloneable, Serializable {
+    static class ImmutableByteSetN extends AbstractImmutableByteSet implements Cloneable, Serializable {
         private static final long serialVersionUID = 1L;
 
-        private final int size;
-        private final long[] bitMark;
+        private final transient int size;
+        private final transient long[] bitMark;
 
         public ImmutableByteSetN(long[] bitMark) {
             this.size = computeSize(this.bitMark = bitMark);
@@ -1777,8 +1777,6 @@ final class ImmutableByteCollections {
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-            in.defaultReadObject();
-
             CollectionUtil.SerialCheck.ioCheckSize(computeSize(this.bitMark = new long[]{in.readLong(), in.readLong(), in.readLong(), in.readLong()}), 2, 256);
         }
 
