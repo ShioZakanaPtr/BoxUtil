@@ -4,7 +4,6 @@ import io.github.shiozakanaptr.acext.api.collection.Container;
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.HashBehavior;
 import io.github.shiozakanaptr.acext.api.collection.HashContainer;
-import org.boxutil.base.api.container.*;
 import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjSet;
 import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
