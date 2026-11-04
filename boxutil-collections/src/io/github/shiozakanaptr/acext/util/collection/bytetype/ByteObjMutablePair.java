@@ -1,0 +1,66 @@
+package io.github.shiozakanaptr.acext.util.collection.bytetype;
+
+import io.github.shiozakanaptr.acext.api.collection.Pair;
+import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteObjPair;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+public class ByteObjMutablePair<R> implements ByteObjPair<R>, Serializable {
+    private static final long serialVersionUID = 1L;
+
+    protected byte le;
+    protected R ri;
+
+    public ByteObjMutablePair() {
+        this.le = 0;
+        this.ri = null;
+    }
+
+    public ByteObjMutablePair(byte left, R right) {
+        this.le = left;
+        this.ri = right;
+    }
+
+    public byte leftRaw() {
+        return this.le;
+    }
+
+    public R right() {
+        return this.ri;
+    }
+
+    public byte left(byte value) {
+        final byte result = this.le;
+        this.le = value;
+        return result;
+    }
+
+    public <T extends R> R right(T value) {
+        final R result = this.ri;
+        this.ri = value;
+        return result;
+    }
+
+    public boolean isMutable() {
+        return true;
+    }
+
+    public int hashCode() {
+        return 31 * (31 + Byte.hashCode(this.le)) + Objects.hashCode(this.ri);
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) return true;
+
+        if (o instanceof Pair<?, ?>) {
+            final Pair<?, ?> cast = (Pair<?, ?>) o;
+            return Objects.equals(this.le, cast.left()) && Objects.equals(this.ri, cast.right());
+        }
+        return false;
+    }
+
+    public String toString() {
+        return "[" + this.le + ',' + this.ri + ']';
+    }
+}
