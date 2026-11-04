@@ -2,11 +2,12 @@ package org.boxutil.base.api.container.longtype;
 
 import org.boxutil.base.api.container.*;
 import org.boxutil.base.api.container.objecttype.ObjSet;
-import org.boxutil.util.CollectionUtil;
+import org.boxutil.util.InternalCollectionUtil;
 import org.boxutil.util.collection.HashBehaviorFactory;
 import org.boxutil.util.collection.longtype.AbstractLongCollection;
 import org.boxutil.util.collection.longtype.LongLinearProbingHashSet;
 import org.boxutil.util.collection.objecttype.AbstractObjSet;
+import org.boxutil.util.function.longtype.LongUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -140,11 +141,11 @@ final class ImmutableLongCollections {
             throw new UnsupportedOperationException();
         }
 
-        public void replaceRange(int fromIndex, int toIndex, LongUnaryOperator operator) {
+        public void replace(int fromIndex, int toIndex, LongUnaryOperator operator) {
             throw new UnsupportedOperationException();
         }
 
-        public boolean computeRange(int fromIndex, int toIndex, LongFunction<? extends Long> operator) {
+        public boolean compute(int fromIndex, int toIndex, LongFunction<? extends Long> operator) {
             throw new UnsupportedOperationException();
         }
 
@@ -202,6 +203,10 @@ final class ImmutableLongCollections {
 
         public void forEach(LongConsumer action) {}
 
+        public void forEach(int fromIndex, int toIndex, LongConsumer action) {
+            if (fromIndex != 0 || toIndex != 0) throw new IndexOutOfBoundsException();
+        }
+
         public boolean containsAll(@NotNull Collection<?> c) {
             return c.isEmpty();
         }
@@ -216,7 +221,8 @@ final class ImmutableLongCollections {
         }
 
         public LongList subList(int fromIndex, int toIndex) {
-            throw new IndexOutOfBoundsException("Empty list");
+            if (fromIndex != 0 || toIndex != 0) throw new IndexOutOfBoundsException();
+            return this;
         }
 
         public int size() {
@@ -347,6 +353,11 @@ final class ImmutableLongCollections {
             action.accept(this.element);
         }
 
+        public void forEach(int fromIndex, int toIndex, LongConsumer action) {
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
+            action.accept(this.element);
+        }
+
         public boolean containsAll(@NotNull Collection<?> c) {
             return c.contains(this.element);
         }
@@ -361,8 +372,8 @@ final class ImmutableLongCollections {
         }
 
         public LongList subList(int fromIndex, int toIndex) {
-            CollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
-            return new ImmutableLongListOne(this.element);
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
+            return toIndex != 0 ? new ImmutableLongListOne(this.element) : (LongList) EMPTY_LIST;
         }
 
         public int capacity() {
@@ -565,6 +576,12 @@ final class ImmutableLongCollections {
             }
         }
 
+        public void forEach(int fromIndex, int toIndex, LongConsumer action) {
+            for (int i = fromIndex; i < toIndex;) {
+                action.accept(this.element[i++]);
+            }
+        }
+
         public boolean containsAll(Collection<?> c) {
             if (c == this) return true;
             if (c.isEmpty()) return false;
@@ -576,12 +593,12 @@ final class ImmutableLongCollections {
         }
 
         public LongListIterator listIterator(int index) {
-            CollectionUtil.checkIndex(index, 0, this.element.length);
+            InternalCollectionUtil.checkIndex(index, 0, this.element.length);
             return new CollectionLongListIterator(index);
         }
 
         public LongList subList(int fromIndex, int toIndex) {
-            CollectionUtil.checkRange(fromIndex, toIndex, 0, this.element.length);
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.element.length);
             return new ImmutableLongSubList(fromIndex, toIndex);
         }
 
@@ -634,10 +651,10 @@ final class ImmutableLongCollections {
                 try {
                     if (castList instanceof ImmutableLongListN) {
                         final ImmutableLongListN cast = (ImmutableLongListN) o;
-                        return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
+                        return InternalCollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
                     } else if (castList instanceof ImmutableLongListN.ImmutableLongSubList) {
                         final ImmutableLongListN.ImmutableLongSubList cast = (ImmutableLongListN.ImmutableLongSubList) o;
-                        return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
+                        return InternalCollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
                     } else {
                         final Iterator<?> oit = castList.iterator();
                         for (long l : this.element) {
@@ -838,6 +855,14 @@ final class ImmutableLongCollections {
                 }
             }
 
+            public void forEach(int fromIndex, int toIndex, LongConsumer action) {
+                final int limit = toIndex + this.offset;
+                final long[] eleL = this.rootArray();
+                for (int i = fromIndex + this.offset; i < limit;) {
+                    action.accept(eleL[i++]);
+                }
+            }
+
             public boolean containsAll(Collection<?> c) {
                 if (this.isEmpty()) return c.isEmpty();
                 if (c == this) return true;
@@ -853,7 +878,7 @@ final class ImmutableLongCollections {
             }
 
             public LongList subList(int fromIndex, int toIndex) {
-                CollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
+                InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
                 return new ImmutableLongSubList(this, fromIndex, toIndex);
             }
 
@@ -910,10 +935,10 @@ final class ImmutableLongCollections {
                     try {
                         if (castList instanceof ImmutableLongListN) {
                             final ImmutableLongListN cast = (ImmutableLongListN) o;
-                            return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
+                            return InternalCollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
                         } else if (castList instanceof ImmutableLongListN.ImmutableLongSubList) {
                             final ImmutableLongListN.ImmutableLongSubList cast = (ImmutableLongListN.ImmutableLongSubList) o;
-                            return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
+                            return InternalCollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
                         } else {
                             final Iterator<?> oit = castList.iterator();
                             final int limit = this.size;
@@ -1830,7 +1855,7 @@ final class ImmutableLongCollections {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
 
             final long[] eleL = this.element = newTable(sizeL);
             for (int i = 0; i < sizeL;) {
@@ -1869,8 +1894,8 @@ final class ImmutableLongCollections {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
-            CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
 
             final long[] eleL = this.element = newTable(sizeL);
             for (int i = 0; i < sizeL;) {
@@ -1926,7 +1951,7 @@ final class ImmutableLongCollections {
         final boolean withNullEleL = collect.contains((long) 0);
         final int sizeL = collect.size(), capacityL = collect.capacity();
         final long[] eleL = collect.table();
-        CollectionUtil.SerialCheck.ioCheckElementCount(elements.length, sizeL);
+        InternalCollectionUtil.SerialCheck.ioCheckElementCount(elements.length, sizeL);
         return new ImmutableLongSetN(withNullEleL, sizeL, capacityL, eleL);
     }
 

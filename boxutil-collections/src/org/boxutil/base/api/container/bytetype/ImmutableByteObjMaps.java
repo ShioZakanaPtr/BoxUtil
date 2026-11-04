@@ -4,7 +4,7 @@ import org.boxutil.base.api.container.CollectionExt;
 import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.objecttype.ObjList;
 import org.boxutil.base.api.container.objecttype.ObjSet;
-import org.boxutil.util.CollectionUtil;
+import org.boxutil.util.InternalCollectionUtil;
 import org.boxutil.util.collection.bytetype.ByteObjBitMap;
 import org.boxutil.util.collection.bytetype.ByteObjMutablePair;
 import org.boxutil.util.function.bytetype.ByteFunction;
@@ -585,7 +585,7 @@ final class ImmutableByteObjMaps {
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             final long[] bitL;
-            CollectionUtil.SerialCheck.ioCheckSize(computeSize(bitL = this.bitMark = new long[]{in.readLong(), in.readLong(), in.readLong(), in.readLong()}), 2, 256);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(computeSize(bitL = this.bitMark = new long[]{in.readLong(), in.readLong(), in.readLong(), in.readLong()}), 2, 256);
 
             final int capacity;
             final V[] valueL = this.valueTable = newValueTable(capacity = getLimit(bitL));

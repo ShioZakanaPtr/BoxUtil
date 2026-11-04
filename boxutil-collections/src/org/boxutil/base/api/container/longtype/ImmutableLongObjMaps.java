@@ -3,8 +3,7 @@ package org.boxutil.base.api.container.longtype;
 import org.boxutil.base.api.container.*;
 import org.boxutil.base.api.container.objecttype.ObjList;
 import org.boxutil.base.api.container.objecttype.ObjSet;
-import org.boxutil.util.CollectionUtil;
-import org.boxutil.util.collection.HashBehaviorFactory;
+import org.boxutil.util.InternalCollectionUtil;
 import org.boxutil.util.collection.longtype.LongObjLinearProbingHashMap;
 import org.boxutil.util.collection.longtype.LongObjMutablePair;
 import org.boxutil.util.function.longtype.LongObjBiConsumer;
@@ -654,8 +653,8 @@ final class ImmutableLongObjMaps {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
-            CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, ImmutableLongCollections.DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, ImmutableLongCollections.DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
 
             final long[] keyL = this.keyCollect = newKeyTable(sizeL);
             final V[] valueL = this.valueCollect = newValueTable(sizeL);
@@ -890,7 +889,7 @@ final class ImmutableLongObjMaps {
         final int sizeL = collect.size(), capacityL = collect.capacity();
         final long[] keyL = collect.keyTable();
         final V[] valueL = collect.valueTable();
-        CollectionUtil.SerialCheck.ioCheckElementCount(keys.length, sizeL);
+        InternalCollectionUtil.SerialCheck.ioCheckElementCount(keys.length, sizeL);
         return new ImmutableLongObjMapN<>(withNullEleL, sizeL, capacityL, keyL, valueL);
     }
 

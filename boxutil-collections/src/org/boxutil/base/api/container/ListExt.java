@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -410,6 +411,40 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, Container {
     }
 
     /**
+     * Performs the given action for each element in the right-open interval
+     * {@code [fromIndex, toIndex)}. For each element {@code e} in the interval,
+     * {@code action.accept(e)} is invoked. If {@code fromIndex == toIndex},
+     * this operation has no effect.
+     *
+     * <p>This operation does not change the size of this list by itself. The
+     * action should not modify this list during computation; if it does, the
+     * behavior of this operation is unspecified.
+     *
+     * <p>If the action itself throws an (unchecked) exception, the exception is
+     * rethrown, and the action is not invoked for the remaining elements in the
+     * interval. Any elements already processed are not rolled back.
+     *
+     * @implNote
+     * Implementations may invoke the action for the elements in any order
+     * within the specified interval, provided that the action is invoked exactly
+     * once for each element in the interval.
+     *
+     * @param fromIndex the inclusive lower bound of the range to process
+     * @param toIndex the exclusive upper bound of the range to process
+     * @param action the action to be performed for each element in the range
+     * @throws NullPointerException if {@code action} is {@code null}
+     * @throws IndexOutOfBoundsException if {@code fromIndex < 0} or
+     *         {@code toIndex > size()}
+     * @throws IllegalArgumentException if {@code fromIndex > toIndex}
+     */
+    default void forEach(int fromIndex, int toIndex, Consumer<? super E> action) {
+        ListIterator<E> it = this.listIterator(fromIndex);
+        while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
+            action.accept(it.next());
+        }
+    }
+
+    /**
      * Replaces each element in the right-open interval
      * {@code [fromIndex, toIndex)} with the result of applying the specified
      * operator to that element. For each element {@code e} in the interval, the
@@ -451,7 +486,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, Container {
      *         prevents it from being stored in this list
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default void replaceRange(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+    default void replace(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
         ListIterator<E> it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
             it.set(operator.apply(it.next()));
@@ -519,7 +554,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, Container {
      *         prevents it from being stored in this list
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default boolean computeRange(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+    default boolean compute(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
         boolean result = false;
         ListIterator<E> it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {

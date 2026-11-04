@@ -4,8 +4,7 @@ import org.boxutil.base.api.container.Container;
 import org.boxutil.base.api.container.EntrySetExt;
 import org.boxutil.base.api.container.HashBehavior;
 import org.boxutil.base.api.container.HashContainer;
-import org.boxutil.base.api.container.longtype.*;
-import org.boxutil.util.CollectionUtil;
+import org.boxutil.util.InternalCollectionUtil;
 import org.boxutil.util.collection.HashBehaviorFactory;
 import org.boxutil.util.collection.objecttype.AbstractObjCollection;
 import org.boxutil.util.collection.objecttype.AbstractObjSet;
@@ -143,11 +142,11 @@ final class ImmutableObjCollections {
             throw new UnsupportedOperationException();
         }
 
-        public void replaceRange(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+        public void replace(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
             throw new UnsupportedOperationException();
         }
 
-        public boolean computeRange(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+        public boolean compute(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
             throw new UnsupportedOperationException();
         }
 
@@ -205,6 +204,10 @@ final class ImmutableObjCollections {
 
         public void forEach(Consumer<? super E> action) {}
 
+        public void forEach(int fromIndex, int toIndex, Consumer<? super E> action) {
+            if (fromIndex != 0 || toIndex != 0) throw new IndexOutOfBoundsException();
+        }
+
         public boolean containsAll(@NotNull Collection<?> c) {
             return c.isEmpty();
         }
@@ -219,7 +222,8 @@ final class ImmutableObjCollections {
         }
 
         public ObjList<E> subList(int fromIndex, int toIndex) {
-            throw new IndexOutOfBoundsException("Empty list");
+            if (fromIndex != 0 || toIndex != 0) throw new IndexOutOfBoundsException();
+            return this;
         }
 
         public int size() {
@@ -337,6 +341,11 @@ final class ImmutableObjCollections {
             action.accept(this.element);
         }
 
+        public void forEach(int fromIndex, int toIndex, Consumer<? super E> action) {
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
+            action.accept(this.element);
+        }
+
         public boolean containsAll(@NotNull Collection<?> c) {
             return c.contains(this.element);
         }
@@ -351,8 +360,8 @@ final class ImmutableObjCollections {
         }
 
         public ObjList<E> subList(int fromIndex, int toIndex) {
-            CollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
-            return new ImmutableObjListOne<>(this.element);
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
+            return toIndex != 0 ? new ImmutableObjListOne<>(this.element) : (ObjList<E>) EMPTY_LIST;
         }
 
         public int capacity() {
@@ -531,6 +540,12 @@ final class ImmutableObjCollections {
             }
         }
 
+        public void forEach(int fromIndex, int toIndex, Consumer<? super E> action) {
+            for (int i = fromIndex; i < toIndex;) {
+                action.accept(this.element[i++]);
+            }
+        }
+
         public boolean containsAll(Collection<?> c) {
             if (c == this) return true;
             if (c.isEmpty()) return false;
@@ -542,12 +557,12 @@ final class ImmutableObjCollections {
         }
 
         public ListIterator<E> listIterator(int index) {
-            CollectionUtil.checkIndex(index, 0, this.element.length);
+            InternalCollectionUtil.checkIndex(index, 0, this.element.length);
             return new CollectionObjListIterator(index);
         }
 
         public ObjList<E> subList(int fromIndex, int toIndex) {
-            CollectionUtil.checkRange(fromIndex, toIndex, 0, this.element.length);
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.element.length);
             return new ImmutableObjSubList(fromIndex, toIndex);
         }
 
@@ -586,10 +601,10 @@ final class ImmutableObjCollections {
                 try {
                     if (castList instanceof ImmutableObjListN) {
                         final ImmutableObjListN<?> cast = (ImmutableObjListN<?>) o;
-                        return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
+                        return InternalCollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
                     } else if (castList instanceof ImmutableObjListN<?>.ImmutableObjSubList) {
                         final ImmutableObjListN<?>.ImmutableObjSubList cast = (ImmutableObjListN<?>.ImmutableObjSubList) o;
-                        return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
+                        return InternalCollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
                     } else {
                         final Iterator<?> oit = castList.iterator();
                         for (E l : this.element) {
@@ -791,6 +806,14 @@ final class ImmutableObjCollections {
                 }
             }
 
+            public void forEach(int fromIndex, int toIndex, Consumer<? super E> action) {
+                final int limit = toIndex + this.offset;
+                final E[] eleL = this.rootArray();
+                for (int i = fromIndex + this.offset; i < limit;) {
+                    action.accept(eleL[i++]);
+                }
+            }
+
             public boolean containsAll(Collection<?> c) {
                 if (this.isEmpty()) return c.isEmpty();
                 if (c == this) return true;
@@ -806,7 +829,7 @@ final class ImmutableObjCollections {
             }
 
             public ObjList<E> subList(int fromIndex, int toIndex) {
-                CollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
+                InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
                 return new ImmutableObjSubList(this, fromIndex, toIndex);
             }
 
@@ -850,10 +873,10 @@ final class ImmutableObjCollections {
                     try {
                         if (castList instanceof ImmutableObjListN<?>) {
                             final ImmutableObjListN<?> cast = ((ImmutableObjListN<?>) o);
-                            return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
+                            return InternalCollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
                         } else if (castList instanceof ImmutableObjListN<?>.ImmutableObjSubList) {
                             final ImmutableObjListN<?>.ImmutableObjSubList cast = (ImmutableObjListN<?>.ImmutableObjSubList) o;
-                            return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
+                            return InternalCollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
                         } else {
                             final Iterator<?> oit = castList.iterator();
                             final int limit = this.size;
@@ -1727,7 +1750,7 @@ final class ImmutableObjCollections {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
 
             final E[] eleL = this.element = newTable(sizeL);
             for (int i = 0; i < sizeL;) {
@@ -1766,8 +1789,8 @@ final class ImmutableObjCollections {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
-            CollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, HashContainer.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioGetHashTableCapacity(sizeL, DEFAULT_LOAD_FACTOR, HashContainer.MAXIMUM_CAPACITY);
 
             final E[] eleL = this.element = newTable(sizeL);
             for (int i = 0; i < sizeL;) {
@@ -1825,7 +1848,7 @@ final class ImmutableObjCollections {
         final boolean withNullEleL = collect.contains(null);
         final int sizeL = collect.size(), capacityL = collect.capacity();
         final E[] eleL = collect.table();
-        CollectionUtil.SerialCheck.ioCheckElementCount(elements.length, sizeL);
+        InternalCollectionUtil.SerialCheck.ioCheckElementCount(elements.length, sizeL);
         return new ImmutableObjSetN<>(withNullEleL, sizeL, capacityL, eleL);
     }
 

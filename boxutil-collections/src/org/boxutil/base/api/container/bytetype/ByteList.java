@@ -1,13 +1,14 @@
 package org.boxutil.base.api.container.bytetype;
 
 import org.boxutil.base.api.container.ListExt;
-import org.boxutil.base.api.container.longtype.*;
+import org.boxutil.util.function.bytetype.ByteConsumer;
 import org.boxutil.util.function.bytetype.ByteFunction;
 import org.boxutil.util.function.bytetype.ByteUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -224,6 +225,21 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
         this.set(toIndex, left);
     }
 
+    default void forEach(int fromIndex, int toIndex, ByteConsumer action) {
+        ByteListIterator it = this.listIterator(fromIndex);
+        while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
+            action.accept(it.nextByte());
+        }
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default void forEach(int fromIndex, int toIndex, Consumer<? super Byte> action) {
+        this.forEach(fromIndex, toIndex, (byte l_t) -> action.accept(l_t));
+    }
+
     default void replaceAll(@NotNull ByteUnaryOperator operator) {
         final ByteListIterator li = this.listIterator();
         while (li.hasNext()) {
@@ -242,7 +258,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
         });
     }
 
-    default void replaceRange(int fromIndex, int toIndex, ByteUnaryOperator operator) {
+    default void replace(int fromIndex, int toIndex, ByteUnaryOperator operator) {
         ByteListIterator it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
             it.set(operator.apply(it.nextByte()));
@@ -253,14 +269,14 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default void replaceRange(int fromIndex, int toIndex, Function<? super Byte, ? extends Byte> operator) {
-        this.replaceRange(fromIndex, toIndex, (byte l_t) -> {
+    default void replace(int fromIndex, int toIndex, Function<? super Byte, ? extends Byte> operator) {
+        this.replace(fromIndex, toIndex, (byte l_t) -> {
             final Byte result = operator.apply(l_t);
             return result != null ? result : (byte) 0;
         });
     }
 
-    default boolean computeRange(int fromIndex, int toIndex, ByteFunction<? extends Byte> operator) {
+    default boolean compute(int fromIndex, int toIndex, ByteFunction<? extends Byte> operator) {
         boolean result = false;
         ByteListIterator it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
@@ -279,8 +295,8 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default boolean computeRange(int fromIndex, int toIndex, Function<? super Byte, ? extends Byte> operator) {
-        return this.computeRange(fromIndex, toIndex, (byte l_t) -> operator.apply(l_t));
+    default boolean compute(int fromIndex, int toIndex, Function<? super Byte, ? extends Byte> operator) {
+        return this.compute(fromIndex, toIndex, (byte l_t) -> operator.apply(l_t));
     }
 
     default boolean addAll(@NotNull byte[] elements) {

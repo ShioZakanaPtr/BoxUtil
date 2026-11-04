@@ -6,9 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
-import java.util.function.Function;
-import java.util.function.LongFunction;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
 
 public interface LongList extends ListExt<Long>, LongCollection {
     long getRaw(int index);
@@ -223,6 +221,21 @@ public interface LongList extends ListExt<Long>, LongCollection {
         this.set(toIndex, left);
     }
 
+    default void forEach(int fromIndex, int toIndex, LongConsumer action) {
+        LongListIterator it = this.listIterator(fromIndex);
+        while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
+            action.accept(it.nextLong());
+        }
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    default void forEach(int fromIndex, int toIndex, Consumer<? super Long> action) {
+        this.forEach(fromIndex, toIndex, (long l_t) -> action.accept(l_t));
+    }
+
     default void replaceAll(@NotNull LongUnaryOperator operator) {
         final LongListIterator li = this.listIterator();
         while (li.hasNext()) {
@@ -241,7 +254,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
         });
     }
 
-    default void replaceRange(int fromIndex, int toIndex, LongUnaryOperator operator) {
+    default void replace(int fromIndex, int toIndex, LongUnaryOperator operator) {
         LongListIterator it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
             it.set(operator.apply(it.nextLong()));
@@ -252,14 +265,14 @@ public interface LongList extends ListExt<Long>, LongCollection {
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default void replaceRange(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
-        this.replaceRange(fromIndex, toIndex, (long l_t) -> {
+    default void replace(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
+        this.replace(fromIndex, toIndex, (long l_t) -> {
             final Long result = operator.apply(l_t);
             return result != null ? result : (long) 0;
         });
     }
 
-    default boolean computeRange(int fromIndex, int toIndex, LongFunction<? extends Long> operator) {
+    default boolean compute(int fromIndex, int toIndex, LongFunction<? extends Long> operator) {
         boolean result = false;
         LongListIterator it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
@@ -278,8 +291,8 @@ public interface LongList extends ListExt<Long>, LongCollection {
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default boolean computeRange(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
-        return this.computeRange(fromIndex, toIndex, (long l_t) -> operator.apply(l_t));
+    default boolean compute(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
+        return this.compute(fromIndex, toIndex, (long l_t) -> operator.apply(l_t));
     }
 
     default boolean addAll(@NotNull long[] elements) {

@@ -7,7 +7,7 @@ import org.boxutil.base.api.container.HashContainer;
 import java.io.StreamCorruptedException;
 import java.util.Objects;
 
-public final class CollectionUtil {
+public final class InternalCollectionUtil {
     public static void throwCapacityOverflowTips() {
         throw new IllegalStateException("The capacity of container overflow; should split to different ones");
     }
@@ -29,7 +29,7 @@ public final class CollectionUtil {
     public static int expandArray(int length) {
         int reqCap = length < 64 ? length << 1 : length + (length >>> 1) + 1;
         if (length < Container.MAXIMUM_CAPACITY) reqCap = Math.min(reqCap, Container.MAXIMUM_CAPACITY);
-        else CollectionUtil.throwCapacityOverflowTips();
+        else InternalCollectionUtil.throwCapacityOverflowTips();
         return reqCap;
     }
 
@@ -68,7 +68,7 @@ public final class CollectionUtil {
 
     public static int expandHashArray(int length) {
         final int reqCap;
-        if (!((reqCap = length << 1) >= 0 && reqCap <= HashContainer.MAXIMUM_CAPACITY)) CollectionUtil.throwCapacityOverflowTips();
+        if (!((reqCap = length << 1) >= 0 && reqCap <= HashContainer.MAXIMUM_CAPACITY)) InternalCollectionUtil.throwCapacityOverflowTips();
         return reqCap;
     }
 
@@ -194,5 +194,5 @@ public final class CollectionUtil {
         return true;
     }
 
-    private CollectionUtil() {}
+    private InternalCollectionUtil() {}
 }

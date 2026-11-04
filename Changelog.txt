@@ -5,6 +5,7 @@
 
 v1.6.4 / 2026.10.32
     三角函数相关计算性能改进
+    优化部分原有实现
     为每帧帧缓冲操作增加barrier，并略微减少绑定帧缓冲的固定开销
     修复 ShaderUtil 纹理相关生成或处理算法在部分Mesa平台上的问题
     修复 SimpleParticleControlData 的一些状态问题
@@ -16,6 +17,9 @@ v1.6.4 / 2026.10.32
     于 org.boxutil.util.function 新增原始类型相关的特化函数式接口
 
     RenderDataAPI 现在reset调用后会对以往一些不受任何reset的设置起效，其他Entity类或功能接口同等
+
+    TextureManager 新增方法：
+        int tryNormalForTexture(int, NormalMapGenParam);
 
     CommonUtil 新增方法：
         Vector4f getKelvinColor(float, Vector4f);

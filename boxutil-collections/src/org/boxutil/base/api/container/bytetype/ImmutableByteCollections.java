@@ -2,9 +2,8 @@ package org.boxutil.base.api.container.bytetype;
 
 import org.boxutil.base.api.container.Container;
 import org.boxutil.base.api.container.EntrySetExt;
-import org.boxutil.base.api.container.longtype.*;
 import org.boxutil.base.api.container.objecttype.ObjSet;
-import org.boxutil.util.CollectionUtil;
+import org.boxutil.util.InternalCollectionUtil;
 import org.boxutil.util.collection.bytetype.AbstractByteCollection;
 import org.boxutil.util.collection.bytetype.ByteBitSet;
 import org.boxutil.util.collection.objecttype.AbstractObjSet;
@@ -147,11 +146,11 @@ final class ImmutableByteCollections {
             throw new UnsupportedOperationException();
         }
 
-        public void replaceRange(int fromIndex, int toIndex, ByteUnaryOperator operator) {
+        public void replace(int fromIndex, int toIndex, ByteUnaryOperator operator) {
             throw new UnsupportedOperationException();
         }
 
-        public boolean computeRange(int fromIndex, int toIndex, ByteFunction<? extends Byte> operator) {
+        public boolean compute(int fromIndex, int toIndex, ByteFunction<? extends Byte> operator) {
             throw new UnsupportedOperationException();
         }
 
@@ -209,6 +208,10 @@ final class ImmutableByteCollections {
 
         public void forEach(ByteConsumer action) {}
 
+        public void forEach(int fromIndex, int toIndex, ByteConsumer action) {
+            if (fromIndex != 0 || toIndex != 0) throw new IndexOutOfBoundsException();
+        }
+
         public boolean containsAll(@NotNull Collection<?> c) {
             return c.isEmpty();
         }
@@ -223,7 +226,8 @@ final class ImmutableByteCollections {
         }
 
         public ByteList subList(int fromIndex, int toIndex) {
-            throw new IndexOutOfBoundsException("Empty list");
+            if (fromIndex != 0 || toIndex != 0) throw new IndexOutOfBoundsException();
+            return this;
         }
 
         public int size() {
@@ -354,6 +358,11 @@ final class ImmutableByteCollections {
             action.accept(this.element);
         }
 
+        public void forEach(int fromIndex, int toIndex, ByteConsumer action) {
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
+            action.accept(this.element);
+        }
+
         public boolean containsAll(@NotNull Collection<?> c) {
             return c.contains(this.element);
         }
@@ -368,8 +377,8 @@ final class ImmutableByteCollections {
         }
 
         public ByteList subList(int fromIndex, int toIndex) {
-            CollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
-            return new ImmutableByteListOne(this.element);
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, 1);
+            return toIndex != 0 ? new ImmutableByteListOne(this.element) : (ByteList) EMPTY_LIST;
         }
 
         public int capacity() {
@@ -572,6 +581,12 @@ final class ImmutableByteCollections {
             }
         }
 
+        public void forEach(int fromIndex, int toIndex, ByteConsumer action) {
+            for (int i = fromIndex; i < toIndex;) {
+                action.accept(this.element[i++]);
+            }
+        }
+
         public boolean containsAll(Collection<?> c) {
             if (c == this) return true;
             if (c.isEmpty()) return false;
@@ -583,12 +598,12 @@ final class ImmutableByteCollections {
         }
 
         public ByteListIterator listIterator(int index) {
-            CollectionUtil.checkIndex(index, 0, this.element.length);
+            InternalCollectionUtil.checkIndex(index, 0, this.element.length);
             return new CollectionByteListIterator(index);
         }
 
         public ByteList subList(int fromIndex, int toIndex) {
-            CollectionUtil.checkRange(fromIndex, toIndex, 0, this.element.length);
+            InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.element.length);
             return new ImmutableByteSubList(fromIndex, toIndex);
         }
 
@@ -641,10 +656,10 @@ final class ImmutableByteCollections {
                 try {
                     if (castList instanceof ImmutableByteListN) {
                         final ImmutableByteListN cast = (ImmutableByteListN) o;
-                        return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
+                        return InternalCollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.element, 0, cast.element.length);
                     } else if (castList instanceof ImmutableByteListN.ImmutableByteSubList) {
                         final ImmutableByteListN.ImmutableByteSubList cast = (ImmutableByteListN.ImmutableByteSubList) o;
-                        return CollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
+                        return InternalCollectionUtil.arrayEquals(this.element, 0, this.element.length, cast.rootArray(), cast.offset, cast.size);
                     } else {
                         final Iterator<?> oit = castList.iterator();
                         for (byte l : this.element) {
@@ -845,6 +860,14 @@ final class ImmutableByteCollections {
                 }
             }
 
+            public void forEach(int fromIndex, int toIndex, ByteConsumer action) {
+                final int limit = toIndex + this.offset;
+                final byte[] eleL = this.rootArray();
+                for (int i = fromIndex + this.offset; i < limit;) {
+                    action.accept(eleL[i++]);
+                }
+            }
+
             public boolean containsAll(Collection<?> c) {
                 if (this.isEmpty()) return c.isEmpty();
                 if (c == this) return true;
@@ -860,7 +883,7 @@ final class ImmutableByteCollections {
             }
 
             public ByteList subList(int fromIndex, int toIndex) {
-                CollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
+                InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
                 return new ImmutableByteSubList(this, fromIndex, toIndex);
             }
 
@@ -917,10 +940,10 @@ final class ImmutableByteCollections {
                     try {
                         if (castList instanceof ImmutableByteListN) {
                             final ImmutableByteListN cast = (ImmutableByteListN) o;
-                            return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
+                            return InternalCollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.element, 0, cast.element.length);
                         } else if (castList instanceof ImmutableByteListN.ImmutableByteSubList) {
                             final ImmutableByteListN.ImmutableByteSubList cast = (ImmutableByteListN.ImmutableByteSubList) o;
-                            return CollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
+                            return InternalCollectionUtil.arrayEquals(this.rootArray(), this.offset, this.size, cast.rootArray(), cast.offset, cast.size);
                         } else {
                             final Iterator<?> oit = castList.iterator();
                             final int limit = this.size;
@@ -1744,7 +1767,7 @@ final class ImmutableByteCollections {
             in.defaultReadObject();
 
             final int sizeL = in.readInt();
-            CollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(sizeL, 2, Container.MAXIMUM_CAPACITY);
 
             final byte[] eleL = this.element = newTable(sizeL);
             for (int i = 0; i < sizeL;) {
@@ -1777,7 +1800,7 @@ final class ImmutableByteCollections {
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-            CollectionUtil.SerialCheck.ioCheckSize(computeSize(this.bitMark = new long[]{in.readLong(), in.readLong(), in.readLong(), in.readLong()}), 2, 256);
+            InternalCollectionUtil.SerialCheck.ioCheckSize(computeSize(this.bitMark = new long[]{in.readLong(), in.readLong(), in.readLong(), in.readLong()}), 2, 256);
         }
 
         private Object readResolve() throws ObjectStreamException {
