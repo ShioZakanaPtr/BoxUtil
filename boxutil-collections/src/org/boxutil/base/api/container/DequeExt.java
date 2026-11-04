@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Consumer;
 
-public interface DequeExt<E> extends Deque<E>, QueueExt<E> {
+public interface DequeExt<E> extends Deque<E>, QueueExt<E>, OrderedCollection<E> {
     default E peek() {
         return this.peekFirst();
     }

@@ -13,7 +13,7 @@ import java.util.function.Function;
  * {@code Number(0)} if the element was specific primitive type that the
  * List implementation defined.
  */
-public interface ListExt<E> extends List<E>, CollectionExt<E>, Container {
+public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection<E>, Container {
     // For compatibility
     default E getFirst() {
         return this.get(0);
