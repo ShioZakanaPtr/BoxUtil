@@ -19,7 +19,7 @@ import java.util.function.*;
 final class ImmutableObjCollections {
     final static float DEFAULT_LOAD_FACTOR = 0.75f;
     final static Object NULL_SLOT = null;
-    final static HashBehavior<Object> DEFAULT_HASHER = HashBehaviorFactory.fibonacciMix();
+    final static HashBehavior<Object> DEFAULT_BEHAVIOR = HashBehaviorFactory.fibonacciMix();
     private final static ObjList<Object> EMPTY_LIST = new ImmutableObjListEmpty<>();
     private final static ObjSet<Object> EMPTY_SET = new ImmutableObjSetEmpty<>();
 
@@ -1046,7 +1046,7 @@ final class ImmutableObjCollections {
         private static final long serialVersionUID = 1L;
 
         public boolean contains(Object o) {
-            return super.contains(o);
+            return false;
         }
 
         public void forEach(Consumer<? super E> action) {}
@@ -1144,7 +1144,7 @@ final class ImmutableObjCollections {
         }
 
         public boolean contains(Object o) {
-            return this.element == o;
+            return DEFAULT_BEHAVIOR.equals(o, this.element);
         }
 
         public void forEach(Consumer<? super E> action) {
@@ -1284,11 +1284,11 @@ final class ImmutableObjCollections {
         }
 
         public boolean contains(Object o) {
-            if (DEFAULT_HASHER.equals(o, null)) return this.withNullEle;
+            if (DEFAULT_BEHAVIOR.equals(o, null)) return this.withNullEle;
 
             E currEle;
-            for (int pos = DEFAULT_HASHER.hashing(o); (currEle = this.element[pos &= this.posMask]) != ((E) NULL_SLOT); pos++) {
-                if (DEFAULT_HASHER.equals(o, currEle)) return true;
+            for (int pos = DEFAULT_BEHAVIOR.hashing(o); (currEle = this.element[pos &= this.posMask]) != ((E) NULL_SLOT); pos++) {
+                if (DEFAULT_BEHAVIOR.equals(o, currEle)) return true;
             }
             return false;
         }
@@ -1898,7 +1898,7 @@ final class ImmutableObjCollections {
 
     @SafeVarargs
     static <E> ObjSet<E> ofSetSerial(E... elements) throws StreamCorruptedException {
-        final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
+        final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_BEHAVIOR);
         collect.shrink();
         final boolean withNullEleL = collect.contains(null);
         final int sizeL = collect.size(), capacityL = collect.capacity();
@@ -1914,7 +1914,7 @@ final class ImmutableObjCollections {
             case 1: return new ImmutableObjSetOne<>(elements[0]);
         }
 
-        final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
+        final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(elements, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_BEHAVIOR);
         collect.shrink();
         final boolean withNullEleL = collect.contains(null);
         final int sizeL = collect.size(), capacityL = collect.capacity();
@@ -1936,7 +1936,7 @@ final class ImmutableObjCollections {
             case 0: return (ObjSet<E>) EMPTY_SET;
             case 1: return new ImmutableObjSetOne<>((E) source.toArray(new Object[0])[0]);
             default: {
-                final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(source, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_HASHER);
+                final ObjLinearProbingHashSet<E> collect = new ObjLinearProbingHashSet<>(source, DEFAULT_LOAD_FACTOR, (HashBehavior<E>) DEFAULT_BEHAVIOR);
                 collect.shrink();
                 final boolean withNullEleL = collect.contains(null);
                 final int sizeL = collect.size(), capacityL = collect.capacity();

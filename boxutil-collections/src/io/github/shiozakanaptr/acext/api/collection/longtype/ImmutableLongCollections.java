@@ -1106,7 +1106,7 @@ final class ImmutableLongCollections {
         private static final long serialVersionUID = 1L;
 
         public boolean contains(long o) {
-            return super.contains(o);
+            return false;
         }
 
         public void forEach(LongConsumer action) {}
@@ -1217,7 +1217,7 @@ final class ImmutableLongCollections {
         }
 
         public boolean contains(long o) {
-            return this.element == o;
+            return DEFAULT_BEHAVIOR.equals(o, this.element);
         }
 
         public void forEach(LongConsumer action) {

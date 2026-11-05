@@ -1108,7 +1108,7 @@ final class ImmutableByteCollections {
         private static final long serialVersionUID = 1L;
 
         public boolean contains(byte o) {
-            return super.contains(o);
+            return false;
         }
 
         public void forEach(ByteConsumer action) {}

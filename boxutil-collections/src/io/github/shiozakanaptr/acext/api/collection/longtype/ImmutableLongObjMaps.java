@@ -221,15 +221,15 @@ final class ImmutableLongObjMaps {
         }
 
         public V get(long key) {
-            return key == this.key ? this.value : null;
+            return ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, this.key) ? this.value : null;
         }
 
         public V getOrDefault(long key, V defaultValue) {
-            return key == this.key ? this.value : defaultValue;
+            return ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, this.key) ? this.value : defaultValue;
         }
 
         public boolean containsKey(long key) {
-            return key == this.key;
+            return ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, this.key);
         }
 
         public boolean containsValue(Object value) {
