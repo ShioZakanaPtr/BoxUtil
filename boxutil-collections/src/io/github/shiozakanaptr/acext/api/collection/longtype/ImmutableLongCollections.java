@@ -267,8 +267,12 @@ final class ImmutableLongCollections {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_LIST;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageListEmpty();
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -816,11 +820,8 @@ final class ImmutableLongCollections {
             }
 
             public long getRaw(int index) {
+                InternalCollectionUtil.checkBound(index, 0, this.size);
                 return ImmutableLongListN.this.getRaw(index + this.offset);
-            }
-
-            public long set(int index, long element) {
-                return ImmutableLongListN.this.set(index + this.offset, element);
             }
 
             public boolean contains(long o) {
@@ -859,6 +860,7 @@ final class ImmutableLongCollections {
             }
 
             public void forEach(int fromIndex, int toIndex, LongConsumer action) {
+                InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
                 final int limit = toIndex + this.offset;
                 final long[] eleL = this.rootArray();
                 for (int i = fromIndex + this.offset; i < limit;) {
@@ -877,6 +879,7 @@ final class ImmutableLongCollections {
             }
 
             public LongListIterator listIterator(int index) {
+                InternalCollectionUtil.checkIndex(index, 0, this.size);
                 return new CollectionLongSubListIterator(index);
             }
 
@@ -984,16 +987,16 @@ final class ImmutableLongCollections {
 
                 public long nextLong() {
                     if (this.pos >= ImmutableLongSubList.this.size) throw new NoSuchElementException();
-                    return ImmutableLongSubList.this.rootArray()[this.pos++ + ImmutableLongSubList.this.offset];
+                    return ImmutableLongSubList.this.rootArray()[ImmutableLongSubList.this.offset + this.pos++];
                 }
 
                 public void forEachRemaining(LongConsumer action) {
+                    final int rawLimit = ImmutableLongSubList.this.size, limit = rawLimit + ImmutableLongSubList.this.offset;
                     final long[] eleL = ImmutableLongSubList.this.rootArray();
-                    final int limit = eleL.length;
-                    for (int i = this.pos; i < limit;) {
+                    for (int i = this.pos + ImmutableLongSubList.this.offset; i < limit;) {
                         action.accept(eleL[i++]);
                     }
-                    this.pos = limit;
+                    this.pos = rawLimit;
                 }
             }
 
@@ -1159,8 +1162,12 @@ final class ImmutableLongCollections {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_SET;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageSetEmpty();
         }
 
         private static class CollectionLongIterator implements ImmutableLongIterator {
@@ -1806,6 +1813,30 @@ final class ImmutableLongCollections {
         }
     }
 
+    private final static class ProxyStorageListEmpty implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_LIST;
+        }
+    }
+
+    private final static class ProxyStorageSetEmpty implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_SET;
+        }
+    }
+
     private final static class ProxyStorageListOne implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -1813,6 +1844,14 @@ final class ImmutableLongCollections {
 
         public ProxyStorageListOne(long element) {
             this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {
@@ -1827,6 +1866,14 @@ final class ImmutableLongCollections {
 
         public ProxyStorageSetOne(long element) {
             this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {

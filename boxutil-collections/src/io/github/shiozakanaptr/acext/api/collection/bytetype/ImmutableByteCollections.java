@@ -269,8 +269,12 @@ final class ImmutableByteCollections {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_LIST;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageListEmpty();
         }
 
         private static class CollectionByteIterator implements ImmutableByteIterator {
@@ -818,11 +822,8 @@ final class ImmutableByteCollections {
             }
 
             public byte getRaw(int index) {
+                InternalCollectionUtil.checkBound(index, 0, this.size);
                 return ImmutableByteListN.this.getRaw(index + this.offset);
-            }
-
-            public byte set(int index, byte element) {
-                return ImmutableByteListN.this.set(index + this.offset, element);
             }
 
             public boolean contains(byte o) {
@@ -861,6 +862,7 @@ final class ImmutableByteCollections {
             }
 
             public void forEach(int fromIndex, int toIndex, ByteConsumer action) {
+                InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
                 final int limit = toIndex + this.offset;
                 final byte[] eleL = this.rootArray();
                 for (int i = fromIndex + this.offset; i < limit;) {
@@ -879,6 +881,7 @@ final class ImmutableByteCollections {
             }
 
             public ByteListIterator listIterator(int index) {
+                InternalCollectionUtil.checkIndex(index, 0, this.size);
                 return new CollectionByteSubListIterator(index);
             }
 
@@ -986,16 +989,16 @@ final class ImmutableByteCollections {
 
                 public byte nextByte() {
                     if (this.pos >= ImmutableByteSubList.this.size) throw new NoSuchElementException();
-                    return ImmutableByteSubList.this.rootArray()[this.pos++ + ImmutableByteSubList.this.offset];
+                    return ImmutableByteSubList.this.rootArray()[ImmutableByteSubList.this.offset + this.pos++];
                 }
 
                 public void forEachRemaining(ByteConsumer action) {
+                    final int rawLimit = ImmutableByteSubList.this.size, limit = rawLimit + ImmutableByteSubList.this.offset;
                     final byte[] eleL = ImmutableByteSubList.this.rootArray();
-                    final int limit = eleL.length;
-                    for (int i = this.pos; i < limit;) {
+                    for (int i = this.pos + ImmutableByteSubList.this.offset; i < limit;) {
                         action.accept(eleL[i++]);
                     }
-                    this.pos = limit;
+                    this.pos = rawLimit;
                 }
             }
 
@@ -1161,8 +1164,12 @@ final class ImmutableByteCollections {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_SET;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageSetEmpty();
         }
 
         private static class CollectionByteIterator implements ImmutableByteIterator {
@@ -1715,6 +1722,30 @@ final class ImmutableByteCollections {
         }
     }
 
+    private final static class ProxyStorageListEmpty implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_LIST;
+        }
+    }
+
+    private final static class ProxyStorageSetEmpty implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_SET;
+        }
+    }
+
     private final static class ProxyStorageListOne implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -1722,6 +1753,14 @@ final class ImmutableByteCollections {
 
         public ProxyStorageListOne(byte element) {
             this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {
@@ -1736,6 +1775,14 @@ final class ImmutableByteCollections {
 
         public ProxyStorageSetOne(byte element) {
             this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {

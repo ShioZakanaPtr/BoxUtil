@@ -256,8 +256,12 @@ final class ImmutableObjCollections {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_LIST;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageListEmpty<>();
         }
 
         private static class CollectionObjIterator<E> implements ImmutableObjIterator<E> {
@@ -402,7 +406,11 @@ final class ImmutableObjCollections {
             return this;
         }
 
-        private Object readResolve() {
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
             return new ProxyStorageListOne<>(this.element);
         }
 
@@ -764,11 +772,8 @@ final class ImmutableObjCollections {
             }
 
             public E get(int index) {
+                InternalCollectionUtil.checkBound(index, 0, this.size);
                 return ImmutableObjListN.this.get(index + this.offset);
-            }
-
-            public E set(int index, E element) {
-                return ImmutableObjListN.this.set(index + this.offset, element);
             }
 
             public boolean contains(Object o) {
@@ -807,6 +812,7 @@ final class ImmutableObjCollections {
             }
 
             public void forEach(int fromIndex, int toIndex, Consumer<? super E> action) {
+                InternalCollectionUtil.checkRange(fromIndex, toIndex, 0, this.size);
                 final int limit = toIndex + this.offset;
                 final E[] eleL = this.rootArray();
                 for (int i = fromIndex + this.offset; i < limit;) {
@@ -825,6 +831,7 @@ final class ImmutableObjCollections {
             }
 
             public ListIterator<E> listIterator(int index) {
+                InternalCollectionUtil.checkIndex(index, 0, this.size);
                 return new CollectionObjSubListIterator(index);
             }
 
@@ -920,16 +927,16 @@ final class ImmutableObjCollections {
 
                 public E next() {
                     if (this.pos >= ImmutableObjSubList.this.size) throw new NoSuchElementException();
-                    return ImmutableObjSubList.this.rootArray()[this.pos++ + ImmutableObjSubList.this.offset];
+                    return ImmutableObjSubList.this.rootArray()[ImmutableObjSubList.this.offset + this.pos++];
                 }
 
                 public void forEachRemaining(Consumer<? super E> action) {
+                    final int rawLimit = ImmutableObjSubList.this.size, limit = rawLimit + ImmutableObjSubList.this.offset;
                     final E[] eleL = ImmutableObjSubList.this.rootArray();
-                    final int limit = eleL.length;
-                    for (int i = this.pos; i < limit;) {
+                    for (int i = this.pos + ImmutableObjSubList.this.offset; i < limit;) {
                         action.accept(eleL[i++]);
                     }
-                    this.pos = limit;
+                    this.pos = rawLimit;
                 }
             }
 
@@ -1086,8 +1093,12 @@ final class ImmutableObjCollections {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_SET;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageSetEmpty<>();
         }
 
         private static class CollectionObjIterator<E> implements ImmutableObjIterator<E> {
@@ -1186,7 +1197,11 @@ final class ImmutableObjCollections {
             return this;
         }
 
-        private Object readResolve() {
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
             return new ProxyStorageSetOne<>(this.element);
         }
 
@@ -1698,6 +1713,30 @@ final class ImmutableObjCollections {
         }
     }
 
+    private final static class ProxyStorageListEmpty<E> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_LIST;
+        }
+    }
+
+    private final static class ProxyStorageSetEmpty<E> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_SET;
+        }
+    }
+
     private final static class ProxyStorageListOne<E> implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -1705,6 +1744,14 @@ final class ImmutableObjCollections {
 
         public ProxyStorageListOne(E element) {
             this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {
@@ -1719,6 +1766,14 @@ final class ImmutableObjCollections {
 
         public ProxyStorageSetOne(E element) {
             this.element = element;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {

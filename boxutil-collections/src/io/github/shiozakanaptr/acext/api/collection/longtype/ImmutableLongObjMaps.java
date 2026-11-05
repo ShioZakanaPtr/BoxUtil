@@ -31,6 +31,10 @@ final class ImmutableLongObjMaps {
         return (T[]) new Object[cap];
     }
 
+    private static <V> LongObjMap.Entry<V>[] newEntryTable(int cap) {
+        return (LongObjMap.Entry<V>[]) new LongObjMap.Entry<?>[cap];
+    }
+
     private static abstract class AbstractImmutableLongObjMap<V> implements LongObjMap<V> {
         public void resize(int newCapacity) {
             throw new UnsupportedOperationException();
@@ -192,8 +196,12 @@ final class ImmutableLongObjMaps {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_MAP;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageEmpty<>();
         }
     }
 
@@ -548,7 +556,7 @@ final class ImmutableLongObjMaps {
             final int capL = this.capacity;
             final long[] keyL = this.keyTable;
             final V[] valueL = this.valueTable;
-            final LongObjMap.Entry<V>[] result = newValueTable(this.size);
+            final LongObjMap.Entry<V>[] result = newEntryTable(this.size);
             for (int pos = 0; pos < capL; pos++) {
                 final long currKey;
                 if ((currKey = keyL[pos]) != ((long) ImmutableLongCollections.NULL_SLOT)) {
@@ -612,6 +620,18 @@ final class ImmutableLongObjMaps {
         }
     }
 
+    private final static class ProxyStorageEmpty<V> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_MAP;
+        }
+    }
+
     private final static class ProxyStorageOne<V> implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -621,6 +641,14 @@ final class ImmutableLongObjMaps {
         public ProxyStorageOne(long keyCollect, V valueCollect) {
             this.keyCollect = keyCollect;
             this.valueCollect = valueCollect;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {

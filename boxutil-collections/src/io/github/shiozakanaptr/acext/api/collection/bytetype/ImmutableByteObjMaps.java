@@ -29,6 +29,10 @@ final class ImmutableByteObjMaps {
         return (T[]) new Object[cap];
     }
 
+    private static <V> ByteObjMap.Entry<V>[] newEntryTable(int cap) {
+        return (ByteObjMap.Entry<V>[]) new ByteObjMap.Entry<?>[cap];
+    }
+
     private static int computeSize(long[] bitL) {
         return Long.bitCount(bitL[0]) + Long.bitCount(bitL[1]) + Long.bitCount(bitL[2]) + Long.bitCount(bitL[3]);
     }
@@ -204,8 +208,12 @@ final class ImmutableByteObjMaps {
             return this;
         }
 
-        private Object readResolve() {
-            return EMPTY_MAP;
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
+            throw new InvalidObjectException("Proxy required");
+        }
+
+        private Object writeReplace() {
+            return new ProxyStorageEmpty<>();
         }
     }
 
@@ -480,7 +488,7 @@ final class ImmutableByteObjMaps {
 
         private ByteObjMap.Entry<V>[] toEntryArray() {
             final V[] valueL;
-            final ByteObjMap.Entry<V>[] result = newValueTable(this.size);
+            final ByteObjMap.Entry<V>[] result = newEntryTable(this.size);
             final int capacity = (valueL = this.valueTable).length;
             for (int seq = 0, idx = 0; seq < capacity; seq++) {
                 if ((this.bitMark[seq >>> 6] & (1L << (seq & 0b111111))) != ImmutableByteCollections.NULL_BIT) {
@@ -542,6 +550,18 @@ final class ImmutableByteObjMaps {
         }
     }
 
+    private final static class ProxyStorageEmpty<V> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private void writeObject(ObjectOutputStream out) throws IOException {}
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {}
+
+        private Object readResolve() throws ObjectStreamException {
+            return EMPTY_MAP;
+        }
+    }
+
     private final static class ProxyStorageOne<V> implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -551,6 +571,14 @@ final class ImmutableByteObjMaps {
         public ProxyStorageOne(byte keyCollect, V valueCollect) {
             this.keyCollect = keyCollect;
             this.valueCollect = valueCollect;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
         }
 
         private Object readResolve() throws ObjectStreamException {
