@@ -17,7 +17,11 @@ public final class InternalCollectionUtil {
     }
 
     public static void checkIndex(long index, long min, long max) {
-        if (!(index >= min && index <= max)) throw new IndexOutOfBoundsException("Illegal index '" + index + "' out of range [" + min + ',' + max + ')');
+        if (!(index >= min && index <= max)) throw new IndexOutOfBoundsException("Illegal index '" + index + "' out of range [" + min + ',' + max + ']');
+    }
+
+    public static void checkBound(long index, long min, long max) {
+        if (!(index >= min && index < max)) throw new IndexOutOfBoundsException("Illegal index '" + index + "' out of range [" + min + ',' + max + ')');
     }
 
     public static void checkRange(long fromIndex, long toIndex, long fromLimit, long toLimit) {
