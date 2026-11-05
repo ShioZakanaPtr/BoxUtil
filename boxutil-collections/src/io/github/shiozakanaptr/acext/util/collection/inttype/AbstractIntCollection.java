@@ -18,7 +18,7 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
     }
 
     public boolean contains(int o) {
-        final IntIterator it = this.iterator();
+        IntIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextInt() == o) return true;
         }
@@ -29,7 +29,7 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean contains(final Object o) {
+    public boolean contains(Object o) {
         if (o != null && !(o instanceof Integer)) return false;
         return this.contains(o != null ? ((Integer) o).intValue() : (int) 0);
     }
@@ -42,12 +42,12 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean add(final Integer e) {
+    public boolean add(Integer e) {
         return this.add(e != null ? e.intValue() : (int) 0);
     }
 
-    public boolean remove(int o) {
-        final IntIterator it = this.iterator();
+    public boolean removeElement(int o) {
+        IntIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextInt() == o) {
                 it.remove();
@@ -61,9 +61,17 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean remove(final Object o) {
+    public boolean removeElement(Object o) {
         if (o != null && !(o instanceof Integer)) return false;
-        return this.remove(o != null ? ((Integer) o).intValue() : (int) 0);
+        return this.removeElement(o != null ? ((Integer) o).intValue() : (int) 0);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean remove(Object o) {
+        return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
@@ -92,7 +100,7 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
     public abstract IntSpliterator spliterator();
 
     public void clear() {
-        final IntIterator it = this.iterator();
+        IntIterator it = this.iterator();
         while (it.hasNext()) {
             it.nextInt();
             it.remove();

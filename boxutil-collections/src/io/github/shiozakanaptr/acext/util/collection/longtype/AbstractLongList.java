@@ -32,7 +32,7 @@ public abstract class AbstractLongList extends AbstractLongCollection implements
     }
 
     public boolean removeElement(long o) {
-        final LongIterator it = this.iterator();
+        LongIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextLong() == o) {
                 it.remove();
@@ -40,10 +40,6 @@ public abstract class AbstractLongList extends AbstractLongCollection implements
             }
         }
         return false;
-    }
-
-    public boolean remove(long o) {
-        return this.removeElement(o);
     }
 
     public int indexOf(long o) {

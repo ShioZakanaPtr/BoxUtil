@@ -29,15 +29,15 @@ public interface ByteSet extends SetExt<Byte>, ByteCollection {
         return this.add(e != null ? e.byteValue() : (byte) 0);
     }
 
-    boolean remove(byte o);
+    boolean removeElement(byte o);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default boolean remove(Object o) {
+    default boolean removeElement(Object o) {
         if (o != null && !(o instanceof Byte)) return false;
-        return this.remove(o != null ? ((Byte) o).byteValue() : (byte) 0);
+        return this.removeElement(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
     boolean remapping(byte element, @NotNull ByteFunction<? extends Byte> remappingFunction);

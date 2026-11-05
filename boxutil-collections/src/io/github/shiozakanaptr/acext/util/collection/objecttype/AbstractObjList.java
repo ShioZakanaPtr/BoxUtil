@@ -20,7 +20,7 @@ public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implem
         throw new UnsupportedOperationException();
     }
 
-    public boolean add(final E e) {
+    public boolean add(E e) {
         this.add(this.size(), e);
         return true;
     }
@@ -34,7 +34,7 @@ public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implem
     }
 
     public boolean removeElement(Object o) {
-        final Iterator<E> it = this.iterator();
+        Iterator<E> it = this.iterator();
         while (it.hasNext()) {
             if (Objects.equals(o, it.next())) {
                 it.remove();
@@ -42,10 +42,6 @@ public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implem
             }
         }
         return false;
-    }
-
-    public boolean remove(Object o) {
-        return this.removeElement(o);
     }
 
     public int indexOf(Object o) {

@@ -123,22 +123,6 @@ public interface LongList extends ListExt<Long>, LongCollection {
         return this.removeElement(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
-    /**
-     * @see ListExt#remove(Object)
-     */
-    @Deprecated
-    default boolean remove(long o) {
-        return this.removeElement(o);
-    }
-
-    /**
-     * @see ListExt#remove(Object)
-     */
-    @Deprecated
-    default boolean remove(Object o) {
-        return this.removeElement(o);
-    }
-
     default long removeFirstRaw() {
         if (this.isEmpty()) throw new NoSuchElementException();
         return this.removeAtRaw(0);

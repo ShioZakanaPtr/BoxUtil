@@ -32,15 +32,15 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
         return this.add(e != null ? e.longValue() : (long) 0);
     }
 
-    boolean remove(long o);
+    boolean removeElement(long o);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default boolean remove(Object o) {
+    default boolean removeElement(Object o) {
         if (o != null && !(o instanceof Long)) return false;
-        return this.remove(o != null ? ((Long) o).longValue() : (long) 0);
+        return this.removeElement(o != null ? ((Long) o).longValue() : (long) 0);
     }
 
     default boolean removeIf(@NotNull LongPredicate filter) {

@@ -127,22 +127,6 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
         return this.removeElement(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
-    /**
-     * @see ListExt#remove(Object)
-     */
-    @Deprecated
-    default boolean remove(byte o) {
-        return this.removeElement(o);
-    }
-
-    /**
-     * @see ListExt#remove(Object)
-     */
-    @Deprecated
-    default boolean remove(Object o) {
-        return this.removeElement(o);
-    }
-
     default byte removeFirstRaw() {
         if (this.isEmpty()) throw new NoSuchElementException();
         return this.removeAtRaw(0);

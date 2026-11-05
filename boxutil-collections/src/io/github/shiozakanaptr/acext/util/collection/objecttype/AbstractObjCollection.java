@@ -15,20 +15,20 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
         throw new UnsupportedOperationException();
     }
 
-    public boolean contains(final Object o) {
-        final Iterator<E> it = this.iterator();
+    public boolean contains(Object o) {
+        Iterator<E> it = this.iterator();
         while (it.hasNext()) {
             if (Objects.equals(o, it.next())) return true;
         }
         return false;
     }
 
-    public boolean add(final E e) {
+    public boolean add(E e) {
         throw new UnsupportedOperationException();
     }
 
-    public boolean remove(Object o) {
-        final Iterator<E> it = this.iterator();
+    public boolean removeElement(Object o) {
+        Iterator<E> it = this.iterator();
         while (it.hasNext()) {
             if (Objects.equals(o, it.next())) {
                 it.remove();
@@ -36,6 +36,14 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
             }
         }
         return false;
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean remove(Object o) {
+        return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
@@ -64,7 +72,7 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
     public abstract Spliterator<E> spliterator();
 
     public void clear() {
-        final Iterator<E> it = this.iterator();
+        Iterator<E> it = this.iterator();
         while (it.hasNext()) {
             it.next();
             it.remove();

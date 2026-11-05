@@ -110,100 +110,57 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
     }
 
     /**
-     * Removes the first occurrence of the specified element from this list, if it
-     * is present (optional operation).  If this list does not contain the element,
-     * it is unchanged.  More formally, removes the element {@code e} such that
-     * {@code Objects.equals(element, e)} (if such an element exists).  Returns
-     * {@code true} if this list contained the specified element (or equivalently,
-     * if this list changed as a result of the call).
+     * Removes a single instance of the specified element from this list,
+     * if it is present (optional operation).
      *
-     * <p>This method is named {@code removeElement} rather than {@code remove} on
-     * purpose, so that removal <em>by value</em> can never be confused with
-     * removal <em>by position</em>:
+     * <p>More formally, removes an element {@code e} such that
+     * {@code Objects.equals(o, e)}, if this list contains one or more such
+     * elements.  If this list does not contain the element, it is unchanged.
+     * Returns {@code true} if this list contained the specified element
+     * (or equivalently, if this list changed as a result of the call).
      *
-     * <ul>
-     *   <li>If the element type {@code E} is {@link Integer}, the inherited
-     *       {@link #remove(int) E remove(int index)} overload is more specific
-     *       than {@link #remove(Object) boolean remove(Object)}, so a call such as
-     *       {@code list.remove(1)} silently removes the <em>element at index</em>
-     *       {@code 1} instead of the element whose <em>value</em> is {@code 1}.
-     *       Because that method also returns {@code E} rather than {@code boolean},
-     *       the mistake is not caught by the compiler and usually surfaces only as
-     *       corrupted data or a surprising return value at run time.  This method
-     *       has no such overload, so {@code list.removeElement(1)} always means
-     *       "remove the value {@code 1}" and autoboxing resolves the argument
-     *       unambiguously.</li>
+     * <p>This method is implemented as
+     * {@code return CollectionExt.super.remove(o);}, so its behavior is
+     * identical to the default implementation inherited from the parent
+     * collection extension interface.  It is redeclared here only to attach
+     * list-specific documentation and to keep the deprecation notice visible
+     * at the point where the overload hazard is most acute.
      *
-     *   <li>If this interface is specialized over a primitive type (for example an
-     *       {@code IntList}), or over a boxed type in a way that exposes both a
-     *       positional and a value-based {@code remove} overload, the same
-     *       accidental overload resolution reappears, and the caller cannot fix it
-     *       without an explicit cast to the boxed or primitive type.  Using a
-     *       distinct, unambiguous name for value-based removal avoids the problem
-     *       uniformly across all specializations, since this method is the only
-     *       one named {@code removeElement}.</li>
-     * </ul>
+     * <p><strong>Deprecation note:</strong> This list interface also declares
+     * {@link #removeAt(int)} for removal by position and a deprecated
+     * {@link #remove(int) remove(int)} overload for source compatibility.
+     * When the element type {@code E} is {@link Integer}, an invocation such
+     * as {@code list.remove(1)} resolves to {@code remove(int index)} rather
+     * than to this method, because the {@code int} overload is more specific
+     * than the {@code Object} overload.  Code intended to remove the
+     * <em>value</em> {@code 1} therefore removes the <em>element at index</em>
+     * {@code 1} instead, and the mistake is invisible to the compiler.  The
+     * same hazard can arise in interfaces specialized over primitive types.
+     * To keep removal unambiguous across all specializations, callers should
+     * use {@link #removeElement(Object)} for removal by value and
+     * {@link #removeAt(int)} for removal by position.
      *
-     * <p>Callers should therefore always use this method for removal by value, and
-     * should use {@link #removeAt(int)} for removal by position.  The deprecated
-     * {@link #remove(Object)} method exists only for source compatibility and
-     * should not be called.
-     *
-     * <p>Note that this method accepts {@code Object} rather than {@code E} so
-     * that it can be invoked without a cast whenever the argument's static type
-     * differs from the element type (for example when removing an {@link Integer}
-     * from a list of {@code Number}).
-     *
-     * @param element element to be removed from this list, if present
-     * @return {@code true} if this list contained the specified element
-     * @throws ClassCastException if the type of the specified element is
-     *         incompatible with this list (optional)
-     * @throws NullPointerException if the specified element is null and this list
-     *         does not permit null elements (optional)
-     * @throws UnsupportedOperationException if the {@code removeElement} operation
-     *         is not supported by this list
-     * @see #removeAt(int)
-     */
-    boolean removeElement(Object element);
-
-    /**
-     * Removes the first occurrence of the specified element from this list, if it
-     * is present (optional operation).  If this list does not contain the element,
-     * it is unchanged.  More formally, removes the element {@code e} such that
-     * {@code Objects.equals(o, e)} (if such an element exists).  Returns
-     * {@code true} if this list contained the specified element (or equivalently,
-     * if this list changed as a result of the call).
-     *
-     * <p>This method is implemented as {@code return this.removeElement(o);}.
+     * <p>This method exists only for source compatibility with existing code;
+     * new code should call {@link #removeElement(Object)} instead.
      *
      * @param o element to be removed from this list, if present
      * @return {@code true} if this list contained the specified element
-     * @throws ClassCastException if the type of the specified element is
-     *         incompatible with this list (optional)
-     * @throws NullPointerException if the specified element is null and this list
-     *         does not permit null elements (optional)
-     * @throws UnsupportedOperationException if the {@code remove} operation is not
-     *         supported by this list
+     *         (or equivalently, if this list changed as a result of the call)
+     * @throws UnsupportedOperationException if the {@code removeElement}
+     *         operation is not supported by this list
      * @see #removeElement(Object)
-     * @deprecated This method is ambiguous with
-     *             {@link #removeAt(int) removeAt(int)} / {@link #remove(int)}
-     *             because it shares the name {@code remove} with the positional
-     *             overload.  When the element type {@code E} is {@link Integer},
-     *             an invocation such as {@code list.remove(1)} is resolved to
-     *             {@code E remove(int index)} rather than to this method, i.e. it
-     *             removes the element at <em>index</em> {@code 1} instead of the
-     *             element whose <em>value</em> is {@code 1}; because the two
-     *             overloads differ in return type as well ({@code E} versus
-     *             {@code boolean}), the error is not detected at compile time.
-     *             The same hazard could arise in interfaces specialized over
-     *             primitive types, where a single {@code remove} name cannot
-     *             express both "by index" and "by value" semantics.  Use
-     *             {@link #removeElement(Object)} for removal by value and
-     *             {@link #removeAt(int)} for removal by position.
+     * @see #removeAt(int)
+     * @see #remove(int)
+     * @see CollectionExt#remove(Object)
+     * @deprecated This method is ambiguous with {@link #remove(int) remove(int)}
+     *             when the element type is {@link Integer}; an invocation such as
+     *             {@code list.remove(1)} resolves to removal by position rather
+     *             than removal by value, and the error goes undetected at compile
+     *             time.  Use {@link #removeElement(Object)} for removal by value.
      */
     @Deprecated
     default boolean remove(Object o) {
-        return this.removeElement(o);
+        return CollectionExt.super.remove(o);
     }
 
     // For compatibility

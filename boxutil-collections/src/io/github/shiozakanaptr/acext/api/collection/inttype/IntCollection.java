@@ -32,15 +32,15 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
         return this.add(e != null ? e.intValue() : (int) 0);
     }
 
-    boolean remove(int o);
+    boolean removeElement(int o);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default boolean remove(Object o) {
+    default boolean removeElement(Object o) {
         if (o != null && !(o instanceof Integer)) return false;
-        return this.remove(o != null ? ((Integer) o).intValue() : (int) 0);
+        return this.removeElement(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
     default boolean removeIf(@NotNull IntPredicate filter) {

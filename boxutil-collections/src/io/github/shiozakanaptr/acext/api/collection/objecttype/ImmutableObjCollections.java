@@ -48,7 +48,7 @@ final class ImmutableObjCollections {
             throw new UnsupportedOperationException();
         }
 
-        public boolean remove(Object o) {
+        public boolean removeElement(Object o) {
             throw new UnsupportedOperationException();
         }
 
@@ -107,10 +107,6 @@ final class ImmutableObjCollections {
         }
 
         public E removeAt(int index) {
-            throw new UnsupportedOperationException();
-        }
-
-        public boolean removeElement(Object o) {
             throw new UnsupportedOperationException();
         }
 
@@ -1284,7 +1280,7 @@ final class ImmutableObjCollections {
         }
 
         public boolean contains(Object o) {
-            if (DEFAULT_BEHAVIOR.equals(o, null)) return this.withNullEle;
+            if (DEFAULT_BEHAVIOR.equals(o, ((E) NULL_SLOT))) return this.withNullEle;
 
             E currEle;
             for (int pos = DEFAULT_BEHAVIOR.hashing(o); (currEle = this.element[pos &= this.posMask]) != ((E) NULL_SLOT); pos++) {

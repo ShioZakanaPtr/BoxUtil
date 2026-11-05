@@ -10,14 +10,12 @@ import java.util.function.Consumer;
 public interface ShortSpliterator extends Spliterator.OfPrimitive<Short, ShortConsumer, ShortSpliterator> {
     ShortSpliterator trySplit();
 
-    boolean tryAdvance(ShortConsumer action);
-
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
     default boolean tryAdvance(Consumer<? super Short> action) {
-        return this.tryAdvance(action::accept);
+        return this.tryAdvance((short l_value) -> action.accept(l_value));
     }
 
     /**
@@ -25,7 +23,7 @@ public interface ShortSpliterator extends Spliterator.OfPrimitive<Short, ShortCo
      */
     @Deprecated
     default void forEachRemaining(Consumer<? super Short> action) {
-        this.forEachRemaining(action::accept);
+        this.forEachRemaining((short l_value) -> action.accept(l_value));
     }
 
     default ShortComparator getComparator() {

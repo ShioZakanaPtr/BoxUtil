@@ -20,7 +20,7 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
     }
 
     public boolean contains(short o) {
-        final ShortIterator it = this.iterator();
+        ShortIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextShort() == o) return true;
         }
@@ -31,7 +31,7 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean contains(final Object o) {
+    public boolean contains(Object o) {
         if (o != null && !(o instanceof Short)) return false;
         return this.contains(o != null ? ((Short) o).shortValue() : (short) 0);
     }
@@ -44,12 +44,12 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean add(final Short e) {
+    public boolean add(Short e) {
         return this.add(e != null ? e.shortValue() : (short) 0);
     }
 
-    public boolean remove(short o) {
-        final ShortIterator it = this.iterator();
+    public boolean removeElement(short o) {
+        ShortIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextShort() == o) {
                 it.remove();
@@ -63,9 +63,17 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean remove(final Object o) {
+    public boolean removeElement(Object o) {
         if (o != null && !(o instanceof Short)) return false;
-        return this.remove(o != null ? ((Short) o).shortValue() : (short) 0);
+        return this.removeElement(o != null ? ((Short) o).shortValue() : (short) 0);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean remove(Object o) {
+        return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
@@ -94,7 +102,7 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
     public abstract ShortSpliterator spliterator();
 
     public void clear() {
-        final ShortIterator it = this.iterator();
+        ShortIterator it = this.iterator();
         while (it.hasNext()) {
             it.nextShort();
             it.remove();

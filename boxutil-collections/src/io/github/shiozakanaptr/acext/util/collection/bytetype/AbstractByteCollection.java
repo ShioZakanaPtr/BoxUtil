@@ -20,7 +20,7 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
     }
 
     public boolean contains(byte o) {
-        final ByteIterator it = this.iterator();
+        ByteIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextByte() == o) return true;
         }
@@ -31,7 +31,7 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean contains(final Object o) {
+    public boolean contains(Object o) {
         if (o != null && !(o instanceof Byte)) return false;
         return this.contains(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
@@ -44,12 +44,12 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean add(final Byte e) {
+    public boolean add(Byte e) {
         return this.add(e != null ? e.byteValue() : (byte) 0);
     }
 
-    public boolean remove(byte o) {
-        final ByteIterator it = this.iterator();
+    public boolean removeElement(byte o) {
+        ByteIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextByte() == o) {
                 it.remove();
@@ -63,9 +63,17 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean remove(final Object o) {
+    public boolean removeElement(Object o) {
         if (o != null && !(o instanceof Byte)) return false;
-        return this.remove(o != null ? ((Byte) o).byteValue() : (byte) 0);
+        return this.removeElement(o != null ? ((Byte) o).byteValue() : (byte) 0);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean remove(Object o) {
+        return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
@@ -94,7 +102,7 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
     public abstract ByteSpliterator spliterator();
 
     public void clear() {
-        final ByteIterator it = this.iterator();
+        ByteIterator it = this.iterator();
         while (it.hasNext()) {
             it.nextByte();
             it.remove();

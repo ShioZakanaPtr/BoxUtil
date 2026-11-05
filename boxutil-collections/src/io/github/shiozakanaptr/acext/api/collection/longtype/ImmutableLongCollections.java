@@ -50,7 +50,7 @@ final class ImmutableLongCollections {
             throw new UnsupportedOperationException();
         }
 
-        public boolean remove(long o) {
+        public boolean removeElement(long o) {
             throw new UnsupportedOperationException();
         }
 
@@ -109,10 +109,6 @@ final class ImmutableLongCollections {
         }
 
         public long removeAtRaw(int index) {
-            throw new UnsupportedOperationException();
-        }
-
-        public boolean removeElement(long o) {
             throw new UnsupportedOperationException();
         }
 
@@ -1368,7 +1364,7 @@ final class ImmutableLongCollections {
         }
 
         public boolean contains(long o) {
-            if (DEFAULT_BEHAVIOR.equals(o, 0)) return this.withNullEle;
+            if (DEFAULT_BEHAVIOR.equals(o, ((long) NULL_SLOT))) return this.withNullEle;
 
             long currEle;
             for (int pos = DEFAULT_BEHAVIOR.hashing(o); (currEle = this.element[pos &= this.posMask]) != ((long) NULL_SLOT); pos++) {

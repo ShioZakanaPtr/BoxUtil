@@ -20,7 +20,7 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
     }
 
     public boolean contains(long o) {
-        final LongIterator it = this.iterator();
+        LongIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextLong() == o) return true;
         }
@@ -31,7 +31,7 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean contains(final Object o) {
+    public boolean contains(Object o) {
         if (o != null && !(o instanceof Long)) return false;
         return this.contains(o != null ? ((Long) o).longValue() : (long) 0);
     }
@@ -48,8 +48,8 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
         return this.add(e != null ? e.longValue() : (int) 0);
     }
 
-    public boolean remove(long o) {
-        final LongIterator it = this.iterator();
+    public boolean removeElement(long o) {
+        LongIterator it = this.iterator();
         while (it.hasNext()) {
             if (it.nextLong() == o) {
                 it.remove();
@@ -63,9 +63,17 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    public boolean remove(final Object o) {
+    public boolean removeElement(Object o) {
         if (o != null && !(o instanceof Long)) return false;
-        return this.remove(o != null ? ((Long) o).longValue() : (long) 0);
+        return this.removeElement(o != null ? ((Long) o).longValue() : (long) 0);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
+    public boolean remove(Object o) {
+        return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
@@ -94,7 +102,7 @@ public abstract class AbstractLongCollection extends AbstractCollection<Long> im
     public abstract LongSpliterator spliterator();
 
     public void clear() {
-        final LongIterator it = this.iterator();
+        LongIterator it = this.iterator();
         while (it.hasNext()) {
             it.nextLong();
             it.remove();

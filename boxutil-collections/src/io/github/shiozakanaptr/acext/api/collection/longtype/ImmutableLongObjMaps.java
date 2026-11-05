@@ -336,7 +336,7 @@ final class ImmutableLongObjMaps {
             }
 
             int pos = ImmutableLongCollections.DEFAULT_BEHAVIOR.hashing(key);
-            for (long currKey; (currKey = this.keyTable[pos &= this.posMask]) != 0; pos++) {
+            for (long currKey; (currKey = this.keyTable[pos &= this.posMask]) != ((long) ImmutableLongCollections.NULL_SLOT); pos++) {
                 if (ImmutableLongCollections.DEFAULT_BEHAVIOR.equals(key, currKey)) {
                     return pos;
                 }

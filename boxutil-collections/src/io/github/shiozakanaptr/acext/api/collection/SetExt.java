@@ -13,6 +13,60 @@ import java.util.function.Function;
  */
 public interface SetExt<E> extends Set<E>, CollectionExt<E>, Container {
     /**
+     * Removes the specified element from this set if it is present
+     * (optional operation).
+     *
+     * <p>More formally, removes an element {@code e} such that
+     * {@code Objects.equals(o, e)}, if this set contains such an element.
+     * If this set does not contain the element, it is unchanged.  Returns
+     * {@code true} if this set contained the specified element (or
+     * equivalently, if this set changed as a result of the call).  Since a
+     * set contains at most one such element, at most one element is removed.
+     *
+     * <p>This method is implemented as
+     * {@code return CollectionExt.super.remove(o);}, so its behavior is
+     * identical to the default implementation inherited from the parent
+     * collection extension interface.  It is redeclared here only to attach
+     * set-specific documentation and to keep the deprecation notice visible
+     * in this interface.
+     *
+     * <p><strong>Deprecation note:</strong> Unlike the list extension
+     * interface, this set interface declares no positional-removal overload,
+     * so the {@code remove(int)} versus {@code remove(Object)} overload hazard
+     * does not arise directly here.  This method is nevertheless deprecated to
+     * keep the removal API uniform across the collection extension hierarchy:
+     * removal by value should always be expressed with the unambiguous name
+     * {@link #removeElement(Object)}.  Using a single, unambiguous name avoids
+     * confusion when a set-like interface is combined with, adapted to, or
+     * specialized alongside list-like interfaces that do expose positional
+     * removal, and it keeps migration between the collection extension
+     * interfaces straightforward.
+     *
+     * <p>This method exists only for source compatibility with existing code;
+     * new code should call {@link #removeElement(Object)} instead.
+     *
+     * @param o element to be removed from this set, if present
+     * @return {@code true} if this set contained the specified element
+     *         (or equivalently, if this set changed as a result of the call)
+     * @throws UnsupportedOperationException if the {@code removeElement}
+     *         operation is not supported by this set
+     * @see #removeElement(Object)
+     * @see CollectionExt#remove(Object)
+     * @see java.util.Set#remove(Object)
+     * @deprecated This method is deprecated for consistency with
+     *             {@link CollectionExt#remove(Object)}.  Removal by value should
+     *             use the unambiguous {@link #removeElement(Object)} so that the
+     *             same call cannot be confused with positional removal in
+     *             list-like interfaces or in specializations that expose both
+     *             kinds of removal.  The method remains only for source
+     *             compatibility.
+     */
+    @Deprecated
+    default boolean remove(Object o) {
+        return CollectionExt.super.remove(o);
+    }
+
+    /**
      * Remaps the specified element in this set. If this set does not contain the
      * specified element, returns {@code false} and leaves the set unchanged.
      * Otherwise, computes a new element from the specified element using the given

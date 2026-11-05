@@ -32,15 +32,15 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
         return this.add(e != null ? e.shortValue() : (short) 0);
     }
 
-    boolean remove(short o);
+    boolean removeElement(short o);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default boolean remove(Object o) {
+    default boolean removeElement(Object o) {
         if (o != null && !(o instanceof Short)) return false;
-        return this.remove(o != null ? ((Short) o).shortValue() : (short) 0);
+        return this.removeElement(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
     default boolean removeIf(@NotNull ShortPredicate filter) {
