@@ -52,7 +52,7 @@ final class ImmutableByteCollections {
             throw new UnsupportedOperationException();
         }
 
-        public boolean remove(byte o) {
+        public boolean removeElement(byte o) {
             throw new UnsupportedOperationException();
         }
 
@@ -111,10 +111,6 @@ final class ImmutableByteCollections {
         }
 
         public byte removeAtRaw(int index) {
-            throw new UnsupportedOperationException();
-        }
-
-        public boolean removeElement(byte o) {
             throw new UnsupportedOperationException();
         }
 
