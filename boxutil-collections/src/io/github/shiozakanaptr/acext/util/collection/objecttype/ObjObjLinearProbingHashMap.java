@@ -1320,6 +1320,8 @@ public class ObjObjLinearProbingHashMap<K, V> implements ObjObjMap<K, V>, HashCo
                     action.accept(supplier.apply(pos));
                 }
             }
+
+            if (ObjObjLinearProbingHashMap.this.withNullKey) action.accept(supplier.apply(capL));
         }
 
         public void forEach(Consumer<? super ObjObjMap.Entry<K,V>> action) {
