@@ -394,7 +394,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      *         {@code toIndex > size()}
      * @throws IllegalArgumentException if {@code fromIndex > toIndex}
      */
-    default void forEach(int fromIndex, int toIndex, Consumer<? super E> action) {
+    default void forEach(int fromIndex, int toIndex, @NotNull Consumer<? super E> action) {
         ListIterator<E> it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
             action.accept(it.next());
@@ -443,7 +443,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      *         prevents it from being stored in this list
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default void replace(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+    default void replace(int fromIndex, int toIndex, @NotNull Function<? super E, ? extends E> operator) {
         ListIterator<E> it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
             it.set(operator.apply(it.next()));
@@ -511,7 +511,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      *         prevents it from being stored in this list
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
      */
-    default boolean compute(int fromIndex, int toIndex, Function<? super E, ? extends E> operator) {
+    default boolean compute(int fromIndex, int toIndex, @NotNull Function<? super E, ? extends E> operator) {
         boolean result = false;
         ListIterator<E> it = this.listIterator(fromIndex);
         while (it.hasNext() && it.previousIndex() < (toIndex - 1)) {
@@ -583,7 +583,8 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      */
     <T extends E> boolean addAll(int dstIndex, @NotNull T[] elements, int srcIndex, int length);
 
-    @NotNull ListExt<E> subList(int fromIndex, int toIndex);
+    @NotNull
+    ListExt<E> subList(int fromIndex, int toIndex);
 
     /**
      * Returns a Jumbo list iterator over the elements in this list in proper
@@ -604,6 +605,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      * @see JumboListIterator
      * @see JumboContainer
      */
+    @NotNull
     default JumboListIterator<E> listIterator64() {
         throw new UnsupportedOperationException();
     }
@@ -637,6 +639,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      * @see JumboListIterator
      * @see JumboContainer
      */
+    @NotNull
     default JumboListIterator<E> listIterator64(long index) {
         throw new UnsupportedOperationException();
     }

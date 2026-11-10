@@ -229,7 +229,9 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
     }
 
     /**
-     * @deprecated Please use the corresponding method that using primitive type.
+     * @deprecated Please use the corresponding method that renamed ones to
+     * avoid overload-resolution ambiguity.
+     * @see #removeElement(Object)
      */
     @Deprecated
     default boolean remove(Object o) {

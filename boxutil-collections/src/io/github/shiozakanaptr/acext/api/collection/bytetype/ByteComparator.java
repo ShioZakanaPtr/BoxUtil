@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
 public interface ByteComparator extends Comparator<Byte> {
     int compare(byte o1, byte o2);
@@ -43,7 +46,7 @@ public interface ByteComparator extends Comparator<Byte> {
     @Deprecated
     @NotNull
     default Comparator<Byte> thenComparing(Comparator<? super Byte> other) {
-        return this.thenComparing(other::compare);
+        return this.thenComparing((byte l_o1, byte l_o2) -> other.compare(l_o1, l_o2));
     }
 
     @NotNull

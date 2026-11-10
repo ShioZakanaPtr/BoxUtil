@@ -1,6 +1,7 @@
 package io.github.shiozakanaptr.acext.api.collection.objecttype;
 
 import io.github.shiozakanaptr.acext.api.collection.BiMap;
+import io.github.shiozakanaptr.acext.api.collection.CollectionExt;
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.Pair;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
@@ -219,8 +220,16 @@ public interface ObjLongBiMap<X, Y> extends BiMap<X, Y, Long> {
         return this.setDefaultReturnValue(newDefault != null ? newDefault.longValue() : (long) 0);
     }
 
+    @NotNull
+    ObjCollection<X> firstKeyCollection();
+
+    @NotNull
+    ObjCollection<Y> secondKeyCollection();
+
+    @NotNull
     LongCollection valueCollection();
 
+    @NotNull
     EntrySetExt<ObjLongBiMap.BiEntry<X, Y>> entrySetRaw();
 
     /**
@@ -242,6 +251,7 @@ public interface ObjLongBiMap<X, Y> extends BiMap<X, Y, Long> {
 
         /**
          * @deprecated Please use the corresponding method that using primitive type.
+         * @see #setValue(long)
          */
         @Deprecated
         default Long setValue(Long newValue) {

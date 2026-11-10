@@ -2,6 +2,7 @@ package io.github.shiozakanaptr.acext.api.collection.objecttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
+import io.github.shiozakanaptr.acext.api.collection.SetExt;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
 import io.github.shiozakanaptr.acext.util.function.longtype.LongLongBiFunction;
 import io.github.shiozakanaptr.acext.util.function.objecttype.ObjLongBiConsumer;
@@ -214,9 +215,14 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
         return this.setDefaultReturnValue(newDefault != null ? newDefault.longValue() : (long) 0);
     }
 
-    @NotNull LongCollection values();
+    @NotNull
+    ObjSet<K> keySet();
 
-    @NotNull EntrySetExt<ObjLongMap.Entry<K>> entrySetRaw();
+    @NotNull
+    LongCollection values();
+
+    @NotNull
+    EntrySetExt<ObjLongMap.Entry<K>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.

@@ -1,5 +1,7 @@
 package io.github.shiozakanaptr.acext.api.collection;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A generic interface for hash-based containers that use closed/open addressing
  * or similar hashing strategies. It exposes load factor, and delegates key
@@ -25,6 +27,7 @@ public interface BinaryHashContainer<X, Y> extends Container {
      *
      * @return the container behavior
      */
+    @NotNull
     HashBehavior<X> getFirstBehavior();
 
     /**
@@ -35,5 +38,6 @@ public interface BinaryHashContainer<X, Y> extends Container {
      *
      * @return the container behavior
      */
+    @NotNull
     HashBehavior<Y> getSecondBehavior();
 }

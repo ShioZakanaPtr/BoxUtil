@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface ObjList<E> extends ListExt<E> {
+public interface ObjList<E> extends ListExt<E>, ObjCollection<E> {
     @NotNull ObjList<E> subList(int fromIndex, int toIndex);
 
     static <E> ObjList<E> of() {

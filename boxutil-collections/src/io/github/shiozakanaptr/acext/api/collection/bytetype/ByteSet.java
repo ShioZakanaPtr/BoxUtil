@@ -44,6 +44,7 @@ public interface ByteSet extends SetExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remapping(byte, ByteFunction)
      */
     @Deprecated
     default boolean remapping(Byte element, @NotNull Function<? super Byte, ? extends Byte> remappingFunction) {

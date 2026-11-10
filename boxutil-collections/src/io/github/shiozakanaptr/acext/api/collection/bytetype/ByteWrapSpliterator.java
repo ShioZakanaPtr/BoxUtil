@@ -19,7 +19,7 @@ final class ByteWrapSpliterator implements IntSpliterator {
     }
 
     public boolean tryAdvance(IntConsumer action) {
-        return this.source.tryAdvance((byte l_t) -> action.accept(l_t));
+        return this.source.tryAdvance((byte l_t) -> action.accept((int) l_t));
     }
 
     public boolean tryAdvance(Consumer<? super Integer> action) {
@@ -27,7 +27,7 @@ final class ByteWrapSpliterator implements IntSpliterator {
     }
 
     public void forEachRemaining(IntConsumer action) {
-        this.source.forEachRemaining((byte l_t) -> action.accept(l_t));
+        this.source.forEachRemaining((byte l_t) -> action.accept((int) l_t));
     }
 
     public void forEachRemaining(Consumer<? super Integer> action) {

@@ -15,6 +15,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(long)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -26,6 +27,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(long)
      */
     @Deprecated
     default boolean add(Long e) {
@@ -36,6 +38,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(long)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -58,6 +61,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeIf(LongPredicate)
      */
     @Deprecated
     default boolean removeIf(@NotNull Predicate<? super Long> filter) {
@@ -77,6 +81,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(long[])
      */
     @Deprecated
     default <T extends Long> boolean addAll(@NotNull T[] elements) {
@@ -95,6 +100,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(long[], int, int)
      */
     @Deprecated
     default <T extends Long> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
@@ -116,6 +122,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #streamRaw()
      */
     @Deprecated
     @NotNull
@@ -130,6 +137,7 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #parallelStreamRaw()
      */
     @Deprecated
     @NotNull

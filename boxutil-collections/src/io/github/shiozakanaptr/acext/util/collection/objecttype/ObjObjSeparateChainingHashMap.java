@@ -1,7 +1,9 @@
 package io.github.shiozakanaptr.acext.util.collection.objecttype;
 
 import io.github.shiozakanaptr.acext.api.collection.*;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjCollection;
 import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjObjMap;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjSet;
 import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
 
@@ -22,8 +24,8 @@ public class ObjObjSeparateChainingHashMap<K, V> implements ObjObjMap<K, V>, Has
     protected final HashBehavior<K> hashBehavior;
     protected transient Node<K, V>[] table;
 
-    protected transient SetExt<K> keySet = null;
-    protected transient CollectionExt<V> valueCollection = null;
+    protected transient ObjSet<K> keySet = null;
+    protected transient ObjCollection<V> valueCollection = null;
     protected transient EntrySetExt<Entry<K, V>> entrySet = null;
 
     protected Node<K, V>[] newTable(int cap) {
@@ -506,23 +508,23 @@ public class ObjObjSeparateChainingHashMap<K, V> implements ObjObjMap<K, V>, Has
         return this.size < 1;
     }
 
-    public SetExt<K> keySet() {
-        SetExt<K> result;
+    public ObjSet<K> keySet() {
+        ObjSet<K> result;
         if ((result = this.keySet) == null) {
             result = this.keySet = new KeySet();
         }
         return result;
     }
 
-    public CollectionExt<V> values() {
-        CollectionExt<V> result;
+    public ObjCollection<V> values() {
+        ObjCollection<V> result;
         if ((result = this.valueCollection) == null) {
             result = this.valueCollection = new ValueCollection();
         }
         return result;
     }
 
-    public EntrySetExt<ObjObjMap.Entry<K, V>> entrySet() {
+    public EntrySetExt<ObjObjMap.Entry<K, V>> entrySetRaw() {
         EntrySetExt<ObjObjMap.Entry<K, V>> result;
         if ((result = this.entrySet) == null) {
             result = this.entrySet = new MapEntrySet();

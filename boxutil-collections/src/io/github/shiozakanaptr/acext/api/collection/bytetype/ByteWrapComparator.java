@@ -1,11 +1,14 @@
 package io.github.shiozakanaptr.acext.api.collection.bytetype;
 
 import io.github.shiozakanaptr.acext.api.collection.inttype.IntComparator;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntFunction;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntToIntFunction;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntToLongFunction;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntToDoubleFunction;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.function.*;
 
 final class ByteWrapComparator implements IntComparator {
     private final ByteComparator source;
@@ -31,23 +34,23 @@ final class ByteWrapComparator implements IntComparator {
     }
 
     public <U> IntComparator thenComparing(IntFunction<? extends U> keyExtractor, Comparator<? super U> keyComparator) {
-        return new ByteWrapComparator(this.source.thenComparing(ByteComparator.comparing((byte l_t) -> keyExtractor.apply(l_t), keyComparator)));
+        return new ByteWrapComparator(this.source.thenComparing(ByteComparator.comparing((byte l_t) -> keyExtractor.apply((int) l_t), keyComparator)));
     }
 
     public <U extends Comparable<? super U>> IntComparator thenComparing(IntFunction<? extends U> keyExtractor) {
-        return new ByteWrapComparator(this.source.thenComparing(ByteComparator.comparing((byte l_t) -> keyExtractor.apply(l_t))));
+        return new ByteWrapComparator(this.source.thenComparing(ByteComparator.comparing((byte l_t) -> keyExtractor.apply((int) l_t))));
     }
 
-    public IntComparator thenComparingInt(IntUnaryOperator keyExtractor) {
-        return new ByteWrapComparator(this.source.thenComparingInt((byte l_t) -> keyExtractor.applyAsInt(l_t)));
+    public IntComparator thenComparingInt(IntToIntFunction keyExtractor) {
+        return new ByteWrapComparator(this.source.thenComparingInt((byte l_t) -> keyExtractor.apply((int) l_t)));
     }
 
     public IntComparator thenComparingLong(IntToLongFunction keyExtractor) {
-        return new ByteWrapComparator(this.source.thenComparingLong((byte l_t) -> keyExtractor.applyAsLong(l_t)));
+        return new ByteWrapComparator(this.source.thenComparingLong((byte l_t) -> keyExtractor.apply((int) l_t)));
     }
 
     public IntComparator thenComparingDouble(IntToDoubleFunction keyExtractor) {
-        return new ByteWrapComparator(this.source.thenComparingDouble((byte l_t) -> keyExtractor.applyAsDouble(l_t)));
+        return new ByteWrapComparator(this.source.thenComparingDouble((byte l_t) -> keyExtractor.apply((int) l_t)));
     }
 
     public int hashCode() {

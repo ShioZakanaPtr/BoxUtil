@@ -1,20 +1,26 @@
 package io.github.shiozakanaptr.acext.api.collection.inttype;
 
-import io.github.shiozakanaptr.acext.util.function.inttype.IntToDoubleFunction;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntFunction;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntToIntFunction;
 import io.github.shiozakanaptr.acext.util.function.inttype.IntToLongFunction;
-import io.github.shiozakanaptr.acext.util.function.inttype.IntUnaryOperator;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntToDoubleFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
+@FunctionalInterface
 public interface IntComparator extends Comparator<Integer> {
     int compare(int o1, int o2);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #compare(int, int)
      */
     @Deprecated
     default int compare(Integer o1, Integer o2) {
@@ -37,6 +43,7 @@ public interface IntComparator extends Comparator<Integer> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #thenComparing(IntComparator)
      */
     @Deprecated
     @NotNull
@@ -51,6 +58,7 @@ public interface IntComparator extends Comparator<Integer> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #thenComparing(IntFunction, Comparator)
      */
     @Deprecated
     @NotNull
@@ -65,6 +73,7 @@ public interface IntComparator extends Comparator<Integer> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #thenComparing(IntFunction)
      */
     @Deprecated
     @NotNull
@@ -73,12 +82,13 @@ public interface IntComparator extends Comparator<Integer> {
     }
 
     @NotNull
-    default IntComparator thenComparingInt(IntUnaryOperator keyExtractor) {
+    default IntComparator thenComparingInt(IntToIntFunction keyExtractor) {
         return this.thenComparing(IntComparator.comparingInt(keyExtractor));
     }
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #thenComparingInt(IntToIntFunction)
      */
     @Deprecated
     @NotNull
@@ -93,6 +103,7 @@ public interface IntComparator extends Comparator<Integer> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #thenComparingLong(IntToLongFunction)
      */
     @Deprecated
     @NotNull
@@ -107,6 +118,7 @@ public interface IntComparator extends Comparator<Integer> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #thenComparingDouble(IntToDoubleFunction)
      */
     @Deprecated
     @NotNull
@@ -132,7 +144,7 @@ public interface IntComparator extends Comparator<Integer> {
                 (l_c1, l_c2) -> keyExtractor.apply(l_c1).compareTo(keyExtractor.apply(l_c2));
     }
 
-    static IntComparator comparingInt(IntUnaryOperator keyExtractor) {
+    static IntComparator comparingInt(IntToIntFunction keyExtractor) {
         Objects.requireNonNull(keyExtractor);
         return (IntComparator & Serializable)
                 (l_c1, l_c2) -> Integer.compare(keyExtractor.apply(l_c1), keyExtractor.apply(l_c2));

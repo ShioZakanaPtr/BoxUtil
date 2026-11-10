@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongIterator;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongSpliterator;
 import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjLongMap;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjSet;
 import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
 import io.github.shiozakanaptr.acext.util.collection.longtype.AbstractLongCollection;
@@ -37,7 +38,7 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
     protected transient K[] keyTable;
     protected transient long[] valueTable;
 
-    protected transient SetExt<K> keySet = null;
+    protected transient ObjSet<K> keySet = null;
     protected transient LongCollection valueCollection = null;
     protected transient EntrySetExt<ObjLongMap.Entry<K>> entrySet = null;
 
@@ -614,8 +615,8 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
         return this.size < 1;
     }
 
-    public SetExt<K> keySet() {
-        SetExt<K> result;
+    public ObjSet<K> keySet() {
+        ObjSet<K> result;
         if ((result = this.keySet) == null) {
             result = this.keySet = new KeySet();
         }

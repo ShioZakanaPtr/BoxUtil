@@ -4,6 +4,7 @@ import io.github.shiozakanaptr.acext.api.collection.*;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongIterator;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongSpliterator;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjCollection;
 import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjLongBiMap;
 import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
@@ -47,8 +48,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
     protected transient Y[] keyBTable;
     protected transient long[] valueTable;
 
-    protected transient CollectionExt<X> firstKeyCollection = null;
-    protected transient CollectionExt<Y> secondKeyCollection = null;
+    protected transient ObjCollection<X> firstKeyCollection = null;
+    protected transient ObjCollection<Y> secondKeyCollection = null;
     protected transient LongCollection valueCollection = null;
     protected transient EntrySetExt<BiEntry<X, Y>> entrySet = null;
 
@@ -638,16 +639,16 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return this.size < 1;
     }
 
-    public CollectionExt<X> firstKeyCollection() {
-        CollectionExt<X> result;
+    public ObjCollection<X> firstKeyCollection() {
+        ObjCollection<X> result;
         if ((result = this.firstKeyCollection) == null) {
             result = this.firstKeyCollection = new FirstKeyCollection();
         }
         return result;
     }
 
-    public CollectionExt<Y> secondKeyCollection() {
-        CollectionExt<Y> result;
+    public ObjCollection<Y> secondKeyCollection() {
+        ObjCollection<Y> result;
         if ((result = this.secondKeyCollection) == null) {
             result = this.secondKeyCollection = new SecondKeyCollection();
         }

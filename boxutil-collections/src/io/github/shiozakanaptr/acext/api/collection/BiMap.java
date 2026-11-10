@@ -1154,6 +1154,7 @@ public interface BiMap<X, Y, V> extends Container {
      * @see #secondKeyCollection()
      * @see #containsFirstKey(Object)
      */
+    @NotNull
     CollectionExt<X> firstKeyCollection();
 
     /**
@@ -1180,6 +1181,7 @@ public interface BiMap<X, Y, V> extends Container {
      * @see #firstKeyCollection()
      * @see #containsSecondKey(Object)
      */
+    @NotNull
     CollectionExt<Y> secondKeyCollection();
 
     /**
@@ -1203,6 +1205,7 @@ public interface BiMap<X, Y, V> extends Container {
      * @return a collection view of the values contained in this map
      * @see Map#values()
      */
+    @NotNull
     CollectionExt<V> valueCollection();
 
     /**
@@ -1231,6 +1234,7 @@ public interface BiMap<X, Y, V> extends Container {
      * @see Map#entrySet()
      * @see BiEntry
      */
+    @NotNull
     EntrySetExt<BiEntry<X, Y, V>> entrySet();
 
     /**

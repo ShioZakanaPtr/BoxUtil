@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface ObjSet<E> extends SetExt<E> {
+public interface ObjSet<E> extends SetExt<E>, ObjCollection<E> {
     static <E> ObjSet<E> of() {
         return ImmutableObjCollections.ofSet();
     }

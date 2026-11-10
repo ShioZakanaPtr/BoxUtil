@@ -11,6 +11,7 @@ public interface LongListIterator extends ListIterator<Long>, LongIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #nextLong()
      */
     @Deprecated
     default Long next() {
@@ -25,6 +26,7 @@ public interface LongListIterator extends ListIterator<Long>, LongIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #previousLong()
      */
     @Deprecated
     default Long previous() {
@@ -37,6 +39,7 @@ public interface LongListIterator extends ListIterator<Long>, LongIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #set(long)
      */
     @Deprecated
     default void set(Long e) {
@@ -47,6 +50,7 @@ public interface LongListIterator extends ListIterator<Long>, LongIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(long)
      */
     @Deprecated
     default void add(Long e) {
