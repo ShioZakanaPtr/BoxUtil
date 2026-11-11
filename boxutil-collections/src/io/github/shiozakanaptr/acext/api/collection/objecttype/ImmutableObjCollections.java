@@ -87,6 +87,10 @@ final class ImmutableObjCollections {
         public void clear(int newCapacity) {
             throw new UnsupportedOperationException();
         }
+
+        public boolean isMutable() {
+            return false;
+        }
     }
 
     private static abstract class AbstractImmutableObjList<E> extends AbstractImmutableObjCollection<E> implements ObjList<E>, RandomAccess {

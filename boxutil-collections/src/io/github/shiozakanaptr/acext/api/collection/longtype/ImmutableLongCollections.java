@@ -89,6 +89,10 @@ final class ImmutableLongCollections {
         public void clear(int newCapacity) {
             throw new UnsupportedOperationException();
         }
+
+        public boolean isMutable() {
+            return false;
+        }
     }
 
     private static abstract class AbstractImmutableLongList extends AbstractImmutableLongCollection implements LongList, RandomAccess {

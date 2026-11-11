@@ -7,15 +7,14 @@ import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.bytetype.AbstractByteCollection;
 import io.github.shiozakanaptr.acext.util.collection.bytetype.ByteBitSet;
 import io.github.shiozakanaptr.acext.util.collection.objecttype.AbstractObjSet;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteConsumer;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteFunction;
-import io.github.shiozakanaptr.acext.util.function.bytetype.BytePredicate;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteUnaryOperator;
+import io.github.shiozakanaptr.acext.util.function.bytetype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Predicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @SuppressWarnings({"UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
 final class ImmutableByteCollections {
@@ -90,6 +89,10 @@ final class ImmutableByteCollections {
 
         public void clear(int newCapacity) {
             throw new UnsupportedOperationException();
+        }
+
+        public boolean isMutable() {
+            return false;
         }
     }
 
@@ -1177,7 +1180,7 @@ final class ImmutableByteCollections {
                 return false;
             }
 
-            public void forEachRemaining(LongConsumer action) {}
+            public void forEachRemaining(ByteConsumer action) {}
         }
 
         private final static class CollectionByteSpliterator implements ByteSpliterator {

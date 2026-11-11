@@ -243,4 +243,28 @@ public interface Container {
     default boolean isJumbo() {
         return false;
     }
+
+    /**
+     * Returns whether the contents of this container may be modified.
+     *
+     * <p>If this method returns {@code true}, this container is expected to support
+     * the modification operations exposed by its concrete type, such as adding,
+     * removing, or replacing elements through the methods defined by the relevant
+     * subinterfaces. If this method returns {@code false}, those mutating operations
+     * are expected to throw {@link UnsupportedOperationException}.
+     *
+     * <p>This method is intended to allow callers to test, before attempting a
+     * modification, whether the container is mutable. It does not by itself
+     * guarantee that every individual modification will succeed; implementations
+     * may still reject specific elements for reasons such as type, nullability, or
+     * value constraints.
+     *
+     * <p>The default implementation returns {@code true}.
+     *
+     * @return {@code true} if the contents of this container may be modified;
+     *         {@code false} otherwise
+     */
+    default boolean isMutable() {
+        return true;
+    }
 }

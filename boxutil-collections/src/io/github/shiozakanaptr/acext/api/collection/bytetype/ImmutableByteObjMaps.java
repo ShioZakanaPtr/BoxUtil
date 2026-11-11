@@ -143,6 +143,10 @@ final class ImmutableByteObjMaps {
         public void clear() {
             throw new UnsupportedOperationException();
         }
+
+        public boolean isMutable() {
+            return false;
+        }
     }
 
     private final static class ImmutableByteObjMapEmpty<V> extends AbstractImmutableByteObjMap<V> implements Cloneable, Serializable {

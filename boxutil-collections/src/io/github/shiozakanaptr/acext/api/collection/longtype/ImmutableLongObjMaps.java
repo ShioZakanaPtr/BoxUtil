@@ -131,6 +131,10 @@ final class ImmutableLongObjMaps {
         public void clear() {
             throw new UnsupportedOperationException();
         }
+
+        public boolean isMutable() {
+            return false;
+        }
     }
 
     private final static class ImmutableLongObjMapEmpty<V> extends AbstractImmutableLongObjMap<V> implements Cloneable, Serializable {
