@@ -1,26 +1,23 @@
 package io.github.shiozakanaptr.acext.util.collection.objecttype;
 
 import io.github.shiozakanaptr.acext.api.collection.*;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongIterator;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongSpliterator;
 import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjCollection;
-import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjLongBiMap;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjObjPairMap;
 import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
-import io.github.shiozakanaptr.acext.util.collection.longtype.AbstractLongCollection;
-import io.github.shiozakanaptr.acext.util.function.longtype.LongLongBiFunction;
-import io.github.shiozakanaptr.acext.util.function.objecttype.ObjLongTeConsumer;
-import io.github.shiozakanaptr.acext.util.function.objecttype.ObjLongTeFunction;
-import io.github.shiozakanaptr.acext.util.function.objecttype.ObjLongTeOperator;
+import io.github.shiozakanaptr.acext.util.function.objecttype.TeConsumer;
+import io.github.shiozakanaptr.acext.util.function.objecttype.TeFunction;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
-@SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "deprecation", "RedundantCast"})
-public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap<X, Y>, BinaryHashContainer<X, Y>, Cloneable, Serializable {
+@SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
+public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMap<X, Y, V>, BinaryHashContainer<X, Y>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
 
     protected final static Object NULL_KEY_A = new EmptySlot();
@@ -40,18 +37,18 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
     protected transient int posMask;
     protected int size = 0;
     protected final float loadFactor;
-    protected long defVal = 0;
+    protected V defVal = null;
     protected final HashBehavior<X> hashBehaviorA;
     protected final HashBehavior<Y> hashBehaviorB;
     protected transient int[] hashTable;
     protected transient X[] keyATable;
     protected transient Y[] keyBTable;
-    protected transient long[] valueTable;
+    protected transient V[] valueTable;
 
     protected transient ObjCollection<X> firstKeyCollection = null;
     protected transient ObjCollection<Y> secondKeyCollection = null;
-    protected transient LongCollection valueCollection = null;
-    protected transient EntrySetExt<BiEntry<X, Y>> entrySet = null;
+    protected transient ObjCollection<V> valueCollection = null;
+    protected transient EntrySetExt<BiEntry<X, Y, V>> entrySet = null;
 
     protected X[] newKeyATable(int cap) {
         return (X[]) new Object[cap];
@@ -61,8 +58,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return (Y[]) new Object[cap];
     }
 
-    protected long[] newValueTable(int cap) {
-        return new long[cap];
+    protected V[] newValueTable(int cap) {
+        return (V[]) new Object[cap];
     }
 
     /**
@@ -71,7 +68,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
      * @param firstHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      * @param secondHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      */
-    public ObjLongFlatLinearProbingBinaryHashMap(int initialCapacity, float loadFactor, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
+    public ObjObjFlatLinearProbingHashPairMap(int initialCapacity, float loadFactor, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
         InternalCollectionUtil.checkHashCapacity(initialCapacity);
         InternalCollectionUtil.checkHashLoadFactor(loadFactor, 0.2f, 0.9f);
 
@@ -93,18 +90,18 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
      * @param firstHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      * @param secondHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      */
-    public ObjLongFlatLinearProbingBinaryHashMap(int initialCapacity, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
+    public ObjObjFlatLinearProbingHashPairMap(int initialCapacity, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
         this(initialCapacity, HashContainer.DEFAULT_LOAD_FACTOR, firstHashBehavior, secondHashBehavior);
     }
 
     /**
      * @param initialCapacity will auto conversion to <code>2^n</code> that greater than or equal to the value.
      */
-    public ObjLongFlatLinearProbingBinaryHashMap(int initialCapacity) {
+    public ObjObjFlatLinearProbingHashPairMap(int initialCapacity) {
         this(initialCapacity, HashBehaviorFactory.fibonacci(), HashBehaviorFactory.fibonacci());
     }
 
-    public ObjLongFlatLinearProbingBinaryHashMap() {
+    public ObjObjFlatLinearProbingHashPairMap() {
         this(HashContainer.DEFAULT_INITIAL_CAPACITY);
     }
 
@@ -113,7 +110,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
      * @param firstHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      * @param secondHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      */
-    public ObjLongFlatLinearProbingBinaryHashMap(final BiMap<? extends X, ? extends Y, ? extends Long> source, float loadFactor, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
+    public ObjObjFlatLinearProbingHashPairMap(final PairMap<? extends X, ? extends Y, ? extends V> source, float loadFactor, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
         this(Math.max(source.size(), 2), loadFactor, firstHashBehavior, secondHashBehavior);
         this.putAll(source);
     }
@@ -122,11 +119,11 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
      * @param firstHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      * @param secondHashBehavior should create a new ones from {@link HashBehaviorFactory}.
      */
-    public ObjLongFlatLinearProbingBinaryHashMap(final BiMap<? extends X, ? extends Y, ? extends Long> source, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
+    public ObjObjFlatLinearProbingHashPairMap(final PairMap<? extends X, ? extends Y, ? extends V> source, final HashBehavior<X> firstHashBehavior, final HashBehavior<Y> secondHashBehavior) {
         this(source, HashContainer.DEFAULT_LOAD_FACTOR, firstHashBehavior, secondHashBehavior);
     }
 
-    public ObjLongFlatLinearProbingBinaryHashMap(final BiMap<? extends X, ? extends Y, ? extends Long> source) {
+    public ObjObjFlatLinearProbingHashPairMap(final PairMap<? extends X, ? extends Y, ? extends V> source) {
         this(source, HashBehaviorFactory.fibonacci(), HashBehaviorFactory.fibonacci());
     }
 
@@ -141,7 +138,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         final int[] newHash = new int[newCap], oldHash = this.hashTable;
         final X[] newKeyA = this.newKeyATable(newCap), oldKeyA = this.keyATable;
         final Y[] newKeyB = this.newKeyBTable(newCap), oldKeyB = this.keyBTable;
-        final long[] newValue = this.newValueTable(newCap), oldValue = this.valueTable;
+        final V[] newValue = this.newValueTable(newCap), oldValue = this.valueTable;
         Arrays.fill(newKeyA, ((X) NULL_KEY_A));
 
         if (this.size > 0) {
@@ -174,13 +171,13 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         this.resize(InternalCollectionUtil.getHashTableCapacity(newMaxSize, this.loadFactor));
     }
 
-    protected long removeAndShift(final X[] keyAL, final Y[] keyBL, int currPos) {
+    protected V removeAndShift(final X[] keyAL, final Y[] keyBL, int currPos) {
         final HashBehavior<X> behaviorA = this.hashBehaviorA;
-        final long[] valueL = this.valueTable;
-        final long result = valueL[currPos];
+        final V[] valueL = this.valueTable;
+        final V result = valueL[currPos];
         keyAL[currPos] = ((X) NULL_KEY_A);
         keyBL[currPos] = ((Y) NULL_KEY_B);
-        valueL[currPos] = 0;
+        valueL[currPos] = null;
         this.size--;
         this.remaining++;
 
@@ -193,7 +190,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
                 keyBL[holePos] = keyBL[nextPos];
                 keyBL[nextPos] = ((Y) NULL_KEY_B);
                 valueL[holePos] = valueL[nextPos];
-                valueL[nextPos] = 0;
+                valueL[nextPos] = null;
                 holePos = nextPos;
                 dist = 0;
             }
@@ -225,7 +222,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return ~pos;
     }
 
-    protected long insert(int pos, int hash, final X keyA, final Y keyB, final long value) {
+    protected V insert(int pos, int hash, final X keyA, final Y keyB, final V value) {
         final int realPos = ~pos;
         this.hashTable[realPos] = hash;
         this.keyATable[realPos] = keyA;
@@ -237,7 +234,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return value;
     }
 
-    public long getRaw(Object keyA, Object keyB) {
+    public V get(Object keyA, Object keyB) {
         final HashBehavior<X> behaviorA = this.hashBehaviorA;
         final HashBehavior<Y> behaviorB = this.hashBehaviorB;
         final int maskL = this.posMask, hash;
@@ -251,7 +248,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return this.defVal;
     }
 
-    public long getOrDefault(Object keyA, Object keyB, long defaultValue) {
+    public V getOrDefault(Object keyA, Object keyB, V defaultValue) {
         final HashBehavior<X> behaviorA = this.hashBehaviorA;
         final HashBehavior<Y> behaviorB = this.hashBehaviorB;
         final int maskL = this.posMask, hash;
@@ -265,7 +262,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return defaultValue;
     }
 
-    public long put(X keyA, Y keyB, long value) {
+    public V put(X keyA, Y keyB, V value) {
         final HashBehavior<X> behaviorA = this.hashBehaviorA;
         final HashBehavior<Y> behaviorB = this.hashBehaviorB;
         final int maskL = this.posMask, hash;
@@ -275,8 +272,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         int pos = hash = behaviorA.mix(behaviorA.hashing(keyA), behaviorB.hashing(keyB));
         for (X currKeyA; (currKeyA = keyAL[pos &= maskL]) != ((X) NULL_KEY_A); pos++) {
             if (hash == hashL[pos] && behaviorA.equals(keyA, currKeyA) && behaviorB.equals(keyB, keyBL[pos])) {
-                final long[] valueL;
-                final long oldValue = (valueL = this.valueTable)[pos];
+                final V[] valueL;
+                final V oldValue = (valueL = this.valueTable)[pos];
                 valueL[pos] = value;
                 return oldValue;
             }
@@ -291,19 +288,19 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return this.defVal;
     }
 
-    public long putIfAbsent(X keyA, Y keyB, long value) {
+    public V putIfAbsent(X keyA, Y keyB, V value) {
         final int pos, hash;
         if ((pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) < 0) {
             this.insert(pos, hash, keyA, keyB, value);
             return this.defVal;
         }
-        final long[] valueL;
-        if ((valueL = this.valueTable)[pos] != 0) return valueL[pos];
+        final V[] valueL;
+        if ((valueL = this.valueTable)[pos] != null) return valueL[pos];
         valueL[pos] = value;
-        return 0;
+        return null;
     }
 
-    public long removeRaw(Object keyA, Object keyB) {
+    public V remove(Object keyA, Object keyB) {
         final HashBehavior<X> behaviorA = this.hashBehaviorA;
         final HashBehavior<Y> behaviorB = this.hashBehaviorB;
         final int maskL = this.posMask, hash;
@@ -317,16 +314,16 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return this.defVal;
     }
 
-    public boolean remove(Object keyA, Object keyB, long value) {
+    public boolean remove(Object keyA, Object keyB, Object value) {
         final int pos;
-        if ((pos = this.find(this.getHash(keyA, keyB), keyA, keyB)) > -1 && value == this.valueTable[pos]) {
+        if ((pos = this.find(this.getHash(keyA, keyB), keyA, keyB)) > -1 && Objects.equals(value, this.valueTable[pos])) {
             this.removeAndShift(this.keyATable, this.keyBTable, pos);
             return true;
         }
         return false;
     }
 
-    public long replace(X keyA, Y keyB, long value) {
+    public V replace(X keyA, Y keyB, V value) {
         final HashBehavior<X> behaviorA = this.hashBehaviorA;
         final HashBehavior<Y> behaviorB = this.hashBehaviorB;
         final int maskL = this.posMask, hash;
@@ -336,8 +333,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         X currKeyA;
         for (int pos = hash = behaviorA.mix(behaviorA.hashing(keyA), behaviorB.hashing(keyB)); (currKeyA = keyAL[pos &= maskL]) != ((X) NULL_KEY_A); pos++) {
             if (hash == hashL[pos] && behaviorA.equals(keyA, currKeyA) && behaviorB.equals(keyB, keyBL[pos])) {
-                final long[] valueL;
-                final long result = (valueL = this.valueTable)[pos];
+                final V[] valueL;
+                final V result = (valueL = this.valueTable)[pos];
                 valueL[pos] = value;
                 return result;
             }
@@ -345,79 +342,75 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return this.defVal;
     }
 
-    public boolean replace(X keyA, Y keyB, long oldValue, long newValue) {
+    public boolean replace(X keyA, Y keyB, V oldValue, V newValue) {
         final int pos;
-        final long[] valueL = this.valueTable;
-        if ((pos = this.find(this.getHash(keyA, keyB), keyA, keyB)) > -1 && oldValue == valueL[pos]) {
+        final V[] valueL = this.valueTable;
+        if ((pos = this.find(this.getHash(keyA, keyB), keyA, keyB)) > -1 && Objects.equals(oldValue, valueL[pos])) {
             valueL[pos] = newValue;
             return true;
         }
         return false;
     }
 
-    public long computeIfAbsentRaw(X keyA, Y keyB, BiFunction<? super X, ? super Y, ? extends Long> mappingFunction) {
+    public V computeIfAbsent(X keyA, Y keyB, BiFunction<? super X, ? super Y, ? extends V> mappingFunction) {
         final int pos, hash;
-        if ((pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) > -1) return this.valueTable[pos];
+        final V[] valueL = this.valueTable;
+        final V currValue;
+        if ((pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) > -1 && (currValue = valueL[pos]) != null) return currValue;
 
-        final Long newValue = mappingFunction.apply(keyA, keyB);
+        final V newValue = mappingFunction.apply(keyA, keyB);
         if (newValue != null) {
-            return this.insert(pos, hash, keyA, keyB, newValue);
+            return pos < 0 ? this.insert(pos, hash, keyA, keyB, newValue) : (valueL[pos] = newValue);
         }
         return this.defVal;
     }
 
-    public long computeIfPresent(X keyA, Y keyB, ObjLongTeFunction<? super X, ? super Y, ? extends Long> remappingFunction) {
+    public V computeIfPresent(X keyA, Y keyB, TeFunction<? super X, ? super Y, ? super V, ? extends V> remappingFunction) {
         final int pos;
-        if ((pos = this.find(this.getHash(keyA, keyB), keyA, keyB)) < 0) return this.defVal;
+        final V[] valueL;
+        if ((pos = this.find(this.getHash(keyA, keyB), keyA, keyB)) < 0 || (valueL = this.valueTable)[pos] == null) return this.defVal;
 
-        final long[] valueL;
-        final Long newValue = remappingFunction.apply(keyA, keyB, (valueL = this.valueTable)[pos]);
-        if (newValue != null) {
-            return valueL[pos] = newValue;
-        }
+        final V newValue = remappingFunction.apply(keyA, keyB, valueL[pos]);
+        if (newValue != null) return valueL[pos] = newValue;
         this.removeAndShift(this.keyATable, this.keyBTable, pos);
         return this.defVal;
     }
 
-    public long compute(X keyA, Y keyB, ObjLongTeFunction<? super X, ? super Y, ? extends Long> remappingFunction) {
+    public V compute(X keyA, Y keyB, TeFunction<? super X, ? super Y, ? super V, ? extends V> remappingFunction) {
         final int pos, hash;
-        final long[] valueL = this.valueTable;
-        final Long newValue = remappingFunction.apply(keyA, keyB, (pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) < 0 ? 0 : valueL[pos]);
-        if (newValue != null) {
-            final long rawValue = newValue;
-            return pos < 0 ? this.insert(pos, hash, keyA, keyB, rawValue) : (valueL[pos] = rawValue);
-        }
+        final V[] valueL = this.valueTable;
+        final V newValue = remappingFunction.apply(keyA, keyB, (pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) < 0 ? null : valueL[pos]);
+        if (newValue != null) return pos < 0 ? this.insert(pos, hash, keyA, keyB, newValue) : (valueL[pos] = newValue);
 
         if (pos >= 0) this.removeAndShift(this.keyATable, this.keyBTable, pos);
         return this.defVal;
     }
 
-    public long merge(X keyA, Y keyB, long value, LongLongBiFunction<? extends Long> remappingFunction) {
+    public V merge(X keyA, Y keyB, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         final int pos, hash;
         if ((pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) < 0) return this.insert(pos, hash, keyA, keyB, value);
 
-        final long[] valueL;
-        final Long newValue = remappingFunction.apply((valueL = this.valueTable)[pos], value);
-        if (newValue != null) {
-            return valueL[pos] = newValue;
-        }
+        final V[] valueL = this.valueTable;
+        final V oldValue = valueL[pos],
+                newValue = oldValue != null ? remappingFunction.apply(oldValue, value) : value;
+        if (newValue != null) return valueL[pos] = newValue;
         this.removeAndShift(this.keyATable, this.keyBTable, pos);
         return this.defVal;
     }
 
-    public long update(X keyA, Y keyB, LongUnaryOperator updateFunction) {
+    public V update(X keyA, Y keyB, Function<? super V, ? extends V> updateFunction) {
         final int pos, hash;
-        final long[] valueL = this.valueTable;
-        final long newValue = updateFunction.applyAsLong((pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) < 0 ? this.defVal : valueL[pos]);
+        final V[] valueL = this.valueTable;
+        final V newValue = updateFunction.apply((pos = this.find(hash = this.getHash(keyA, keyB), keyA, keyB)) < 0 ? this.defVal : valueL[pos]);
         return pos < 0 ? this.insert(pos, hash, keyA, keyB, newValue) : (valueL[pos] = newValue);
     }
 
-    public long remapping(X keyA, Y keyB, ObjLongTeFunction<? super X, ? super Y, ? extends Pair<? extends X, ? extends Y>> remappingFunction, LongLongBiFunction<? extends Long> mergeFunction) {
+    public V remapping(X keyA, Y keyB, TeFunction<? super X, ? super Y, ? super V, ? extends Pair<? extends X, ? extends Y>> remappingFunction, BiFunction<? super V, ? super V, ? extends V> mergeFunction) {
         final int pos;
         if ((pos = this.find(this.getHash(keyA, keyB), keyA, keyB)) < 0) return this.defVal;
 
-        final long[] valueL;
-        final long currValue;
+        final V[] valueL;
+        final V currValue;
         final Pair<? extends X, ? extends Y> newKey = remappingFunction.apply(keyA, keyB, currValue = (valueL = this.valueTable)[pos]);
         final boolean sameKey = newKey != null && this.hashBehaviorA.equals(newKey.left(), keyA) && this.hashBehaviorB.equals(newKey.right(), keyB);
 
@@ -430,16 +423,16 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         final int newPos, newHash;
         if ((newPos = this.find(newHash = this.getHash(newKey.left(), newKey.right()), newKey.left(), newKey.right())) < 0) return this.insert(newPos, newHash, newKey.left(), newKey.right(), currValue);
 
-        final Long newValue = mergeFunction.apply(valueL[newPos], currValue);
+        final V newValue = mergeFunction.apply(valueL[newPos], currValue);
         if (newValue != null) return valueL[newPos] = newValue;
         this.removeAndShift(keyAL, keyBL, newPos);
         return this.defVal;
     }
 
-    public void swap(BiMap<X, Y, Long> source) {
+    public void swap(PairMap<X, Y, V> source) {
         if (this == source || (this.isEmpty() && source.isEmpty())) return;
-        if (source instanceof ObjLongFlatLinearProbingBinaryHashMap) {
-            final ObjLongFlatLinearProbingBinaryHashMap<X, Y> src = (ObjLongFlatLinearProbingBinaryHashMap<X, Y>) source;
+        if (source instanceof ObjObjFlatLinearProbingHashPairMap) {
+            final ObjObjFlatLinearProbingHashPairMap<X, Y, V> src = (ObjObjFlatLinearProbingHashPairMap<X, Y, V>) source;
             if (Objects.equals(src.hashBehaviorA, this.hashBehaviorA) && Objects.equals(src.hashBehaviorB, this.hashBehaviorB) && this.loadFactor == src.loadFactor) {
                 this.clearMappingCollection();
                 src.clearMappingCollection();
@@ -450,7 +443,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
                 final int[] currHashA = this.hashTable, srcHashA = src.hashTable;
                 final X[] currKeyA = this.keyATable, srcKeyA = src.keyATable;
                 final Y[] currKeyB = this.keyBTable, srcKeyB = src.keyBTable;
-                final long[] currValue = this.valueTable, srcValue = src.valueTable;
+                final V[] currValue = this.valueTable, srcValue = src.valueTable;
 
                 src.size = currSize;
                 src.posMask = currMask;
@@ -470,13 +463,13 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
             }
         }
         if (source.size() < this.size()) {
-            final BiMap<X, Y, Long> tmp = new ObjLongFlatLinearProbingBinaryHashMap<>(source);
+            final PairMap<X, Y, V> tmp = new ObjObjFlatLinearProbingHashPairMap<>(source);
             source.clear();
             source.putAll(this);
             this.clear();
             this.putAll(tmp);
         } else {
-            final BiMap<X, Y, Long> tmp = new ObjLongFlatLinearProbingBinaryHashMap<>(this);
+            final PairMap<X, Y, V> tmp = new ObjObjFlatLinearProbingHashPairMap<>(this);
             this.clear();
             this.putAll(source);
             source.clear();
@@ -490,8 +483,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         final int posB, hashB = this.getHash(toA, toB);
         if ((posB = this.find(hashB, toA, toB)) < 0) return false;
 
-        final long[] valueL = this.valueTable;
-        final long tmpValue = valueL[posA];
+        final V[] valueL = this.valueTable;
+        final V tmpValue = valueL[posA];
         valueL[posA] = valueL[posB];
         valueL[posB] = tmpValue;
         return false;
@@ -537,24 +530,24 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return false;
     }
 
-    public boolean containsValue(long value) {
+    public boolean containsValue(Object value) {
         if (this.isEmpty()) return false;
 
         final X[] keyAL = this.keyATable;
-        final long[] valueL = this.valueTable;
+        final V[] valueL = this.valueTable;
         final int capL = this.keyATable.length;
         for (int pos = 0; pos < capL; pos++) {
-            if (keyAL[pos] != ((X) NULL_KEY_A) && value == valueL[pos]) return true;
+            if (keyAL[pos] != ((X) NULL_KEY_A) && Objects.equals(value, valueL[pos])) return true;
         }
         return false;
     }
 
-    public void forEach(ObjLongTeConsumer<? super X, ? super Y> action) {
+    public void forEach(TeConsumer<? super X, ? super Y, ? super V> action) {
         if (this.isEmpty()) return;
 
         final X[] keyAL = this.keyATable;
         final Y[] keyBL = this.keyBTable;
-        final long[] valueL = this.valueTable;
+        final V[] valueL = this.valueTable;
         final int capL = this.keyATable.length;
         for (int pos = 0; pos < capL; pos++) {
             final X currKeyA;
@@ -564,12 +557,12 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
     }
 
-    public void replaceAll(ObjLongTeOperator<? super X, ? super Y> function) {
+    public void replaceAll(TeFunction<? super X, ? super Y, ? super V, ? extends V> function) {
         if (this.isEmpty()) return;
 
         final X[] keyAL = this.keyATable;
         final Y[] keyBL = this.keyBTable;
-        final long[] valueL = this.valueTable;
+        final V[] valueL = this.valueTable;
         final int capL = this.keyATable.length;
         for (int pos = 0; pos < capL; pos++) {
             final X currKeyA;
@@ -579,14 +572,14 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
     }
 
-    public void putAll(BiMap<? extends X, ? extends Y, ? extends Long> m) {
+    public void putAll(PairMap<? extends X, ? extends Y, ? extends V> m) {
         if (m == this || m.isEmpty()) return;
         if (m.size() >= this.remaining()) this.reserve(this.size + m.size() + 1);
-        if (m instanceof ObjLongFlatLinearProbingBinaryHashMap<?, ?>) {
-            final ObjLongFlatLinearProbingBinaryHashMap<?, ?> cast = (ObjLongFlatLinearProbingBinaryHashMap<?, ?>) m;
+        if (m instanceof ObjObjFlatLinearProbingHashPairMap<?, ?, ?>) {
+            final ObjObjFlatLinearProbingHashPairMap<?, ?, ?> cast = (ObjObjFlatLinearProbingHashPairMap<?, ?, ?>) m;
             final X[] keyAL = (X[]) cast.keyATable;
             final Y[] keyBL = (Y[]) cast.keyBTable;
-            final long[] valueL = cast.valueTable;
+            final V[] valueL = (V[]) cast.valueTable;
             final int capL = cast.keyATable.length;
             for (int pos = 0; pos < capL; pos++) {
                 final X currKeyA;
@@ -601,12 +594,12 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         this.remaining = InternalCollectionUtil.getHashTableMaxRemaining(this.keyATable.length, this.loadFactor, true) - this.size;
     }
 
-    public long getDefaultReturnValueRaw() {
+    public V getDefaultReturnValue() {
         return this.defVal;
     }
 
-    public long setDefaultReturnValue(long newDefault) {
-        final long oldDef = this.defVal;
+    public V setDefaultReturnValue(V newDefault) {
+        final V oldDef = this.defVal;
         this.defVal = newDefault;
         return oldDef;
     }
@@ -655,16 +648,16 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return result;
     }
 
-    public LongCollection valueCollection() {
-        LongCollection result;
+    public ObjCollection<V> valueCollection() {
+        ObjCollection<V> result;
         if ((result = this.valueCollection) == null) {
             result = this.valueCollection = new ValueCollection();
         }
         return result;
     }
 
-    public EntrySetExt<BiEntry<X, Y>> entrySetRaw() {
-        EntrySetExt<BiEntry<X, Y>> result;
+    public EntrySetExt<ObjObjPairMap.BiEntry<X, Y, V>> entrySetRaw() {
+        EntrySetExt<ObjObjPairMap.BiEntry<X, Y, V>> result;
         if ((result = this.entrySet) == null) {
             result = this.entrySet = new MapEntrySet();
         }
@@ -683,7 +676,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         return this.keyBTable;
     }
 
-    public long[] valueTable() {
+    public V[] valueTable() {
         return this.valueTable;
     }
 
@@ -694,6 +687,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         Arrays.fill(this.hashTable, 0);
         Arrays.fill(this.keyATable, ((X) NULL_KEY_A));
         Arrays.fill(this.keyBTable, ((Y) NULL_KEY_B));
+        Arrays.fill(this.valueTable, null);
         this.calculateRemaining();
     }
 
@@ -720,12 +714,12 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         int result = 0;
         final X[] keyAL = this.keyATable;
         final Y[] keyBL = this.keyBTable;
-        final long[] valueL = this.valueTable;
+        final V[] valueL = this.valueTable;
         final int capL = this.keyATable.length;
         for (int pos = 0; pos < capL; pos++) {
             final X currKeyA;
             if ((currKeyA = keyAL[pos]) != ((X) NULL_KEY_A)) {
-                result += Objects.hashCode(currKeyA) ^ Objects.hashCode(keyBL[pos]) ^ Long.hashCode(valueL[pos]);
+                result += Objects.hashCode(currKeyA) ^ Objects.hashCode(keyBL[pos]) ^ Objects.hashCode(valueL[pos]);
             }
         }
         return result;
@@ -734,15 +728,15 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
     public boolean equals(Object o) {
         if (o == this) return true;
 
-        if (o instanceof BiMap<?, ?, ?>) {
-            final BiMap<?, ?, ?> castMap = (BiMap<?, ?, ?>) o;
+        if (o instanceof PairMap<?, ?, ?>) {
+            final PairMap<?, ?, ?> castMap = (PairMap<?, ?, ?>) o;
             if (castMap.size() != this.size()) return false;
             try {
-                if (castMap instanceof ObjLongFlatLinearProbingBinaryHashMap<?, ?>) {
-                    final ObjLongFlatLinearProbingBinaryHashMap<?, ?> cast = (ObjLongFlatLinearProbingBinaryHashMap<?, ?>) castMap;
+                if (castMap instanceof ObjObjFlatLinearProbingHashPairMap<?, ?, ?>) {
+                    final ObjObjFlatLinearProbingHashPairMap<?, ?, ?> cast = (ObjObjFlatLinearProbingHashPairMap<?, ?, ?>) castMap;
                     final X[] srcKeyAL = (X[]) cast.keyATable;
                     final Y[] srcKeyBL = (Y[]) cast.keyBTable;
-                    final long[] currValueL = this.valueTable, srcValueL = cast.valueTable;
+                    final V[] currValueL = this.valueTable, srcValueL = (V[]) cast.valueTable;
 
                     final int capacity = srcKeyAL.length;
                     for (int srcPos = 0; srcPos < capacity; srcPos++) {
@@ -752,22 +746,21 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
                             final int currPos = this.find(this.getHash(srcKeyA, srcKeyB), srcKeyA, srcKeyB);
                             if (currPos < 0) return false;
 
-                            final long currValue = currValueL[currPos], srcValue = srcValueL[srcPos];
-                            if (srcValue != currValue) return false;
+                            if (!Objects.equals(currValueL[currPos], srcValueL[srcPos])) return false;
                         }
                     }
                     return true;
                 } else {
-                    final long[] currValueL = this.valueTable;
-                    for (BiMap.BiEntry<?, ?, ?> entry : castMap.entrySet()) {
+                    final V[] currValueL = this.valueTable;
+                    for (PairMap.BiEntry<?, ?, ?> entry : castMap.entrySet()) {
                         final X srcKeyA = (X) entry.getFirstKey();
                         final Y srcKeyB = (Y) entry.getSecondKey();
-                        final Long srcValue = (Long) entry.getValue();
+                        final V srcValue = (V) entry.getValue();
                         final int currPos = this.find(this.getHash(srcKeyA, srcKeyB), srcKeyA, srcKeyB);
                         if (currPos < 0) return false;
 
-                        final long currValue = currValueL[currPos];
-                        if (srcValue == null && currValue != 0 || srcValue != null && srcValue != currValue) return false;
+                        final V currValue = currValueL[currPos];
+                        if (srcValue == null && currValue != null || srcValue != null && !Objects.equals(srcValue, currValue)) return false;
                     }
                 }
                 return true;
@@ -785,19 +778,20 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         sb.append('{');
         final X[] keyAL = this.keyATable;
         final Y[] keyBL = this.keyBTable;
-        final long[] valueL = this.valueTable;
+        final V[] valueL = this.valueTable;
         final int capL = this.keyATable.length;
         for (int pos = 0; pos < capL; pos++) {
             final X currKeyA;
             if ((currKeyA = keyAL[pos]) != ((X) NULL_KEY_A)) {
                 final Y currKeyB;
+                final V currValue;
                 if (sb.length() > 1) sb.append(',').append(' ');
                 sb.append('[').append(currKeyA != this ? currKeyA : "(this Map)")
                         .append(',').append(' ')
                         .append((currKeyB = keyBL[pos]) != this ? currKeyB : "(this Map)")
                         .append(']')
                         .append('=')
-                        .append(valueL[pos]);
+                        .append((currValue = valueL[pos]) != this ? currValue : "(this Map)");
             }
         }
         sb.append('}');
@@ -812,9 +806,9 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
     }
 
     public Object clone() {
-        ObjLongFlatLinearProbingBinaryHashMap<X, Y> result;
+        ObjObjFlatLinearProbingHashPairMap<X, Y, V> result;
         try {
-            result = (ObjLongFlatLinearProbingBinaryHashMap<X, Y>) super.clone();
+            result = (ObjObjFlatLinearProbingHashPairMap<X, Y, V>) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new InternalError(e);
         }
@@ -837,14 +831,14 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
 
         final X[] keyAL = this.keyATable;
         final Y[] keyBL = this.keyBTable;
-        final long[] valueL = this.valueTable;
+        final V[] valueL = this.valueTable;
         final int capL = this.keyATable.length;
         for (int pos = 0; pos < capL; pos++) {
             final X currKeyA;
             if ((currKeyA = keyAL[pos]) != ((X) NULL_KEY_A)) {
                 out.writeObject(currKeyA);
                 out.writeObject(keyBL[pos]);
-                out.writeLong(valueL[pos]);
+                out.writeObject(valueL[pos]);
             }
         }
     }
@@ -861,14 +855,14 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         final int[] hashL = this.hashTable = new int[capacity];
         final X[] keyAL = this.keyATable = this.newKeyATable(capacity);
         final Y[] keyBL = this.keyBTable = this.newKeyBTable(capacity);
-        final long[] valueL = this.valueTable = this.newValueTable(capacity);
+        final V[] valueL = this.valueTable = this.newValueTable(capacity);
         Arrays.fill(keyAL, ((X) NULL_KEY_A));
 
         final HashBehavior<X> behaviorA = this.hashBehaviorA;
         for (int i = this.size; i-- > 0;) {
             final X currKeyA = (X) in.readObject();
             final Y currKeyB = (Y) in.readObject();
-            final long currValue = in.readLong();
+            final V currValue = (V) in.readObject();
 
             final int hash = behaviorA.mix(behaviorA.hashing(currKeyA), this.hashBehaviorB.hashing(currKeyB));
             int pos = hash & maskL;
@@ -885,27 +879,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         this.calculateRemaining();
     }
 
-    protected long[] prepareArray(long[] a) {
-        final int sizeL = this.size;
-        if (a.length < sizeL) return this.newValueTable(sizeL);
-        if (a.length > sizeL) a[sizeL] = 0;
-        return a;
-    }
-
-    protected long[] valueToArray(long[] a) {
-        if (this.isEmpty()) return a;
-
-        int idx = 0;
-        final X[] keyAL = this.keyATable;
-        final long[] valueL = this.valueTable;
-        final int capL = this.keyATable.length;
-        for (int pos = 0; pos < capL; pos++) {
-            if (keyAL[pos] != ((X) NULL_KEY_A)) a[idx++] = valueL[pos];
-        }
-        return a;
-    }
-
-    protected class Node implements ObjLongBiMap.BiEntry<X, Y> {
+    protected class Node implements ObjObjPairMap.BiEntry<X, Y, V> {
         protected int pos;
 
         protected Node update(int pos) {
@@ -920,44 +894,44 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         public X getFirstKey() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.keyATable[this.pos];
+            return ObjObjFlatLinearProbingHashPairMap.this.keyATable[this.pos];
         }
 
         public Y getSecondKey() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable[this.pos];
+            return ObjObjFlatLinearProbingHashPairMap.this.keyBTable[this.pos];
         }
 
-        public long getValueRaw() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.valueTable[this.pos];
+        public V getValue() {
+            return ObjObjFlatLinearProbingHashPairMap.this.valueTable[this.pos];
         }
 
-        public long setValue(long newValue) {
+        public V setValue(V newValue) {
             final int posL = this.pos;
-            final long[] valueL = ObjLongFlatLinearProbingBinaryHashMap.this.valueTable;
-            final long oldValue = valueL[posL];
+            final V[] valueL = ObjObjFlatLinearProbingHashPairMap.this.valueTable;
+            final V oldValue = valueL[posL];
             valueL[posL] = newValue;
             return oldValue;
         }
 
         public String toString() {
             final int posL = this.pos;
-            return "[" + ObjLongFlatLinearProbingBinaryHashMap.this.keyATable[posL] + ", " + ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable[posL] + "]=" + ObjLongFlatLinearProbingBinaryHashMap.this.valueTable[posL];
+            return "[" + ObjObjFlatLinearProbingHashPairMap.this.keyATable[posL] + ", " + ObjObjFlatLinearProbingHashPairMap.this.keyBTable[posL] + "]=" + ObjObjFlatLinearProbingHashPairMap.this.valueTable[posL];
         }
 
         public int hashCode() {
             final int posL = this.pos;
-            return Objects.hashCode(ObjLongFlatLinearProbingBinaryHashMap.this.keyATable[posL]) ^ Objects.hashCode(ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable[posL]) ^ Long.hashCode(ObjLongFlatLinearProbingBinaryHashMap.this.valueTable[posL]);
+            return Objects.hashCode(ObjObjFlatLinearProbingHashPairMap.this.keyATable[posL]) ^ Objects.hashCode(ObjObjFlatLinearProbingHashPairMap.this.keyBTable[posL]) ^ Objects.hashCode(ObjObjFlatLinearProbingHashPairMap.this.valueTable[posL]);
         }
 
         public boolean equals(Object obj) {
             if (obj == this) return true;
 
-            if (!(obj instanceof BiMap.BiEntry<?, ?, ?>)) return false;
-            final BiMap.BiEntry<?, ?, ?> cast = (BiMap.BiEntry<?, ?, ?>) obj;
+            if (!(obj instanceof PairMap.BiEntry<?, ?, ?>)) return false;
+            final PairMap.BiEntry<?, ?, ?> cast = (PairMap.BiEntry<?, ?, ?>) obj;
             final int posL = this.pos;
-            return Objects.equals(ObjLongFlatLinearProbingBinaryHashMap.this.keyATable[posL], cast.getFirstKey())
-                    && Objects.equals(ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable[posL], cast.getFirstKey())
-                    && Objects.equals(ObjLongFlatLinearProbingBinaryHashMap.this.valueTable[posL], cast.getValue());
+            return Objects.equals(ObjObjFlatLinearProbingHashPairMap.this.keyATable[posL], cast.getFirstKey())
+                    && Objects.equals(ObjObjFlatLinearProbingHashPairMap.this.keyBTable[posL], cast.getFirstKey())
+                    && Objects.equals(ObjObjFlatLinearProbingHashPairMap.this.valueTable[posL], cast.getValue());
         }
     }
 
@@ -967,8 +941,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         protected int posNext = -1;
 
         protected MapIterator() {
-            if (ObjLongFlatLinearProbingBinaryHashMap.this.size > 0) {
-                this.scanPos(ObjLongFlatLinearProbingBinaryHashMap.this.keyATable, 0);
+            if (ObjObjFlatLinearProbingHashPairMap.this.size > 0) {
+                this.scanPos(ObjObjFlatLinearProbingHashPairMap.this.keyATable, 0);
             }
         }
 
@@ -998,7 +972,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
             final int posL = this.pos = this.posNext;
             this.posNext = -1;
 
-            final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable;
+            final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
             if (posL > -1) {
                 final int capL = keyAL.length;
                 int i;
@@ -1016,8 +990,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
             final int posPreL;
             if ((posPreL = this.posPre) < 0) throw new IllegalStateException();
 
-            final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable;
-            ObjLongFlatLinearProbingBinaryHashMap.this.removeAndShift(keyAL, ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable, posPreL);
+            final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
+            ObjObjFlatLinearProbingHashPairMap.this.removeAndShift(keyAL, ObjObjFlatLinearProbingHashPairMap.this.keyBTable, posPreL);
             this.scanPos(keyAL, posPreL);
             this.posPre = -1;
         }
@@ -1027,7 +1001,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         public void forEachRemaining(C action) {
             final int current;
             if ((current = this.pos) < 0) return;
-            final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable;
+            final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
             int i = current, findPre = this.posPre;
             for (final int capL = keyAL.length; i < capL; i++) {
                 final X currKeyA;
@@ -1054,8 +1028,8 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         protected final int getLimitCap() {
             int newLimit;
             if ((newLimit = this.limitCap) < 0) {
-                this.estSize = ObjLongFlatLinearProbingBinaryHashMap.this.size;
-                newLimit = this.limitCap = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable.length;
+                this.estSize = ObjObjFlatLinearProbingHashPairMap.this.size;
+                newLimit = this.limitCap = ObjObjFlatLinearProbingHashPairMap.this.keyATable.length;
             }
             return newLimit;
         }
@@ -1073,7 +1047,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
             final int currLimit = this.getLimitCap();
 
             int idxL = this.index;
-            for (final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable; idxL < currLimit; idxL++) {
+            for (final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable; idxL < currLimit; idxL++) {
                 final X currKeyA;
                 if ((currKeyA = keyAL[idxL]) != ((X) NULL_KEY_A)) {
                     this.consumerProxy(action, currKeyA, idxL);
@@ -1089,7 +1063,7 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
             final int currLimit = this.getLimitCap();
 
             int idxL = this.index;
-            for (final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable; idxL < currLimit; idxL++) {
+            for (final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable; idxL < currLimit; idxL++) {
                 final X currKeyA;
                 if ((currKeyA = keyAL[idxL]) != ((X) NULL_KEY_A)) this.consumerProxy(action, currKeyA, idxL);
             }
@@ -1102,13 +1076,13 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         public int characteristics() {
-            return this.limitCap < 0 || this.estSize == ObjLongFlatLinearProbingBinaryHashMap.this.size ? Spliterator.SIZED : 0;
+            return this.limitCap < 0 || this.estSize == ObjObjFlatLinearProbingHashPairMap.this.size ? Spliterator.SIZED : 0;
         }
     }
 
     protected class FirstKeyIterator extends MapIterator<Consumer<? super X>> implements Iterator<X> {
         public X next() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.keyATable[this.nextPos()];
+            return ObjObjFlatLinearProbingHashPairMap.this.keyATable[this.nextPos()];
         }
 
         protected void consumerProxy(Consumer<? super X> action, X keyA, int pos) {
@@ -1118,42 +1092,42 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
 
     protected class SecondKeyIterator extends MapIterator<Consumer<? super Y>> implements Iterator<Y> {
         public Y next() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable[this.nextPos()];
+            return ObjObjFlatLinearProbingHashPairMap.this.keyBTable[this.nextPos()];
         }
 
         protected void consumerProxy(Consumer<? super Y> action, X keyA, int pos) {
-            action.accept(ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable[pos]);
+            action.accept(ObjObjFlatLinearProbingHashPairMap.this.keyBTable[pos]);
         }
     }
 
-    protected class ValueIterator extends MapIterator<LongConsumer> implements LongIterator {
-        public long nextLong() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.valueTable[this.nextPos()];
+    protected class ValueIterator extends MapIterator<Consumer<? super V>> implements Iterator<V> {
+        public V next() {
+            return ObjObjFlatLinearProbingHashPairMap.this.valueTable[this.nextPos()];
         }
 
-        protected void consumerProxy(LongConsumer action, X keyA, int pos) {
-            action.accept(ObjLongFlatLinearProbingBinaryHashMap.this.valueTable[pos]);
+        protected void consumerProxy(Consumer<? super V> action, X keyA, int pos) {
+            action.accept(ObjObjFlatLinearProbingHashPairMap.this.valueTable[pos]);
         }
     }
 
-    protected class MapEntryIterator extends MapIterator<Consumer<? super ObjLongBiMap.BiEntry<X, Y>>> implements Iterator<ObjLongBiMap.BiEntry<X, Y>> {
-        public ObjLongBiMap.BiEntry<X, Y> next() {
+    protected class MapEntryIterator extends MapIterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>> implements Iterator<ObjObjPairMap.BiEntry<X, Y, V>> {
+        public ObjObjPairMap.BiEntry<X, Y, V> next() {
             return new Node(this.nextPos());
         }
 
-        protected void consumerProxy(Consumer<? super BiEntry<X, Y>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super BiEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(new Node(pos));
         }
     }
 
-    protected class MapEntryViewIterator extends MapIterator<Consumer<? super ObjLongBiMap.BiEntry<X, Y>>> implements Iterator<ObjLongBiMap.BiEntry<X, Y>> {
+    protected class MapEntryViewIterator extends MapIterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>> implements Iterator<ObjObjPairMap.BiEntry<X, Y, V>> {
         protected final Node tmpEntry = new Node();
 
-        public ObjLongBiMap.BiEntry<X, Y> next() {
+        public ObjObjPairMap.BiEntry<X, Y, V> next() {
             return this.tmpEntry.update(this.nextPos());
         }
 
-        protected void consumerProxy(Consumer<? super BiEntry<X, Y>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super BiEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(this.tmpEntry.update(pos));
         }
     }
@@ -1182,83 +1156,79 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         protected void consumerProxy(Consumer<? super Y> action, X keyA, int pos) {
-            action.accept(ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable[pos]);
+            action.accept(ObjObjFlatLinearProbingHashPairMap.this.keyBTable[pos]);
         }
     }
 
-    protected class ValueSpliterator extends MapSpliterator<LongConsumer, LongSpliterator> implements LongSpliterator {
+    protected class ValueSpliterator extends MapSpliterator<Consumer<? super V>, Spliterator<V>> implements Spliterator<V> {
         protected ValueSpliterator(int index, int limitCap, int estSize) {
             super(index, limitCap, estSize);
         }
 
-        protected LongSpliterator splitProxy(int index, int limitCap, int estSize) {
+        protected Spliterator<V> splitProxy(int index, int limitCap, int estSize) {
             return new ValueSpliterator(index, limitCap, estSize);
         }
 
-        protected void consumerProxy(LongConsumer action, X keyA, int pos) {
-            action.accept(ObjLongFlatLinearProbingBinaryHashMap.this.valueTable[pos]);
-        }
-
-        public int characteristics() {
-            return (this.limitCap < 0 || this.estSize == ObjLongFlatLinearProbingBinaryHashMap.this.size ? Spliterator.SIZED : 0) | Spliterator.NONNULL;
+        protected void consumerProxy(Consumer<? super V> action, X keyA, int pos) {
+            action.accept(ObjObjFlatLinearProbingHashPairMap.this.valueTable[pos]);
         }
     }
 
-    protected class MapEntrySpliterator extends MapSpliterator<Consumer<? super ObjLongBiMap.BiEntry<X, Y>>, Spliterator<ObjLongBiMap.BiEntry<X, Y>>> implements Spliterator<ObjLongBiMap.BiEntry<X, Y>> {
+    protected class MapEntrySpliterator extends MapSpliterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>, Spliterator<ObjObjPairMap.BiEntry<X, Y, V>>> implements Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> {
         protected MapEntrySpliterator(int index, int limitCap, int estSize) {
             super(index, limitCap, estSize);
         }
 
-        protected Spliterator<ObjLongBiMap.BiEntry<X, Y>> splitProxy(int index, int limitCap, int estSize) {
+        protected Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> splitProxy(int index, int limitCap, int estSize) {
             return new MapEntrySpliterator(index, limitCap, estSize);
         }
 
-        protected void consumerProxy(Consumer<? super ObjLongBiMap.BiEntry<X, Y>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(new Node(pos));
         }
 
         public int characteristics() {
-            return (this.limitCap < 0 || this.estSize == ObjLongFlatLinearProbingBinaryHashMap.this.size ? Spliterator.SIZED : 0) | Spliterator.DISTINCT | Spliterator.NONNULL;
+            return (this.limitCap < 0 || this.estSize == ObjObjFlatLinearProbingHashPairMap.this.size ? Spliterator.SIZED : 0) | Spliterator.DISTINCT | Spliterator.NONNULL;
         }
     }
 
-    protected class MapEntryViewSpliterator extends MapSpliterator<Consumer<? super ObjLongBiMap.BiEntry<X, Y>>, Spliterator<ObjLongBiMap.BiEntry<X, Y>>> implements Spliterator<ObjLongBiMap.BiEntry<X, Y>> {
+    protected class MapEntryViewSpliterator extends MapSpliterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>, Spliterator<ObjObjPairMap.BiEntry<X, Y, V>>> implements Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> {
         protected final Node tmpEntry = new Node();
 
         protected MapEntryViewSpliterator(int index, int limitCap, int estSize) {
             super(index, limitCap, estSize);
         }
 
-        protected Spliterator<ObjLongBiMap.BiEntry<X, Y>> splitProxy(int index, int limitCap, int estSize) {
+        protected Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> splitProxy(int index, int limitCap, int estSize) {
             return new MapEntryViewSpliterator(index, limitCap, estSize);
         }
 
-        protected void consumerProxy(Consumer<? super ObjLongBiMap.BiEntry<X, Y>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(this.tmpEntry.update(pos));
         }
 
         public int characteristics() {
-            return (this.limitCap < 0 || this.estSize == ObjLongFlatLinearProbingBinaryHashMap.this.size ? Spliterator.SIZED : 0) | Spliterator.DISTINCT | Spliterator.NONNULL;
+            return (this.limitCap < 0 || this.estSize == ObjObjFlatLinearProbingHashPairMap.this.size ? Spliterator.SIZED : 0) | Spliterator.DISTINCT | Spliterator.NONNULL;
         }
     }
 
     protected class FirstKeyCollection extends AbstractObjCollection<X> {
         public void resize(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.resize(newCapacity);
+            ObjObjFlatLinearProbingHashPairMap.this.resize(newCapacity);
         }
 
         public void reserve(int newMaxSize) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.reserve(newMaxSize);
+            ObjObjFlatLinearProbingHashPairMap.this.reserve(newMaxSize);
         }
 
         public boolean contains(Object o) {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.containsFirstKey(o);
+            return ObjObjFlatLinearProbingHashPairMap.this.containsFirstKey(o);
         }
 
         public void forEach(Consumer<? super X> action) {
-            if (ObjLongFlatLinearProbingBinaryHashMap.this.isEmpty()) return;
+            if (ObjObjFlatLinearProbingHashPairMap.this.isEmpty()) return;
 
-            final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable;
+            final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
             for (final X currKeyA : keyAL) {
                 if (currKeyA != ((X) NULL_KEY_A)) {
                     action.accept(currKeyA);
@@ -1267,15 +1237,15 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         public int capacity() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.capacity();
+            return ObjObjFlatLinearProbingHashPairMap.this.capacity();
         }
 
         public int remaining() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.remaining();
+            return ObjObjFlatLinearProbingHashPairMap.this.remaining();
         }
 
         public int size() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.size;
+            return ObjObjFlatLinearProbingHashPairMap.this.size;
         }
 
         public Iterator<X> iterator() {
@@ -1287,32 +1257,32 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         public void clear() {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear();
+            ObjObjFlatLinearProbingHashPairMap.this.clear();
         }
 
         public void clear(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear(newCapacity);
+            ObjObjFlatLinearProbingHashPairMap.this.clear(newCapacity);
         }
     }
 
     protected class SecondKeyCollection extends AbstractObjCollection<Y> {
         public void resize(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.resize(newCapacity);
+            ObjObjFlatLinearProbingHashPairMap.this.resize(newCapacity);
         }
 
         public void reserve(int newMaxSize) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.reserve(newMaxSize);
+            ObjObjFlatLinearProbingHashPairMap.this.reserve(newMaxSize);
         }
 
         public boolean contains(Object o) {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.containsSecondKey(o);
+            return ObjObjFlatLinearProbingHashPairMap.this.containsSecondKey(o);
         }
 
         public void forEach(Consumer<? super Y> action) {
-            if (ObjLongFlatLinearProbingBinaryHashMap.this.isEmpty()) return;
+            if (ObjObjFlatLinearProbingHashPairMap.this.isEmpty()) return;
 
-            final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable;
-            final Y[] keyBL = ObjLongFlatLinearProbingBinaryHashMap.this.keyBTable;
+            final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
+            final Y[] keyBL = ObjObjFlatLinearProbingHashPairMap.this.keyBTable;
             final int capL = keyAL.length;
             for (int pos = 0; pos < capL; pos++) {
                 if (keyAL[pos] != ((X) NULL_KEY_A)) {
@@ -1322,15 +1292,15 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         public int capacity() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.capacity();
+            return ObjObjFlatLinearProbingHashPairMap.this.capacity();
         }
 
         public int remaining() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.remaining();
+            return ObjObjFlatLinearProbingHashPairMap.this.remaining();
         }
 
         public int size() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.size;
+            return ObjObjFlatLinearProbingHashPairMap.this.size;
         }
 
         public Iterator<Y> iterator() {
@@ -1342,32 +1312,32 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         public void clear() {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear();
+            ObjObjFlatLinearProbingHashPairMap.this.clear();
         }
 
         public void clear(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear(newCapacity);
+            ObjObjFlatLinearProbingHashPairMap.this.clear(newCapacity);
         }
     }
 
-    protected class ValueCollection extends AbstractLongCollection {
+    protected class ValueCollection extends AbstractObjCollection<V> {
         public void resize(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.resize(newCapacity);
+            ObjObjFlatLinearProbingHashPairMap.this.resize(newCapacity);
         }
 
         public void reserve(int newMaxSize) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.reserve(newMaxSize);
+            ObjObjFlatLinearProbingHashPairMap.this.reserve(newMaxSize);
         }
 
         public boolean contains(long o) {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.containsValue(o);
+            return ObjObjFlatLinearProbingHashPairMap.this.containsValue(o);
         }
 
-        public void forEach(LongConsumer action) {
-            if (ObjLongFlatLinearProbingBinaryHashMap.this.isEmpty()) return;
+        public void forEach(Consumer<? super V> action) {
+            if (ObjObjFlatLinearProbingHashPairMap.this.isEmpty()) return;
 
-            final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable;
-            final long[] valueL = ObjLongFlatLinearProbingBinaryHashMap.this.valueTable;
+            final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
+            final V[] valueL = ObjObjFlatLinearProbingHashPairMap.this.valueTable;
             final int capL = keyAL.length;
             for (int pos = 0; pos < capL; pos++) {
                 if (keyAL[pos] != ((X) NULL_KEY_A)) {
@@ -1377,67 +1347,59 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
         }
 
         public int capacity() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.capacity();
+            return ObjObjFlatLinearProbingHashPairMap.this.capacity();
         }
 
         public int remaining() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.remaining();
+            return ObjObjFlatLinearProbingHashPairMap.this.remaining();
         }
 
         public int size() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.size;
+            return ObjObjFlatLinearProbingHashPairMap.this.size;
         }
 
-        public LongIterator iterator() {
+        public Iterator<V> iterator() {
             return new ValueIterator();
         }
 
-        public LongSpliterator spliterator() {
+        public Spliterator<V> spliterator() {
             return new ValueSpliterator(0, -1, 0);
         }
 
         public void clear() {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear();
+            ObjObjFlatLinearProbingHashPairMap.this.clear();
         }
 
         public void clear(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear(newCapacity);
-        }
-
-        public long[] toArrayRaw() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.valueToArray(ObjLongFlatLinearProbingBinaryHashMap.this.newValueTable(ObjLongFlatLinearProbingBinaryHashMap.this.size));
-        }
-
-        public long[] toArray(long[] a) {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.valueToArray(ObjLongFlatLinearProbingBinaryHashMap.this.prepareArray(a));
+            ObjObjFlatLinearProbingHashPairMap.this.clear(newCapacity);
         }
     }
 
-    protected class MapEntrySet extends AbstractObjSet<ObjLongBiMap.BiEntry<X, Y>> implements EntrySetExt<ObjLongBiMap.BiEntry<X, Y>> {
+    protected class MapEntrySet extends AbstractObjSet<ObjObjPairMap.BiEntry<X, Y, V>> implements EntrySetExt<ObjObjPairMap.BiEntry<X, Y, V>> {
         protected final Node tmpEntry = new Node();
 
         public void resize(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.resize(newCapacity);
+            ObjObjFlatLinearProbingHashPairMap.this.resize(newCapacity);
         }
 
         public void reserve(int newMaxSize) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.reserve(newMaxSize);
+            ObjObjFlatLinearProbingHashPairMap.this.reserve(newMaxSize);
         }
 
         public boolean contains(Object o) {
-            if (!(o instanceof BiMap.BiEntry<?, ?, ?>)) return false;
-            final BiMap.BiEntry<?, ?, ?> entryCast = (BiMap.BiEntry<?, ?, ?>) o;
-            return ObjLongFlatLinearProbingBinaryHashMap.this.containsKey(entryCast.getFirstKey(), entryCast.getSecondKey());
+            if (!(o instanceof PairMap.BiEntry<?, ?, ?>)) return false;
+            final PairMap.BiEntry<?, ?, ?> entryCast = (PairMap.BiEntry<?, ?, ?>) o;
+            return ObjObjFlatLinearProbingHashPairMap.this.containsKey(entryCast.getFirstKey(), entryCast.getSecondKey());
         }
 
         public boolean removeElement(Object o) {
-            if (!(o instanceof BiMap.BiEntry<?, ?, ?>)) return false;
-            final BiMap.BiEntry<?, ?, ?> entryCast = (BiMap.BiEntry<?, ?, ?>) o;
-            return ObjLongFlatLinearProbingBinaryHashMap.this.remove(entryCast.getFirstKey(), entryCast.getSecondKey(), entryCast.getValue());
+            if (!(o instanceof PairMap.BiEntry<?, ?, ?>)) return false;
+            final PairMap.BiEntry<?, ?, ?> entryCast = (PairMap.BiEntry<?, ?, ?>) o;
+            return ObjObjFlatLinearProbingHashPairMap.this.remove(entryCast.getFirstKey(), entryCast.getSecondKey(), entryCast.getValue());
         }
 
-        protected void forEachProxy(Consumer<? super ObjLongBiMap.BiEntry<X, Y>> action, IntFunction<ObjLongBiMap.BiEntry<X, Y>> supplier) {
-            final X[] keyAL = ObjLongFlatLinearProbingBinaryHashMap.this.keyATable;
+        protected void forEachProxy(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action, IntFunction<ObjObjPairMap.BiEntry<X, Y, V>> supplier) {
+            final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
             final int capL = keyAL.length;
             for (int pos = 0; pos < capL; pos++) {
                 if (keyAL[pos] != ((X) NULL_KEY_A)) {
@@ -1446,48 +1408,48 @@ public class ObjLongFlatLinearProbingBinaryHashMap<X, Y> implements ObjLongBiMap
             }
         }
 
-        public void forEach(Consumer<? super ObjLongBiMap.BiEntry<X, Y>> action) {
+        public void forEach(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action) {
             this.forEachProxy(action, Node::new);
         }
 
-        public void viewForEach(Consumer<? super ObjLongBiMap.BiEntry<X, Y>> action) {
+        public void viewForEach(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action) {
             this.forEachProxy(action, this.tmpEntry::update);
         }
 
         public int capacity() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.capacity();
+            return ObjObjFlatLinearProbingHashPairMap.this.capacity();
         }
 
         public int remaining() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.remaining();
+            return ObjObjFlatLinearProbingHashPairMap.this.remaining();
         }
 
         public int size() {
-            return ObjLongFlatLinearProbingBinaryHashMap.this.size;
+            return ObjObjFlatLinearProbingHashPairMap.this.size;
         }
 
-        public Iterator<ObjLongBiMap.BiEntry<X, Y>> iterator() {
+        public Iterator<ObjObjPairMap.BiEntry<X, Y, V>> iterator() {
             return new MapEntryIterator();
         }
 
-        public Spliterator<ObjLongBiMap.BiEntry<X, Y>> spliterator() {
+        public Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> spliterator() {
             return new MapEntrySpliterator(0, -1, 0);
         }
 
-        public Iterator<ObjLongBiMap.BiEntry<X, Y>> viewIterator() {
+        public Iterator<ObjObjPairMap.BiEntry<X, Y, V>> viewIterator() {
             return new MapEntryViewIterator();
         }
 
-        public Spliterator<ObjLongBiMap.BiEntry<X, Y>> viewSpliterator() {
+        public Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> viewSpliterator() {
             return new MapEntryViewSpliterator(0, -1, 0);
         }
 
         public void clear() {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear();
+            ObjObjFlatLinearProbingHashPairMap.this.clear();
         }
 
         public void clear(int newCapacity) {
-            ObjLongFlatLinearProbingBinaryHashMap.this.clear(newCapacity);
+            ObjObjFlatLinearProbingHashPairMap.this.clear(newCapacity);
         }
     }
 }

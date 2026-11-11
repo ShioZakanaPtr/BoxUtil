@@ -1,7 +1,6 @@
 package io.github.shiozakanaptr.acext.api.collection.objecttype;
 
-import io.github.shiozakanaptr.acext.api.collection.BiMap;
-import io.github.shiozakanaptr.acext.api.collection.CollectionExt;
+import io.github.shiozakanaptr.acext.api.collection.PairMap;
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.Pair;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
@@ -15,7 +14,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.LongUnaryOperator;
 
-public interface ObjLongBiMap<X, Y> extends BiMap<X, Y, Long> {
+public interface ObjLongPairMap<X, Y> extends PairMap<X, Y, Long> {
     long getRaw(Object keyA, Object keyB);
 
     /**
@@ -230,17 +229,17 @@ public interface ObjLongBiMap<X, Y> extends BiMap<X, Y, Long> {
     LongCollection valueCollection();
 
     @NotNull
-    EntrySetExt<ObjLongBiMap.BiEntry<X, Y>> entrySetRaw();
+    EntrySetExt<ObjLongPairMap.BiEntry<X, Y>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default EntrySetExt<BiMap.BiEntry<X, Y, Long>> entrySet() {
+    default EntrySetExt<PairMap.BiEntry<X, Y, Long>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface BiEntry<X, Y> extends BiMap.BiEntry<X, Y, Long> {
+    interface BiEntry<X, Y> extends PairMap.BiEntry<X, Y, Long> {
         long getValueRaw();
 
         default Long getValue() {

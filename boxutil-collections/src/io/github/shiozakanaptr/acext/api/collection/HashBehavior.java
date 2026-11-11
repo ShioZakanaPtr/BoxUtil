@@ -215,7 +215,7 @@ public interface HashBehavior<K> extends Serializable {
      * Mix the hash value of two input keys. The default implementation
      * is {@code left + right * 31}.
      *
-     * <p>For multi key such as {@link BiMap}, will only use the first behavior
+     * <p>For multi key such as {@link PairMap}, will only use the first behavior
      * to mix all the keys.
      *
      * @param left the first input hash
