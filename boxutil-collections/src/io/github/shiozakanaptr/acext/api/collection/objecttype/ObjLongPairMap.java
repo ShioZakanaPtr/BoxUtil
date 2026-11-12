@@ -229,17 +229,17 @@ public interface ObjLongPairMap<X, Y> extends PairMap<X, Y, Long> {
     LongCollection valueCollection();
 
     @NotNull
-    EntrySetExt<ObjLongPairMap.BiEntry<X, Y>> entrySetRaw();
+    EntrySetExt<ObjLongPairMap.PairEntry<X, Y>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default EntrySetExt<PairMap.BiEntry<X, Y, Long>> entrySet() {
+    default EntrySetExt<PairMap.PairEntry<X, Y, Long>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface BiEntry<X, Y> extends PairMap.BiEntry<X, Y, Long> {
+    interface PairEntry<X, Y> extends PairMap.PairEntry<X, Y, Long> {
         long getValueRaw();
 
         default Long getValue() {

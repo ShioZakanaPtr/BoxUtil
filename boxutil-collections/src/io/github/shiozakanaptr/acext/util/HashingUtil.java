@@ -1,8 +1,36 @@
 package io.github.shiozakanaptr.acext.util;
 
+import io.github.shiozakanaptr.acext.api.collection.HashBehavior;
+import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A utility class providing hashing primitives and helpers used by hash-based
+ * collections in this project.
+ *
+ * <p>This class supplies the default implementations backing the built-in
+ * {@link HashBehaviorFactory.Strategy strategies} exposed by
+ * {@link HashBehaviorFactory}. Instances of {@link HashBehavior} returned by
+ * {@link HashBehaviorFactory#get(HashBehaviorFactory.Strategy)} typically
+ * delegate their work to the methods defined here.
+ *
+ * <p>In addition to the strategy-oriented helpers, this class provides
+ * specialized methods for hashing primitive and commonly used types (for
+ * example {@code int}, {@code long}, and other standard element types) so that
+ * hash-based containers can avoid boxing and dispatch overhead when their
+ * element type is known. It also extension methods for custom data stream hashing,
+ * allowing developers to use bespoke hashing behavior where the built-in strategies
+ * are insufficient.
+ *
+ * <p>All methods in this class are static and side-effect-free with respect to
+ * the arguments passed to them. This class cannot be instantiated.
+ *
+ * @see HashBehavior
+ * @see HashBehaviorFactory
+ * @see HashBehaviorFactory.Strategy
+ */
 public final class HashingUtil {
     /**
      * A hash strategy that uses the input parameter value directly as the

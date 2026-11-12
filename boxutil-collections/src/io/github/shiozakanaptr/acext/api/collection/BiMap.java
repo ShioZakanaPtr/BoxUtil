@@ -91,71 +91,73 @@ public interface BiMap<K, V> extends MapExt<K, V> {
     }
 
     /**
-     * Associates the specified key with the specified value in this bimap's
-     * inverse direction. This operation also updates the corresponding
-     * key-to-value mapping so that the bidirectional relationship remains
-     * consistent.
+     * Associates the specified value with the specified key in this bimap.
      *
-     * <p>Returns the key previously associated with the specified value, or
-     * {@link #getDefaultReturnKey()} if the value had no previous mapping.
+     * <p>Because a {@code BiMap} enforces unique values, if the specified value
+     * is already associated with a different key, the existing value-to-key
+     * mapping is silently removed and the corresponding key-to-value mapping is
+     * also removed, after which the specified value is associated with the
+     * specified key. Likewise, if the specified key is already associated with
+     * a different value, that previous mapping is replaced.
      *
-     * <p>If the specified value is already associated with another key, or the
-     * specified key is already associated with another value, the behavior is
-     * implementation-specific. Implementations may replace an existing mapping,
-     * reject the operation, or throw an {@link IllegalArgumentException}.
+     * <p>Returns the value previously associated with the specified key, or
+     * {@code null} if the key had no previous mapping. A {@code null} return
+     * may also indicate that the key was previously mapped to {@code null} if
+     * this bimap permits {@code null} values; {@link #containsKey(Object)} may
+     * be used to distinguish these cases.
      *
-     * @param value the value with which the specified key is to be associated
-     * @param key the key to be associated with the specified value
-     * @return the previous key associated with the specified value, or
-     *         {@link #getDefaultReturnKey()} if there was no previous mapping
-     * @throws UnsupportedOperationException if the {@code putKey} operation is
-     *         not supported by this bimap
-     * @throws ClassCastException if the supplied value or key is of an
+     * @param key the key with which the specified value is to be associated
+     * @param value the value to be associated with the specified key
+     * @return the value previously associated with the specified key, or
+     *         {@code null} if there was no previous mapping
+     * @throws UnsupportedOperationException if the {@code put} operation is not
+     *         supported by this bimap
+     * @throws ClassCastException if the supplied key or value is of an
      *         inappropriate type for this map
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws NullPointerException if the supplied value or key is {@code null}
-     *         and this map does not permit {@code null} values or keys
+     * @throws NullPointerException if the supplied key or value is {@code null}
+     *         and this map does not permit {@code null} keys or values
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws IllegalArgumentException if the mapping would violate the
-     *         uniqueness constraints of this bimap
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @see #putKeyIfAbsent(Object, Object)
-     * @see #getDefaultReturnKey()
+     * @see #putUnique(Object, Object)
      */
-    K putKey(V value, K key);
+    V put(K key, V value);
 
     /**
-     * If the specified value is not already associated with a key, associates it
-     * with the specified key in this bimap's inverse direction and returns the
-     * result of {@link #putKey(Object, Object)}. If the specified value is
-     * already associated with a key, returns that key and does not modify this
-     * bimap.
+     * Associates the specified value with the specified key in this bimap,
+     * provided the specified value is not already associated with a different
+     * key.
      *
-     * @param value the value with which the specified key is to be associated
-     * @param key the key to be associated with the specified value if the value
-     *        is absent
-     * @return the key currently associated with the specified value, or the
-     *         result of {@code putKey(value, key)} if no mapping existed
-     * @throws UnsupportedOperationException if the {@code putKey} operation is
-     *         not supported by this bimap
-     * @throws ClassCastException if the supplied value or key is of an
+     * <p>Unlike {@link #put(Object, Object)}, this method does not silently
+     * remove an existing value-to-key mapping. If the specified value is already
+     * associated with a different key, this bimap is left unchanged and the
+     * existing mapping is returned (that is, the already-associated value is
+     * returned).
+     *
+     * <p>If the specified value is not currently associated with a different
+     * key, the mapping is established and the value previously associated with
+     * the specified key is returned, or {@code null} if the key had no previous
+     * mapping. A {@code null} return may also indicate that the key was
+     * previously mapped to {@code null} if this bimap permits {@code null}
+     * values; {@link #containsKey(Object)} may be used to distinguish these
+     * cases.
+     *
+     * @param key the key with which the specified value is to be associated
+     * @param value the value to be associated with the specified key
+     * @return the existing value if the specified value was already associated
+     *         with a different key, otherwise the value previously associated
+     *         with the specified key, or {@code null} if there was no previous
+     *         mapping
+     * @throws UnsupportedOperationException if the {@code putUnique} operation
+     *         is not supported by this bimap
+     * @throws ClassCastException if the supplied key or value is of an
      *         inappropriate type for this map
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws NullPointerException if the supplied value or key is {@code null}
-     *         and this map does not permit {@code null} values or keys
+     * @throws NullPointerException if the supplied key or value is {@code null}
+     *         and this map does not permit {@code null} keys or values
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws IllegalArgumentException if the mapping would violate the
-     *         uniqueness constraints of this bimap
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @see #putKey(Object, Object)
+     * @see #put(Object, Object)
      */
-    default K putKeyIfAbsent(V value, K key) {
-        K result = this.getKey(value);
-        if (result == null) {
-            result = this.putKey(value, key);
-        }
-        return result;
-    }
+    V putUnique(K key, V value);
 
     /**
      * Removes the mapping for the specified value from this bimap. This operation
@@ -182,7 +184,6 @@ public interface BiMap<K, V> extends MapExt<K, V> {
      * @throws NullPointerException if the supplied value is {@code null} and
      *         this map does not permit {@code null} values
      *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @see #removeValue(Object, Object)
      * @see #containsValue(Object)
      * @see #getDefaultReturnKey()
      */
@@ -216,78 +217,6 @@ public interface BiMap<K, V> extends MapExt<K, V> {
             return false;
         }
         this.removeValue(value);
-        return true;
-    }
-
-    /**
-     * Replaces the key currently associated with the specified value with the
-     * specified key, if the value is currently mapped. This operation also
-     * updates the corresponding key-to-value mappings so that the bidirectional
-     * relationship remains consistent.
-     *
-     * <p>Returns the key previously associated with the specified value, or
-     * {@link #getDefaultReturnKey()} if the value had no previous mapping. If no
-     * previous mapping exists, this bimap is not modified.
-     *
-     * @param value the value whose associated key is to be replaced
-     * @param key the new key to be associated with the specified value
-     * @return the previous key associated with the specified value, or
-     *         {@link #getDefaultReturnKey()} if there was no previous mapping
-     * @throws UnsupportedOperationException if the {@code putKey} operation is
-     *         not supported by this bimap
-     * @throws ClassCastException if the supplied value or key is of an
-     *         inappropriate type for this map
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws NullPointerException if the supplied value or key is {@code null}
-     *         and this map does not permit {@code null} values or keys
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws IllegalArgumentException if the mapping would violate the
-     *         uniqueness constraints of this bimap
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @see #replaceValue(Object, Object, Object)
-     * @see #getDefaultReturnKey()
-     */
-    default K replaceValue(V value, K key) {
-        K currKey;
-        if ((currKey = this.getKey(value)) != null || this.containsValue(value)) {
-            currKey = this.putKey(value, key);
-        }
-        return currKey;
-    }
-
-    /**
-     * Replaces the key currently associated with the specified value with a new
-     * key only if the value is currently associated with the specified old key.
-     * This operation also updates the corresponding key-to-value mappings so
-     * that the bidirectional relationship remains consistent.
-     *
-     * <p>More formally, replaces the mapping for {@code value} from
-     * {@code oldKey} to {@code newKey} if this bimap currently contains a
-     * value-to-key mapping from {@code value} to {@code oldKey}.
-     *
-     * @param value the value whose associated key is to be replaced
-     * @param oldKey the key expected to be currently associated with the value
-     * @param newKey the new key to be associated with the value
-     * @return {@code true} if the key was replaced; {@code false} otherwise
-     * @throws UnsupportedOperationException if the {@code putKey} operation is
-     *         not supported by this bimap
-     * @throws ClassCastException if the supplied value or key is of an
-     *         inappropriate type for this map
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws NullPointerException if the supplied value or key is {@code null}
-     *         and this map does not permit {@code null} values or keys
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @throws IllegalArgumentException if the mapping would violate the
-     *         uniqueness constraints of this bimap
-     *         (<a href="{@docRoot}/java.base/java/util/Collection.html#optional-restrictions">optional</a>)
-     * @see #replaceValue(Object, Object)
-     */
-    default boolean replaceValue(V value, K oldKey, K newKey) {
-        Object currKey = this.getKey(value);
-        if (!Objects.equals(currKey, oldKey) || (currKey == null && !this.containsValue(value))) {
-            return false;
-        }
-        this.putKey(value, newKey);
         return true;
     }
 
@@ -336,6 +265,11 @@ public interface BiMap<K, V> extends MapExt<K, V> {
      */
     @NotNull
     SetExt<V> values();
+
+    /**
+     * @see MapExt#entrySet()
+     */
+    @NotNull EntrySetExt<MapExt.Entry<K, V>> entrySet();
 
     /**
      * Returns the inverse view of this bimap, which maps this bimap's values back

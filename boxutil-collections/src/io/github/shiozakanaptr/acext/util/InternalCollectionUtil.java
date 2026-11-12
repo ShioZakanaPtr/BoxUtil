@@ -7,6 +7,26 @@ import io.github.shiozakanaptr.acext.api.collection.HashContainer;
 import java.io.StreamCorruptedException;
 import java.util.Objects;
 
+/**
+ * An internal utility class providing shared helpers for collection
+ * implementation classes in this project.
+ *
+ * <p>This class contains low-level support routines used by the concrete
+ * collection implementations, including capacity computation, argument and
+ * state validation, and standardized exception throwing. These helpers exist to
+ * keep the implementation classes consistent and to avoid duplicating such
+ * logic across them.
+ *
+ * <p><strong>This class is not part of the public API.</strong> It is intended
+ * solely for use by collection implementation classes within this project.
+ * Ordinary developers should not call, extend, or otherwise depend on the
+ * members of this class, as its contents may change or be removed without
+ * notice. For this reason, individual methods are not documented.
+ *
+ * <p>All members of this class are static. This class cannot be instantiated.
+ * @author ShioZakanaPtr
+ * @version 1.0.0
+ */
 public final class InternalCollectionUtil {
     public static void throwCapacityOverflowTips() {
         throw new IllegalStateException("The capacity of container overflow; should split to different ones");

@@ -15,16 +15,16 @@ public interface ObjObjPairMap<X, Y, V> extends PairMap<X, Y, V> {
     ObjCollection<V> valueCollection();
 
     @NotNull
-    EntrySetExt<ObjObjPairMap.BiEntry<X, Y, V>> entrySetRaw();
+    EntrySetExt<ObjObjPairMap.PairEntry<X, Y, V>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default EntrySetExt<PairMap.BiEntry<X, Y, V>> entrySet() {
+    default EntrySetExt<PairMap.PairEntry<X, Y, V>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface BiEntry<X, Y, V> extends PairMap.BiEntry<X, Y, V> {
+    interface PairEntry<X, Y, V> extends PairMap.PairEntry<X, Y, V> {
     }
 }

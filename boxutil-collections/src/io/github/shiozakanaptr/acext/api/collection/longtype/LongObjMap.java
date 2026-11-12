@@ -214,11 +214,11 @@ public interface LongObjMap<V> extends MapExt<Long, V> {
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default @NotNull EntrySetExt<Map.Entry<Long, V>> entrySet() {
+    default @NotNull EntrySetExt<MapExt.Entry<Long, V>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface Entry<V> extends Map.Entry<Long, V> {
+    interface Entry<V> extends MapExt.Entry<Long, V> {
         long getKeyRaw();
 
         /**

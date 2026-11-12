@@ -88,7 +88,7 @@ public interface HashBehavior<K> extends Serializable {
      * @return the computed hash value
      */
     default int hashing(float key) {
-        return this.hashing(Float.floatToRawIntBits(key));
+        return this.hashing(Float.hashCode(key));
     }
 
     /**
@@ -100,7 +100,7 @@ public interface HashBehavior<K> extends Serializable {
      * @return the computed hash value
      */
     default int hashing(double key) {
-        return this.hashing(Double.doubleToRawLongBits(key));
+        return this.hashing(Double.hashCode(key));
     }
 
     /**
@@ -189,26 +189,26 @@ public interface HashBehavior<K> extends Serializable {
 
     /**
      * Determines whether two {@code float} keys are equal. The default
-     * implementation uses the {@code ==} operator.
+     * implementation uses convert to bits and then {@code ==} operator.
      *
      * @param src the input query key
      * @param dst the existed key in container or special value
      * @return {@code true} if the keys are equal; {@code false} otherwise
      */
     default boolean equals(float src, float dst) {
-        return src == dst;
+        return Float.floatToIntBits(src) == Float.floatToIntBits(dst);
     }
 
     /**
      * Determines whether two {@code double} keys are equal. The default
-     * implementation uses the {@code ==} operator.
+     * implementation uses convert to bits and then {@code ==} operator.
      *
      * @param src the input query key
      * @param dst the existed key in container or special value
      * @return {@code true} if the keys are equal; {@code false} otherwise
      */
     default boolean equals(double src, double dst) {
-        return src == dst;
+        return Double.doubleToLongBits(src) == Double.doubleToLongBits(dst);
     }
 
     /**

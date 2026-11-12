@@ -344,12 +344,21 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * @see java.util.Map#keySet()
+     */
     @NotNull
     SetExt<K> keySet();
 
+    /**
+     * @see java.util.Map#values()
+     */
     @NotNull
     CollectionExt<V> values();
 
+    /**
+     * @see java.util.Map#entrySet()
+     */
     @NotNull
-    EntrySetExt<Map.Entry<K, V>> entrySet();
+    EntrySetExt<MapExt.Entry<K, V>> entrySet();
 }

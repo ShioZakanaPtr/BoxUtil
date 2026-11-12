@@ -30,7 +30,7 @@ public class ObjObjLinearProbingHashMap<K, V> implements ObjObjMap<K, V>, HashCo
 
     protected transient ObjSet<K> keySet = null;
     protected transient ObjCollection<V> valueCollection = null;
-    protected transient EntrySetExt<Entry<K, V>> entrySet = null;
+    protected transient EntrySetExt<ObjObjMap.Entry<K, V>> entrySet = null;
 
     protected K[] newKeyTable(int cap) {
         return (K[]) new Object[cap];
@@ -1090,7 +1090,7 @@ public class ObjObjLinearProbingHashMap<K, V> implements ObjObjMap<K, V>, HashCo
             return this.tmpEntry.update(this.nextPos());
         }
 
-        protected void consumerProxy(Consumer<? super Entry<K, V>> action, K key, int pos) {
+        protected void consumerProxy(Consumer<? super ObjObjMap.Entry<K, V>> action, K key, int pos) {
             action.accept(this.tmpEntry.update(pos));
         }
     }

@@ -53,7 +53,7 @@ import java.util.function.Function;
  * @see Map
  * @see MapExt
  * @see Container
- * @see BiEntry
+ * @see PairEntry
  */
 public interface PairMap<L, R, V> extends Container {
     /**
@@ -1212,7 +1212,7 @@ public interface PairMap<L, R, V> extends Container {
      * Returns an {@link EntrySetExt} view of the mappings contained in this
      * map.
      *
-     * <p>Each element of the returned set is a {@link BiEntry} that exposes the
+     * <p>Each element of the returned set is a {@link PairEntry} that exposes the
      * first key, the second key and the value of one mapping.
      *
      * <p>The set is backed by this map, so changes to the map are reflected in
@@ -1232,10 +1232,10 @@ public interface PairMap<L, R, V> extends Container {
      *
      * @return a set view of the mappings contained in this map
      * @see Map#entrySet()
-     * @see BiEntry
+     * @see PairEntry
      */
     @NotNull
-    EntrySetExt<BiEntry<L, R, V>> entrySet();
+    EntrySetExt<PairEntry<L, R, V>> entrySet();
 
     /**
      * Removes all of the mappings from this map (optional operation). The map
@@ -1313,7 +1313,7 @@ public interface PairMap<L, R, V> extends Container {
      * @see PairMap#entrySet()
      * @see Entry
      */
-    interface BiEntry<X, Y, V> {
+    interface PairEntry<X, Y, V> {
         /**
          * Returns the first key of this entry.
          *

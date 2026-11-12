@@ -48,7 +48,7 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
     protected transient ObjCollection<X> firstKeyCollection = null;
     protected transient ObjCollection<Y> secondKeyCollection = null;
     protected transient ObjCollection<V> valueCollection = null;
-    protected transient EntrySetExt<BiEntry<X, Y, V>> entrySet = null;
+    protected transient EntrySetExt<ObjObjPairMap.PairEntry<X, Y, V>> entrySet = null;
 
     protected X[] newKeyATable(int cap) {
         return (X[]) new Object[cap];
@@ -656,8 +656,8 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         return result;
     }
 
-    public EntrySetExt<ObjObjPairMap.BiEntry<X, Y, V>> entrySetRaw() {
-        EntrySetExt<ObjObjPairMap.BiEntry<X, Y, V>> result;
+    public EntrySetExt<ObjObjPairMap.PairEntry<X, Y, V>> entrySetRaw() {
+        EntrySetExt<ObjObjPairMap.PairEntry<X, Y, V>> result;
         if ((result = this.entrySet) == null) {
             result = this.entrySet = new MapEntrySet();
         }
@@ -752,7 +752,7 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
                     return true;
                 } else {
                     final V[] currValueL = this.valueTable;
-                    for (PairMap.BiEntry<?, ?, ?> entry : castMap.entrySet()) {
+                    for (PairMap.PairEntry<?, ?, ?> entry : castMap.entrySet()) {
                         final X srcKeyA = (X) entry.getFirstKey();
                         final Y srcKeyB = (Y) entry.getSecondKey();
                         final V srcValue = (V) entry.getValue();
@@ -879,7 +879,7 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         this.calculateRemaining();
     }
 
-    protected class Node implements ObjObjPairMap.BiEntry<X, Y, V> {
+    protected class Node implements ObjObjPairMap.PairEntry<X, Y, V> {
         protected int pos;
 
         protected Node update(int pos) {
@@ -926,8 +926,8 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         public boolean equals(Object obj) {
             if (obj == this) return true;
 
-            if (!(obj instanceof PairMap.BiEntry<?, ?, ?>)) return false;
-            final PairMap.BiEntry<?, ?, ?> cast = (PairMap.BiEntry<?, ?, ?>) obj;
+            if (!(obj instanceof PairMap.PairEntry<?, ?, ?>)) return false;
+            final PairMap.PairEntry<?, ?, ?> cast = (PairMap.PairEntry<?, ?, ?>) obj;
             final int posL = this.pos;
             return Objects.equals(ObjObjFlatLinearProbingHashPairMap.this.keyATable[posL], cast.getFirstKey())
                     && Objects.equals(ObjObjFlatLinearProbingHashPairMap.this.keyBTable[posL], cast.getFirstKey())
@@ -1110,24 +1110,24 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         }
     }
 
-    protected class MapEntryIterator extends MapIterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>> implements Iterator<ObjObjPairMap.BiEntry<X, Y, V>> {
-        public ObjObjPairMap.BiEntry<X, Y, V> next() {
+    protected class MapEntryIterator extends MapIterator<Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>>> implements Iterator<ObjObjPairMap.PairEntry<X, Y, V>> {
+        public ObjObjPairMap.PairEntry<X, Y, V> next() {
             return new Node(this.nextPos());
         }
 
-        protected void consumerProxy(Consumer<? super BiEntry<X, Y, V>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(new Node(pos));
         }
     }
 
-    protected class MapEntryViewIterator extends MapIterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>> implements Iterator<ObjObjPairMap.BiEntry<X, Y, V>> {
+    protected class MapEntryViewIterator extends MapIterator<Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>>> implements Iterator<ObjObjPairMap.PairEntry<X, Y, V>> {
         protected final Node tmpEntry = new Node();
 
-        public ObjObjPairMap.BiEntry<X, Y, V> next() {
+        public ObjObjPairMap.PairEntry<X, Y, V> next() {
             return this.tmpEntry.update(this.nextPos());
         }
 
-        protected void consumerProxy(Consumer<? super BiEntry<X, Y, V>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(this.tmpEntry.update(pos));
         }
     }
@@ -1174,16 +1174,16 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         }
     }
 
-    protected class MapEntrySpliterator extends MapSpliterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>, Spliterator<ObjObjPairMap.BiEntry<X, Y, V>>> implements Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> {
+    protected class MapEntrySpliterator extends MapSpliterator<Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>>, Spliterator<ObjObjPairMap.PairEntry<X, Y, V>>> implements Spliterator<ObjObjPairMap.PairEntry<X, Y, V>> {
         protected MapEntrySpliterator(int index, int limitCap, int estSize) {
             super(index, limitCap, estSize);
         }
 
-        protected Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> splitProxy(int index, int limitCap, int estSize) {
+        protected Spliterator<ObjObjPairMap.PairEntry<X, Y, V>> splitProxy(int index, int limitCap, int estSize) {
             return new MapEntrySpliterator(index, limitCap, estSize);
         }
 
-        protected void consumerProxy(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(new Node(pos));
         }
 
@@ -1192,18 +1192,18 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         }
     }
 
-    protected class MapEntryViewSpliterator extends MapSpliterator<Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>>, Spliterator<ObjObjPairMap.BiEntry<X, Y, V>>> implements Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> {
+    protected class MapEntryViewSpliterator extends MapSpliterator<Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>>, Spliterator<ObjObjPairMap.PairEntry<X, Y, V>>> implements Spliterator<ObjObjPairMap.PairEntry<X, Y, V>> {
         protected final Node tmpEntry = new Node();
 
         protected MapEntryViewSpliterator(int index, int limitCap, int estSize) {
             super(index, limitCap, estSize);
         }
 
-        protected Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> splitProxy(int index, int limitCap, int estSize) {
+        protected Spliterator<ObjObjPairMap.PairEntry<X, Y, V>> splitProxy(int index, int limitCap, int estSize) {
             return new MapEntryViewSpliterator(index, limitCap, estSize);
         }
 
-        protected void consumerProxy(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action, X keyA, int pos) {
+        protected void consumerProxy(Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>> action, X keyA, int pos) {
             action.accept(this.tmpEntry.update(pos));
         }
 
@@ -1375,7 +1375,7 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         }
     }
 
-    protected class MapEntrySet extends AbstractObjSet<ObjObjPairMap.BiEntry<X, Y, V>> implements EntrySetExt<ObjObjPairMap.BiEntry<X, Y, V>> {
+    protected class MapEntrySet extends AbstractObjSet<ObjObjPairMap.PairEntry<X, Y, V>> implements EntrySetExt<ObjObjPairMap.PairEntry<X, Y, V>> {
         protected final Node tmpEntry = new Node();
 
         public void resize(int newCapacity) {
@@ -1387,18 +1387,18 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
         }
 
         public boolean contains(Object o) {
-            if (!(o instanceof PairMap.BiEntry<?, ?, ?>)) return false;
-            final PairMap.BiEntry<?, ?, ?> entryCast = (PairMap.BiEntry<?, ?, ?>) o;
+            if (!(o instanceof PairMap.PairEntry<?, ?, ?>)) return false;
+            final PairMap.PairEntry<?, ?, ?> entryCast = (PairMap.PairEntry<?, ?, ?>) o;
             return ObjObjFlatLinearProbingHashPairMap.this.containsKey(entryCast.getFirstKey(), entryCast.getSecondKey());
         }
 
         public boolean removeElement(Object o) {
-            if (!(o instanceof PairMap.BiEntry<?, ?, ?>)) return false;
-            final PairMap.BiEntry<?, ?, ?> entryCast = (PairMap.BiEntry<?, ?, ?>) o;
+            if (!(o instanceof PairMap.PairEntry<?, ?, ?>)) return false;
+            final PairMap.PairEntry<?, ?, ?> entryCast = (PairMap.PairEntry<?, ?, ?>) o;
             return ObjObjFlatLinearProbingHashPairMap.this.remove(entryCast.getFirstKey(), entryCast.getSecondKey(), entryCast.getValue());
         }
 
-        protected void forEachProxy(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action, IntFunction<ObjObjPairMap.BiEntry<X, Y, V>> supplier) {
+        protected void forEachProxy(Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>> action, IntFunction<ObjObjPairMap.PairEntry<X, Y, V>> supplier) {
             final X[] keyAL = ObjObjFlatLinearProbingHashPairMap.this.keyATable;
             final int capL = keyAL.length;
             for (int pos = 0; pos < capL; pos++) {
@@ -1408,11 +1408,11 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
             }
         }
 
-        public void forEach(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action) {
+        public void forEach(Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>> action) {
             this.forEachProxy(action, Node::new);
         }
 
-        public void viewForEach(Consumer<? super ObjObjPairMap.BiEntry<X, Y, V>> action) {
+        public void viewForEach(Consumer<? super ObjObjPairMap.PairEntry<X, Y, V>> action) {
             this.forEachProxy(action, this.tmpEntry::update);
         }
 
@@ -1428,19 +1428,19 @@ public class ObjObjFlatLinearProbingHashPairMap<X, Y, V> implements ObjObjPairMa
             return ObjObjFlatLinearProbingHashPairMap.this.size;
         }
 
-        public Iterator<ObjObjPairMap.BiEntry<X, Y, V>> iterator() {
+        public Iterator<ObjObjPairMap.PairEntry<X, Y, V>> iterator() {
             return new MapEntryIterator();
         }
 
-        public Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> spliterator() {
+        public Spliterator<ObjObjPairMap.PairEntry<X, Y, V>> spliterator() {
             return new MapEntrySpliterator(0, -1, 0);
         }
 
-        public Iterator<ObjObjPairMap.BiEntry<X, Y, V>> viewIterator() {
+        public Iterator<ObjObjPairMap.PairEntry<X, Y, V>> viewIterator() {
             return new MapEntryViewIterator();
         }
 
-        public Spliterator<ObjObjPairMap.BiEntry<X, Y, V>> viewSpliterator() {
+        public Spliterator<ObjObjPairMap.PairEntry<X, Y, V>> viewSpliterator() {
             return new MapEntryViewSpliterator(0, -1, 0);
         }
 

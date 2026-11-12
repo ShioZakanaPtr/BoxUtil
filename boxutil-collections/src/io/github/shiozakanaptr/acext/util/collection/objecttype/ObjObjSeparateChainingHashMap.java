@@ -26,7 +26,7 @@ public class ObjObjSeparateChainingHashMap<K, V> implements ObjObjMap<K, V>, Has
 
     protected transient ObjSet<K> keySet = null;
     protected transient ObjCollection<V> valueCollection = null;
-    protected transient EntrySetExt<Entry<K, V>> entrySet = null;
+    protected transient EntrySetExt<ObjObjMap.Entry<K, V>> entrySet = null;
 
     protected Node<K, V>[] newTable(int cap) {
         return (Node<K, V>[]) new Node<?, ?>[cap];
