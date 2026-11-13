@@ -38,12 +38,9 @@ public class IntLinearProbingHashSet extends AbstractIntSet implements HashConta
      * @param hashBehavior should create a new ones from {@link HashBehaviorFactory}.
      */
     public IntLinearProbingHashSet(int initialCapacity, float loadFactor, final HashBehavior<Integer> hashBehavior) {
-        InternalCollectionUtil.checkHashCapacity(initialCapacity);
-        InternalCollectionUtil.checkHashLoadFactor(loadFactor, 0.2f, 0.9f);
-
-        this.capacity = InternalCollectionUtil.getCapacityPOT(Math.max(initialCapacity, 2));
+        this.capacity = InternalCollectionUtil.checkHashCapacity(InternalCollectionUtil.getCapacityPOT(Math.max(initialCapacity, 2)));
         this.posMask = this.capacity - 1;
-        this.loadFactor = loadFactor;
+        this.loadFactor = InternalCollectionUtil.checkHashLoadFactor(loadFactor, 0.2f, 0.9f);
         this.hashBehavior = Objects.requireNonNull(hashBehavior);
         this.element = this.newTable(this.capacity + 1);
         this.calculateRemaining();
@@ -110,12 +107,12 @@ public class IntLinearProbingHashSet extends AbstractIntSet implements HashConta
 
     public void resize(int newCapacity) {
         if (newCapacity < 1) throw new IllegalArgumentException("Not a valid size: '" + newCapacity + '\'');
-        final int minSize = InternalCollectionUtil.getHashTableCapacity(this.size + 1, this.loadFactor), newTargetCap = InternalCollectionUtil.getCapacityPOT(newCapacity);
-        InternalCollectionUtil.checkHashCapacity(newTargetCap);
-        if (newTargetCap == this.capacity) return;
+        final int minSize = InternalCollectionUtil.getHashTableCapacity(this.size + 1, this.loadFactor),
+                newTargetCap = InternalCollectionUtil.checkHashCapacity(InternalCollectionUtil.getCapacityPOT(newCapacity)),
+                newCap = Math.max(minSize, Math.max(newTargetCap, 2));
+        if (newCap == this.capacity) return;
 
-        final int newCap = Math.max(minSize, Math.max(newTargetCap, 2)),
-                newMask = newCap - 1, oldCap;
+        final int newMask = newCap - 1, oldCap;
         final int[] newEle = this.newTable(newCap + 1), oldEle = this.element;
 
         if (this.size > 0) {

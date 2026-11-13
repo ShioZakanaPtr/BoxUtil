@@ -1024,7 +1024,7 @@ public interface PairMap<L, R, V> extends Container {
     void forEach(@NotNull TeConsumer<? super L, ? super R, ? super V> action);
 
     /**
-     * Copies all of the mappings from the specified map to this map (optional
+     * Copies all the mappings from the specified map to this map (optional
      * operation). The effect of this call is equivalent to that of calling
      * {@link #put(Object, Object, Object)} on this map once for each mapping
      * from the specified map to this map.
@@ -1238,7 +1238,7 @@ public interface PairMap<L, R, V> extends Container {
     EntrySetExt<PairEntry<L, R, V>> entrySet();
 
     /**
-     * Removes all of the mappings from this map (optional operation). The map
+     * Removes all the mappings from this map (optional operation). The map
      * will be empty after this call returns.
      *
      * @throws UnsupportedOperationException if the {@code clear} operation is

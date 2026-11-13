@@ -32,8 +32,12 @@ public final class InternalCollectionUtil {
         throw new IllegalStateException("The capacity of container overflow; should split to different ones");
     }
 
+    public static void checkCapacity(long cap, long max) {
+        if (!(cap >= 0 && cap <= max)) throw new IllegalArgumentException("Capacity overflow '" + cap + "' over '" + max + '\'');
+    }
+
     public static void checkCapacity(long cap) {
-        if (!(cap >= 0 && cap <= Container.MAXIMUM_CAPACITY)) throw new IllegalArgumentException("Capacity overflow " + cap);
+        checkCapacity(cap, Container.MAXIMUM_CAPACITY);
     }
 
     public static void checkIndex(long index, long min, long max) {
@@ -66,9 +70,7 @@ public final class InternalCollectionUtil {
     }
 
     public static int getHashTableCapacity(int elementSize, float loadFactor) {
-        final long cap;
-        checkHashCapacity(cap = getCapacityPOT((long) Math.ceil(elementSize / (double) loadFactor)));
-        return (int) Math.max(cap, 2);
+        return (int) Math.max(checkHashCapacity(getCapacityPOT((long) Math.ceil(elementSize / (double) loadFactor))), 2);
     }
 
     public static int getHashTableMaxRemaining(int capacity, float loadFactor, boolean reservedNull) {
@@ -78,16 +80,19 @@ public final class InternalCollectionUtil {
         return reservedNull ? result + 1 : result;
     }
 
-    public static void checkHashCapacity(int cap) {
-        if (!(cap >= 0 && cap <= HashContainer.MAXIMUM_CAPACITY)) throw new IllegalArgumentException("Capacity overflow " + cap);
+    public static int checkHashCapacity(int cap) {
+        checkCapacity(cap, HashContainer.MAXIMUM_CAPACITY);
+        return cap;
     }
 
-    public static void checkHashCapacity(long cap) {
-        if (!(cap >= 0 && cap <= HashContainer.MAXIMUM_CAPACITY)) throw new IllegalArgumentException("Capacity overflow " + cap);
+    public static long checkHashCapacity(long cap) {
+        checkCapacity(cap, HashContainer.MAXIMUM_CAPACITY);
+        return cap;
     }
 
-    public static void checkHashLoadFactor(float loadFactor, float min, float max) {
+    public static float checkHashLoadFactor(float loadFactor, float min, float max) {
         if (!(Float.isFinite(loadFactor) && loadFactor >= min && loadFactor <= max)) throw new IllegalArgumentException("Illegal load factor '" + loadFactor + "' out of range [" + min + ',' + max + ']');
+        return loadFactor;
     }
 
     public static int expandHashArray(int length) {

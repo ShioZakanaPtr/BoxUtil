@@ -6,6 +6,7 @@ import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteIterator;
 import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteObjMap;
 import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteSet;
 import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteSpliterator;
+import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.objecttype.AbstractObjCollection;
 import io.github.shiozakanaptr.acext.util.collection.objecttype.AbstractObjSet;
 import io.github.shiozakanaptr.acext.util.function.bytetype.ByteConsumer;
@@ -37,7 +38,7 @@ public class ByteObjBitMap<V> implements ByteObjMap<V>, Cloneable, Serializable 
     }
 
     public ByteObjBitMap(int initialCapacity) {
-        if (initialCapacity > 256 || initialCapacity < 1) throw new IllegalArgumentException("The capacity of map overflow: '" + initialCapacity + '\'');
+        InternalCollectionUtil.checkCapacity(initialCapacity, 256);
         this.valueTable = this.newValueTable(Math.max(initialCapacity, 2));
     }
 
@@ -80,7 +81,7 @@ public class ByteObjBitMap<V> implements ByteObjMap<V>, Cloneable, Serializable 
 
     public void resize(int newCapacity) {
         if (newCapacity < 1) throw new IllegalArgumentException("Not a valid size: '" + newCapacity + '\'');
-        if (newCapacity > 256) throw new IllegalArgumentException("Capacity overflow: '" + newCapacity + '\'');
+        InternalCollectionUtil.checkCapacity(newCapacity, 256);
         final int newCap = Math.max(newCapacity, 2);
         if (newCap <= this.getLimit()) return;
         this.resizeTable(newCap);

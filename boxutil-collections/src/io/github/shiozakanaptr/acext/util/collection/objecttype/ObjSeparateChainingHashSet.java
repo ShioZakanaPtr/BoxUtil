@@ -33,12 +33,9 @@ public class ObjSeparateChainingHashSet<E> extends AbstractObjSet<E> implements 
      * @param hashBehavior should create a new ones from {@link HashBehaviorFactory}.
      */
     public ObjSeparateChainingHashSet(int initialCapacity, float loadFactor, final HashBehavior<E> hashBehavior) {
-        InternalCollectionUtil.checkHashCapacity(initialCapacity);
-        InternalCollectionUtil.checkHashLoadFactor(loadFactor, 0.2f, 2.0f);
-
-        final int capacity = InternalCollectionUtil.getCapacityPOT(Math.max(initialCapacity, 2));
+        this.loadFactor = InternalCollectionUtil.checkHashLoadFactor(loadFactor, 0.2f, 2.0f);
+        final int capacity = InternalCollectionUtil.checkHashCapacity(InternalCollectionUtil.getCapacityPOT(Math.max(initialCapacity, 2)));
         this.posMask = capacity - 1;
-        this.loadFactor = loadFactor;
         this.hashBehavior = Objects.requireNonNull(hashBehavior);
         this.table = this.newTable(capacity);
         this.calculateRemaining();
@@ -105,12 +102,12 @@ public class ObjSeparateChainingHashSet<E> extends AbstractObjSet<E> implements 
 
     public void resize(int newCapacity) {
         if (newCapacity < 1) throw new IllegalArgumentException("Not a valid size: '" + newCapacity + '\'');
-        final int minSize = InternalCollectionUtil.getHashTableCapacity(this.size + 1, this.loadFactor), newTargetCap = InternalCollectionUtil.getCapacityPOT(newCapacity);
-        InternalCollectionUtil.checkHashCapacity(newTargetCap);
-        if (newTargetCap == this.table.length) return;
+        final int minSize = InternalCollectionUtil.getHashTableCapacity(this.size + 1, this.loadFactor),
+                newTargetCap = InternalCollectionUtil.checkHashCapacity(InternalCollectionUtil.getCapacityPOT(newCapacity)),
+                newCap = Math.max(minSize, Math.max(newTargetCap, 2));
+        if (newCap == this.table.length) return;
 
-        final int newCap = Math.max(minSize, Math.max(newTargetCap, 2)),
-                newMask = newCap - 1;
+        final int newMask = newCap - 1;
         final Node<E>[] newTable = this.newTable(newCap), oldTable = this.table;
 
         if (this.size > 0) {
