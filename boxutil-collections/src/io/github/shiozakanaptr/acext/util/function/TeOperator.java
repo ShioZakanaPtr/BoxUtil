@@ -1,4 +1,4 @@
-package io.github.shiozakanaptr.acext.util.function.objecttype;
+package io.github.shiozakanaptr.acext.util.function;
 
 /**
  * Represents an operation on three operands that produces a result of the
@@ -12,10 +12,13 @@ package io.github.shiozakanaptr.acext.util.function.objecttype;
  * @param <T> the type of the first operand and of the result
  * @param <U> the type of the second operand
  * @param <R> the type of the third operand and of the result
+ *
  * @see TeFunction
  * @see java.util.function.UnaryOperator
  * @see java.util.function.BinaryOperator
+ *
  * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 @FunctionalInterface
 public interface TeOperator<T, U, R> extends TeFunction<T, U, R, R> {

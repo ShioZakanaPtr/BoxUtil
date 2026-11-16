@@ -24,8 +24,9 @@ import java.util.Objects;
  * notice. For this reason, individual methods are not documented.
  *
  * <p>All members of this class are static. This class cannot be instantiated.
+ *
+ * @since 1.0.0
  * @author ShioZakanaPtr
- * @version 1.0.0
  */
 public final class InternalCollectionUtil {
     public static void throwCapacityOverflowTips() {
@@ -116,6 +117,10 @@ public final class InternalCollectionUtil {
 
         public static void ioCheckKeyIsDuplicate(Object target) throws StreamCorruptedException {
             throw new StreamCorruptedException("Duplicate key '" + target + '\'');
+        }
+
+        public static void ioCheckValueIsDuplicate(Object target) throws StreamCorruptedException {
+            throw new StreamCorruptedException("Duplicate value '" + target + '\'');
         }
 
         public static int ioGetHashTableCapacity(long elementSize, float loadFactor, long max) throws StreamCorruptedException {

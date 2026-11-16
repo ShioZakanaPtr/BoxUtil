@@ -1,4 +1,4 @@
-package io.github.shiozakanaptr.acext.util.function.objecttype;
+package io.github.shiozakanaptr.acext.util.function;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -15,9 +15,12 @@ import java.util.function.Function;
  * @param <U> the type of the second argument to the function
  * @param <V> the type of the third argument to the function
  * @param <R> the type of the result of the function
+ *
  * @see java.util.function.Function
  * @see java.util.function.BiFunction
+ *
  * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 @FunctionalInterface
 public interface TeFunction<T, U, V, R> {

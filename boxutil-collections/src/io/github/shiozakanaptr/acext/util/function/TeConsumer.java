@@ -1,4 +1,4 @@
-package io.github.shiozakanaptr.acext.util.function.objecttype;
+package io.github.shiozakanaptr.acext.util.function;
 
 import java.util.Objects;
 
@@ -13,9 +13,12 @@ import java.util.Objects;
  * @param <T> the type of the first argument to the operation
  * @param <U> the type of the second argument to the operation
  * @param <V> the type of the third argument to the operation
+ *
  * @see java.util.function.Consumer
  * @see java.util.function.BiConsumer
- * @since 1.0
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 @FunctionalInterface
 public interface TeConsumer<T, U, V> {

@@ -1,5 +1,7 @@
 package io.github.shiozakanaptr.acext.util.function.objecttype;
 
+import io.github.shiozakanaptr.acext.util.function.TeConsumer;
+
 @FunctionalInterface
 public interface ObjByteTeConsumer<T, U> extends TeConsumer<T, U, Byte> {
     void accept(T t, U u, byte v);

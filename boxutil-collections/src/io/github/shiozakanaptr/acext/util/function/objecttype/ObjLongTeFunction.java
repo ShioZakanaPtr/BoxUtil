@@ -1,5 +1,7 @@
 package io.github.shiozakanaptr.acext.util.function.objecttype;
 
+import io.github.shiozakanaptr.acext.util.function.TeFunction;
+
 @FunctionalInterface
 public interface ObjLongTeFunction<T, U, R> extends TeFunction<T, U, Long, R> {
     R apply(T t, U u, long v);
