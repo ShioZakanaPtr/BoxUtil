@@ -29,6 +29,9 @@ package io.github.shiozakanaptr.acext.api.collection;
  * @see Container#remaining64()
  * @see Container#size64()
  * @see Container#clear64(long)
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface JumboContainer extends Container {
 }

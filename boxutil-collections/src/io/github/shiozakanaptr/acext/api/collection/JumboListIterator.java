@@ -24,6 +24,9 @@ import java.util.ListIterator;
  * @see ListIterator#nextIndex()
  * @see ListIterator#previousIndex()
  * @see JumboContainer
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface JumboListIterator<E> extends ListIterator<E> {
     /**

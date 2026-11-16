@@ -4,27 +4,27 @@ import io.github.shiozakanaptr.acext.api.collection.PairMap;
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import org.jetbrains.annotations.NotNull;
 
-public interface ObjObjPairMap<X, Y, V> extends PairMap<X, Y, V> {
+public interface ObjObjPairMap<L, R, V> extends PairMap<L, R, V> {
     @NotNull
-    ObjCollection<X> firstKeyCollection();
+    ObjCollection<L> firstKeyCollection();
 
     @NotNull
-    ObjCollection<Y> secondKeyCollection();
+    ObjCollection<R> secondKeyCollection();
 
     @NotNull
     ObjCollection<V> valueCollection();
 
     @NotNull
-    EntrySetExt<ObjObjPairMap.PairEntry<X, Y, V>> entrySetRaw();
+    EntrySetExt<ObjObjPairMap.PairEntry<L, R, V>> entrySetRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
      */
     @Deprecated
-    default EntrySetExt<PairMap.PairEntry<X, Y, V>> entrySet() {
+    default EntrySetExt<PairMap.PairEntry<L, R, V>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface PairEntry<X, Y, V> extends PairMap.PairEntry<X, Y, V> {
+    interface PairEntry<L, R, V> extends PairMap.PairEntry<L, R, V> {
     }
 }

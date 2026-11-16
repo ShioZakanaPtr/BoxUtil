@@ -30,6 +30,9 @@ import java.util.Objects;
  *
  * @see MapExt
  * @see java.util.Map
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface BiMap<K, V> extends MapExt<K, V> {
     /**
@@ -283,4 +286,30 @@ public interface BiMap<K, V> extends MapExt<K, V> {
      */
     @NotNull
     BiMap<V, K> inverse();
+
+    /**
+     * Returns whether this bimap is an inverse view of another {@link BiMap}.
+     *
+     * <p>A {@link BiMap} obtained from {@link #inverse()} is an inverse view:
+     * it maps the original bimap's values back to their associated keys, and it
+     * is backed by the same underlying data as the original. For such a view,
+     * this method returns {@code true}, and calling {@link #inverse()} on it
+     * returns the original (primary) bimap.
+     *
+     * <p>For a bimap that is not an inverse view, this method returns
+     * {@code false}, and {@link #inverse()} returns a new inverse view backed by
+     * this bimap.
+     *
+     * <p>The default implementation returns {@code false}. Implementations that
+     * expose an inverse view should override this method so that callers can
+     * distinguish a primary bimap from its inverse without inspecting the
+     * object's identity or type.
+     *
+     * @return {@code true} if this bimap is an inverse view of another
+     *         {@link BiMap}; {@code false} otherwise
+     * @see #inverse()
+     */
+    default boolean isInverse() {
+        return false;
+    }
 }

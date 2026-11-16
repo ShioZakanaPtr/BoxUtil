@@ -9,10 +9,55 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Typically, for any key or value is {@code null}, it should be treated as {@code 0}
- * if the key was specific primitive type that the Map implementation defined.
- * <p>However, for any value is {@code 0}, usually it not be treated as {@code null}
- * if the value was specific primitive type that the Map implementation defined.
+ * A {@link Map} extension that adds additional map operations on top of the
+ * standard {@link Map} contract and shares {@link Container} with map
+ * implementations so that capacity and resizing can be controlled uniformly.
+ *
+ * <p>In addition to the operations inherited from {@link Map}, a
+ * {@code MapExt} defines extra map operation methods. These operations
+ * complement rather than replace the {@link Map} operations, and may include
+ * additional forms of querying and updating mappings as well as capacity-related
+ * operations where applicable. Unless otherwise documented by an implementation,
+ * their key/value equality semantics are the same as those of {@link Map}.
+ * Implementations may provide optimized or primitive-specialized versions of
+ * these operations.
+ *
+ * <p>Methods such as {@link #get(Object)} return
+ * {@link #getDefaultReturnValue()} when no mapping exists for a queried key.
+ * Implementations may allow this default value to be customized through
+ * {@link #setDefaultReturnValue(Object)}.
+ *
+ * <p>The views exposed by {@link Map#keySet()} and {@link Map#values()} remain
+ * subject to the {@link Map} contract, expect {@link Map#entrySet()} will return
+ * a set that under {@link EntrySetExt} class, Capacity and resizing behavior,
+ * where exposed, follows {@link Container}.
+ *
+ * <p><b>Null handling.</b> Typically, for any key or value that is {@code null},
+ * it should be treated as {@code 0} if the key is of a specific primitive type
+ * that the implementation defines. However, for any value that is {@code 0}, it
+ * usually is not treated as {@code null} if the value is of a specific
+ * primitive type that the implementation defines. Concrete implementations may
+ * impose additional restrictions; consult their documentation.
+ *
+ * <p><b>Optional operations.</b> Some implementations may not support mutation.
+ * An implementation that does not support a mutating operation is documented as
+ * throwing {@link UnsupportedOperationException} for that operation. Callers
+ * should consult the documentation of the concrete implementation for the
+ * optional operations it supports.
+ *
+ * <p><b>Not thread-safe.</b> Unless a concrete implementation documents
+ * otherwise, a {@code MapExt} is not safe for concurrent use by multiple
+ * threads. External synchronization is required if it is shared between
+ * threads.
+ *
+ * @param <K> the type of keys maintained by this map
+ * @param <V> the type of mapped values
+ *
+ * @see Map
+ * @see Container
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface MapExt<K, V> extends Map<K, V>, Container {
     /**

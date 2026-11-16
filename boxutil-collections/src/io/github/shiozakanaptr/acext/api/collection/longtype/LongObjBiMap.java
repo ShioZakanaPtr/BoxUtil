@@ -92,15 +92,13 @@ public interface LongObjBiMap<V> extends BiMap<Long, V>, LongObjMap<V> {
 
     @NotNull ObjSet<V> values();
 
-    @NotNull EntrySetExt<LongObjMap.Entry<V>> entrySetRaw();
-
     /**
      * @deprecated Please use the corresponding method that using primitive or actual type.
      * @see #entrySetRaw()
      */
     @Deprecated
     default @NotNull EntrySetExt<MapExt.Entry<Long, V>> entrySet() {
-        return (EntrySetExt) this.entrySetRaw();
+        return LongObjMap.super.entrySet();
     }
 
     @NotNull ObjLongBiMap<V> inverse();

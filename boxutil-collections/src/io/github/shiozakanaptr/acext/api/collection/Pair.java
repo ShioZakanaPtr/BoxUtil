@@ -12,6 +12,10 @@ package io.github.shiozakanaptr.acext.api.collection;
  * implemented by specialized classes, including implementations specialized
  * for primitive component types.
  *
+ * <p>In cases where both values are always available and used together,
+ * declaring two separate fields is generally preferable to a pair; a pair is
+ * intended for situations where bundling the two values is genuinely useful.
+ *
  * <p>The left and right elements may be mutable through
  * {@code left(value)}, {@code right(value)}, or {@link #setValue(Object)}.
  * Whether mutation is supported is implementation-dependent. The default
@@ -29,6 +33,9 @@ package io.github.shiozakanaptr.acext.api.collection;
  *          and the right element as the value.
  *
  * @see MapExt.Entry
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface Pair<L, R> extends MapExt.Entry<L, R> {
     /**

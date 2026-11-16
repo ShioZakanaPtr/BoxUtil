@@ -67,6 +67,10 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     boolean remove(Object key, long value);
 
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     */
+    @Deprecated
     default boolean remove(Object key, Object value) {
         if (value != null && !(value instanceof Long)) return false;
         return this.remove(key, value != null ? ((Long) value).longValue() : (long) 0);

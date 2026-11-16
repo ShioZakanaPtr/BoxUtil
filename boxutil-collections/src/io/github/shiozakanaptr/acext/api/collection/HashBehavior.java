@@ -17,6 +17,9 @@ import java.util.Objects;
  * treated as equal to {@code null} for hashing purposes.
  *
  * @param <K> the type of keys
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 @FunctionalInterface
 public interface HashBehavior<K> extends Serializable {

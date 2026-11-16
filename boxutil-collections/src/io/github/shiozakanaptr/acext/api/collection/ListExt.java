@@ -9,9 +9,20 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * For any element is {@code null}, it should be treated as {@code 0} or
- * {@code Number(0)} if the element was specific primitive type that the
- * List implementation defined.
+ * A {@link List} extension that adds additional list operations on top of
+ * the standard {@link List} contract and shares {@link Container} with list
+ * implementations so that capacity and resizing can be controlled uniformly.
+ *
+ * <p><b>Null handling.</b> Typically, for any element that is {@code null},
+ * it should be treated as {@code 0} if the key is of a specific primitive type
+ * that the implementation defines.
+ *
+ * @param <E> the type of elements maintained by this list
+ *
+ * @see List
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection<E>, Container {
     // For compatibility

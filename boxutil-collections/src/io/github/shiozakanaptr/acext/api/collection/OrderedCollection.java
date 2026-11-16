@@ -18,9 +18,12 @@ package io.github.shiozakanaptr.acext.api.collection;
  * encounter-order semantics and optional-operation behavior.
  *
  * @param <E> the type of elements in this collection
+ *
  * @see <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/SequencedCollection.html">
  *      SequencedCollection (JDK 21)</a>
+ *
  * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface OrderedCollection<E> {
     /**

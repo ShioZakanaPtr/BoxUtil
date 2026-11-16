@@ -7,6 +7,22 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+/**
+ * A {@link Deque} extension that adds additional deque operations on top of
+ * the standard {@link Deque} contract and shares {@link Container} with deque
+ * implementations so that capacity and resizing can be controlled uniformly.
+ *
+ * <p><b>Null handling.</b> Typically, for any element that is {@code null},
+ * it should be treated as {@code 0} if the key is of a specific primitive type
+ * that the implementation defines.
+ *
+ * @param <E> the type of elements maintained by this deque
+ *
+ * @see Deque
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface DequeExt<E> extends Deque<E>, QueueExt<E>, OrderedCollection<E> {
     default E peek() {
         return this.peekFirst();

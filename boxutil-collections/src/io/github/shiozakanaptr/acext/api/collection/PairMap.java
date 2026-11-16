@@ -1,7 +1,7 @@
 package io.github.shiozakanaptr.acext.api.collection;
 
-import io.github.shiozakanaptr.acext.util.function.objecttype.TeConsumer;
-import io.github.shiozakanaptr.acext.util.function.objecttype.TeFunction;
+import io.github.shiozakanaptr.acext.util.function.TeConsumer;
+import io.github.shiozakanaptr.acext.util.function.TeFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import java.util.function.Function;
 /**
  * A map that is keyed by an ordered pair of two keys, {@code (keyA, keyB)},
  * rather than by a single key. A {@code PairMap} is therefore a three-dimensional
- * association from {@code (X, Y)} to {@code V}.
+ * association from {@code (L, R)} to {@code V}.
  *
  * <p>The pair {@code (keyA, keyB)} identifies a single value, exactly as a
  * single key identifies a single value in {@link Map}. Two pairs are considered
@@ -50,10 +50,14 @@ import java.util.function.Function;
  * @param <L> the type of the first key
  * @param <R> the type of the second key
  * @param <V> the type of the mapped value
+ *
  * @see Map
  * @see MapExt
  * @see Container
  * @see PairEntry
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface PairMap<L, R, V> extends Container {
     /**
@@ -755,7 +759,7 @@ public interface PairMap<L, R, V> extends Container {
      * if (!containsKey(keyA, keyB)) return def;
      *
      * V currValue = get(keyA, keyB);
-     * Pair<? extends X, ? extends Y> newKeyPair = remappingFunction.apply(keyA, keyB, currValue);
+     * Pair<? extends L, ? extends R> newKeyPair = remappingFunction.apply(keyA, keyB, currValue);
      * if (newKeyPair == null) {
      *     remove(keyA, keyB);
      *     return def;
@@ -1307,20 +1311,20 @@ public interface PairMap<L, R, V> extends Container {
      * modified. The behaviour of the accessors on an invalidated entry is
      * unspecified unless the implementation documents otherwise.
      *
-     * @param <X> the type of the first key
-     * @param <Y> the type of the second key
+     * @param <L> the type of the first key
+     * @param <R> the type of the second key
      * @param <V> the type of the mapped value
      * @see PairMap#entrySet()
      * @see Entry
      */
-    interface PairEntry<X, Y, V> {
+    interface PairEntry<L, R, V> {
         /**
          * Returns the first key of this entry.
          *
          * @return the first key of this entry
          * @see Entry#getKey()
          */
-        X getFirstKey();
+        L getFirstKey();
 
         /**
          * Returns the second key of this entry.
@@ -1328,7 +1332,7 @@ public interface PairMap<L, R, V> extends Container {
          * @return the second key of this entry
          * @see Entry#getKey()
          */
-        Y getSecondKey();
+        R getSecondKey();
 
         /**
          * Returns the value of this entry.

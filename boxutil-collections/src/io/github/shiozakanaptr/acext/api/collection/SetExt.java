@@ -7,9 +7,20 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Typically, for any element is {@code null}, it should be treated as {@code 0}
- * or {@code Number(0)} if the element was specific primitive
- * type that the Set implementation defined.
+ * A {@link Set} extension that adds additional set operations on top of
+ * the standard {@link Set} contract and shares {@link Container} with set
+ * implementations so that capacity and resizing can be controlled uniformly.
+ *
+ * <p><b>Null handling.</b> Typically, for any element that is {@code null},
+ * it should be treated as {@code 0} if the key is of a specific primitive type
+ * that the implementation defines.
+ *
+ * @param <E> the type of elements maintained by this set
+ *
+ * @see Set
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface SetExt<E> extends Set<E>, CollectionExt<E>, Container {
     /**

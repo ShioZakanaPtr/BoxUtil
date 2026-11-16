@@ -3,6 +3,9 @@ package io.github.shiozakanaptr.acext.api.collection;
 /**
  * A generic interface for basic containers. It exposes capacity and
  * resizing function that can be control it.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface Container {
     int MAXIMUM_CAPACITY = (1 << 31) - 9;

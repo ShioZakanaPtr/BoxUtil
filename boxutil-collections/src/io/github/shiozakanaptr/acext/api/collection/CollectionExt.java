@@ -3,8 +3,26 @@ package io.github.shiozakanaptr.acext.api.collection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Deque;
 import java.util.Objects;
 
+/**
+ * A {@link Collection} extension that adds additional collection operations
+ * on top of the standard {@link Collection} contract and shares {@link Container}
+ * with collection implementations so that capacity and resizing can be
+ * controlled uniformly.
+ *
+ * <p><b>Null handling.</b> Typically, for any element that is {@code null},
+ * it should be treated as {@code 0} if the key is of a specific primitive type
+ * that the implementation defines.
+ *
+ * @param <E> the type of elements maintained by this collection
+ *
+ * @see Collection
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface CollectionExt<E> extends Collection<E>, Container {
     /**
      * Removes a single instance of the specified element from this collection,

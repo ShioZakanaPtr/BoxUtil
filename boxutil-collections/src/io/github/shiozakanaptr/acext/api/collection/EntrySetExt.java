@@ -49,7 +49,12 @@ import java.util.function.Consumer;
  * @param <E> the element type; for the entry set of a map this is
  *            normally {@code Map.Entry<K,V>}
  *
+ * @see SetExt
+ * @see java.util.Set
  * @see Map#entrySet()
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface EntrySetExt<E> extends SetExt<E> {
     /**

@@ -7,8 +7,23 @@ import org.jetbrains.annotations.NotNull;
  * or similar hashing strategies. It exposes load factor, and delegates key
  * hashing and equality decisions to a {@link HashBehavior}.
  *
+ * <p>Implementations of this interface typically allow callers to supply a
+ * custom {@link HashBehavior} in order to change how keys are hashed and
+ * compared for equality. When no custom behavior is supplied, the container
+ * defaults to a single, simple hashing pass, chosen to be sufficient for
+ * typical use while remaining fast enough for general-purpose workloads.
+ *
+ * <p>If stronger guarantees are required, for example, protection against
+ * hash-flooding or other adversarial inputs: callers should instead supply a
+ * customized {@link HashBehavior} such as built from the {@code MurmurHash3}
+ * or {@code SipHash} routines provided by
+ * {@link io.github.shiozakanaptr.acext.util.HashingUtil}.
+ *
  * @param <X> the type of first keys maintained by this container
  * @param <Y> the type of second keys maintained by this container
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface BinaryHashContainer<X, Y> extends Container {
     /**
