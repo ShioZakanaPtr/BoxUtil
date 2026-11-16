@@ -24,6 +24,9 @@ import java.util.function.Supplier;
  *
  * @see HashBehavior
  * @see Strategy
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 @SuppressWarnings("unchecked")
 public final class HashBehaviorFactory {
