@@ -48,9 +48,11 @@ import java.util.concurrent.ConcurrentMap;
  * supported with concurrent semantics by this interface:
  *
  * <ul>
- *   <li>{@link MapExt#update}</li>
- *   <li>{@link MapExt#remapping}</li>
- *   <li>{@link MapExt#swapAt}</li>
+ *   <li>{@link MapExt#update}: when multiple threads attempt updates including
+ *   potentially calling function parameter multiple times.</li>
+ *   <li>{@link MapExt#remapping}: when multiple threads attempt updates including
+ *   potentially calling function parameter multiple times.</li>
+ *   <li>{@link MapExt#swapAt}: atomic swap and updates</li>
  * </ul>
  *
  * <p>For any additional {@link MapExt} operations not listed above, no
