@@ -370,6 +370,7 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      * implementations may allow customization via {@link #setDefaultReturnValue(V)}.
      *
      * @return the default return value
+     * @see #setDefaultReturnValue(Object)
      */
     default V getDefaultReturnValue() {
         return null;
@@ -384,6 +385,7 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
      * @return the previous default return value
      * @throws UnsupportedOperationException if this map using a fixed default
      *         return value.
+     * @see #getDefaultReturnValue()
      */
     default V setDefaultReturnValue(@Nullable V newDefault) {
         throw new UnsupportedOperationException();

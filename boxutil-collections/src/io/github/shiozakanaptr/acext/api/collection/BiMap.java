@@ -264,7 +264,6 @@ public interface BiMap<K, V> extends MapExt<K, V> {
      * modification.
      *
      * @return a set view of the values contained in this bimap
-     * @see #inverse()
      */
     @NotNull
     SetExt<V> values();
@@ -282,7 +281,7 @@ public interface BiMap<K, V> extends MapExt<K, V> {
      * are reflected in the other. The inverse of the inverse view is this bimap.
      *
      * @return the inverse view of this bimap
-     * @see #values()
+     * @see #isInverse()
      */
     @NotNull
     BiMap<V, K> inverse();
