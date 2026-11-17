@@ -7,6 +7,6 @@ public interface ByteByteBiFunction<R> extends BiFunction<Byte, Byte, R> {
     R apply(byte t, byte u);
 
     default R apply(Byte t, Byte u) {
-        return this.apply(t == null ? (byte) 0 : t, u == null ? (byte) 0 : u);
+        return this.apply(t != null ? t : (byte) 0, u != null ? u : (byte) 0);
     }
 }

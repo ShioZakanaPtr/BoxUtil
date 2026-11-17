@@ -2,10 +2,11 @@ package io.github.shiozakanaptr.acext.util.function.longtype;
 
 import java.util.function.BiConsumer;
 
+@FunctionalInterface
 public interface LongByteBiConsumer extends BiConsumer<Long, Byte> {
     void accept(long t, byte u);
 
     default void accept(Long t, Byte u) {
-        this.accept(t == null ? (long) 0 : t, u == null ? (byte) 0 : u);
+        this.accept(t != null ? t : (long) 0, u != null ? u : (byte) 0);
     }
 }

@@ -2,23 +2,23 @@ package io.github.shiozakanaptr.acext.api.collection.objecttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.SetExt;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjSet;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
-import io.github.shiozakanaptr.acext.util.function.longtype.LongLongBiFunction;
-import io.github.shiozakanaptr.acext.util.function.objecttype.ObjLongBiConsumer;
-import io.github.shiozakanaptr.acext.util.function.objecttype.ObjLongBiFunction;
-import io.github.shiozakanaptr.acext.util.function.objecttype.ObjLongBiOperator;
+import io.github.shiozakanaptr.acext.util.function.objecttype.*;
+import io.github.shiozakanaptr.acext.util.function.longtype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 public interface ObjLongMap<K> extends MapExt<K, Long> {
     long getRaw(Object key);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getRaw(Object)
      */
     @Deprecated
     default Long get(Object key) {
@@ -29,6 +29,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getOrDefault(Object, long)
      */
     @Deprecated
     default Long getOrDefault(Object key, Long defaultValue) {
@@ -39,6 +40,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #put(K, long)
      */
     @Deprecated
     default Long put(K key, Long value) {
@@ -49,6 +51,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #putIfAbsent(K, long)
      */
     @Deprecated
     default Long putIfAbsent(K key, Long value) {
@@ -59,6 +62,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeRaw(Object)
      */
     @Deprecated
     default Long remove(Object key) {
@@ -69,6 +73,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remove(Object, long)
      */
     @Deprecated
     default boolean remove(Object key, Object value) {
@@ -80,6 +85,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(K, long)
      */
     @Deprecated
     default Long replace(K key, Long value) {
@@ -90,6 +96,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(K, long, long)
      */
     @Deprecated
     default boolean replace(K key, Long oldValue, Long newValue) {
@@ -100,10 +107,10 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfAbsentRaw(K, Function)
      */
     @Deprecated
     default Long computeIfAbsent(K key, @NotNull Function<? super K, ? extends Long> mappingFunction) {
-        Objects.requireNonNull(mappingFunction);
         return this.computeIfAbsentRaw(key, (K l_t) -> mappingFunction.apply(l_t));
     }
 
@@ -111,10 +118,10 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfPresent(K, ObjLongBiFunction)
      */
     @Deprecated
     default Long computeIfPresent(K key, @NotNull BiFunction<? super K, ? super Long, ? extends Long> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.computeIfPresent(key, (K l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
@@ -122,10 +129,10 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #compute(K, ObjLongBiFunction)
      */
     @Deprecated
     default Long compute(K key, @NotNull BiFunction<? super K, ? super Long, ? extends Long> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.compute(key, (K l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
@@ -133,24 +140,24 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #merge(K, long, LongLongBiFunction)
      */
     @Deprecated
     default Long merge(K key, @NotNull Long value, @NotNull BiFunction<? super Long, ? super Long, ? extends Long> remappingFunction) {
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(remappingFunction);
-        return this.merge(key, value.longValue(), (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key, value != null ? value.longValue() : (long) 0, (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     long update(K key, @NotNull LongUnaryOperator updateFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #update(K, LongUnaryOperator)
      */
     @Deprecated
     default Long update(K key, @NotNull Function<? super Long, ? extends Long> updateFunction) {
         return this.update(key, (long l_t) -> {
-            final Long result = updateFunction.apply(l_t);
-            return result != null ? result : (long) 0;
+            final Long result;
+            return (result = updateFunction.apply(l_t)) != null ? result : (long) 0;
         });
     }
 
@@ -158,11 +165,10 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remapping(K, ObjLongBiFunction, LongLongBiFunction)
      */
     @Deprecated
     default Long remapping(K key, @NotNull BiFunction<? super K, ? super Long, ? extends K> remappingFunction, @NotNull BiFunction<? super Long, ? super Long, ? extends Long> mergeFunction) {
-        Objects.requireNonNull(remappingFunction);
-        Objects.requireNonNull(mergeFunction);
         return this.remapping(key, (K l_t, long l_u) -> remappingFunction.apply(l_t, l_u), (long l_t, long l_u) -> mergeFunction.apply(l_t, l_u));
     }
 
@@ -170,6 +176,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #containsValue(long)
      */
     @Deprecated
     default boolean containsValue(Object value) {
@@ -181,10 +188,10 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEach(ObjLongBiConsumer)
      */
     @Deprecated
     default void forEach(@NotNull BiConsumer<? super K, ? super Long> action) {
-        Objects.requireNonNull(action);
         this.forEach((K l_t, long l_u) -> action.accept(l_t, l_u));
     }
 
@@ -192,10 +199,10 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replaceAll(ObjLongBiOperator)
      */
     @Deprecated
     default void replaceAll(@NotNull BiFunction<? super K, ? super Long, ? extends Long> function) {
-        Objects.requireNonNull(function);
         this.replaceAll((K l_t, long l_u) -> function.apply(l_t, l_u));
     }
 
@@ -203,6 +210,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getDefaultReturnValueRaw()
      */
     @Deprecated
     default Long getDefaultReturnValue() {
@@ -213,6 +221,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #setDefaultReturnValue(long)
      */
     @Deprecated
     default Long setDefaultReturnValue(Long newDefault) {
@@ -229,32 +238,38 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
     EntrySetExt<ObjLongMap.Entry<K>> entrySetRaw();
 
     /**
-     * @deprecated Please use the corresponding method that using primitive type.
+     * @deprecated Please use the corresponding method that using primitive or actual type.
+     * @see #entrySetRaw()
      */
     @Deprecated
-    default @NotNull EntrySetExt<Map.Entry<K, Long>> entrySet() {
+    @NotNull
+    default EntrySetExt<MapExt.Entry<K, Long>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface Entry<K> extends Map.Entry<K, Long> {
-        long getValueRaw();
+    interface Entry<K> extends MapExt.Entry<K, Long> {
 
-        long setValue(long newValue);
+        long getValueRaw();
 
         /**
          * @deprecated Please use the corresponding method that using primitive type.
+         * @see #getValueRaw()
          */
         @Deprecated
         default Long getValue() {
             return this.getValueRaw();
         }
 
+        long setValue(long newValue);
+
         /**
          * @deprecated Please use the corresponding method that using primitive type.
+         * @see #setValue(long)
          */
         @Deprecated
         default Long setValue(Long value) {
             return this.setValue(value != null ? value.longValue() : (long) 0);
         }
     }
+
 }

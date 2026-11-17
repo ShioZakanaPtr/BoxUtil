@@ -1,11 +1,11 @@
 package io.github.shiozakanaptr.acext.api.collection.longtype;
 
 import io.github.shiozakanaptr.acext.api.collection.DequeExt;
+import java.util.function.LongConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-import java.util.function.LongConsumer;
 
 public interface LongDeque extends DequeExt<Long>, LongQueue {
     default long peekRaw() {
@@ -14,6 +14,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #peekRaw()
      */
     @Deprecated
     default Long peek() {
@@ -24,6 +25,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #peekFirstRaw()
      */
     @Deprecated
     default Long peekFirst() {
@@ -34,6 +36,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #peekLastRaw()
      */
     @Deprecated
     default Long peekLast() {
@@ -46,6 +49,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #elementRaw()
      */
     @Deprecated
     default Long element() {
@@ -60,6 +64,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getFirstRaw()
      */
     @Deprecated
     default Long getFirst() {
@@ -74,6 +79,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getLastRaw()
      */
     @Deprecated
     default Long getLast() {
@@ -87,6 +93,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(long)
      */
     @Deprecated
     default boolean add(Long e) {
@@ -98,6 +105,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addFirst(long)
      */
     @Deprecated
     default void addFirst(Long e) {
@@ -108,6 +116,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addLast(long)
      */
     @Deprecated
     default void addLast(Long e) {
@@ -121,6 +130,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #offer(long)
      */
     @Deprecated
     default boolean offer(Long e) {
@@ -135,6 +145,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #offerFirstRaw(long)
      */
     @Deprecated
     default boolean offerFirst(Long e) {
@@ -149,6 +160,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #offerLastRaw(long)
      */
     @Deprecated
     default boolean offerLast(Long e) {
@@ -162,6 +174,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #pollRaw()
      */
     @Deprecated
     default Long poll() {
@@ -172,6 +185,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #pollFirstRaw()
      */
     @Deprecated
     default Long pollFirst() {
@@ -182,6 +196,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #pollLastRaw()
      */
     @Deprecated
     default Long pollLast() {
@@ -194,6 +209,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeRaw()
      */
     @Deprecated
     default Long remove() {
@@ -208,6 +224,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeFirstRaw()
      */
     @Deprecated
     default Long removeFirst() {
@@ -222,6 +239,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeLastRaw()
      */
     @Deprecated
     default Long removeLast() {
@@ -231,7 +249,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
     /**
      * @deprecated Please use the corresponding method that renamed ones to
      * avoid overload-resolution ambiguity.
-     * @see #removeElement(Object)
+     * @see #removeElement(long)
      */
     @Deprecated
     default boolean remove(Object o) {
@@ -242,6 +260,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeFirstOccurrence(long)
      */
     @Deprecated
     default boolean removeFirstOccurrence(Object o) {
@@ -253,6 +272,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeLastOccurrence(long)
      */
     @Deprecated
     default boolean removeLastOccurrence(Object o) {
@@ -266,6 +286,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #push(long)
      */
     @Deprecated
     default void push(Long e) {
@@ -278,6 +299,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #popRaw()
      */
     @Deprecated
     default Long pop() {
@@ -286,6 +308,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(long)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -296,6 +319,7 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #tryPollExecuteOfferReversed(LongConsumer)
      */
     @Deprecated
     default boolean tryPollExecuteOfferReversed(@NotNull Consumer<? super Long> action) {

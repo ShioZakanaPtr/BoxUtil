@@ -15,6 +15,7 @@ public interface LongObjBiMap<V> extends BiMap<Long, V>, LongObjMap<V> {
      * @deprecated Please use the corresponding method that using primitive type.
      * @see #getKeyRaw(Object)
      */
+    @Deprecated
     default Long getKey(Object value) {
         return this.getKeyRaw(value);
     }
@@ -25,6 +26,7 @@ public interface LongObjBiMap<V> extends BiMap<Long, V>, LongObjMap<V> {
      * @deprecated Please use the corresponding method that using primitive type.
      * @see #getKeyOrDefault(Object, long)
      */
+    @Deprecated
     default Long getKeyOrDefault(Object value, Long defaultKey) {
         return this.getKeyOrDefault(value, defaultKey != null ? defaultKey.longValue() : (long) 0);
     }
@@ -33,6 +35,7 @@ public interface LongObjBiMap<V> extends BiMap<Long, V>, LongObjMap<V> {
      * @deprecated Please use the corresponding method that using primitive type.
      * @see #put(long, V)
      */
+    @Deprecated
     default V put(Long key, V value) {
         return LongObjMap.super.put(key, value);
     }
@@ -43,6 +46,7 @@ public interface LongObjBiMap<V> extends BiMap<Long, V>, LongObjMap<V> {
      * @deprecated Please use the corresponding method that using primitive type.
      * @see #putUnique(long, V)
      */
+    @Deprecated
     default V putUnique(Long key, V value) {
         return this.putUnique(key != null ? key.longValue() : (long) 0, value);
     }
@@ -53,6 +57,7 @@ public interface LongObjBiMap<V> extends BiMap<Long, V>, LongObjMap<V> {
      * @deprecated Please use the corresponding method that using primitive type.
      * @see #removeValueRaw(Object)
      */
+    @Deprecated
     default Long removeValue(Object value) {
         return this.removeValueRaw(value);
     }
@@ -63,6 +68,7 @@ public interface LongObjBiMap<V> extends BiMap<Long, V>, LongObjMap<V> {
      * @deprecated Please use the corresponding method that using primitive type.
      * @see #removeValue(Object, long)
      */
+    @Deprecated
     default boolean removeValue(Object value, Object key) {
         if (key != null && !(key instanceof Long)) return false;
         return this.removeValue(value, key != null ? ((Long) key).longValue() : (long) 0);

@@ -11,6 +11,7 @@ public interface ByteListIterator extends ListIterator<Byte>, ByteIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #nextByte()
      */
     @Deprecated
     default Byte next() {
@@ -25,6 +26,7 @@ public interface ByteListIterator extends ListIterator<Byte>, ByteIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #previousByte()
      */
     @Deprecated
     default Byte previous() {
@@ -37,6 +39,7 @@ public interface ByteListIterator extends ListIterator<Byte>, ByteIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #set(byte)
      */
     @Deprecated
     default void set(Byte e) {
@@ -47,6 +50,7 @@ public interface ByteListIterator extends ListIterator<Byte>, ByteIterator {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(byte)
      */
     @Deprecated
     default void add(Byte e) {

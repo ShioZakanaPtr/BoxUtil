@@ -1,10 +1,10 @@
 package io.github.shiozakanaptr.acext.api.collection.shorttype;
 
 import io.github.shiozakanaptr.acext.api.collection.CollectionExt;
+
 import io.github.shiozakanaptr.acext.util.function.shorttype.ShortPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -15,6 +15,7 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(short)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -26,6 +27,7 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(short)
      */
     @Deprecated
     default boolean add(Short e) {
@@ -36,6 +38,7 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(short)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -44,7 +47,6 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
     }
 
     default boolean removeIf(@NotNull ShortPredicate filter) {
-        Objects.requireNonNull(filter);
         boolean removed = false;
         final ShortIterator each = this.iterator();
         while (each.hasNext()) {
@@ -58,16 +60,14 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeIf(ShortPredicate)
      */
     @Deprecated
     default boolean removeIf(@NotNull Predicate<? super Short> filter) {
-        Objects.requireNonNull(filter);
-        return this.removeIf(filter::test);
+        return this.removeIf((short l_t) -> filter.test(l_t));
     }
 
     default boolean addAll(@NotNull short[] elements) {
-        Objects.requireNonNull(elements);
-
         boolean result = false;
         for (short element : elements) {
             result |= this.add(element);
@@ -77,6 +77,7 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(short[])
      */
     @Deprecated
     default <T extends Short> boolean addAll(@NotNull T[] elements) {
@@ -84,8 +85,6 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
     }
 
     default boolean addAll(@NotNull short[] elements, int srcIndex, int length) {
-        Objects.requireNonNull(elements);
-
         boolean result = false;
         for (int i = srcIndex, limit = srcIndex + length; i < limit; i++) {
             result |= this.add(elements[i]);
@@ -95,19 +94,24 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(short[], int, int)
      */
     @Deprecated
     default <T extends Short> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
         return CollectionExt.super.addAll(elements, srcIndex, length);
     }
 
-    @NotNull ShortIterator iterator();
+    @NotNull
+    ShortIterator iterator();
 
-    @NotNull ShortSpliterator spliterator();
+    @NotNull
+    ShortSpliterator spliterator();
 
-    @NotNull short[] toArrayRaw();
+    @NotNull
+    short[] toArrayRaw();
 
-    @NotNull short[] toArray(@NotNull short[] a);
+    @NotNull
+    short[] toArray(@NotNull short[] a);
 
     @NotNull
     default IntStream streamRaw() {
@@ -116,6 +120,7 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #streamRaw()
      */
     @Deprecated
     @NotNull
@@ -130,6 +135,7 @@ public interface ShortCollection extends CollectionExt<Short>, ShortIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #parallelStreamRaw()
      */
     @Deprecated
     @NotNull

@@ -2,10 +2,11 @@ package io.github.shiozakanaptr.acext.util.function.bytetype;
 
 import java.util.function.BiFunction;
 
+@FunctionalInterface
 public interface ByteShortBiOperator extends BiFunction<Byte, Short, Short> {
     short apply(byte t, short u);
 
     default Short apply(Byte t, Short u) {
-        return this.apply(t == null ? (byte) 0 : t, u == null ? (short) 0 : u);
+        return this.apply(t != null ? t : (byte) 0, u != null ? u : (short) 0);
     }
 }

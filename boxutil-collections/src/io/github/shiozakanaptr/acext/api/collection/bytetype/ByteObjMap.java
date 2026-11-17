@@ -2,21 +2,23 @@ package io.github.shiozakanaptr.acext.api.collection.bytetype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteFunction;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteObjBiConsumer;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteObjBiFunction;
+import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteSet;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjCollection;
+import io.github.shiozakanaptr.acext.util.function.bytetype.*;
+import io.github.shiozakanaptr.acext.util.function.objecttype.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 public interface ByteObjMap<V> extends MapExt<Byte, V> {
     V get(byte key);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #get(byte)
      */
     @Deprecated
     default V get(Object key) {
@@ -28,6 +30,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getOrDefault(byte, V)
      */
     @Deprecated
     default V getOrDefault(Object key, V defaultValue) {
@@ -39,9 +42,10 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #put(byte, V)
      */
     @Deprecated
-    default @Nullable V put(Byte key, V value) {
+    default V put(Byte key, V value) {
         return this.put(key != null ? key.byteValue() : (byte) 0, value);
     }
 
@@ -49,6 +53,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #putIfAbsent(byte, V)
      */
     @Deprecated
     default V putIfAbsent(Byte key, V value) {
@@ -59,6 +64,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remove(byte)
      */
     @Deprecated
     default V remove(Object key) {
@@ -70,6 +76,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remove(byte, Object)
      */
     @Deprecated
     default boolean remove(Object key, Object value) {
@@ -81,6 +88,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(byte, V)
      */
     @Deprecated
     default V replace(Byte key, V value) {
@@ -91,6 +99,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(byte, V, V)
      */
     @Deprecated
     default boolean replace(Byte key, V oldValue, V newValue) {
@@ -101,21 +110,21 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfAbsent(byte, ByteFunction)
      */
     @Deprecated
     default V computeIfAbsent(Byte key, @NotNull Function<? super Byte, ? extends V> mappingFunction) {
-        Objects.requireNonNull(mappingFunction);
-        return this.computeIfAbsent(key != null ? key.byteValue() : (byte) 0, (byte l_t) -> mappingFunction.apply(l_t));
+        return this.computeIfAbsent(key != null ? key.byteValue() : (byte) 0, (Byte l_t) -> mappingFunction.apply(l_t));
     }
 
     V computeIfPresent(byte key, @NotNull ByteObjBiFunction<? super V, ? extends V> remappingFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfPresent(byte, ByteObjBiFunction)
      */
     @Deprecated
     default V computeIfPresent(Byte key, @NotNull BiFunction<? super Byte, ? super V, ? extends V> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.computeIfPresent(key != null ? key.byteValue() : (byte) 0, (byte l_t, V l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
@@ -123,22 +132,21 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #compute(byte, ByteObjBiFunction)
      */
     @Deprecated
     default V compute(Byte key, @NotNull BiFunction<? super Byte, ? super V, ? extends V> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.compute(key != null ? key.byteValue() : (byte) 0, (byte l_t, V l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
-    V merge(byte key, @NotNull V value, @NotNull BiFunction<? super V, ? super V, ? extends V> remappingFunction);
+    V merge(byte key, V value, @NotNull BiFunction<? super V, ? super V, ? extends V> remappingFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #merge(byte, V, BiFunction)
      */
     @Deprecated
     default V merge(Byte key, @NotNull V value, @NotNull BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(remappingFunction);
         return this.merge(key != null ? key.byteValue() : (byte) 0, value, (V l_t, V l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
@@ -146,21 +154,21 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #update(byte, Function)
      */
     @Deprecated
     default V update(Byte key, @NotNull Function<? super V, ? extends V> updateFunction) {
         return this.update(key != null ? key.byteValue() : (byte) 0, (V l_t) -> updateFunction.apply(l_t));
     }
 
-    V remapping(byte key, ByteObjBiFunction<? super V, ? extends Byte> remappingFunction, BiFunction<? super V, ? super V, ? extends V> mergeFunction);
+    V remapping(byte key, @NotNull ByteObjBiFunction<? super V, ? extends Byte> remappingFunction, BiFunction<? super V, ? super V, ? extends V> mergeFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remapping(byte, ByteObjBiFunction, BiFunction)
      */
     @Deprecated
     default V remapping(Byte key, @NotNull BiFunction<? super Byte, ? super V, ? extends Byte> remappingFunction, @NotNull BiFunction<? super V, ? super V, ? extends V> mergeFunction) {
-        Objects.requireNonNull(remappingFunction);
-        Objects.requireNonNull(mergeFunction);
         return this.remapping(key != null ? key.byteValue() : (byte) 0, (byte l_t, V l_u) -> remappingFunction.apply(l_t, l_u), (V l_t, V l_u) -> mergeFunction.apply(l_t, l_u));
     }
 
@@ -168,6 +176,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #swapAt(byte, byte)
      */
     @Deprecated
     default boolean swapAt(Byte from, Byte to) {
@@ -178,6 +187,7 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #containsKey(byte)
      */
     @Deprecated
     default boolean containsKey(Object key) {
@@ -189,10 +199,10 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEach(ByteObjBiConsumer)
      */
     @Deprecated
     default void forEach(@NotNull BiConsumer<? super Byte, ? super V> action) {
-        Objects.requireNonNull(action);
         this.forEach((byte l_t, V l_u) -> action.accept(l_t, l_u));
     }
 
@@ -200,95 +210,44 @@ public interface ByteObjMap<V> extends MapExt<Byte, V> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replaceAll(ByteObjBiFunction)
      */
     @Deprecated
     default void replaceAll(@NotNull BiFunction<? super Byte, ? super V, ? extends V> function) {
-        Objects.requireNonNull(function);
         this.replaceAll((byte l_t, V l_u) -> function.apply(l_t, l_u));
     }
 
-    @NotNull ByteSet keySet();
+    @NotNull
+    ByteSet keySet();
 
-    @NotNull EntrySetExt<ByteObjMap.Entry<V>> entrySetRaw();
+    @NotNull
+    ObjCollection<V> values();
+
+    @NotNull
+    EntrySetExt<ByteObjMap.Entry<V>> entrySetRaw();
 
     /**
-     * @deprecated Please use the corresponding method that using primitive type.
+     * @deprecated Please use the corresponding method that using primitive or actual type.
+     * @see #entrySetRaw()
      */
     @Deprecated
-    default @NotNull EntrySetExt<Map.Entry<Byte, V>> entrySet() {
+    @NotNull
+    default EntrySetExt<MapExt.Entry<Byte, V>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface Entry<V> extends Map.Entry<Byte, V> {
+    interface Entry<V> extends MapExt.Entry<Byte, V> {
         byte getKeyRaw();
 
         /**
          * @deprecated Please use the corresponding method that using primitive type.
+         * @see #getKeyRaw()
          */
         @Deprecated
         default Byte getKey() {
             return this.getKeyRaw();
         }
+
     }
 
-    static <V> ByteObjMap<V> of() {
-        return ImmutableByteObjMaps.of();
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1) {
-        return ImmutableByteObjMaps.of(k1, v1);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7, byte k8, V v8) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7, byte k8, V v8, byte k9, V v9) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8, k9, v9);
-    }
-
-    static <V> ByteObjMap<V> of(byte k1, V v1, byte k2, V v2, byte k3, V v3, byte k4, V v4, byte k5, V v5, byte k6, V v6, byte k7, V v7, byte k8, V v8, byte k9, V v9, byte k10, V v10) {
-        return ImmutableByteObjMaps.of(k1, v1, k2, v2, k3, v3, k4, v4, k5, v5, k6, v6, k7, v7, k8, v8, k9, v9, k10, v10);
-    }
-
-    static <V> ByteObjMap.Entry<V> entry(byte k, V v) {
-        return ImmutableByteObjMaps.entry(k, v);
-    }
-
-    @SafeVarargs
-    static <V> ByteObjMap<V> ofEntries(Map.Entry<? extends Byte, ? extends V>... entries) {
-        return ImmutableByteObjMaps.ofEntries(entries);
-    }
-
-    static <V> ByteObjMap<V> ofArrays(byte[] keys, V[] values) {
-        return ImmutableByteObjMaps.ofArrays(keys, values);
-    }
-
-    static <V> ByteObjMap<V> copyOf(@NotNull Map<? extends Byte, ? extends V> source) {
-        return ImmutableByteObjMaps.copyOf(source);
-    }
 }

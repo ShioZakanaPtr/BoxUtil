@@ -7,6 +7,6 @@ public interface LongByteBiFunction<R> extends BiFunction<Long, Byte, R> {
     R apply(long t, byte u);
 
     default R apply(Long t, Byte u) {
-        return this.apply(t == null ? (long) 0 : t, u == null ? (byte) 0 : u);
+        return this.apply(t != null ? t : (long) 0, u != null ? u : (byte) 0);
     }
 }

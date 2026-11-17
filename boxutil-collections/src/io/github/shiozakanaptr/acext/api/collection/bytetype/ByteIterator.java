@@ -9,6 +9,15 @@ import java.util.function.Consumer;
 public interface ByteIterator extends PrimitiveIterator<Byte, ByteConsumer> {
     byte nextByte();
 
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #nextByte()
+     */
+    @Deprecated
+    default Byte next() {
+        return this.nextByte();
+    }
+
     default void forEachRemaining(@NotNull ByteConsumer action) {
         while (this.hasNext()) {
             action.accept(this.nextByte());
@@ -17,17 +26,10 @@ public interface ByteIterator extends PrimitiveIterator<Byte, ByteConsumer> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
-    default Byte next() {
-        return this.nextByte();
-    }
-
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEachRemaining(ByteConsumer)
      */
     @Deprecated
     default void forEachRemaining(@NotNull Consumer<? super Byte> action) {
-        this.forEachRemaining(action::accept);
+        this.forEachRemaining((byte l_t) -> action.accept(l_t));
     }
 }

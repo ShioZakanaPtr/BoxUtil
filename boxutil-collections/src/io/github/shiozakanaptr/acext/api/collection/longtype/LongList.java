@@ -1,18 +1,23 @@
 package io.github.shiozakanaptr.acext.api.collection.longtype;
 
 import io.github.shiozakanaptr.acext.api.collection.ListExt;
+import java.util.function.LongConsumer;
+import io.github.shiozakanaptr.acext.util.function.longtype.LongFunction;
 import io.github.shiozakanaptr.acext.util.function.longtype.LongUnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;
-import java.util.function.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public interface LongList extends ListExt<Long>, LongCollection {
     long getRaw(int index);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getRaw(int)
      */
     @Deprecated
     default Long get(int index) {
@@ -26,6 +31,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getFirstRaw()
      */
     @Deprecated
     default Long getFirst() {
@@ -39,6 +45,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getLastRaw()
      */
     @Deprecated
     default Long getLast() {
@@ -49,6 +56,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #set(int, long)
      */
     @Deprecated
     default Long set(int index, Long element) {
@@ -62,6 +70,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(long)
      */
     @Deprecated
     default boolean add(Long e) {
@@ -72,6 +81,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(int, long)
      */
     @Deprecated
     default void add(int index, Long element) {
@@ -84,6 +94,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addFirst(long)
      */
     @Deprecated
     default void addFirst(Long e) {
@@ -96,6 +107,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addLast(long)
      */
     @Deprecated
     default void addLast(Long e) {
@@ -106,6 +118,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeAtRaw(int)
      */
     @Deprecated
     default Long removeAt(int index) {
@@ -116,6 +129,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(long)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -130,6 +144,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeFirstRaw()
      */
     @Deprecated
     default Long removeFirst() {
@@ -142,6 +157,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeLastRaw()
      */
     @Deprecated
     default Long removeLast() {
@@ -152,6 +168,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(long)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -163,6 +180,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #indexOf(long)
      */
     @Deprecated
     default int indexOf(Object o) {
@@ -174,6 +192,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #lastIndexOf(long)
      */
     @Deprecated
     default int lastIndexOf(Object o) {
@@ -189,6 +208,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #update(int, LongUnaryOperator)
      */
     @Deprecated
     default Long update(int index, @NotNull Function<? super Long, ? extends Long> updateFunction) {
@@ -214,6 +234,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEach(int, int, LongConsumer)
      */
     @Deprecated
     default void forEach(int fromIndex, int toIndex, Consumer<? super Long> action) {
@@ -229,6 +250,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replaceAll(LongUnaryOperator)
      */
     @Deprecated
     default void replaceAll(@NotNull UnaryOperator<Long> operator) {
@@ -247,6 +269,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(int, int, LongUnaryOperator)
      */
     @Deprecated
     default void replace(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
@@ -273,6 +296,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #compute(int, int, LongFunction)
      */
     @Deprecated
     default boolean compute(int fromIndex, int toIndex, Function<? super Long, ? extends Long> operator) {
@@ -285,6 +309,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(long[])
      */
     @Deprecated
     default <T extends Long> boolean addAll(@NotNull T[] elements) {
@@ -297,6 +322,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(long[], int, int)
      */
     @Deprecated
     default <T extends Long> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
@@ -307,6 +333,7 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(int, long[], int, int)
      */
     @Deprecated
     default <T extends Long> boolean addAll(int dstIndex, @NotNull T[] elements, int srcIndex, int length) {
@@ -317,9 +344,11 @@ public interface LongList extends ListExt<Long>, LongCollection {
         return true;
     }
 
-    @NotNull LongListIterator listIterator();
+    @NotNull
+    LongListIterator listIterator();
 
-    @NotNull LongListIterator listIterator(int index);
+    @NotNull
+    LongListIterator listIterator(int index);
 
     default LongJumboListIterator listIterator64() {
         throw new UnsupportedOperationException();
@@ -329,24 +358,10 @@ public interface LongList extends ListExt<Long>, LongCollection {
         throw new UnsupportedOperationException();
     }
 
-    @NotNull LongList subList(int fromIndex, int toIndex);
+    @NotNull
+    LongList subList(int fromIndex, int toIndex);
 
     @NotNull
     LongSpliterator spliterator();
 
-    static LongList of() {
-        return ImmutableLongCollections.ofList();
-    }
-
-    static LongList of(long element) {
-        return ImmutableLongCollections.ofList(element);
-    }
-
-    static LongList of(long... elements) {
-        return ImmutableLongCollections.ofList(elements);
-    }
-
-    static LongList copyOf(@NotNull Collection<? extends Long> source) {
-        return ImmutableLongCollections.copyOfList(source);
-    }
 }

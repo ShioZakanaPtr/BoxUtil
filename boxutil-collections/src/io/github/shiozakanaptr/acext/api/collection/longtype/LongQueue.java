@@ -1,17 +1,18 @@
 package io.github.shiozakanaptr.acext.api.collection.longtype;
 
 import io.github.shiozakanaptr.acext.api.collection.QueueExt;
+import java.util.function.LongConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-import java.util.function.LongConsumer;
 
 public interface LongQueue extends QueueExt<Long>, LongCollection {
     long peekRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #peekRaw()
      */
     @Deprecated
     default Long peek() {
@@ -26,6 +27,7 @@ public interface LongQueue extends QueueExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #elementRaw()
      */
     @Deprecated
     default Long element() {
@@ -34,6 +36,7 @@ public interface LongQueue extends QueueExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(long)
      */
     @Deprecated
     default boolean add(Long e) {
@@ -46,6 +49,7 @@ public interface LongQueue extends QueueExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #offer(long)
      */
     @Deprecated
     default boolean offer(Long e) {
@@ -56,6 +60,7 @@ public interface LongQueue extends QueueExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #pollRaw()
      */
     @Deprecated
     default Long poll() {
@@ -70,6 +75,7 @@ public interface LongQueue extends QueueExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeRaw()
      */
     @Deprecated
     default Long remove() {
@@ -80,6 +86,7 @@ public interface LongQueue extends QueueExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #tryPollExecuteOffer(LongConsumer)
      */
     @Deprecated
     default boolean tryPollExecuteOffer(@NotNull Consumer<? super Long> action) {
@@ -92,6 +99,7 @@ public interface LongQueue extends QueueExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getNullElementRaw()
      */
     @Deprecated
     default Long getNullElement() {

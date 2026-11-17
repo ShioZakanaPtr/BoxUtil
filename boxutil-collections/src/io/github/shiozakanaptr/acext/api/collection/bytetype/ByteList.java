@@ -17,6 +17,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getRaw(int)
      */
     @Deprecated
     default Byte get(int index) {
@@ -30,6 +31,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getFirstRaw()
      */
     @Deprecated
     default Byte getFirst() {
@@ -43,6 +45,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getLastRaw()
      */
     @Deprecated
     default Byte getLast() {
@@ -53,6 +56,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #set(int, byte)
      */
     @Deprecated
     default Byte set(int index, Byte element) {
@@ -66,6 +70,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(byte)
      */
     @Deprecated
     default boolean add(Byte e) {
@@ -76,6 +81,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(int, byte)
      */
     @Deprecated
     default void add(int index, Byte element) {
@@ -88,6 +94,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addFirst(byte)
      */
     @Deprecated
     default void addFirst(Byte e) {
@@ -100,6 +107,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addLast(byte)
      */
     @Deprecated
     default void addLast(Byte e) {
@@ -110,6 +118,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeAtRaw(int)
      */
     @Deprecated
     default Byte removeAt(int index) {
@@ -120,6 +129,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(byte)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -134,6 +144,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeFirstRaw()
      */
     @Deprecated
     default Byte removeFirst() {
@@ -146,6 +157,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeLastRaw()
      */
     @Deprecated
     default Byte removeLast() {
@@ -156,6 +168,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(byte)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -167,6 +180,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #indexOf(byte)
      */
     @Deprecated
     default int indexOf(Object o) {
@@ -178,6 +192,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #lastIndexOf(byte)
      */
     @Deprecated
     default int lastIndexOf(Object o) {
@@ -193,6 +208,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #update(int, ByteUnaryOperator)
      */
     @Deprecated
     default Byte update(int index, @NotNull Function<? super Byte, ? extends Byte> updateFunction) {
@@ -218,6 +234,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEach(int, int, ByteConsumer)
      */
     @Deprecated
     default void forEach(int fromIndex, int toIndex, Consumer<? super Byte> action) {
@@ -233,6 +250,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replaceAll(ByteUnaryOperator)
      */
     @Deprecated
     default void replaceAll(@NotNull UnaryOperator<Byte> operator) {
@@ -251,6 +269,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(int, int, ByteUnaryOperator)
      */
     @Deprecated
     default void replace(int fromIndex, int toIndex, Function<? super Byte, ? extends Byte> operator) {
@@ -277,6 +296,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #compute(int, int, ByteFunction)
      */
     @Deprecated
     default boolean compute(int fromIndex, int toIndex, Function<? super Byte, ? extends Byte> operator) {
@@ -289,6 +309,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(byte[])
      */
     @Deprecated
     default <T extends Byte> boolean addAll(@NotNull T[] elements) {
@@ -301,6 +322,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(byte[], int, int)
      */
     @Deprecated
     default <T extends Byte> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
@@ -311,6 +333,7 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(int, byte[], int, int)
      */
     @Deprecated
     default <T extends Byte> boolean addAll(int dstIndex, @NotNull T[] elements, int srcIndex, int length) {
@@ -321,9 +344,11 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
         return true;
     }
 
-    @NotNull ByteListIterator listIterator();
+    @NotNull
+    ByteListIterator listIterator();
 
-    @NotNull ByteListIterator listIterator(int index);
+    @NotNull
+    ByteListIterator listIterator(int index);
 
     default ByteJumboListIterator listIterator64() {
         throw new UnsupportedOperationException();
@@ -333,24 +358,10 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
         throw new UnsupportedOperationException();
     }
 
-    @NotNull ByteList subList(int fromIndex, int toIndex);
+    @NotNull
+    ByteList subList(int fromIndex, int toIndex);
 
     @NotNull
     ByteSpliterator spliterator();
 
-    static ByteList of() {
-        return ImmutableByteCollections.ofList();
-    }
-
-    static ByteList of(byte element) {
-        return ImmutableByteCollections.ofList(element);
-    }
-
-    static ByteList of(byte... elements) {
-        return ImmutableByteCollections.ofList(elements);
-    }
-
-    static ByteList copyOf(@NotNull Collection<? extends Byte> source) {
-        return ImmutableByteCollections.copyOfList(source);
-    }
 }

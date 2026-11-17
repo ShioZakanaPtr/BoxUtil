@@ -1,17 +1,18 @@
 package io.github.shiozakanaptr.acext.api.collection.longtype;
 
 import io.github.shiozakanaptr.acext.api.collection.SetExt;
+import io.github.shiozakanaptr.acext.util.function.longtype.LongFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.function.Function;
-import java.util.function.LongFunction;
 
 public interface LongSet extends SetExt<Long>, LongCollection {
     boolean contains(long o);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(long)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -23,6 +24,7 @@ public interface LongSet extends SetExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(long)
      */
     @Deprecated
     default boolean add(Long e) {
@@ -33,6 +35,7 @@ public interface LongSet extends SetExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(long)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -44,29 +47,17 @@ public interface LongSet extends SetExt<Long>, LongCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remapping(long, LongFunction)
      */
     @Deprecated
     default boolean remapping(Long element, @NotNull Function<? super Long, ? extends Long> remappingFunction) {
         return this.remapping(element != null ? element.longValue() : (long) 0, (long l_t) -> remappingFunction.apply(l_t));
     }
 
-    @NotNull LongIterator iterator();
+    @NotNull
+    LongIterator iterator();
 
-    @NotNull LongSpliterator spliterator();
+    @NotNull
+    LongSpliterator spliterator();
 
-    static LongSet of() {
-        return ImmutableLongCollections.ofSet();
-    }
-
-    static LongSet of(long element) {
-        return ImmutableLongCollections.ofSet(element);
-    }
-
-    static LongSet of(long... elements) {
-        return ImmutableLongCollections.ofSet(elements);
-    }
-
-    static LongSet copyOf(@NotNull Collection<? extends Long> source) {
-        return ImmutableLongCollections.copyOfSet(source);
-    }
 }

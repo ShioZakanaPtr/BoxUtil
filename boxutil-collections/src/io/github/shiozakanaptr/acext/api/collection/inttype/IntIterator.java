@@ -1,6 +1,8 @@
 package io.github.shiozakanaptr.acext.api.collection.inttype;
 
-import java.util.Objects;
+import java.util.function.IntConsumer;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.PrimitiveIterator;
 import java.util.function.Consumer;
 
@@ -9,18 +11,25 @@ public interface IntIterator extends PrimitiveIterator.OfInt {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #nextInt()
      */
     @Deprecated
     default Integer next() {
         return this.nextInt();
     }
 
+    default void forEachRemaining(@NotNull IntConsumer action) {
+        while (this.hasNext()) {
+            action.accept(this.nextInt());
+        }
+    }
+
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEachRemaining(IntConsumer)
      */
     @Deprecated
-    default void forEachRemaining(Consumer<? super Integer> action) {
-        Objects.requireNonNull(action);
-        this.forEachRemaining((int l_value) -> action.accept(l_value));
+    default void forEachRemaining(@NotNull Consumer<? super Integer> action) {
+        this.forEachRemaining((int l_t) -> action.accept(l_t));
     }
 }

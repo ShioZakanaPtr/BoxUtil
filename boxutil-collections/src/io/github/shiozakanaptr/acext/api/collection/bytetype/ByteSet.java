@@ -12,6 +12,7 @@ public interface ByteSet extends SetExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(byte)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -23,6 +24,7 @@ public interface ByteSet extends SetExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(byte)
      */
     @Deprecated
     default boolean add(Byte e) {
@@ -33,6 +35,7 @@ public interface ByteSet extends SetExt<Byte>, ByteCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(byte)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -51,23 +54,10 @@ public interface ByteSet extends SetExt<Byte>, ByteCollection {
         return this.remapping(element != null ? element.byteValue() : (byte) 0, (byte l_t) -> remappingFunction.apply(l_t));
     }
 
-    @NotNull ByteIterator iterator();
+    @NotNull
+    ByteIterator iterator();
 
-    @NotNull ByteSpliterator spliterator();
+    @NotNull
+    ByteSpliterator spliterator();
 
-    static ByteSet of() {
-        return ImmutableByteCollections.ofSet();
-    }
-
-    static ByteSet of(byte element) {
-        return ImmutableByteCollections.ofSet(element);
-    }
-
-    static ByteSet of(byte... elements) {
-        return ImmutableByteCollections.ofSet(elements);
-    }
-
-    static ByteSet copyOf(@NotNull Collection<? extends Byte> source) {
-        return ImmutableByteCollections.copyOfSet(source);
-    }
 }

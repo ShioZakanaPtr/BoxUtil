@@ -14,7 +14,7 @@ final class ByteWrapComparator implements IntComparator {
     private final ByteComparator source;
 
     ByteWrapComparator(ByteComparator source) {
-        this.source = source;
+        this.source = Objects.requireNonNull(source);
     }
 
     public int compare(int o1, int o2) {
@@ -27,29 +27,35 @@ final class ByteWrapComparator implements IntComparator {
 
     public IntComparator thenComparing(IntComparator other) {
         Objects.requireNonNull(other);
-        return (IntComparator & Serializable) (l_c1, l_c2) -> {
-            int res = this.compare(l_c1, l_c2);
-            return (res != 0) ? res : other.compare(l_c1, l_c2);
+        return (IntComparator & Serializable) (int l_o1, int l_o2) -> {
+            final int result;
+            return (result = this.compare(l_o1, l_o2)) != 0 ? result : other.compare(l_o1, l_o2);
         };
     }
 
     public <U> IntComparator thenComparing(IntFunction<? extends U> keyExtractor, Comparator<? super U> keyComparator) {
+        Objects.requireNonNull(keyExtractor);
+        Objects.requireNonNull(keyComparator);
         return new ByteWrapComparator(this.source.thenComparing(ByteComparator.comparing((byte l_t) -> keyExtractor.apply((int) l_t), keyComparator)));
     }
 
     public <U extends Comparable<? super U>> IntComparator thenComparing(IntFunction<? extends U> keyExtractor) {
+        Objects.requireNonNull(keyExtractor);
         return new ByteWrapComparator(this.source.thenComparing(ByteComparator.comparing((byte l_t) -> keyExtractor.apply((int) l_t))));
     }
 
     public IntComparator thenComparingInt(IntToIntFunction keyExtractor) {
+        Objects.requireNonNull(keyExtractor);
         return new ByteWrapComparator(this.source.thenComparingInt((byte l_t) -> keyExtractor.apply((int) l_t)));
     }
 
     public IntComparator thenComparingLong(IntToLongFunction keyExtractor) {
+        Objects.requireNonNull(keyExtractor);
         return new ByteWrapComparator(this.source.thenComparingLong((byte l_t) -> keyExtractor.apply((int) l_t)));
     }
 
     public IntComparator thenComparingDouble(IntToDoubleFunction keyExtractor) {
+        Objects.requireNonNull(keyExtractor);
         return new ByteWrapComparator(this.source.thenComparingDouble((byte l_t) -> keyExtractor.apply((int) l_t)));
     }
 
@@ -59,7 +65,7 @@ final class ByteWrapComparator implements IntComparator {
 
     public boolean equals(Object o) {
         if (o instanceof ByteComparator) return this.source.equals(o);
-        return false;
+        return o == this;
     }
 
     public String toString() {

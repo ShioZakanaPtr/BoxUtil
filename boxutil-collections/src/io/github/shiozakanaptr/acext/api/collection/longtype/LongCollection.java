@@ -1,10 +1,10 @@
 package io.github.shiozakanaptr.acext.api.collection.longtype;
 
 import io.github.shiozakanaptr.acext.api.collection.CollectionExt;
+
+import io.github.shiozakanaptr.acext.util.function.longtype.LongPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -47,7 +47,6 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
     }
 
     default boolean removeIf(@NotNull LongPredicate filter) {
-        Objects.requireNonNull(filter);
         boolean removed = false;
         final LongIterator each = this.iterator();
         while (each.hasNext()) {
@@ -65,13 +64,10 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
      */
     @Deprecated
     default boolean removeIf(@NotNull Predicate<? super Long> filter) {
-        Objects.requireNonNull(filter);
-        return this.removeIf((long l_value) -> filter.test(l_value));
+        return this.removeIf((long l_t) -> filter.test(l_t));
     }
 
     default boolean addAll(@NotNull long[] elements) {
-        Objects.requireNonNull(elements);
-
         boolean result = false;
         for (long element : elements) {
             result |= this.add(element);
@@ -89,8 +85,6 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
     }
 
     default boolean addAll(@NotNull long[] elements, int srcIndex, int length) {
-        Objects.requireNonNull(elements);
-
         boolean result = false;
         for (int i = srcIndex, limit = srcIndex + length; i < limit; i++) {
             result |= this.add(elements[i]);
@@ -107,13 +101,17 @@ public interface LongCollection extends CollectionExt<Long>, LongIterable {
         return CollectionExt.super.addAll(elements, srcIndex, length);
     }
 
-    @NotNull LongIterator iterator();
+    @NotNull
+    LongIterator iterator();
 
-    @NotNull LongSpliterator spliterator();
+    @NotNull
+    LongSpliterator spliterator();
 
-    @NotNull long[] toArrayRaw();
+    @NotNull
+    long[] toArrayRaw();
 
-    @NotNull long[] toArray(@NotNull long[] a);
+    @NotNull
+    long[] toArray(@NotNull long[] a);
 
     @NotNull
     default LongStream streamRaw() {

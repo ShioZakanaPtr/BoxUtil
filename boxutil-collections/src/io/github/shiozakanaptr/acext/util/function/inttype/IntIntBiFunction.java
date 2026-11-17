@@ -7,6 +7,6 @@ public interface IntIntBiFunction<R> extends BiFunction<Integer, Integer, R> {
     R apply(int t, int u);
 
     default R apply(Integer t, Integer u) {
-        return this.apply(t == null ? (int) 0 : t, u == null ? (int) 0 : u);
+        return this.apply(t != null ? t : (int) 0, u != null ? u : (int) 0);
     }
 }

@@ -10,7 +10,7 @@ final class ReversedShortComparator implements ShortComparator, Serializable {
 
     private final ShortComparator comparator;
 
-    public ReversedShortComparator(ShortComparator comparator) {
+    public ReversedShortComparator(@NotNull ShortComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);
     }
 

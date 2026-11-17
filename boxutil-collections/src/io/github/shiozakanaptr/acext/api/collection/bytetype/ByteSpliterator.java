@@ -18,7 +18,7 @@ public interface ByteSpliterator extends Spliterator.OfPrimitive<Byte, ByteConsu
      */
     @Deprecated
     default boolean tryAdvance(@NotNull Consumer<? super Byte> action) {
-        return this.tryAdvance((byte l_value) -> action.accept(l_value));
+        return this.tryAdvance((byte l_t) -> action.accept(l_t));
     }
 
     default void forEachRemaining(@NotNull ByteConsumer action) {
@@ -31,14 +31,28 @@ public interface ByteSpliterator extends Spliterator.OfPrimitive<Byte, ByteConsu
      */
     @Deprecated
     default void forEachRemaining(@NotNull Consumer<? super Byte> action) {
-        this.forEachRemaining((byte l_value) -> action.accept(l_value));
+        this.forEachRemaining((byte l_t) -> action.accept(l_t));
     }
 
     default ByteComparator getComparator() {
         throw new IllegalStateException();
     }
 
-    static @NotNull IntSpliterator wrap(final @NotNull ByteSpliterator source) {
+    /**
+     * Returns a spliterator that wraps the given spliterator, adapting it for
+     * consumption by a stream that requires a different element type.
+     *
+     * <p>The returned spliterator delegates traversal, splitting, and
+     * characteristic reporting to the given spliterator.  Any elements produced
+     * by the source are converted as required to match the element type expected
+     * by the target stream implementation.
+     *
+     * @param source the spliterator to wrap; must not be {@code null}
+     * @return a spliterator adapted for the target stream implementation
+     * @throws NullPointerException if {@code source} is {@code null}
+     */
+    @NotNull
+    static IntSpliterator wrap(@NotNull ByteSpliterator source) {
         return new ByteWrapSpliterator(source);
     }
 }

@@ -1,0 +1,12 @@
+package io.github.shiozakanaptr.acext.util.function.chartype;
+
+import java.util.function.BiFunction;
+
+@FunctionalInterface
+public interface CharLongBiFunction<R> extends BiFunction<Character, Long, R> {
+    R apply(char t, long u);
+
+    default R apply(Character t, Long u) {
+        return this.apply(t != null ? t : (char) 0, u != null ? u : (long) 0);
+    }
+}

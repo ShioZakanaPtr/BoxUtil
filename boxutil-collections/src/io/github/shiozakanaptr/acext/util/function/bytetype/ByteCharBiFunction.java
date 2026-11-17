@@ -1,0 +1,12 @@
+package io.github.shiozakanaptr.acext.util.function.bytetype;
+
+import java.util.function.BiFunction;
+
+@FunctionalInterface
+public interface ByteCharBiFunction<R> extends BiFunction<Byte, Character, R> {
+    R apply(byte t, char u);
+
+    default R apply(Byte t, Character u) {
+        return this.apply(t != null ? t : (byte) 0, u != null ? u : (char) 0);
+    }
+}

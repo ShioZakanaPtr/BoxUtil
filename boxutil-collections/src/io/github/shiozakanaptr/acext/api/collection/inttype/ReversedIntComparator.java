@@ -10,7 +10,7 @@ final class ReversedIntComparator implements IntComparator, Serializable {
 
     private final IntComparator comparator;
 
-    public ReversedIntComparator(IntComparator comparator) {
+    public ReversedIntComparator(@NotNull IntComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);
     }
 

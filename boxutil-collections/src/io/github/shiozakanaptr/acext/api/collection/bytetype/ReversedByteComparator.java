@@ -10,7 +10,7 @@ final class ReversedByteComparator implements ByteComparator, Serializable {
 
     private final ByteComparator comparator;
 
-    public ReversedByteComparator(ByteComparator comparator) {
+    public ReversedByteComparator(@NotNull ByteComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);
     }
 

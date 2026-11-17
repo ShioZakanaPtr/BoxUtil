@@ -2,9 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.objecttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjSet;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjCollection;
+import io.github.shiozakanaptr.acext.util.function.objecttype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 public interface ObjObjMap<K, V> extends MapExt<K, V> {
     @NotNull
@@ -17,13 +23,17 @@ public interface ObjObjMap<K, V> extends MapExt<K, V> {
     EntrySetExt<ObjObjMap.Entry<K, V>> entrySetRaw();
 
     /**
-     * @deprecated Please use the corresponding method that using primitive type.
+     * @deprecated Please use the corresponding method that using primitive or actual type.
+     * @see #entrySetRaw()
      */
     @Deprecated
-    default @NotNull EntrySetExt<Map.Entry<K, V>> entrySet() {
+    @NotNull
+    default EntrySetExt<MapExt.Entry<K, V>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface Entry<K, V> extends Map.Entry<K, V> {
+    interface Entry<K, V> extends MapExt.Entry<K, V> {
+
     }
+
 }

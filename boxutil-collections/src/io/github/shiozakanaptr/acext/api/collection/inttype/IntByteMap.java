@@ -2,23 +2,23 @@ package io.github.shiozakanaptr.acext.api.collection.inttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
+import io.github.shiozakanaptr.acext.api.collection.inttype.IntSet;
 import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteCollection;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteByteBiFunction;
-import io.github.shiozakanaptr.acext.util.function.bytetype.ByteUnaryOperator;
-import io.github.shiozakanaptr.acext.util.function.inttype.IntByteBiConsumer;
-import io.github.shiozakanaptr.acext.util.function.inttype.IntByteBiFunction;
-import io.github.shiozakanaptr.acext.util.function.inttype.IntByteBiOperator;
+import io.github.shiozakanaptr.acext.util.function.inttype.*;
+import io.github.shiozakanaptr.acext.util.function.bytetype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 public interface IntByteMap extends MapExt<Integer, Byte> {
     byte get(int key);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #get(int)
      */
     @Deprecated
     default Byte get(Object key) {
@@ -30,6 +30,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getOrDefault(int, byte)
      */
     @Deprecated
     default Byte getOrDefault(Object key, Byte defaultValue) {
@@ -41,6 +42,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #put(int, byte)
      */
     @Deprecated
     default Byte put(Integer key, Byte value) {
@@ -51,6 +53,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #putIfAbsent(int, byte)
      */
     @Deprecated
     default Byte putIfAbsent(Integer key, Byte value) {
@@ -61,6 +64,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remove(int)
      */
     @Deprecated
     default Byte remove(Object key) {
@@ -72,6 +76,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remove(int, byte)
      */
     @Deprecated
     default boolean remove(Object key, Object value) {
@@ -84,6 +89,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(int, byte)
      */
     @Deprecated
     default Byte replace(Integer key, Byte value) {
@@ -94,6 +100,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(int, byte, byte)
      */
     @Deprecated
     default boolean replace(Integer key, Byte oldValue, Byte newValue) {
@@ -104,21 +111,21 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfAbsent(int, IntFunction)
      */
     @Deprecated
     default Byte computeIfAbsent(Integer key, @NotNull Function<? super Integer, ? extends Byte> mappingFunction) {
-        Objects.requireNonNull(mappingFunction);
-        return this.computeIfAbsent(key != null ? key.intValue() : (int) 0, (int l_t) -> mappingFunction.apply(l_t));
+        return this.computeIfAbsent(key != null ? key.intValue() : (int) 0, (Integer l_t) -> mappingFunction.apply(l_t));
     }
 
     byte computeIfPresent(int key, @NotNull IntByteBiFunction<? extends Byte> remappingFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfPresent(int, IntByteBiFunction)
      */
     @Deprecated
     default Byte computeIfPresent(Integer key, @NotNull BiFunction<? super Integer, ? super Byte, ? extends Byte> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.computeIfPresent(key != null ? key.intValue() : (int) 0, (int l_t, byte l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
@@ -126,10 +133,10 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #compute(int, IntByteBiFunction)
      */
     @Deprecated
     default Byte compute(Integer key, @NotNull BiFunction<? super Integer, ? super Byte, ? extends Byte> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.compute(key != null ? key.intValue() : (int) 0, (int l_t, byte l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
@@ -137,24 +144,24 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #merge(int, byte, ByteByteBiFunction)
      */
     @Deprecated
     default Byte merge(Integer key, @NotNull Byte value, @NotNull BiFunction<? super Byte, ? super Byte, ? extends Byte> remappingFunction) {
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(remappingFunction);
-        return this.merge(key != null ? key.intValue() : (int) 0, value.byteValue(), (byte l_t, byte l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key != null ? key.intValue() : (int) 0, value != null ? value.byteValue() : (byte) 0, (byte l_t, byte l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     byte update(int key, @NotNull ByteUnaryOperator updateFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #update(int, ByteUnaryOperator)
      */
     @Deprecated
     default Byte update(Integer key, @NotNull Function<? super Byte, ? extends Byte> updateFunction) {
-        return this.update(key, (byte l_t) -> {
-            final Byte result = updateFunction.apply(l_t);
-            return result != null ? result : (byte) 0;
+        return this.update(key != null ? key.intValue() : (int) 0, (byte l_t) -> {
+            final Byte result;
+            return (result = updateFunction.apply(l_t)) != null ? result : (byte) 0;
         });
     }
 
@@ -162,11 +169,10 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remapping(int, IntByteBiFunction, ByteByteBiFunction)
      */
     @Deprecated
     default Byte remapping(Integer key, @NotNull BiFunction<? super Integer, ? super Byte, ? extends Integer> remappingFunction, @NotNull BiFunction<? super Byte, ? super Byte, ? extends Byte> mergeFunction) {
-        Objects.requireNonNull(remappingFunction);
-        Objects.requireNonNull(mergeFunction);
         return this.remapping(key != null ? key.intValue() : (int) 0, (int l_t, byte l_u) -> remappingFunction.apply(l_t, l_u), (byte l_t, byte l_u) -> mergeFunction.apply(l_t, l_u));
     }
 
@@ -174,6 +180,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #swapAt(int, int)
      */
     @Deprecated
     default boolean swapAt(Integer from, Integer to) {
@@ -184,6 +191,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #containsKey(int)
      */
     @Deprecated
     default boolean containsKey(Object key) {
@@ -195,6 +203,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #containsValue(byte)
      */
     @Deprecated
     default boolean containsValue(Object value) {
@@ -206,10 +215,10 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEach(IntByteBiConsumer)
      */
     @Deprecated
     default void forEach(@NotNull BiConsumer<? super Integer, ? super Byte> action) {
-        Objects.requireNonNull(action);
         this.forEach((int l_t, byte l_u) -> action.accept(l_t, l_u));
     }
 
@@ -217,10 +226,10 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replaceAll(IntByteBiOperator)
      */
     @Deprecated
     default void replaceAll(@NotNull BiFunction<? super Integer, ? super Byte, ? extends Byte> function) {
-        Objects.requireNonNull(function);
         this.replaceAll((int l_t, byte l_u) -> function.apply(l_t, l_u));
     }
 
@@ -228,6 +237,7 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getDefaultReturnValueRaw()
      */
     @Deprecated
     default Byte getDefaultReturnValue() {
@@ -238,31 +248,38 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #setDefaultReturnValue(byte)
      */
     @Deprecated
     default Byte setDefaultReturnValue(Byte newDefault) {
         return this.setDefaultReturnValue(newDefault != null ? newDefault.byteValue() : (byte) 0);
     }
 
-    @NotNull IntSet keySet();
+    @NotNull
+    IntSet keySet();
 
-    @NotNull ByteCollection values();
+    @NotNull
+    ByteCollection values();
 
-    @NotNull EntrySetExt<IntByteMap.Entry> entrySetRaw();
+    @NotNull
+    EntrySetExt<IntByteMap.Entry> entrySetRaw();
 
     /**
-     * @deprecated Please use the corresponding method that using primitive type.
+     * @deprecated Please use the corresponding method that using primitive or actual type.
+     * @see #entrySetRaw()
      */
     @Deprecated
-    default @NotNull EntrySetExt<Map.Entry<Integer, Byte>> entrySet() {
+    @NotNull
+    default EntrySetExt<MapExt.Entry<Integer, Byte>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
 
-    interface Entry extends Map.Entry<Integer, Byte> {
+    interface Entry extends MapExt.Entry<Integer, Byte> {
         int getKeyRaw();
 
         /**
          * @deprecated Please use the corresponding method that using primitive type.
+         * @see #getKeyRaw()
          */
         @Deprecated
         default Integer getKey() {
@@ -271,22 +288,25 @@ public interface IntByteMap extends MapExt<Integer, Byte> {
 
         byte getValueRaw();
 
-        byte setValue(byte newValue);
-
         /**
          * @deprecated Please use the corresponding method that using primitive type.
+         * @see #getValueRaw()
          */
         @Deprecated
         default Byte getValue() {
             return this.getValueRaw();
         }
 
+        byte setValue(byte newValue);
+
         /**
          * @deprecated Please use the corresponding method that using primitive type.
+         * @see #setValue(byte)
          */
         @Deprecated
         default Byte setValue(Byte value) {
             return this.setValue(value != null ? value.byteValue() : (byte) 0);
         }
     }
+
 }

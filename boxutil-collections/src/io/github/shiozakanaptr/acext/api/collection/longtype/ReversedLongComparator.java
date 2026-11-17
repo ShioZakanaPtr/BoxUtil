@@ -10,7 +10,7 @@ final class ReversedLongComparator implements LongComparator, Serializable {
 
     private final LongComparator comparator;
 
-    public ReversedLongComparator(LongComparator comparator) {
+    public ReversedLongComparator(@NotNull LongComparator comparator) {
         this.comparator = Objects.requireNonNull(comparator);
     }
 

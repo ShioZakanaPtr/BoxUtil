@@ -1,26 +1,24 @@
 package io.github.shiozakanaptr.acext.api.collection.inttype;
 
+import java.util.function.IntConsumer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 public interface IntIterable extends Iterable<Integer> {
     @NotNull IntIterator iterator();
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
-    default void forEach(Consumer<? super Integer> action) {
-        Objects.requireNonNull(action);
-        this.forEach((int l_value) -> action.accept(l_value));
+    default void forEach(@NotNull IntConsumer action) {
+        this.iterator().forEachRemaining(action);
     }
 
-    default void forEach(IntConsumer action) {
-        Objects.requireNonNull(action);
-        this.iterator().forEachRemaining(action);
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEach(IntConsumer)
+     */
+    @Deprecated
+    default void forEach(@NotNull Consumer<? super Integer> action) {
+        this.forEach((int l_t) -> action.accept(l_t));
     }
 
     IntSpliterator spliterator();

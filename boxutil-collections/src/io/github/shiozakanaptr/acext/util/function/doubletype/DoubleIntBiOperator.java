@@ -1,0 +1,12 @@
+package io.github.shiozakanaptr.acext.util.function.doubletype;
+
+import java.util.function.BiFunction;
+
+@FunctionalInterface
+public interface DoubleIntBiOperator extends BiFunction<Double, Integer, Integer> {
+    int apply(double t, int u);
+
+    default Integer apply(Double t, Integer u) {
+        return this.apply(t != null ? t : (double) 0, u != null ? u : (int) 0);
+    }
+}

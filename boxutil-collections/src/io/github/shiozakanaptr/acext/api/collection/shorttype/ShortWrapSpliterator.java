@@ -5,12 +5,13 @@ import io.github.shiozakanaptr.acext.api.collection.inttype.IntSpliterator;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.Objects;
 
 final class ShortWrapSpliterator implements IntSpliterator {
     private final ShortSpliterator source;
 
     ShortWrapSpliterator(ShortSpliterator source) {
-        this.source = source;
+        this.source = Objects.requireNonNull(source);
     }
 
     public ShortWrapSpliterator trySplit() {
@@ -19,18 +20,22 @@ final class ShortWrapSpliterator implements IntSpliterator {
     }
 
     public boolean tryAdvance(IntConsumer action) {
-        return this.source.tryAdvance((short l_t) -> action.accept(l_t));
+        Objects.requireNonNull(action);
+        return this.source.tryAdvance((short l_t) -> action.accept((int) l_t));
     }
 
     public boolean tryAdvance(Consumer<? super Integer> action) {
+        Objects.requireNonNull(action);
         return this.source.tryAdvance((short l_t) -> action.accept((int) l_t));
     }
 
     public void forEachRemaining(IntConsumer action) {
-        this.source.forEachRemaining((short l_t) -> action.accept(l_t));
+        Objects.requireNonNull(action);
+        this.source.forEachRemaining((short l_t) -> action.accept((int) l_t));
     }
 
     public void forEachRemaining(Consumer<? super Integer> action) {
+        Objects.requireNonNull(action);
         this.source.forEachRemaining((short l_t) -> action.accept((int) l_t));
     }
 
@@ -58,9 +63,9 @@ final class ShortWrapSpliterator implements IntSpliterator {
         return this.source.hashCode();
     }
 
-    public boolean equals(Object obj) {
-        if (obj instanceof ShortSpliterator) return this.source.equals(obj);
-        return false;
+    public boolean equals(Object o) {
+        if (o instanceof ShortSpliterator) return this.source.equals(o);
+        return o == this;
     }
 
     public String toString() {

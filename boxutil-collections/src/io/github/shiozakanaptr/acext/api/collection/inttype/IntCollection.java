@@ -1,10 +1,10 @@
 package io.github.shiozakanaptr.acext.api.collection.inttype;
 
 import io.github.shiozakanaptr.acext.api.collection.CollectionExt;
+
+import io.github.shiozakanaptr.acext.util.function.inttype.IntPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -15,6 +15,7 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(int)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -26,6 +27,7 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(int)
      */
     @Deprecated
     default boolean add(Integer e) {
@@ -36,6 +38,7 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(int)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -44,7 +47,6 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
     }
 
     default boolean removeIf(@NotNull IntPredicate filter) {
-        Objects.requireNonNull(filter);
         boolean removed = false;
         final IntIterator each = this.iterator();
         while (each.hasNext()) {
@@ -58,16 +60,14 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeIf(IntPredicate)
      */
     @Deprecated
     default boolean removeIf(@NotNull Predicate<? super Integer> filter) {
-        Objects.requireNonNull(filter);
-        return this.removeIf((int l_value) -> filter.test(l_value));
+        return this.removeIf((int l_t) -> filter.test(l_t));
     }
 
     default boolean addAll(@NotNull int[] elements) {
-        Objects.requireNonNull(elements);
-
         boolean result = false;
         for (int element : elements) {
             result |= this.add(element);
@@ -77,6 +77,7 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(int[])
      */
     @Deprecated
     default <T extends Integer> boolean addAll(@NotNull T[] elements) {
@@ -84,8 +85,6 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
     }
 
     default boolean addAll(@NotNull int[] elements, int srcIndex, int length) {
-        Objects.requireNonNull(elements);
-
         boolean result = false;
         for (int i = srcIndex, limit = srcIndex + length; i < limit; i++) {
             result |= this.add(elements[i]);
@@ -95,19 +94,24 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #addAll(int[], int, int)
      */
     @Deprecated
     default <T extends Integer> boolean addAll(@NotNull T[] elements, int srcIndex, int length) {
         return CollectionExt.super.addAll(elements, srcIndex, length);
     }
 
-    @NotNull IntIterator iterator();
+    @NotNull
+    IntIterator iterator();
 
-    @NotNull IntSpliterator spliterator();
+    @NotNull
+    IntSpliterator spliterator();
 
-    @NotNull int[] toArrayRaw();
+    @NotNull
+    int[] toArrayRaw();
 
-    @NotNull int[] toArray(@NotNull int[] a);
+    @NotNull
+    int[] toArray(@NotNull int[] a);
 
     @NotNull
     default IntStream streamRaw() {
@@ -116,6 +120,7 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #streamRaw()
      */
     @Deprecated
     @NotNull
@@ -130,6 +135,7 @@ public interface IntCollection extends CollectionExt<Integer>, IntIterable {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #parallelStreamRaw()
      */
     @Deprecated
     @NotNull

@@ -7,6 +7,7 @@ public interface LongObjPair<R> extends Pair<Long, R>, LongObjMap.Entry<R> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #leftRaw()
      */
     @Deprecated
     default Long left() {
@@ -19,11 +20,13 @@ public interface LongObjPair<R> extends Pair<Long, R>, LongObjMap.Entry<R> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getKeyRaw()
      */
     @Deprecated
     default Long getKey() {
         return this.leftRaw();
     }
+
 
     default long left(long value) {
         throw new UnsupportedOperationException();
@@ -31,9 +34,11 @@ public interface LongObjPair<R> extends Pair<Long, R>, LongObjMap.Entry<R> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #left(long)
      */
     @Deprecated
     default <T extends Long> Long left(T value) {
-        return this.left(value);
+        return this.left(value != null ? value.longValue() : (long) 0);
     }
+
 }

@@ -2,10 +2,11 @@ package io.github.shiozakanaptr.acext.util.function.bytetype;
 
 import java.util.function.UnaryOperator;
 
+@FunctionalInterface
 public interface ByteUnaryOperator extends UnaryOperator<Byte> {
     byte apply(byte t);
 
     default Byte apply(Byte t) {
-        return this.apply(t == null ? (byte) 0 : t);
+        return this.apply(t != null ? t : (byte) 0);
     }
 }

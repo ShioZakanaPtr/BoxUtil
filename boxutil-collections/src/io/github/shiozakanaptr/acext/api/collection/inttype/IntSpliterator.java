@@ -1,10 +1,10 @@
 package io.github.shiozakanaptr.acext.api.collection.inttype;
 
+import java.util.function.IntConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Spliterator;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 public interface IntSpliterator extends Spliterator.OfInt {
     IntSpliterator trySplit();
@@ -17,7 +17,7 @@ public interface IntSpliterator extends Spliterator.OfInt {
      */
     @Deprecated
     default boolean tryAdvance(@NotNull Consumer<? super Integer> action) {
-        return this.tryAdvance((int l_value) -> action.accept(l_value));
+        return this.tryAdvance((int l_t) -> action.accept(l_t));
     }
 
     default void forEachRemaining(@NotNull IntConsumer action) {
@@ -30,7 +30,7 @@ public interface IntSpliterator extends Spliterator.OfInt {
      */
     @Deprecated
     default void forEachRemaining(@NotNull Consumer<? super Integer> action) {
-        this.forEachRemaining((int l_value) -> action.accept(l_value));
+        this.forEachRemaining((int l_t) -> action.accept(l_t));
     }
 
     default IntComparator getComparator() {

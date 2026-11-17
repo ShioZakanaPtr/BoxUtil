@@ -7,6 +7,7 @@ public interface IntBytePair extends Pair<Integer, Byte>, IntByteMap.Entry {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #leftRaw()
      */
     @Deprecated
     default Integer left() {
@@ -19,6 +20,7 @@ public interface IntBytePair extends Pair<Integer, Byte>, IntByteMap.Entry {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getKeyRaw()
      */
     @Deprecated
     default Integer getKey() {
@@ -29,6 +31,7 @@ public interface IntBytePair extends Pair<Integer, Byte>, IntByteMap.Entry {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #rightRaw()
      */
     @Deprecated
     default Byte right() {
@@ -41,6 +44,7 @@ public interface IntBytePair extends Pair<Integer, Byte>, IntByteMap.Entry {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getValueRaw()
      */
     @Deprecated
     default Byte getValue() {
@@ -53,6 +57,7 @@ public interface IntBytePair extends Pair<Integer, Byte>, IntByteMap.Entry {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #left(int)
      */
     @Deprecated
     default <T extends Integer> Integer left(T value) {
@@ -65,6 +70,7 @@ public interface IntBytePair extends Pair<Integer, Byte>, IntByteMap.Entry {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #right(byte)
      */
     @Deprecated
     default <T extends Byte> Byte right(T value) {
@@ -77,6 +83,7 @@ public interface IntBytePair extends Pair<Integer, Byte>, IntByteMap.Entry {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #setValue(byte)
      */
     @Deprecated
     default Byte setValue(Byte value) {

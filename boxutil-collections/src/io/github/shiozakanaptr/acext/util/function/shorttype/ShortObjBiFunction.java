@@ -7,6 +7,6 @@ public interface ShortObjBiFunction<U, R> extends BiFunction<Short, U, R> {
     R apply(short t, U u);
 
     default R apply(Short t, U u) {
-        return this.apply(t == null ? (short) 0 : t, u);
+        return this.apply(t != null ? t : (short) 0, u);
     }
 }

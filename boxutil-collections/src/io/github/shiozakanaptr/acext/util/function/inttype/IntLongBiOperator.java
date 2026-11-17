@@ -2,10 +2,11 @@ package io.github.shiozakanaptr.acext.util.function.inttype;
 
 import java.util.function.BiFunction;
 
+@FunctionalInterface
 public interface IntLongBiOperator extends BiFunction<Integer, Long, Long> {
     long apply(int t, long u);
 
     default Long apply(Integer t, Long u) {
-        return this.apply(t == null ? (int) 0 : t, u == null ? (long) 0 : u);
+        return this.apply(t != null ? t : (int) 0, u != null ? u : (long) 0);
     }
 }

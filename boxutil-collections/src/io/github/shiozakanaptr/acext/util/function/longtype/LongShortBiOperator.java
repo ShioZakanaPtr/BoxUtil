@@ -2,10 +2,11 @@ package io.github.shiozakanaptr.acext.util.function.longtype;
 
 import java.util.function.BiFunction;
 
+@FunctionalInterface
 public interface LongShortBiOperator extends BiFunction<Long, Short, Short> {
     short apply(long t, short u);
 
     default Short apply(Long t, Short u) {
-        return this.apply(t == null ? (long) 0 : t, u == null ? (short) 0 : u);
+        return this.apply(t != null ? t : (long) 0, u != null ? u : (short) 0);
     }
 }

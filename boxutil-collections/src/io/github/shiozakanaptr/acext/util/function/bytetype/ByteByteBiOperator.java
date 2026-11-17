@@ -1,11 +1,12 @@
 package io.github.shiozakanaptr.acext.util.function.bytetype;
 
-import java.util.function.BinaryOperator;
+import java.util.function.BiFunction;
 
-public interface ByteByteBiOperator extends BinaryOperator<Byte> {
+@FunctionalInterface
+public interface ByteByteBiOperator extends BiFunction<Byte, Byte, Byte> {
     byte apply(byte t, byte u);
 
     default Byte apply(Byte t, Byte u) {
-        return this.apply(t == null ? (byte) 0 : t, u == null ? (byte) 0 : u);
+        return this.apply(t != null ? t : (byte) 0, u != null ? u : (byte) 0);
     }
 }

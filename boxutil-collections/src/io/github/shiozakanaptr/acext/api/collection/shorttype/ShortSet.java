@@ -4,6 +4,7 @@ import io.github.shiozakanaptr.acext.api.collection.SetExt;
 import io.github.shiozakanaptr.acext.util.function.shorttype.ShortFunction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.function.Function;
 
 public interface ShortSet extends SetExt<Short>, ShortCollection {
@@ -11,6 +12,7 @@ public interface ShortSet extends SetExt<Short>, ShortCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #contains(short)
      */
     @Deprecated
     default boolean contains(Object o) {
@@ -22,6 +24,7 @@ public interface ShortSet extends SetExt<Short>, ShortCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #add(short)
      */
     @Deprecated
     default boolean add(Short e) {
@@ -32,6 +35,7 @@ public interface ShortSet extends SetExt<Short>, ShortCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeElement(short)
      */
     @Deprecated
     default boolean removeElement(Object o) {
@@ -43,13 +47,17 @@ public interface ShortSet extends SetExt<Short>, ShortCollection {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remapping(short, ShortFunction)
      */
     @Deprecated
     default boolean remapping(Short element, @NotNull Function<? super Short, ? extends Short> remappingFunction) {
         return this.remapping(element != null ? element.shortValue() : (short) 0, (short l_t) -> remappingFunction.apply(l_t));
     }
 
-    @NotNull ShortIterator iterator();
+    @NotNull
+    ShortIterator iterator();
 
-    @NotNull ShortSpliterator spliterator();
+    @NotNull
+    ShortSpliterator spliterator();
+
 }

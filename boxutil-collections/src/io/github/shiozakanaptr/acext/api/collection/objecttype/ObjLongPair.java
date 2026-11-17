@@ -3,10 +3,12 @@ package io.github.shiozakanaptr.acext.api.collection.objecttype;
 import io.github.shiozakanaptr.acext.api.collection.Pair;
 
 public interface ObjLongPair<L> extends Pair<L, Long>, ObjLongMap.Entry<L> {
+
     long rightRaw();
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #rightRaw()
      */
     @Deprecated
     default Long right() {
@@ -19,11 +21,13 @@ public interface ObjLongPair<L> extends Pair<L, Long>, ObjLongMap.Entry<L> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getValueRaw()
      */
     @Deprecated
     default Long getValue() {
         return this.rightRaw();
     }
+
 
     default long right(long value) {
         throw new UnsupportedOperationException();
@@ -31,6 +35,7 @@ public interface ObjLongPair<L> extends Pair<L, Long>, ObjLongMap.Entry<L> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #right(long)
      */
     @Deprecated
     default <T extends Long> Long right(T value) {
@@ -43,6 +48,7 @@ public interface ObjLongPair<L> extends Pair<L, Long>, ObjLongMap.Entry<L> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #setValue(long)
      */
     @Deprecated
     default Long setValue(Long value) {

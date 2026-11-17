@@ -6,6 +6,7 @@ import io.github.shiozakanaptr.acext.api.collection.MapExt;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongObjBiMap;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ObjLongBiMap<K> extends BiMap<K, Long>, ObjLongMap<K> {
     K getKey(long value);
@@ -28,7 +29,7 @@ public interface ObjLongBiMap<K> extends BiMap<K, Long>, ObjLongMap<K> {
      */
     @Deprecated
     default K getKeyOrDefault(Object value, K defaultKey) {
-        if (value != null && !(value instanceof Long)) return this.getDefaultReturnKey();
+        if (value != null && !(value instanceof Long)) return defaultKey;
         return this.getKeyOrDefault(value != null ? ((Long) value).longValue() : (long) 0, defaultKey);
     }
 

@@ -1,0 +1,92 @@
+package io.github.shiozakanaptr.acext.api.collection.chartype;
+
+import io.github.shiozakanaptr.acext.api.collection.Pair;
+
+public interface CharIntPair extends Pair<Character, Integer>, CharIntMap.Entry {
+    char leftRaw();
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #leftRaw()
+     */
+    @Deprecated
+    default Character left() {
+        return this.leftRaw();
+    }
+
+    default char getKeyRaw() {
+        return this.leftRaw();
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getKeyRaw()
+     */
+    @Deprecated
+    default Character getKey() {
+        return this.leftRaw();
+    }
+
+    int rightRaw();
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #rightRaw()
+     */
+    @Deprecated
+    default Integer right() {
+        return this.rightRaw();
+    }
+
+    default int getValueRaw() {
+        return this.rightRaw();
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getValueRaw()
+     */
+    @Deprecated
+    default Integer getValue() {
+        return this.rightRaw();
+    }
+
+    default char left(char value) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #left(char)
+     */
+    @Deprecated
+    default <T extends Character> Character left(T value) {
+        return this.left(value != null ? value.charValue() : (char) 0);
+    }
+
+    default int right(int value) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #right(int)
+     */
+    @Deprecated
+    default <T extends Integer> Integer right(T value) {
+        return this.right(value != null ? value.intValue() : (int) 0);
+    }
+
+    default int setValue(int newValue) {
+        return this.right(newValue);
+    }
+
+    /**
+     * @deprecated Please use the corresponding method that using primitive type.
+     * @see #setValue(int)
+     */
+    @Deprecated
+    default Integer setValue(Integer value) {
+        return this.right(value != null ? value.intValue() : (int) 0);
+    }
+}
