@@ -7,6 +7,6 @@ public interface ObjDoubleBiOperator<T> extends BiFunction<T, Double, Double> {
     double apply(T t, double u);
 
     default Double apply(T t, Double u) {
-        return this.apply(t,, u != null ? u : (double) 0);
+        return this.apply(t, u != null ? u : (double) 0);
     }
 }

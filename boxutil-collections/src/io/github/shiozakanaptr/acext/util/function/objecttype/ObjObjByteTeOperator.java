@@ -1,6 +1,6 @@
 package io.github.shiozakanaptr.acext.util.function.objecttype;
 
-import io.github.shiozakanaptr.acext.util.function.objecttype.TeFunction;
+import io.github.shiozakanaptr.acext.util.function.TeFunction;
 
 @FunctionalInterface
 public interface ObjObjByteTeOperator<T, U> extends TeFunction<T, U, Byte, Byte> {

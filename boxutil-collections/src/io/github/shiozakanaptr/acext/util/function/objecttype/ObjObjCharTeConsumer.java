@@ -1,6 +1,6 @@
 package io.github.shiozakanaptr.acext.util.function.objecttype;
 
-import io.github.shiozakanaptr.acext.util.function.objecttype.TeConsumer;
+import io.github.shiozakanaptr.acext.util.function.TeConsumer;
 
 @FunctionalInterface
 public interface ObjObjCharTeConsumer<T, U> extends TeConsumer<T, U, Character> {

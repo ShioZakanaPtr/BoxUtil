@@ -22,7 +22,7 @@ final class CharWrapComparator implements IntComparator {
     }
 
     public int compare(Integer o1, Integer o2) {
-        return this.source.compare(o1 != null ? o1.charValue() : (char) 0, o2 != null ? o2.charValue() : (char) 0);
+        return this.source.compare(o1 != null ? (char) o1.intValue() : (char) 0, o2 != null ? (char) o2.intValue() : (char) 0);
     }
 
     public IntComparator thenComparing(IntComparator other) {

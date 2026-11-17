@@ -7,6 +7,6 @@ public interface ObjCharBiOperator<T> extends BiFunction<T, Character, Character
     char apply(T t, char u);
 
     default Character apply(T t, Character u) {
-        return this.apply(t,, u != null ? u : (char) 0);
+        return this.apply(t, u != null ? u : (char) 0);
     }
 }
