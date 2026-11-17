@@ -22,6 +22,30 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.*;
 
+/**
+ * A {@link java.util.Map} implementation backed by a linear-probing open-addressing
+ * hash table.
+ *
+ * <p>Compared with closed-addressing (separate-chaining) designs, this
+ * implementation has lower memory overhead, since entries are stored directly
+ * in the table array without per-entry node objects. It also offers a
+ * significant speed advantage for primitive key and value types, where the
+ * overhead of boxing and indirection can be avoided.
+ *
+ * <p>For reference types such as {@link java.lang.String}, however, this implementation
+ * does not cache hash codes. Depending on the situation, and in particular when
+ * lookups are not mostly hits, it might therefore be slower than
+ * closed-addressing implementations that cache the hash code once per entry.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows the internal probe sequence and is not guaranteed
+ * to be stable across modifications.
+ *
+ * @param <K> the type of keys maintained by this map
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "deprecation", "RedundantCast"})
 public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContainer<K>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -248,17 +272,18 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
         if (behavior.equals(key, ((K) NULL_SLOT))) {
             final long[] valueL = this.valueTable;
             final long result;
+            final int capL = this.capacity;
             if (this.withNullKey) {
-                result = valueL[this.capacity];
+                result = valueL[capL];
             } else {
                 result = this.defVal;
                 this.withNullKey = true;
-                this.keyTable[this.capacity] = key;
+                this.keyTable[capL] = key;
                 this.size++;
                 this.remaining--;
                 this.checkExpand();
             }
-            valueL[this.capacity] = value;
+            valueL[capL] = value;
             return result;
         }
 
@@ -436,7 +461,7 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
 
     public void swap(Map<K, Long> source) {
         if (this == source || (this.isEmpty() && source.isEmpty())) return;
-        if (source instanceof ObjLongLinearProbingHashMap) {
+        if (source instanceof ObjLongLinearProbingHashMap<?>) {
             final ObjLongLinearProbingHashMap<K> src = (ObjLongLinearProbingHashMap<K>) source;
             if (Objects.equals(src.hashBehavior, this.hashBehavior) && this.loadFactor == src.loadFactor) {
                 this.clearMappingCollection();
@@ -467,18 +492,25 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
                 return;
             }
         }
-        if (source.size() < this.size()) {
-            final Map<K, Long> tmp = new ObjLongLinearProbingHashMap<>(source);
+        if (this.isEmpty()) {
+            this.putAll(source);
             source.clear();
-            source.putAll(this);
-            this.clear();
-            this.putAll(tmp);
         } else {
-            final Map<K, Long> tmp = new ObjLongLinearProbingHashMap<>(this);
+            final int capL = this.capacity, fullLength;
+            final K[] oldKeyL, keyL = Arrays.copyOf(oldKeyL = this.keyTable, fullLength = oldKeyL.length);
+            final long[] valueL = Arrays.copyOf(this.valueTable, fullLength);
+
             this.clear();
             this.putAll(source);
             source.clear();
-            source.putAll(tmp);
+            for (int pos = 0; pos < capL; pos++) {
+                final K currKey;
+                if ((currKey = keyL[pos]) != ((K) NULL_SLOT)) {
+                    source.put(currKey, valueL[pos]);
+                }
+            }
+
+            if (this.withNullKey) source.put(keyL[capL], valueL[capL]);
         }
     }
 
@@ -492,7 +524,7 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
         final long tmpValue = valueL[posA];
         valueL[posA] = valueL[posB];
         valueL[posB] = tmpValue;
-        return false;
+        return true;
     }
 
     public boolean containsKey(Object key) {
@@ -711,7 +743,7 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
                             if (srcValue != currValue) return false;
                         }
                     }
-                    if (this.withNullKey) return Objects.equals(currKeyL[this.capacity], srcKeyL[cast.capacity]) && Objects.equals(currValueL[this.capacity], srcValueL[cast.capacity]);
+                    if (this.withNullKey) return Objects.equals(currKeyL[this.capacity], srcKeyL[cast.capacity]) && currValueL[this.capacity] == srcValueL[cast.capacity];
                 } else {
                     final long[] currValueL = this.valueTable;
                     for (Map.Entry<?, ?> entry : castMap.entrySet()) {
@@ -753,7 +785,7 @@ public class ObjLongLinearProbingHashMap<K> implements ObjLongMap<K>, HashContai
         if (this.withNullKey) {
             final K currKey;
             if (sb.length() > 1) sb.append(',').append(' ');
-            sb.append((currKey = keyL[capL]) == this ? "(this Map)" : currKey)
+            sb.append((currKey = keyL[capL]) != this ? currKey : "(this Map)")
                     .append('=')
                     .append(valueL[capL]);
         }

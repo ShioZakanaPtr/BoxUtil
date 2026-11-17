@@ -10,6 +10,26 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.*;
 
+/**
+ * A {@link java.util.Set} implementation backed by a linear-probing open-addressing hash
+ * table.
+ *
+ * <p>Compared with closed-addressing (separate-chaining) designs, this
+ * implementation has lower memory overhead, since entries are stored directly
+ * in the table array without per-entry node objects. It also offers a
+ * significant speed advantage for primitive element types, where the overhead
+ * of boxing and indirection can be avoided.
+ *
+ * <p>For reference element types such as {@link java.lang.String}, however, this
+ * implementation does not cache hash codes. Depending on the situation, and in
+ * particular when lookups are not mostly hits, it might therefore be slower than
+ * closed-addressing implementations that cache the hash code once per entry.
+ *
+ * @param <E> the type of elements maintained by this set
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
 public class ObjLinearProbingHashSet<E> extends AbstractObjSet<E> implements HashContainer<E>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -256,7 +276,7 @@ public class ObjLinearProbingHashSet<E> extends AbstractObjSet<E> implements Has
 
     public void swap(Set<E> source) {
         if (this == source || (this.isEmpty() && source.isEmpty())) return;
-        if (source instanceof ObjLinearProbingHashSet) {
+        if (source instanceof ObjLinearProbingHashSet<?>) {
             final ObjLinearProbingHashSet<E> src = (ObjLinearProbingHashSet<E>) source;
             if (Objects.equals(src.hashBehavior, this.hashBehavior) && this.loadFactor == src.loadFactor) {
                 final boolean currWithNull = this.withNullEle, srcWithNull = src.withNullEle;
@@ -281,18 +301,24 @@ public class ObjLinearProbingHashSet<E> extends AbstractObjSet<E> implements Has
                 return;
             }
         }
-        if (source.size() < this.size()) {
-            final List<E> tmp = new ArrayList<>(source);
+        if (this.isEmpty()) {
+            this.addAll(source);
             source.clear();
-            source.addAll(this);
-            this.clear();
-            this.addAll(tmp);
         } else {
-            final List<E> tmp = new ArrayList<>(this);
+            final int capL = this.capacity;
+            final E[] oldEleL, eleL = Arrays.copyOf(oldEleL = this.element, oldEleL.length);
+
             this.clear();
             this.addAll(source);
             source.clear();
-            source.addAll(tmp);
+            for (int pos = 0; pos < capL;) {
+                final E currEle;
+                if ((currEle = eleL[pos++]) != ((E) NULL_SLOT)) {
+                    source.add(currEle);
+                }
+            }
+
+            if (this.withNullEle) source.add(eleL[capL]);
         }
     }
 

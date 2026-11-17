@@ -23,6 +23,23 @@ import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.LongConsumer;
 
+/**
+ * A {@link java.util.Map} implementation backed by a bitmap over {@code byte} keys.
+ *
+ * <p>This map exploits the fact that a {@code byte} key has only 256 possible
+ * values, using a bitmap to record which keys are present and a compact value
+ * array to store the associated values. As a result, lookup performance
+ * approaches that of direct array indexing, and memory overhead remains
+ * relatively low even when many entries are present, since the footprint is
+ * bounded by the {@code byte} key domain rather than by the number of entries.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows the natural ordering of {@code byte} keys and is
+ * therefore stable across modifications.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"UnusedReturnValue", "unused", "NullableProblems", "deprecation"})
 public class ByteLongBitMap implements ByteLongMap, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -41,6 +58,9 @@ public class ByteLongBitMap implements ByteLongMap, Cloneable, Serializable {
         return new long[cap];
     }
 
+    /**
+     * @param initialCapacity the capacity of value storage space.
+     */
     public ByteLongBitMap(int initialCapacity) {
         InternalCollectionUtil.checkCapacity(initialCapacity, 256);
         this.valueTable = this.newValueTable(Math.max(initialCapacity, 2));
@@ -151,7 +171,7 @@ public class ByteLongBitMap implements ByteLongMap, Cloneable, Serializable {
             return this.defVal;
         }
         final long[] valueL;
-        if ((valueL = this.valueTable)[seq] != NULL_BIT) return valueL[seq];
+        if ((valueL = this.valueTable)[seq] != 0) return valueL[seq];
         valueL[seq] = value;
         return 0;
     }
@@ -314,18 +334,20 @@ public class ByteLongBitMap implements ByteLongMap, Cloneable, Serializable {
             }
             return;
         }
-        if (source.size() < this.size()) {
-            final Map<Byte, Long> tmp = new ByteLongBitMap(source);
+        if (this.isEmpty()) {
+            this.putAll(source);
             source.clear();
-            source.putAll(this);
-            this.clear();
-            this.putAll(tmp);
         } else {
-            final Map<Byte, Long> tmp = new ByteLongBitMap(this);
+            final long[] bitL = Arrays.copyOf(this.bitMark, 4);
+            final long[] oldValueL, valueL = Arrays.copyOf(oldValueL = this.valueTable, oldValueL.length);
+            final int capacity = valueL.length;
+
             this.clear();
             this.putAll(source);
             source.clear();
-            source.putAll(tmp);
+            for (int seq = 0; seq < capacity; seq++) {
+                if ((bitL[seq >>> 6] & (1L << (seq & 0b111111))) != NULL_BIT) source.put((byte) seq, valueL[seq]);
+            }
         }
     }
 

@@ -19,6 +19,25 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.*;
 
+/**
+ * A {@link java.util.Map} implementation backed by a bitmap over {@code byte} keys.
+ *
+ * <p>This map exploits the fact that a {@code byte} key has only 256 possible
+ * values, using a bitmap to record which keys are present and a compact value
+ * array to store the associated values. As a result, lookup performance
+ * approaches that of direct array indexing, and memory overhead remains
+ * relatively low even when many entries are present, since the footprint is
+ * bounded by the {@code byte} key domain rather than by the number of entries.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows the natural ordering of {@code byte} keys and is
+ * therefore stable across modifications.
+ *
+ * @param <V> the type of mapped values
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "deprecation"})
 public class ByteObjBitMap<V> implements ByteObjMap<V>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -37,6 +56,9 @@ public class ByteObjBitMap<V> implements ByteObjMap<V>, Cloneable, Serializable 
         return (V[]) new Object[cap];
     }
 
+    /**
+     * @param initialCapacity the capacity of value storage space.
+     */
     public ByteObjBitMap(int initialCapacity) {
         InternalCollectionUtil.checkCapacity(initialCapacity, 256);
         this.valueTable = this.newValueTable(Math.max(initialCapacity, 2));
@@ -293,7 +315,7 @@ public class ByteObjBitMap<V> implements ByteObjMap<V>, Cloneable, Serializable 
 
     public void swap(Map<Byte, V> source) {
         if (this == source || (this.isEmpty() && source.isEmpty())) return;
-        if (source instanceof ByteObjBitMap) {
+        if (source instanceof ByteObjBitMap<?>) {
             final ByteObjBitMap<V> src = (ByteObjBitMap<V>) source;
             this.clearMappingCollection();
             src.clearMappingCollection();
@@ -314,20 +336,21 @@ public class ByteObjBitMap<V> implements ByteObjMap<V>, Cloneable, Serializable 
             }
             return;
         }
-        if (source.size() < this.size()) {
-            final Map<Byte, V> tmp = new ByteObjBitMap<>(source);
+        if (this.isEmpty()) {
+            this.putAll(source);
             source.clear();
-            source.putAll(this);
-            this.clear();
-            this.putAll(tmp);
         } else {
-            final Map<Byte, V> tmp = new ByteObjBitMap<>(this);
+            final long[] bitL = Arrays.copyOf(this.bitMark, 4);
+            final V[] oldValueL, valueL = Arrays.copyOf(oldValueL = this.valueTable, oldValueL.length);
+            final int capacity = valueL.length;
+
             this.clear();
             this.putAll(source);
             source.clear();
-            source.putAll(tmp);
+            for (int seq = 0; seq < capacity; seq++) {
+                if ((bitL[seq >>> 6] & (1L << (seq & 0b111111))) != NULL_BIT) source.put((byte) seq, valueL[seq]);
+            }
         }
-
     }
 
     public boolean swapAt(byte from, byte to) {

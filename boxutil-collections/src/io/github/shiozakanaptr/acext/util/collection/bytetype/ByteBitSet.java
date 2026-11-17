@@ -10,6 +10,26 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * A {@link java.util.Set} implementation backed by a bitmap over {@code byte} elements.
+ *
+ * <p>This set stores membership as bits in a fixed-size bitmap indexed by the
+ * {@code byte} value, so membership tests and updates are constant-time bit
+ * operations. Its performance is far higher than that of a general-purpose
+ * {@code Byte} set, and when holding elements it has the lowest memory overhead
+ * among nearly all alternatives, since the entire set is represented by the bitmap
+ * itself.
+ *
+ * <p>This set is a fixed capacity collection, any changes capacity method
+ * throwing {@link UnsupportedOperationException} when called.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows the natural ordering of {@code byte} keys and is
+ * therefore stable across modifications.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"UnusedReturnValue", "unused", "NullableProblems", "deprecation"})
 public class ByteBitSet extends AbstractByteSet implements Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -103,18 +123,18 @@ public class ByteBitSet extends AbstractByteSet implements Cloneable, Serializab
             this.bitMark = srcBitL;
             return;
         }
-        if (source.size() < this.size()) {
-            final List<Byte> tmp = new ArrayList<>(source);
+        if (this.isEmpty()) {
+            this.addAll(source);
             source.clear();
-            source.addAll(this);
-            this.clear();
-            this.addAll(tmp);
         } else {
-            final List<Byte> tmp = new ArrayList<>(this);
+            final long[] bitL = Arrays.copyOf(this.bitMark, 4);
+
             this.clear();
             this.addAll(source);
             source.clear();
-            source.addAll(tmp);
+            for (int seq = 0; seq < 256; seq++) {
+                if ((bitL[seq >>> 6] & ( 1L << (seq & 0b111111))) != NULL_BIT) source.add((byte) seq);
+            }
         }
     }
 

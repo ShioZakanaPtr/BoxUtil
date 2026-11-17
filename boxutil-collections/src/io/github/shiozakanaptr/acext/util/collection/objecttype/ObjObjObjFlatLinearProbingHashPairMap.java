@@ -5,8 +5,8 @@ import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjCollection;
 import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjObjPairMap;
 import io.github.shiozakanaptr.acext.util.InternalCollectionUtil;
 import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
-import io.github.shiozakanaptr.acext.util.function.objecttype.TeConsumer;
-import io.github.shiozakanaptr.acext.util.function.objecttype.TeFunction;
+import io.github.shiozakanaptr.acext.util.function.TeConsumer;
+import io.github.shiozakanaptr.acext.util.function.TeFunction;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -16,6 +16,33 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
+/**
+ * A {@link io.github.shiozakanaptr.acext.api.collection.PairMap} implementation
+ * backed by a linear-probing open-addressing hash table.
+ *
+ * <p>Compared with a {@code PairMap} implemented as a nested map (a map of
+ * second keys to values keyed by the first key), this implementation has a
+ * natural memory advantage: all mappings are stored in a flat table rather than
+ * in many small per-first-key maps, avoiding the overhead of the nested
+ * structure's containers.
+ *
+ * <p>The exception is when the number of distinct first keys and the number of
+ * distinct second keys form a significantly skewed ratio. In that case, the
+ * storage associated with one of the key dimensions is underutilized, so the
+ * flat layout may waste memory compared with a nested-map design. For balanced
+ * key distributions, the flat layout is generally the better choice.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows the internal probe sequence and is not guaranteed
+ * to be stable across modifications.
+ *
+ * @param <L> the type of the first keys maintained by this map
+ * @param <R> the type of the second keys maintained by this map
+ * @param <V> the type of mapped values
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "RedundantCast"})
 public class ObjObjObjFlatLinearProbingHashPairMap<L, R, V> implements ObjObjPairMap<L, R, V>, BinaryHashContainer<L, R>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -428,7 +455,7 @@ public class ObjObjObjFlatLinearProbingHashPairMap<L, R, V> implements ObjObjPai
 
     public void swap(PairMap<L, R, V> source) {
         if (this == source || (this.isEmpty() && source.isEmpty())) return;
-        if (source instanceof ObjObjObjFlatLinearProbingHashPairMap) {
+        if (source instanceof ObjObjObjFlatLinearProbingHashPairMap<?, ?, ?>) {
             final ObjObjObjFlatLinearProbingHashPairMap<L, R, V> src = (ObjObjObjFlatLinearProbingHashPairMap<L, R, V>) source;
             if (Objects.equals(src.hashBehaviorA, this.hashBehaviorA) && Objects.equals(src.hashBehaviorB, this.hashBehaviorB) && this.loadFactor == src.loadFactor) {
                 this.clearMappingCollection();
@@ -459,18 +486,24 @@ public class ObjObjObjFlatLinearProbingHashPairMap<L, R, V> implements ObjObjPai
                 return;
             }
         }
-        if (source.size() < this.size()) {
-            final PairMap<L, R, V> tmp = new ObjObjObjFlatLinearProbingHashPairMap<>(source);
+        if (this.isEmpty()) {
+            this.putAll(source);
             source.clear();
-            source.putAll(this);
-            this.clear();
-            this.putAll(tmp);
         } else {
-            final PairMap<L, R, V> tmp = new ObjObjObjFlatLinearProbingHashPairMap<>(this);
+            final int capL;
+            final L[] oldKeyAL, keyAL = Arrays.copyOf(oldKeyAL = this.keyATable, capL = oldKeyAL.length);
+            final R[] keyBL = Arrays.copyOf(this.keyBTable, capL);
+            final V[] valueL = Arrays.copyOf(this.valueTable, capL);
+
             this.clear();
             this.putAll(source);
             source.clear();
-            source.putAll(tmp);
+            for (int pos = 0; pos < capL; pos++) {
+                final L currKeyA;
+                if ((currKeyA = keyAL[pos]) != ((L) NULL_KEY_A)) {
+                    source.put(currKeyA, keyBL[pos], valueL[pos]);
+                }
+            }
         }
     }
 
@@ -484,7 +517,7 @@ public class ObjObjObjFlatLinearProbingHashPairMap<L, R, V> implements ObjObjPai
         final V tmpValue = valueL[posA];
         valueL[posA] = valueL[posB];
         valueL[posB] = tmpValue;
-        return false;
+        return true;
     }
 
     public boolean containsKey(Object keyA, Object keyB) {

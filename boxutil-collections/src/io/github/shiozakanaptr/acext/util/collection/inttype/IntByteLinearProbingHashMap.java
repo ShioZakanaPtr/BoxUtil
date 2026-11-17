@@ -26,6 +26,28 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.*;
 
+/**
+ * A {@link java.util.Map} implementation backed by a linear-probing open-addressing
+ * hash table.
+ *
+ * <p>Compared with closed-addressing (separate-chaining) designs, this
+ * implementation has lower memory overhead, since entries are stored directly
+ * in the table array without per-entry node objects. It also offers a
+ * significant speed advantage for primitive key and value types, where the
+ * overhead of boxing and indirection can be avoided.
+ *
+ * <p>For reference types such as {@link java.lang.String}, however, this implementation
+ * does not cache hash codes. Depending on the situation, and in particular when
+ * lookups are not mostly hits, it might therefore be slower than
+ * closed-addressing implementations that cache the hash code once per entry.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows the internal probe sequence and is not guaranteed
+ * to be stable across modifications.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"UnusedReturnValue", "unused", "NullableProblems", "deprecation", "RedundantCast"})
 public class IntByteLinearProbingHashMap implements IntByteMap, HashContainer<Integer>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -252,17 +274,18 @@ public class IntByteLinearProbingHashMap implements IntByteMap, HashContainer<In
         if (behavior.equals(key, ((int) NULL_SLOT))) {
             final byte[] valueL = this.valueTable;
             final byte result;
+            final int capL = this.capacity;
             if (this.withNullKey) {
-                result = valueL[this.capacity];
+                result = valueL[capL];
             } else {
                 result = this.defVal;
                 this.withNullKey = true;
-                this.keyTable[this.capacity] = key;
+                this.keyTable[capL] = key;
                 this.size++;
                 this.remaining--;
                 this.checkExpand();
             }
-            valueL[this.capacity] = value;
+            valueL[capL] = value;
             return result;
         }
 
@@ -292,7 +315,7 @@ public class IntByteLinearProbingHashMap implements IntByteMap, HashContainer<In
             return this.defVal;
         }
         final byte[] valueL;
-        if ((valueL = this.valueTable)[pos] != ((int) NULL_SLOT)) return valueL[pos];
+        if ((valueL = this.valueTable)[pos] != 0) return valueL[pos];
         valueL[pos] = value;
         return 0;
     }
@@ -472,18 +495,25 @@ public class IntByteLinearProbingHashMap implements IntByteMap, HashContainer<In
                 return;
             }
         }
-        if (source.size() < this.size()) {
-            final Map<Integer, Byte> tmp = new IntByteLinearProbingHashMap(source);
+        if (this.isEmpty()) {
+            this.putAll(source);
             source.clear();
-            source.putAll(this);
-            this.clear();
-            this.putAll(tmp);
         } else {
-            final Map<Integer, Byte> tmp = new IntByteLinearProbingHashMap(this);
+            final int capL = this.capacity, fullLength;
+            final int[] oldKeyL, keyL = Arrays.copyOf(oldKeyL = this.keyTable, fullLength = oldKeyL.length);
+            final byte[] valueL = Arrays.copyOf(this.valueTable, fullLength);
+
             this.clear();
             this.putAll(source);
             source.clear();
-            source.putAll(tmp);
+            for (int pos = 0; pos < capL; pos++) {
+                final int currKey;
+                if ((currKey = keyL[pos]) != ((int) NULL_SLOT)) {
+                    source.put(currKey, valueL[pos]);
+                }
+            }
+
+            if (this.withNullKey) source.put(keyL[capL], valueL[capL]);
         }
     }
 
@@ -497,7 +527,7 @@ public class IntByteLinearProbingHashMap implements IntByteMap, HashContainer<In
         final byte tmpValue = valueL[posA];
         valueL[posA] = valueL[posB];
         valueL[posB] = tmpValue;
-        return false;
+        return true;
     }
 
     public boolean containsKey(int key) {

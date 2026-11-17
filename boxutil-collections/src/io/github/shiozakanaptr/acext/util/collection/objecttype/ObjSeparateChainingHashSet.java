@@ -12,6 +12,29 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * A {@link java.util.Set} implementation backed by separate chaining.
+ *
+ * <p>This is a typical separate-chaining implementation: each bucket holds a
+ * linked list of entries, and there is no red-black tree structure as in the
+ * {@link java.util.HashMap}. Compared with the JDK design, it saves the
+ * overhead of the otherwise unused value field present in the JDK's node
+ * representation.
+ *
+ * <p>Because this implementation caches the hash code of each entry, it may,
+ * depending on the situation, be faster than general open-addressing
+ * implementations for reference element types such as {@link java.lang.String},
+ * particularly when lookups are not mostly hits.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows bucket order and is not guaranteed to be stable
+ * across modifications.
+ *
+ * @param <E> the type of elements maintained by this set
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "StatementWithEmptyBody"})
 public class ObjSeparateChainingHashSet<E> extends AbstractObjSet<E> implements HashContainer<E>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -201,7 +224,7 @@ public class ObjSeparateChainingHashSet<E> extends AbstractObjSet<E> implements 
 
     public void swap(Set<E> source) {
         if (this == source || (this.isEmpty() && source.isEmpty())) return;
-        if (source instanceof ObjSeparateChainingHashSet) {
+        if (source instanceof ObjSeparateChainingHashSet<?>) {
             final ObjSeparateChainingHashSet<E> src = (ObjSeparateChainingHashSet<E>) source;
             if (Objects.equals(src.hashBehavior, this.hashBehavior) && this.loadFactor == src.loadFactor) {
                 final int currSize = this.size, srcSize = src.size,
@@ -220,18 +243,21 @@ public class ObjSeparateChainingHashSet<E> extends AbstractObjSet<E> implements 
                 return;
             }
         }
-        if (source.size() < this.size()) {
-            final List<E> tmp = new ArrayList<>(source);
+        if (this.isEmpty()) {
+            this.addAll(source);
             source.clear();
-            source.addAll(this);
-            this.clear();
-            this.addAll(tmp);
         } else {
-            final List<E> tmp = new ArrayList<>(this);
+            final Node<E>[] oldTableL, tableL = Arrays.copyOf(oldTableL = this.table, oldTableL.length);
+
             this.clear();
             this.addAll(source);
             source.clear();
-            source.addAll(tmp);
+            for (Node<E> currNode : tableL) {
+                while (currNode != null) {
+                    source.add(currNode.element);
+                    currNode = currNode.next;
+                }
+            }
         }
     }
 
@@ -432,7 +458,7 @@ public class ObjSeparateChainingHashSet<E> extends AbstractObjSet<E> implements 
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         InternalCollectionUtil.SerialCheck.ioCheckHashBehavior(this.hashBehavior);
-        InternalCollectionUtil.SerialCheck.ioCheckHashLoadFactor(this.loadFactor, 0.2f, 0.9f);
+        InternalCollectionUtil.SerialCheck.ioCheckHashLoadFactor(this.loadFactor, 0.2f, 2.0f);
         InternalCollectionUtil.SerialCheck.ioCheckSize(this.size, 0, HashContainer.MAXIMUM_CAPACITY);
         final int capacity = InternalCollectionUtil.SerialCheck.ioGetHashTableCapacity(this.size, this.loadFactor, HashContainer.MAXIMUM_CAPACITY),
                 maskL = this.posMask = capacity - 1;

@@ -6,7 +6,28 @@ import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteObjPair;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class ByteObjMutablePair<R> implements ByteObjPair<R>, Serializable {
+/**
+ * A simple mutable {@link Pair} container.
+ *
+ * <p>This class holds a left and a right element, both of which may be
+ * modified after construction via the mutating methods inherited from
+ * {@link Pair}. It is typically used when two values cannot conveniently be
+ * passed around together, such as when a method must return two results or
+ * when a collection stores compound entries.
+ *
+ * <p>In cases where both values are always available and used together,
+ * declaring two separate fields is generally preferable to a pair; a pair is
+ * intended for situations where bundling the two values is genuinely useful.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}.
+ *
+ * @param <R> the type of the right element, which serves as the value of the
+ *        {@link io.github.shiozakanaptr.acext.api.collection.MapExt.Entry} view
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public class ByteObjMutablePair<R> implements ByteObjPair<R>, Cloneable, Serializable {
     private static final long serialVersionUID = 1L;
 
     protected byte le;
@@ -44,6 +65,16 @@ public class ByteObjMutablePair<R> implements ByteObjPair<R>, Serializable {
 
     public boolean isMutable() {
         return true;
+    }
+
+    public Object clone() {
+        ByteObjMutablePair<R> result;
+        try {
+            result = (ByteObjMutablePair<R>) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e);
+        }
+        return result;
     }
 
     public int hashCode() {

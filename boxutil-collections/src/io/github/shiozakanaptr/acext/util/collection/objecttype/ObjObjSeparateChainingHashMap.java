@@ -12,6 +12,28 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.*;
 
+/**
+ * A {@link java.util.Map} implementation backed by separate chaining.
+ *
+ * <p>This is a typical separate-chaining implementation: each bucket holds a
+ * linked list of entries, and there is no red-black tree structure as in the
+ * JDK {@code HashMap}.
+ *
+ * <p>Because this implementation caches the hash code of each entry, it may,
+ * depending on the situation, be faster than general open-addressing
+ * implementations for reference key types such as {@link java.lang.String},
+ * particularly when lookups are not mostly hits.
+ *
+ * <p>This class is {@link Cloneable} and {@link Serializable}. The iteration
+ * order of its views follows bucket order and is not guaranteed to be stable
+ * across modifications.
+ *
+ * @param <K> the type of keys maintained by this map
+ * @param <V> the type of mapped values
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @SuppressWarnings({"unchecked", "UnusedReturnValue", "unused", "NullableProblems", "StatementWithEmptyBody"})
 public class ObjObjSeparateChainingHashMap<K, V> implements ObjObjMap<K, V>, HashContainer<K>, Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -355,7 +377,7 @@ public class ObjObjSeparateChainingHashMap<K, V> implements ObjObjMap<K, V>, Has
 
     public void swap(Map<K, V> source) {
         if (this == source) return;
-        if (source instanceof ObjObjSeparateChainingHashMap) {
+        if (source instanceof ObjObjSeparateChainingHashMap<?, ?>) {
             final ObjObjSeparateChainingHashMap<K, V> src = (ObjObjSeparateChainingHashMap<K, V>) source;
             if (Objects.equals(src.hashBehavior, this.hashBehavior) && this.loadFactor == src.loadFactor) {
                 this.clearMappingCollection();
@@ -377,18 +399,21 @@ public class ObjObjSeparateChainingHashMap<K, V> implements ObjObjMap<K, V>, Has
                 return;
             }
         }
-        if (source.size() < this.size()) {
-            final Map<K, V> tmp = new ObjObjSeparateChainingHashMap<>(source);
+        if (this.isEmpty()) {
+            this.putAll(source);
             source.clear();
-            source.putAll(this);
-            this.clear();
-            this.putAll(tmp);
         } else {
-            final Map<K, V> tmp = new ObjObjSeparateChainingHashMap<>(this);
+            final Node<K, V>[] oldTableL, tableL = Arrays.copyOf(oldTableL = this.table, oldTableL.length);
+
             this.clear();
             this.putAll(source);
             source.clear();
-            source.putAll(tmp);
+            for (Node<K, V> currNode : tableL) {
+                while (currNode != null) {
+                    source.put(currNode.key, currNode.value);
+                    currNode = currNode.next;
+                }
+            }
         }
     }
 
@@ -661,7 +686,7 @@ public class ObjObjSeparateChainingHashMap<K, V> implements ObjObjMap<K, V>, Has
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         InternalCollectionUtil.SerialCheck.ioCheckHashBehavior(this.hashBehavior);
-        InternalCollectionUtil.SerialCheck.ioCheckHashLoadFactor(this.loadFactor, 0.2f, 0.9f);
+        InternalCollectionUtil.SerialCheck.ioCheckHashLoadFactor(this.loadFactor, 0.2f, 2.0f);
         InternalCollectionUtil.SerialCheck.ioCheckSize(this.size, 0, HashContainer.MAXIMUM_CAPACITY);
         final int capacity = InternalCollectionUtil.SerialCheck.ioGetHashTableCapacity(this.size, this.loadFactor, HashContainer.MAXIMUM_CAPACITY),
                 maskL = this.posMask = capacity - 1;
