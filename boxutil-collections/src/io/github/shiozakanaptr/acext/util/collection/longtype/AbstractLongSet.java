@@ -1,14 +1,9 @@
 package io.github.shiozakanaptr.acext.util.collection.longtype;
 
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongIterator;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongSet;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongSpliterator;
+import io.github.shiozakanaptr.acext.api.collection.longtype.*;
+import io.github.shiozakanaptr.acext.util.function.longtype.LongFunction;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.LongFunction;
+import java.util.*;
 
 public abstract class AbstractLongSet extends AbstractLongCollection implements LongSet {
     protected AbstractLongSet() {}
@@ -18,7 +13,6 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
     }
 
     public boolean removeAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (this.isEmpty()) return false;
 
         if (c instanceof List<?>) {
@@ -41,7 +35,6 @@ public abstract class AbstractLongSet extends AbstractLongCollection implements 
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         if (c instanceof Set<?> && this.size() < c.size()) return false;

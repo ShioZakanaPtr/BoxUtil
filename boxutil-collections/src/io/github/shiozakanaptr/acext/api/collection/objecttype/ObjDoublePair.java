@@ -11,7 +11,6 @@ import io.github.shiozakanaptr.acext.api.collection.Pair;
  * @author ShioZakanaPtr
  */
 public interface ObjDoublePair<L> extends Pair<L, Double>, ObjDoubleMap.Entry<L> {
-
     double rightRaw();
 
     /**
@@ -35,7 +34,6 @@ public interface ObjDoublePair<L> extends Pair<L, Double>, ObjDoubleMap.Entry<L>
     default Double getValue() {
         return this.rightRaw();
     }
-
 
     default double right(double value) {
         throw new UnsupportedOperationException();

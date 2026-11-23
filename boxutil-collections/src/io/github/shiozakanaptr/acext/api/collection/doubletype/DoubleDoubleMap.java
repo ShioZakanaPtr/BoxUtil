@@ -6,6 +6,7 @@ import io.github.shiozakanaptr.acext.util.function.doubletype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -153,7 +154,7 @@ public interface DoubleDoubleMap extends MapExt<Double, Double> {
      */
     @Deprecated
     default Double merge(Double key, @NotNull Double value, @NotNull BiFunction<? super Double, ? super Double, ? extends Double> remappingFunction) {
-        return this.merge(key != null ? key.doubleValue() : (double) 0, value != null ? value.doubleValue() : (double) 0, (double l_t, double l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key != null ? key.doubleValue() : (double) 0, value.doubleValue(), (double l_t, double l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     double update(double key, @NotNull DoubleUnaryOperator updateFunction);

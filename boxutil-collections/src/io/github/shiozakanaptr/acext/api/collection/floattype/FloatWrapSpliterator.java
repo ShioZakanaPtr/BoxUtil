@@ -8,7 +8,10 @@ import java.util.function.DoubleConsumer;
 import java.util.Objects;
 
 /**
- * Type specialization class.
+ * Type specialization wrap class.
+ *
+ * @see FloatSpliterator
+ * @see DoubleSpliterator
  *
  * @since 1.0.0
  * @author ShioZakanaPtr

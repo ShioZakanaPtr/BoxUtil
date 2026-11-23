@@ -11,7 +11,6 @@ import io.github.shiozakanaptr.acext.api.collection.Pair;
  * @author ShioZakanaPtr
  */
 public interface ObjCharPair<L> extends Pair<L, Character>, ObjCharMap.Entry<L> {
-
     char rightRaw();
 
     /**
@@ -35,7 +34,6 @@ public interface ObjCharPair<L> extends Pair<L, Character>, ObjCharMap.Entry<L> 
     default Character getValue() {
         return this.rightRaw();
     }
-
 
     default char right(char value) {
         throw new UnsupportedOperationException();

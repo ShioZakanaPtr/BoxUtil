@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.util.function.floattype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -155,7 +156,7 @@ public interface CharFloatMap extends MapExt<Character, Float> {
      */
     @Deprecated
     default Float merge(Character key, @NotNull Float value, @NotNull BiFunction<? super Float, ? super Float, ? extends Float> remappingFunction) {
-        return this.merge(key != null ? key.charValue() : (char) 0, value != null ? value.floatValue() : (float) 0, (float l_t, float l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key != null ? key.charValue() : (char) 0, value.floatValue(), (float l_t, float l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     float update(char key, @NotNull FloatUnaryOperator updateFunction);

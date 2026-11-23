@@ -35,7 +35,6 @@ public interface FloatObjPair<R> extends Pair<Float, R>, FloatObjMap.Entry<R> {
         return this.leftRaw();
     }
 
-
     default float left(float value) {
         throw new UnsupportedOperationException();
     }
@@ -48,5 +47,4 @@ public interface FloatObjPair<R> extends Pair<Float, R>, FloatObjMap.Entry<R> {
     default <T extends Float> Float left(T value) {
         return this.left(value != null ? value.floatValue() : (float) 0);
     }
-
 }

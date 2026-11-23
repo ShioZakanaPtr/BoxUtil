@@ -38,16 +38,11 @@ public abstract class AbstractObjCollection<E> extends AbstractCollection<E> imp
         return false;
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean remove(Object o) {
         return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         return super.containsAll(c);

@@ -1,11 +1,9 @@
 package io.github.shiozakanaptr.acext.util.collection.inttype;
 
-import io.github.shiozakanaptr.acext.api.collection.inttype.IntIterator;
-import io.github.shiozakanaptr.acext.api.collection.inttype.IntSet;
-import io.github.shiozakanaptr.acext.api.collection.inttype.IntSpliterator;
+import io.github.shiozakanaptr.acext.api.collection.inttype.*;
+import io.github.shiozakanaptr.acext.util.function.inttype.IntFunction;
 
 import java.util.*;
-import java.util.function.IntFunction;
 
 public abstract class AbstractIntSet extends AbstractIntCollection implements IntSet {
     protected AbstractIntSet() {}
@@ -15,7 +13,6 @@ public abstract class AbstractIntSet extends AbstractIntCollection implements In
     }
 
     public boolean removeAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (this.isEmpty()) return false;
 
         if (c instanceof List<?>) {
@@ -38,7 +35,6 @@ public abstract class AbstractIntSet extends AbstractIntCollection implements In
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         if (c instanceof Set<?> && this.size() < c.size()) return false;

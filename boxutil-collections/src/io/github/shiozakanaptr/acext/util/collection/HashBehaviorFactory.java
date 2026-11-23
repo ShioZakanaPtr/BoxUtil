@@ -28,7 +28,6 @@ import java.util.function.Supplier;
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
-@SuppressWarnings("unchecked")
 public final class HashBehaviorFactory {
     private final static Map<String, HashBehavior<Object>> CUSTOM = new HashMap<>();
     private final static HashBehavior<Object>[] DEFAULT;
@@ -119,7 +118,7 @@ public final class HashBehaviorFactory {
      */
     public static <K> HashBehavior<K> of(@NotNull String name, @NotNull Supplier<HashBehavior<K>> behavior) {
 //        if (name.isBlank()) throw new IllegalArgumentException("Illegal id: a white space"); // JDK 11+
-        if (isInvalidID(name)) throw new IllegalArgumentException("Illegal id: a white space");
+        if (isInvalidID(name)) throw new IllegalArgumentException("Illegal id: a white space"); // remove if JDK 11+
         return (HashBehavior<K>) CUSTOM.computeIfAbsent(name, l_k -> (HashBehavior<Object>) behavior.get());
     }
 

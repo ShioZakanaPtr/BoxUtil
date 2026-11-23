@@ -22,20 +22,19 @@ import java.util.Objects;
  *
  * <p>This class is {@link Cloneable} and {@link Serializable}.
  *
- * @param <R> the type of the right element, which serves as the value of the
- *        {@link io.github.shiozakanaptr.acext.api.collection.MapExt.Entry} view
+ * @see Pair
  *
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
 public class ByteObjImmutablePair<R> implements ByteObjPair<R>, Cloneable, Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -7142995032377883752L;
 
-    protected final byte le;
-    protected final R ri;
+    protected byte le;
+    protected R ri;
 
     public ByteObjImmutablePair() {
-        this.le = 0;
+        this.le = (byte) 0;
         this.ri = null;
     }
 

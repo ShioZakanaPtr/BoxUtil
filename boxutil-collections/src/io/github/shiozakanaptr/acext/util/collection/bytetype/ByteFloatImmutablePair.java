@@ -22,10 +22,11 @@ import java.util.Objects;
  *
  * <p>This class is {@link Cloneable} and {@link Serializable}.
  *
+ * @see Pair
+ *
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
-@SuppressWarnings("unused")
 public class ByteFloatImmutablePair implements ByteFloatPair, Cloneable, Serializable {
     private static final long serialVersionUID = -7142995032377883752L;
 

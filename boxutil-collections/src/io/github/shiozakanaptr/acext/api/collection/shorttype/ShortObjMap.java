@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.util.function.objecttype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -254,7 +255,6 @@ public interface ShortObjMap<V> extends MapExt<Short, V> {
         default Short getKey() {
             return this.getKeyRaw();
         }
-
     }
 
 }

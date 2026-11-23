@@ -39,7 +39,6 @@ import java.util.Objects;
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
-@SuppressWarnings({"unchecked", "unused"})
 public final class MapFactory {
     private static StringBuilder pickPackage() {
         return new StringBuilder("io.github.shiozakanaptr.acext.util.collection.");

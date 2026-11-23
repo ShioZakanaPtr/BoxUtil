@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.util.function.floattype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -151,7 +152,7 @@ public interface ObjFloatMap<K> extends MapExt<K, Float> {
      */
     @Deprecated
     default Float merge(K key, @NotNull Float value, @NotNull BiFunction<? super Float, ? super Float, ? extends Float> remappingFunction) {
-        return this.merge(key, value != null ? value.floatValue() : (float) 0, (float l_t, float l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key, value.floatValue(), (float l_t, float l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     float update(K key, @NotNull FloatUnaryOperator updateFunction);
@@ -255,7 +256,6 @@ public interface ObjFloatMap<K> extends MapExt<K, Float> {
     }
 
     interface Entry<K> extends MapExt.Entry<K, Float> {
-
         float getValueRaw();
 
         /**

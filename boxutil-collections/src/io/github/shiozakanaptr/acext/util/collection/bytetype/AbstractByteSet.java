@@ -1,14 +1,9 @@
 package io.github.shiozakanaptr.acext.util.collection.bytetype;
 
-import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteIterator;
-import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteSet;
-import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteSpliterator;
+import io.github.shiozakanaptr.acext.api.collection.bytetype.*;
 import io.github.shiozakanaptr.acext.util.function.bytetype.ByteFunction;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractByteSet extends AbstractByteCollection implements ByteSet {
     protected AbstractByteSet() {}
@@ -18,7 +13,6 @@ public abstract class AbstractByteSet extends AbstractByteCollection implements 
     }
 
     public boolean removeAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (this.isEmpty()) return false;
 
         if (c instanceof List<?>) {
@@ -41,7 +35,6 @@ public abstract class AbstractByteSet extends AbstractByteCollection implements 
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         if (c instanceof Set<?> && this.size() < c.size()) return false;

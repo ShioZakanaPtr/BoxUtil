@@ -35,7 +35,6 @@ public interface DoubleObjPair<R> extends Pair<Double, R>, DoubleObjMap.Entry<R>
         return this.leftRaw();
     }
 
-
     default double left(double value) {
         throw new UnsupportedOperationException();
     }
@@ -48,5 +47,4 @@ public interface DoubleObjPair<R> extends Pair<Double, R>, DoubleObjMap.Entry<R>
     default <T extends Double> Double left(T value) {
         return this.left(value != null ? value.doubleValue() : (double) 0);
     }
-
 }

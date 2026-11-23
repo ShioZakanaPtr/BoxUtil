@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.util.function.longtype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -151,7 +152,7 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
      */
     @Deprecated
     default Long merge(K key, @NotNull Long value, @NotNull BiFunction<? super Long, ? super Long, ? extends Long> remappingFunction) {
-        return this.merge(key, value != null ? value.longValue() : (long) 0, (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key, value.longValue(), (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     long update(K key, @NotNull LongUnaryOperator updateFunction);
@@ -255,7 +256,6 @@ public interface ObjLongMap<K> extends MapExt<K, Long> {
     }
 
     interface Entry<K> extends MapExt.Entry<K, Long> {
-
         long getValueRaw();
 
         /**

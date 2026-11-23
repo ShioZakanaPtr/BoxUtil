@@ -35,7 +35,6 @@ public interface ByteObjPair<R> extends Pair<Byte, R>, ByteObjMap.Entry<R> {
         return this.leftRaw();
     }
 
-
     default byte left(byte value) {
         throw new UnsupportedOperationException();
     }
@@ -48,5 +47,4 @@ public interface ByteObjPair<R> extends Pair<Byte, R>, ByteObjMap.Entry<R> {
     default <T extends Byte> Byte left(T value) {
         return this.left(value != null ? value.byteValue() : (byte) 0);
     }
-
 }

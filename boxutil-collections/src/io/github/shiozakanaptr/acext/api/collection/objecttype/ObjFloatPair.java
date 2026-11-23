@@ -11,7 +11,6 @@ import io.github.shiozakanaptr.acext.api.collection.Pair;
  * @author ShioZakanaPtr
  */
 public interface ObjFloatPair<L> extends Pair<L, Float>, ObjFloatMap.Entry<L> {
-
     float rightRaw();
 
     /**
@@ -35,7 +34,6 @@ public interface ObjFloatPair<L> extends Pair<L, Float>, ObjFloatMap.Entry<L> {
     default Float getValue() {
         return this.rightRaw();
     }
-
 
     default float right(float value) {
         throw new UnsupportedOperationException();

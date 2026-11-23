@@ -1,11 +1,9 @@
 package io.github.shiozakanaptr.acext.util.collection.objecttype;
 
-import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjList;
+import io.github.shiozakanaptr.acext.api.collection.BidiIterator;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.*;
 
-import java.util.Iterator;
-import java.util.ListIterator;
-import java.util.Objects;
-import java.util.Spliterator;
+import java.util.*;
 
 public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implements ObjList<E> {
     protected AbstractObjList() {}
@@ -34,7 +32,7 @@ public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implem
     }
 
     public boolean removeElement(Object o) {
-        Iterator<E> it = this.iterator();
+        BidiIterator<E> it = this.iterator();
         while (it.hasNext()) {
             if (Objects.equals(o, it.next())) {
                 it.remove();
@@ -64,7 +62,9 @@ public abstract class AbstractObjList<E> extends AbstractObjCollection<E> implem
         return -1;
     }
 
-    public abstract Iterator<E> iterator();
+    public abstract BidiIterator<E> iterator();
+
+    public abstract BidiIterator<E> iteratorReversed();
 
     public abstract Spliterator<E> spliterator();
 }

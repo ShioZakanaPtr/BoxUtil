@@ -8,7 +8,10 @@ import java.util.function.IntConsumer;
 import java.util.Objects;
 
 /**
- * Type specialization class.
+ * Type specialization wrap class.
+ *
+ * @see CharSpliterator
+ * @see IntSpliterator
  *
  * @since 1.0.0
  * @author ShioZakanaPtr

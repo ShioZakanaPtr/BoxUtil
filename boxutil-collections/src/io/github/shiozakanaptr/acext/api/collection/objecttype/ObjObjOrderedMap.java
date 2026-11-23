@@ -3,6 +3,7 @@ package io.github.shiozakanaptr.acext.api.collection.objecttype;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
 import io.github.shiozakanaptr.acext.api.collection.OrderedMap;
 import io.github.shiozakanaptr.acext.api.collection.OrderedEntrySet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Type specialization interface.

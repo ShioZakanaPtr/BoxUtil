@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.util.function.bytetype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -155,7 +156,7 @@ public interface FloatByteMap extends MapExt<Float, Byte> {
      */
     @Deprecated
     default Byte merge(Float key, @NotNull Byte value, @NotNull BiFunction<? super Byte, ? super Byte, ? extends Byte> remappingFunction) {
-        return this.merge(key != null ? key.floatValue() : (float) 0, value != null ? value.byteValue() : (byte) 0, (byte l_t, byte l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key != null ? key.floatValue() : (float) 0, value.byteValue(), (byte l_t, byte l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     byte update(float key, @NotNull ByteUnaryOperator updateFunction);

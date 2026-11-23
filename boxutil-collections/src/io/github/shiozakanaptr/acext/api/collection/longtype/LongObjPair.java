@@ -35,7 +35,6 @@ public interface LongObjPair<R> extends Pair<Long, R>, LongObjMap.Entry<R> {
         return this.leftRaw();
     }
 
-
     default long left(long value) {
         throw new UnsupportedOperationException();
     }
@@ -48,5 +47,4 @@ public interface LongObjPair<R> extends Pair<Long, R>, LongObjMap.Entry<R> {
     default <T extends Long> Long left(T value) {
         return this.left(value != null ? value.longValue() : (long) 0);
     }
-
 }

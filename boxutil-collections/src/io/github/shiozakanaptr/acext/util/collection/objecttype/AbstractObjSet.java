@@ -1,6 +1,6 @@
 package io.github.shiozakanaptr.acext.util.collection.objecttype;
 
-import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjSet;
+import io.github.shiozakanaptr.acext.api.collection.objecttype.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -13,7 +13,6 @@ public abstract class AbstractObjSet<E> extends AbstractObjCollection<E> impleme
     }
 
     public boolean removeAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (this.isEmpty()) return false;
 
         if (c instanceof List<?>) {
@@ -36,7 +35,6 @@ public abstract class AbstractObjSet<E> extends AbstractObjCollection<E> impleme
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         if (c instanceof Set<?> && this.size() < c.size()) return false;

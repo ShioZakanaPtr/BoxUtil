@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.util.function.chartype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -151,7 +152,7 @@ public interface ObjCharMap<K> extends MapExt<K, Character> {
      */
     @Deprecated
     default Character merge(K key, @NotNull Character value, @NotNull BiFunction<? super Character, ? super Character, ? extends Character> remappingFunction) {
-        return this.merge(key, value != null ? value.charValue() : (char) 0, (char l_t, char l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key, value.charValue(), (char l_t, char l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     char update(K key, @NotNull CharUnaryOperator updateFunction);
@@ -255,7 +256,6 @@ public interface ObjCharMap<K> extends MapExt<K, Character> {
     }
 
     interface Entry<K> extends MapExt.Entry<K, Character> {
-
         char getValueRaw();
 
         /**

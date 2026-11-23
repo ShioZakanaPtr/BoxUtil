@@ -8,6 +8,7 @@ import io.github.shiozakanaptr.acext.util.function.longtype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -155,7 +156,7 @@ public interface FloatLongMap extends MapExt<Float, Long> {
      */
     @Deprecated
     default Long merge(Float key, @NotNull Long value, @NotNull BiFunction<? super Long, ? super Long, ? extends Long> remappingFunction) {
-        return this.merge(key != null ? key.floatValue() : (float) 0, value != null ? value.longValue() : (long) 0, (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key != null ? key.floatValue() : (float) 0, value.longValue(), (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     long update(float key, @NotNull LongUnaryOperator updateFunction);

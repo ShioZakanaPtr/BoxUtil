@@ -33,7 +33,6 @@ public interface ObjObjMap<K, V> extends MapExt<K, V> {
     }
 
     interface Entry<K, V> extends MapExt.Entry<K, V> {
-
     }
 
 }

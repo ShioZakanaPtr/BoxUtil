@@ -11,7 +11,4 @@ import io.github.shiozakanaptr.acext.api.collection.Pair;
  * @author ShioZakanaPtr
  */
 public interface ObjObjPair<L, R> extends Pair<L, R>, ObjObjMap.Entry<L, R> {
-
-
-
 }

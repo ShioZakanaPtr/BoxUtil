@@ -35,7 +35,6 @@ public interface ShortObjPair<R> extends Pair<Short, R>, ShortObjMap.Entry<R> {
         return this.leftRaw();
     }
 
-
     default short left(short value) {
         throw new UnsupportedOperationException();
     }
@@ -48,5 +47,4 @@ public interface ShortObjPair<R> extends Pair<Short, R>, ShortObjMap.Entry<R> {
     default <T extends Short> Short left(T value) {
         return this.left(value != null ? value.shortValue() : (short) 0);
     }
-
 }

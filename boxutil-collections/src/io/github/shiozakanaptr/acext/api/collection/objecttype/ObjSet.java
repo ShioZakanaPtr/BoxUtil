@@ -14,5 +14,4 @@ import java.util.Collection;
  * @author ShioZakanaPtr
  */
 public interface ObjSet<E> extends SetExt<E>, ObjCollection<E> {
-
 }

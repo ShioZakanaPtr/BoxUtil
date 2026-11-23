@@ -11,7 +11,6 @@ import io.github.shiozakanaptr.acext.api.collection.Pair;
  * @author ShioZakanaPtr
  */
 public interface ObjBytePair<L> extends Pair<L, Byte>, ObjByteMap.Entry<L> {
-
     byte rightRaw();
 
     /**
@@ -35,7 +34,6 @@ public interface ObjBytePair<L> extends Pair<L, Byte>, ObjByteMap.Entry<L> {
     default Byte getValue() {
         return this.rightRaw();
     }
-
 
     default byte right(byte value) {
         throw new UnsupportedOperationException();

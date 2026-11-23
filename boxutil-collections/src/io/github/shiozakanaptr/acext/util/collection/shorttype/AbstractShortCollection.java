@@ -4,9 +4,7 @@ import io.github.shiozakanaptr.acext.api.collection.shorttype.ShortCollection;
 import io.github.shiozakanaptr.acext.api.collection.shorttype.ShortIterator;
 import io.github.shiozakanaptr.acext.api.collection.shorttype.ShortSpliterator;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class AbstractShortCollection extends AbstractCollection<Short> implements ShortCollection {
     protected AbstractShortCollection() {}
@@ -22,15 +20,11 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
     public boolean contains(short o) {
         ShortIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextShort() == o) return true;
+            if (o == it.nextShort()) return true;
         }
         return false;
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean contains(Object o) {
         if (o != null && !(o instanceof Short)) return false;
         return this.contains(o != null ? ((Short) o).shortValue() : (short) 0);
@@ -40,10 +34,6 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean add(Short e) {
         return this.add(e != null ? e.shortValue() : (short) 0);
     }
@@ -51,7 +41,7 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
     public boolean removeElement(short o) {
         ShortIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextShort() == o) {
+            if (o == it.nextShort()) {
                 it.remove();
                 return true;
             }
@@ -59,25 +49,16 @@ public abstract class AbstractShortCollection extends AbstractCollection<Short> 
         return false;
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean removeElement(Object o) {
         if (o != null && !(o instanceof Short)) return false;
         return this.removeElement(o != null ? ((Short) o).shortValue() : (short) 0);
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean remove(Object o) {
         return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         return super.containsAll(c);

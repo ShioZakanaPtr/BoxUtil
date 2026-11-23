@@ -21,21 +21,20 @@ import java.util.Objects;
  *
  * <p>This class is {@link Cloneable} and {@link Serializable}.
  *
- * @param <L> the type of the left element, which serves as the value of the
- *        {@link io.github.shiozakanaptr.acext.api.collection.MapExt.Entry} view
+ * @see Pair
  *
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
 public class ObjLongMutablePair<L> implements ObjLongPair<L>, Cloneable, Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -7142995032377883752L;
 
     protected L le;
     protected long ri;
 
     public ObjLongMutablePair() {
         this.le = null;
-        this.ri = 0;
+        this.ri = (long) 0;
     }
 
     public ObjLongMutablePair(L left, long right) {

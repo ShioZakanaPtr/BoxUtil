@@ -1,14 +1,9 @@
 package io.github.shiozakanaptr.acext.util.collection.shorttype;
 
-import io.github.shiozakanaptr.acext.api.collection.shorttype.ShortIterator;
-import io.github.shiozakanaptr.acext.api.collection.shorttype.ShortSet;
-import io.github.shiozakanaptr.acext.api.collection.shorttype.ShortSpliterator;
+import io.github.shiozakanaptr.acext.api.collection.shorttype.*;
 import io.github.shiozakanaptr.acext.util.function.shorttype.ShortFunction;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractShortSet extends AbstractShortCollection implements ShortSet {
     protected AbstractShortSet() {}
@@ -18,7 +13,6 @@ public abstract class AbstractShortSet extends AbstractShortCollection implement
     }
 
     public boolean removeAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (this.isEmpty()) return false;
 
         if (c instanceof List<?>) {
@@ -41,7 +35,6 @@ public abstract class AbstractShortSet extends AbstractShortCollection implement
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         if (c instanceof Set<?> && this.size() < c.size()) return false;

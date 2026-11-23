@@ -4,23 +4,30 @@ import io.github.shiozakanaptr.acext.api.collection.PairMap;
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.Pair;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
+import io.github.shiozakanaptr.acext.util.function.objecttype.*;
+import io.github.shiozakanaptr.acext.util.function.longtype.*;
 import io.github.shiozakanaptr.acext.util.function.TeConsumer;
 import io.github.shiozakanaptr.acext.util.function.TeFunction;
-import io.github.shiozakanaptr.acext.util.function.longtype.LongLongBiFunction;
-import io.github.shiozakanaptr.acext.util.function.objecttype.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.LongUnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @see PairMap
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
     long getRaw(Object keyA, Object keyB);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getRaw(Object, Object)
      */
     @Deprecated
     default Long get(Object keyA, Object keyB) {
@@ -31,6 +38,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getOrDefault(Object, Object, long)
      */
     @Deprecated
     default Long getOrDefault(Object keyA, Object keyB, Long defaultValue) {
@@ -41,6 +49,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #put(L, R, long)
      */
     @Deprecated
     default Long put(L keyA, R keyB, Long value) {
@@ -51,6 +60,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #putIfAbsent(L, R, long)
      */
     @Deprecated
     default Long putIfAbsent(L keyA, R keyB, Long value) {
@@ -61,6 +71,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #removeRaw(Object, Object)
      */
     @Deprecated
     default Long remove(Object keyA, Object keyB) {
@@ -71,6 +82,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remove(Object, Object, long)
      */
     @Deprecated
     default boolean remove(Object keyA, Object keyB, Object value) {
@@ -82,6 +94,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(L, R, long)
      */
     @Deprecated
     default Long replace(L keyA, R keyB, Long value) {
@@ -92,6 +105,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replace(L, R, long, long)
      */
     @Deprecated
     default boolean replace(L keyA, R keyB, Long oldValue, Long newValue) {
@@ -102,32 +116,32 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfAbsentRaw(L, R, BiFunction)
      */
     @Deprecated
     default Long computeIfAbsent(L keyA, R keyB, @NotNull BiFunction<? super L, ? super R, ? extends Long> mappingFunction) {
-        Objects.requireNonNull(mappingFunction);
         return this.computeIfAbsentRaw(keyA, keyB, (L l_t, R l_u) -> mappingFunction.apply(l_t, l_u));
     }
 
-    long computeIfPresent(L keyA, R keyB, @NotNull ObjLongTeFunction<? super L, ? super R, ? extends Long> remappingFunction);
+    long computeIfPresent(L keyA, R keyB, @NotNull ObjObjLongTeFunction<? super L, ? super R, ? extends Long> remappingFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #computeIfPresent(L, R, ObjObjLongTeFunction)
      */
     @Deprecated
     default Long computeIfPresent(L keyA, R keyB, @NotNull TeFunction<? super L, ? super R, ? super Long, ? extends Long> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.computeIfPresent(keyA, keyB, (L l_t, R l_u, long l_v) -> remappingFunction.apply(l_t, l_u, l_v));
     }
 
-    long compute(L keyA, R keyB, @NotNull ObjLongTeFunction<? super L, ? super R, ? extends Long> remappingFunction);
+    long compute(L keyA, R keyB, @NotNull ObjObjLongTeFunction<? super L, ? super R, ? extends Long> remappingFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #compute(L, R, ObjObjLongTeFunction)
      */
     @Deprecated
     default Long compute(L keyA, R keyB, @NotNull TeFunction<? super L, ? super R, ? super Long, ? extends Long> remappingFunction) {
-        Objects.requireNonNull(remappingFunction);
         return this.compute(keyA, keyB, (L l_t, R l_u, long l_v) -> remappingFunction.apply(l_t, l_u, l_v));
     }
 
@@ -135,11 +149,10 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #merge(L, R, long, LongLongBiFunction)
      */
     @Deprecated
     default Long merge(L keyA, R keyB, @NotNull Long value, @NotNull BiFunction<? super Long, ? super Long, ? extends Long> remappingFunction) {
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(remappingFunction);
         return this.merge(keyA, keyB, value.longValue(), (long l_t, long l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
@@ -147,24 +160,24 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #update(L, R, LongUnaryOperator)
      */
     @Deprecated
     default Long update(L keyA, R keyB, @NotNull Function<? super Long, ? extends Long> updateFunction) {
         return this.update(keyA, keyB, (long l_t) -> {
-            final Long result = updateFunction.apply(l_t);
-            return result != null ? result : (long) 0;
+            final Long result;
+            return (result = updateFunction.apply(l_t)) != null ? result : (long) 0;
         });
     }
 
-    long remapping(L keyA, R keyB, @NotNull ObjLongTeFunction<? super L, ? super R, ? extends Pair<? extends L, ? extends R>> remappingFunction, @NotNull LongLongBiFunction<? extends Long> mergeFunction);
+    long remapping(L keyA, R keyB, @NotNull ObjObjLongTeFunction<? super L, ? super R, ? extends Pair<? extends L, ? extends R>> remappingFunction, @NotNull LongLongBiFunction<? extends Long> mergeFunction);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #remapping(L, R, ObjObjLongTeFunction, LongLongBiFunction)
      */
     @Deprecated
     default Long remapping(L keyA, R keyB, @NotNull TeFunction<? super L, ? super R, ? super Long, ? extends Pair<? extends L, ? extends R>> remappingFunction, @NotNull BiFunction<? super Long, ? super Long, ? extends Long> mergeFunction) {
-        Objects.requireNonNull(remappingFunction);
-        Objects.requireNonNull(mergeFunction);
         return this.remapping(keyA, keyB, (L l_t, R l_u, long l_v) -> remappingFunction.apply(l_t, l_u, l_v), (long l_t, long l_u) -> mergeFunction.apply(l_t, l_u));
     }
 
@@ -172,6 +185,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #containsValue(long)
      */
     @Deprecated
     default boolean containsValue(Object value) {
@@ -179,25 +193,25 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
         return this.containsValue(value != null ? ((Long) value).longValue() : (long) 0);
     }
 
-    void forEach(@NotNull ObjLongTeConsumer<? super L, ? super R> action);
+    void forEach(@NotNull ObjObjLongTeConsumer<? super L, ? super R> action);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #forEach(ObjObjLongTeConsumer)
      */
     @Deprecated
     default void forEach(@NotNull TeConsumer<? super L, ? super R, ? super Long> action) {
-        Objects.requireNonNull(action);
         this.forEach((L l_t, R l_u, long l_v) -> action.accept(l_t, l_u, l_v));
     }
 
-    void replaceAll(@NotNull ObjLongTeOperator<? super L, ? super R> function);
+    void replaceAll(@NotNull ObjObjLongTeOperator<? super L, ? super R> function);
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #replaceAll(ObjObjLongTeOperator)
      */
     @Deprecated
     default void replaceAll(@NotNull TeFunction<? super L, ? super R, ? super Long, ? extends Long> function) {
-        Objects.requireNonNull(function);
         this.replaceAll((L l_t, R l_u, long l_v) -> function.apply(l_t, l_u, l_v));
     }
 
@@ -205,6 +219,7 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #getDefaultReturnValueRaw()
      */
     @Deprecated
     default Long getDefaultReturnValue() {
@@ -215,8 +230,10 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
 
     /**
      * @deprecated Please use the corresponding method that using primitive type.
+     * @see #setDefaultReturnValue(long)
      */
     @Deprecated
+    @NotNull
     default Long setDefaultReturnValue(@Nullable Long newDefault) {
         return this.setDefaultReturnValue(newDefault != null ? newDefault.longValue() : (long) 0);
     }
@@ -234,9 +251,11 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
     EntrySetExt<ObjObjLongPairMap.PairEntry<L, R>> entrySetRaw();
 
     /**
-     * @deprecated Please use the corresponding method that using primitive type.
+     * @deprecated Please use the corresponding method that using primitive or actual type.
+     * @see #entrySetRaw()
      */
     @Deprecated
+    @NotNull
     default EntrySetExt<PairMap.PairEntry<L, R, Long>> entrySet() {
         return (EntrySetExt) this.entrySetRaw();
     }
@@ -244,6 +263,11 @@ public interface ObjObjLongPairMap<L, R> extends PairMap<L, R, Long> {
     interface PairEntry<L, R> extends PairMap.PairEntry<L, R, Long> {
         long getValueRaw();
 
+        /**
+         * @deprecated Please use the corresponding method that using primitive type.
+         * @see #getValueRaw()
+         */
+        @Deprecated
         default Long getValue() {
             return this.getValueRaw();
         }

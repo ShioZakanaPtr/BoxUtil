@@ -35,7 +35,6 @@ public interface CharObjPair<R> extends Pair<Character, R>, CharObjMap.Entry<R> 
         return this.leftRaw();
     }
 
-
     default char left(char value) {
         throw new UnsupportedOperationException();
     }
@@ -48,5 +47,4 @@ public interface CharObjPair<R> extends Pair<Character, R>, CharObjMap.Entry<R> 
     default <T extends Character> Character left(T value) {
         return this.left(value != null ? value.charValue() : (char) 0);
     }
-
 }

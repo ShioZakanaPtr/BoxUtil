@@ -6,6 +6,7 @@ import io.github.shiozakanaptr.acext.util.function.shorttype.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+
 import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
@@ -153,7 +154,7 @@ public interface ShortShortMap extends MapExt<Short, Short> {
      */
     @Deprecated
     default Short merge(Short key, @NotNull Short value, @NotNull BiFunction<? super Short, ? super Short, ? extends Short> remappingFunction) {
-        return this.merge(key != null ? key.shortValue() : (short) 0, value != null ? value.shortValue() : (short) 0, (short l_t, short l_u) -> remappingFunction.apply(l_t, l_u));
+        return this.merge(key != null ? key.shortValue() : (short) 0, value.shortValue(), (short l_t, short l_u) -> remappingFunction.apply(l_t, l_u));
     }
 
     short update(short key, @NotNull ShortUnaryOperator updateFunction);

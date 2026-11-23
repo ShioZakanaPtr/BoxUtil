@@ -11,7 +11,10 @@ import java.util.Comparator;
 import java.util.Objects;
 
 /**
- * Type specialization class.
+ * Type specialization wrap class.
+ *
+ * @see FloatComparator
+ * @see DoubleComparator
  *
  * @since 1.0.0
  * @author ShioZakanaPtr

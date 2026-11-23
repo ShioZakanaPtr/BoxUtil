@@ -1,9 +1,6 @@
 package io.github.shiozakanaptr.acext.util.collection.longtype;
 
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongIterator;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongList;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongListIterator;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongSpliterator;
+import io.github.shiozakanaptr.acext.api.collection.longtype.*;
 
 public abstract class AbstractLongList extends AbstractLongCollection implements LongList {
     protected AbstractLongList() {}
@@ -32,9 +29,9 @@ public abstract class AbstractLongList extends AbstractLongCollection implements
     }
 
     public boolean removeElement(long o) {
-        LongIterator it = this.iterator();
+        LongBidiIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextLong() == o) {
+            if (o == it.nextLong()) {
                 it.remove();
                 return true;
             }
@@ -62,7 +59,9 @@ public abstract class AbstractLongList extends AbstractLongCollection implements
         return -1;
     }
 
-    public abstract LongIterator iterator();
+    public abstract LongBidiIterator iterator();
+
+    public abstract LongBidiIterator iteratorReversed();
 
     public abstract LongSpliterator spliterator();
 }

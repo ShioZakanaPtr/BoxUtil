@@ -35,7 +35,6 @@ public interface IntObjPair<R> extends Pair<Integer, R>, IntObjMap.Entry<R> {
         return this.leftRaw();
     }
 
-
     default int left(int value) {
         throw new UnsupportedOperationException();
     }
@@ -48,5 +47,4 @@ public interface IntObjPair<R> extends Pair<Integer, R>, IntObjMap.Entry<R> {
     default <T extends Integer> Integer left(T value) {
         return this.left(value != null ? value.intValue() : (int) 0);
     }
-
 }

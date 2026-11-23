@@ -20,15 +20,11 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
     public boolean contains(int o) {
         IntIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextInt() == o) return true;
+            if (o == it.nextInt()) return true;
         }
         return false;
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean contains(Object o) {
         if (o != null && !(o instanceof Integer)) return false;
         return this.contains(o != null ? ((Integer) o).intValue() : (int) 0);
@@ -38,10 +34,6 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean add(Integer e) {
         return this.add(e != null ? e.intValue() : (int) 0);
     }
@@ -49,7 +41,7 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
     public boolean removeElement(int o) {
         IntIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextInt() == o) {
+            if (o == it.nextInt()) {
                 it.remove();
                 return true;
             }
@@ -57,25 +49,16 @@ public abstract class AbstractIntCollection extends AbstractCollection<Integer> 
         return false;
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean removeElement(Object o) {
         if (o != null && !(o instanceof Integer)) return false;
         return this.removeElement(o != null ? ((Integer) o).intValue() : (int) 0);
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean remove(Object o) {
         return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         return super.containsAll(c);

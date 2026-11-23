@@ -11,7 +11,6 @@ import io.github.shiozakanaptr.acext.api.collection.Pair;
  * @author ShioZakanaPtr
  */
 public interface ObjLongPair<L> extends Pair<L, Long>, ObjLongMap.Entry<L> {
-
     long rightRaw();
 
     /**
@@ -35,7 +34,6 @@ public interface ObjLongPair<L> extends Pair<L, Long>, ObjLongMap.Entry<L> {
     default Long getValue() {
         return this.rightRaw();
     }
-
 
     default long right(long value) {
         throw new UnsupportedOperationException();

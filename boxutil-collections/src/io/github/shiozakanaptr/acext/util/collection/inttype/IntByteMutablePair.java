@@ -21,18 +21,20 @@ import java.util.Objects;
  *
  * <p>This class is {@link Cloneable} and {@link Serializable}.
  *
+ * @see Pair
+ *
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
 public class IntByteMutablePair implements IntBytePair, Cloneable, Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -7142995032377883752L;
 
     protected int le;
     protected byte ri;
 
     public IntByteMutablePair() {
-        this.le = 0;
-        this.ri = 0;
+        this.le = (int) 0;
+        this.ri = (byte) 0;
     }
 
     public IntByteMutablePair(int left, byte right) {

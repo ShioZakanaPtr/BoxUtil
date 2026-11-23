@@ -4,9 +4,7 @@ import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteCollection;
 import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteIterator;
 import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteSpliterator;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class AbstractByteCollection extends AbstractCollection<Byte> implements ByteCollection {
     protected AbstractByteCollection() {}
@@ -22,15 +20,11 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
     public boolean contains(byte o) {
         ByteIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextByte() == o) return true;
+            if (o == it.nextByte()) return true;
         }
         return false;
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean contains(Object o) {
         if (o != null && !(o instanceof Byte)) return false;
         return this.contains(o != null ? ((Byte) o).byteValue() : (byte) 0);
@@ -40,10 +34,6 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean add(Byte e) {
         return this.add(e != null ? e.byteValue() : (byte) 0);
     }
@@ -51,7 +41,7 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
     public boolean removeElement(byte o) {
         ByteIterator it = this.iterator();
         while (it.hasNext()) {
-            if (it.nextByte() == o) {
+            if (o == it.nextByte()) {
                 it.remove();
                 return true;
             }
@@ -59,25 +49,16 @@ public abstract class AbstractByteCollection extends AbstractCollection<Byte> im
         return false;
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean removeElement(Object o) {
         if (o != null && !(o instanceof Byte)) return false;
         return this.removeElement(o != null ? ((Byte) o).byteValue() : (byte) 0);
     }
 
-    /**
-     * @deprecated Please use the corresponding method that using primitive type.
-     */
-    @Deprecated
     public boolean remove(Object o) {
         return this.removeElement(o);
     }
 
     public boolean containsAll(Collection<?> c) {
-        Objects.requireNonNull(c);
         if (c == this) return true;
         if (this.isEmpty()) return c.isEmpty();
         return super.containsAll(c);

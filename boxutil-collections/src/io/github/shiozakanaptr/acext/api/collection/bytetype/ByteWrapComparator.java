@@ -11,7 +11,10 @@ import java.util.Comparator;
 import java.util.Objects;
 
 /**
- * Type specialization class.
+ * Type specialization wrap class.
+ *
+ * @see ByteComparator
+ * @see IntComparator
  *
  * @since 1.0.0
  * @author ShioZakanaPtr

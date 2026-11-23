@@ -11,7 +11,6 @@ import io.github.shiozakanaptr.acext.api.collection.Pair;
  * @author ShioZakanaPtr
  */
 public interface ObjShortPair<L> extends Pair<L, Short>, ObjShortMap.Entry<L> {
-
     short rightRaw();
 
     /**
@@ -35,7 +34,6 @@ public interface ObjShortPair<L> extends Pair<L, Short>, ObjShortMap.Entry<L> {
     default Short getValue() {
         return this.rightRaw();
     }
-
 
     default short right(short value) {
         throw new UnsupportedOperationException();
