@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.inttype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface IntShortBiOperator extends BiFunction<Integer, Short, Short> {
     short apply(int t, short u);

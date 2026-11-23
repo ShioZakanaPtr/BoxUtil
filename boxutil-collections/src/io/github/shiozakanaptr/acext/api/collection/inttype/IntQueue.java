@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see QueueExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface IntQueue extends QueueExt<Integer>, IntCollection {
     int peekRaw();
 

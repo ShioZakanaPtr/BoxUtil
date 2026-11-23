@@ -10,6 +10,14 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Type specialization interface.
+ *
+ * @see CollectionExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface CharCollection extends CollectionExt<Character>, CharIterable {
     boolean contains(char o);
 

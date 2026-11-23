@@ -2,7 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.floattype;
 
 import java.util.ListIterator;
 
-public interface FloatListIterator extends ListIterator<Float>, FloatIterator {
+/**
+ * Type specialization interface.
+ *
+ * @see ListIterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public interface FloatListIterator extends ListIterator<Float>, FloatBidiIterator {
     boolean hasNext();
 
     int nextIndex();

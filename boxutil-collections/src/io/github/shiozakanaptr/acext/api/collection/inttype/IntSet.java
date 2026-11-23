@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.function.Function;
 
+/**
+ * Type specialization class.
+ *
+ * @see SetExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface IntSet extends SetExt<Integer>, IntCollection {
     boolean contains(int o);
 

@@ -9,6 +9,14 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * Type specialization interface.
+ *
+ * @see ConcurrentMapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface FloatShortConcurrentMap extends FloatShortMap, ConcurrentMapExt<Float, Short> {
     /**
      * @deprecated Please use the corresponding method that using primitive type.

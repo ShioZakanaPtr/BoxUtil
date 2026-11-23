@@ -11,10 +11,10 @@ import java.util.Objects;
  * functional, with the single abstract method {@link #hashing(int)} providing
  * the core hash computation.
  *
- * <p>For any object that is {@code null}, its hash code should be {@code 0}.
- * The hash code of integer {@code 0} or floating-point (under IEEE 754)
- * {@code +0.0} should also be {@code 0}; in other words, these values are
- * treated as equal to {@code null} for hashing purposes.
+ * <p><b>Null handling:</b> For any object that is {@code null}, its hash code
+ * should be {@code 0}. The hash code of integer {@code 0} or floating-point
+ * (under IEEE 754) {@code +0.0} should also be {@code 0}; in other words, these
+ * values are treated as equal to {@code null} for hashing purposes.
  *
  * @param <K> the type of keys
  *

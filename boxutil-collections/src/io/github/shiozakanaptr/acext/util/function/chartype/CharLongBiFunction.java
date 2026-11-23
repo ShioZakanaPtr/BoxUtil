@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.chartype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface CharLongBiFunction<R> extends BiFunction<Character, Long, R> {
     R apply(char t, long u);

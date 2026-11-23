@@ -6,6 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.PrimitiveIterator;
 import java.util.function.Consumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see java.util.Iterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface IntIterator extends PrimitiveIterator.OfInt {
     int nextInt();
 

@@ -2,7 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.bytetype;
 
 import java.util.ListIterator;
 
-public interface ByteListIterator extends ListIterator<Byte>, ByteIterator {
+/**
+ * Type specialization interface.
+ *
+ * @see ListIterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public interface ByteListIterator extends ListIterator<Byte>, ByteBidiIterator {
     boolean hasNext();
 
     int nextIndex();

@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.bytetype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface ByteCharBiOperator extends BiFunction<Byte, Character, Character> {
     char apply(byte t, char u);

@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.api.collection.chartype;
 
 import io.github.shiozakanaptr.acext.api.collection.Pair;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Pair
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface CharObjPair<R> extends Pair<Character, R>, CharObjMap.Entry<R> {
     char leftRaw();
 

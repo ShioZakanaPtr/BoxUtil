@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface LongList extends ListExt<Long>, LongCollection {
     long getRaw(int index);
 
@@ -360,6 +366,12 @@ public interface LongList extends ListExt<Long>, LongCollection {
 
     @NotNull
     LongList subList(int fromIndex, int toIndex);
+
+    @NotNull
+    LongBidiIterator iterator();
+
+    @NotNull
+    LongBidiIterator iteratorReversed();
 
     @NotNull
     LongSpliterator spliterator();

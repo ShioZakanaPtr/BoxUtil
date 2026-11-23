@@ -2,7 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.doubletype;
 
 import java.util.ListIterator;
 
-public interface DoubleListIterator extends ListIterator<Double>, DoubleIterator {
+/**
+ * Type specialization interface.
+ *
+ * @see ListIterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public interface DoubleListIterator extends ListIterator<Double>, DoubleBidiIterator {
     boolean hasNext();
 
     int nextIndex();

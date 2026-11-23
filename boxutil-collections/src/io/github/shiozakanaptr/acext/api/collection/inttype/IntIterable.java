@@ -5,6 +5,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Iterable
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface IntIterable extends Iterable<Integer> {
     @NotNull IntIterator iterator();
 

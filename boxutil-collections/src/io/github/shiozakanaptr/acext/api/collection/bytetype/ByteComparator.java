@@ -15,6 +15,14 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Comparator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface ByteComparator extends Comparator<Byte> {
     int compare(byte o1, byte o2);

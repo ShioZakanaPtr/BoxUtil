@@ -2,7 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.inttype;
 
 import java.util.ListIterator;
 
-public interface IntListIterator extends ListIterator<Integer>, IntIterator {
+/**
+ * Type specialization interface.
+ *
+ * @see ListIterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public interface IntListIterator extends ListIterator<Integer>, IntBidiIterator {
     boolean hasNext();
 
     int nextIndex();

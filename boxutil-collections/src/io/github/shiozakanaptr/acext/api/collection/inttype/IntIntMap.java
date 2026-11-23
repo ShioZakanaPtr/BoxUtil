@@ -2,8 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.inttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.inttype.IntSet;
-import io.github.shiozakanaptr.acext.api.collection.inttype.IntCollection;
 import io.github.shiozakanaptr.acext.util.function.inttype.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +10,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface IntIntMap extends MapExt<Integer, Integer> {
     int get(int key);
 

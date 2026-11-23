@@ -10,6 +10,14 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Type specialization interface.
+ *
+ * @see CollectionExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface LongCollection extends CollectionExt<Long>, LongIterable {
     boolean contains(long o);
 

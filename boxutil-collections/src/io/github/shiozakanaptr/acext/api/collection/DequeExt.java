@@ -12,7 +12,7 @@ import java.util.function.Consumer;
  * the standard {@link Deque} contract and shares {@link Container} with deque
  * implementations so that capacity and resizing can be controlled uniformly.
  *
- * <p><b>Null handling.</b> Typically, for any element that is {@code null},
+ * <p><b>Null handling:</b> Typically, for any element that is {@code null},
  * it should be treated as {@code 0} if the key is of a specific primitive type
  * that the implementation defines.
  *
@@ -100,6 +100,59 @@ public interface DequeExt<E> extends Deque<E>, QueueExt<E>, OrderedCollection<E>
         E result;
         if ((result = this.pollLast()) == this.getNullElement()) throw new NoSuchElementException();
         return result;
+    }
+
+    /**
+     * Removes a single instance of the specified element from this deque,
+     * if it is present (optional operation).
+     *
+     * <p>More formally, removes the first occurrence element {@code e} such
+     * that {@code Objects.equals(o, e)}, if this deque contains one or more
+     * such elements.  If this deque does not contain the element, it is
+     * unchanged. Returns {@code true} if this deque contained the specified
+     * element (or equivalently, if this deque changed as a result of the call).
+     *
+     * <p>This method is implemented as
+     * {@code return QueueExt.super.remove(o);}, so its behavior is
+     * identical to the default implementation inherited from the parent
+     * collection extension interface.  It is redeclared here only to attach
+     * deque-specific documentation and to keep the deprecation notice visible
+     * in this interface.
+     *
+     * <p><strong>Deprecation note:</strong> Unlike the list extension
+     * interface, this deque interface declares no positional-removal overload,
+     * so the {@code remove(int)} versus {@code remove(Object)} overload hazard
+     * does not arise directly here.  This method is nevertheless deprecated to
+     * keep the removal API uniform across the collection extension hierarchy:
+     * removal by value should always be expressed with the unambiguous name
+     * {@link #removeElement(Object)}.  Using a single, unambiguous name avoids
+     * confusion when a deque-like interface is combined with, adapted to, or
+     * specialized alongside list-like interfaces that do expose positional
+     * removal, and it keeps migration between the collection extension
+     * interfaces straightforward.
+     *
+     * <p>This method exists only for source compatibility with existing code;
+     * new code should call {@link #removeElement(Object)} instead.
+     *
+     * @param o element to be removed from this deque, if present
+     * @return {@code true} if this deque contained the specified element
+     *         (or equivalently, if this deque changed as a result of the call)
+     * @throws UnsupportedOperationException if the {@code removeElement}
+     *         operation is not supported by this deque
+     * @see #removeElement(Object)
+     * @see CollectionExt#remove(Object)
+     * @see java.util.Deque#remove(Object)
+     * @deprecated This method is deprecated for consistency with
+     *             {@link CollectionExt#remove(Object)}.  Removal by value should
+     *             use the unambiguous {@link #removeElement(Object)} so that the
+     *             same call cannot be confused with positional removal in
+     *             list-like interfaces or in specializations that expose both
+     *             kinds of removal.  The method remains only for source
+     *             compatibility.
+     */
+    @Deprecated
+    default boolean remove(Object o) {
+        return QueueExt.super.remove(o);
     }
 
     default void push(E e) {

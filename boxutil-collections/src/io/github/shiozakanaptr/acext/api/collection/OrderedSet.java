@@ -31,7 +31,7 @@ package io.github.shiozakanaptr.acext.api.collection;
  * behavior. The bidirectional iterator methods are specified by
  * {@link OrderedCollection}.
  *
- * <p><strong>Note:</strong> This interface does not adapt the
+ * <p><b>Note:</b> This interface does not adapt the
  * {@code reversed()} method of {@code SequencedSet}. It provides first/last
  * element operations and bidirectional iterators, but
  * {@link OrderedCollection#iteratorReversed()} does not return a reversed view.
@@ -44,6 +44,9 @@ package io.github.shiozakanaptr.acext.api.collection;
  * @see SetExt
  * @see <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/SequencedSet.html">
  *      SequencedSet (JDK 21)</a>
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface OrderedSet<E> extends OrderedCollection<E>, SetExt<E> {
 }

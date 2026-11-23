@@ -2,7 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.objecttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.objecttype.ObjSet;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
 import io.github.shiozakanaptr.acext.util.function.objecttype.*;
 import io.github.shiozakanaptr.acext.util.function.longtype.*;
@@ -13,6 +12,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ObjLongMap<K> extends MapExt<K, Long> {
     long getRaw(Object key);
 

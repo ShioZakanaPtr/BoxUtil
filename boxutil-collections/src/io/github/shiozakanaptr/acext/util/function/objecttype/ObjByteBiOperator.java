@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.objecttype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface ObjByteBiOperator<T> extends BiFunction<T, Byte, Byte> {
     byte apply(T t, byte u);

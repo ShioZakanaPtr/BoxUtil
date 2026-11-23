@@ -13,7 +13,7 @@ import java.util.function.Function;
  * the standard {@link List} contract and shares {@link Container} with list
  * implementations so that capacity and resizing can be controlled uniformly.
  *
- * <p><b>Null handling.</b> Typically, for any element that is {@code null},
+ * <p><b>Null handling:</b> Typically, for any element that is {@code null},
  * it should be treated as {@code 0} if the key is of a specific primitive type
  * that the implementation defines.
  *
@@ -24,7 +24,7 @@ import java.util.function.Function;
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
-public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection<E>, Container {
+public interface ListExt<E> extends List<E>, OrderedCollection<E>, Container {
     // For compatibility
     default E getFirst() {
         return this.get(0);
@@ -131,7 +131,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      * (or equivalently, if this list changed as a result of the call).
      *
      * <p>This method is implemented as
-     * {@code return CollectionExt.super.remove(o);}, so its behavior is
+     * {@code return OrderedCollection.super.remove(o);}, so its behavior is
      * identical to the default implementation inherited from the parent
      * collection extension interface.  It is redeclared here only to attach
      * list-specific documentation and to keep the deprecation notice visible
@@ -162,7 +162,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      * @see #removeElement(Object)
      * @see #removeAt(int)
      * @see #remove(int)
-     * @see CollectionExt#remove(Object)
+     * @see OrderedCollection#remove(Object)
      * @deprecated This method is ambiguous with {@link #remove(int) remove(int)}
      *             when the element type is {@link Integer}; an invocation such as
      *             {@code list.remove(1)} resolves to removal by position rather
@@ -171,7 +171,7 @@ public interface ListExt<E> extends List<E>, CollectionExt<E>, OrderedCollection
      */
     @Deprecated
     default boolean remove(Object o) {
-        return CollectionExt.super.remove(o);
+        return OrderedCollection.super.remove(o);
     }
 
     // For compatibility

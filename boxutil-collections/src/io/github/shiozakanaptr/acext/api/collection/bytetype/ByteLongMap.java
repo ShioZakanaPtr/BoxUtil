@@ -2,7 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.bytetype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteSet;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
 import io.github.shiozakanaptr.acext.util.function.bytetype.*;
 import io.github.shiozakanaptr.acext.util.function.longtype.*;
@@ -13,6 +12,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ByteLongMap extends MapExt<Byte, Long> {
     long get(byte key);
 

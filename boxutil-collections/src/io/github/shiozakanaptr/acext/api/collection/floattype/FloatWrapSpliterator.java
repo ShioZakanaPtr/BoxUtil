@@ -7,6 +7,12 @@ import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.Objects;
 
+/**
+ * Type specialization class.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 final class FloatWrapSpliterator implements DoubleSpliterator {
     private final FloatSpliterator source;
 

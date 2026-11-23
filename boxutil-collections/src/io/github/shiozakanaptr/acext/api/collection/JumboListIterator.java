@@ -23,12 +23,13 @@ import java.util.ListIterator;
  * @see ListIterator
  * @see ListIterator#nextIndex()
  * @see ListIterator#previousIndex()
+ * @see BidiIterator
  * @see JumboContainer
  *
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
-public interface JumboListIterator<E> extends ListIterator<E> {
+public interface JumboListIterator<E> extends ListIterator<E>, BidiIterator<E> {
     /**
      * Returns the index of the element that would be returned by a subsequent
      * call to {@link #next()}, as a {@code long}.

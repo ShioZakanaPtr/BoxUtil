@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface FloatList extends ListExt<Float>, FloatCollection {
     float getRaw(int index);
 
@@ -360,6 +366,12 @@ public interface FloatList extends ListExt<Float>, FloatCollection {
 
     @NotNull
     FloatList subList(int fromIndex, int toIndex);
+
+    @NotNull
+    FloatBidiIterator iterator();
+
+    @NotNull
+    FloatBidiIterator iteratorReversed();
 
     @NotNull
     FloatSpliterator spliterator();

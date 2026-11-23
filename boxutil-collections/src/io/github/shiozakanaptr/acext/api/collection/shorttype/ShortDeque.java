@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see DequeExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ShortDeque extends DequeExt<Short>, ShortQueue {
     default short peekRaw() {
         return this.peekFirstRaw();
@@ -246,16 +254,6 @@ public interface ShortDeque extends DequeExt<Short>, ShortQueue {
         return this.removeLastRaw();
     }
 
-    /**
-     * @deprecated Please use the corresponding method that renamed ones to
-     * avoid overload-resolution ambiguity.
-     * @see #removeElement(short)
-     */
-    @Deprecated
-    default boolean remove(Object o) {
-        return ShortQueue.super.remove(o);
-    }
-
     boolean removeFirstOccurrence(short o);
 
     /**
@@ -325,6 +323,12 @@ public interface ShortDeque extends DequeExt<Short>, ShortQueue {
     default boolean tryPollExecuteOfferReversed(@NotNull Consumer<? super Short> action) {
         return this.tryPollExecuteOfferReversed((short l_t) -> action.accept(l_t));
     }
+
+    @NotNull
+    ShortBidiIterator iterator();
+
+    @NotNull
+    ShortBidiIterator iteratorReversed();
 
     @NotNull ShortIterator descendingIterator();
 }

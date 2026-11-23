@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ShortList extends ListExt<Short>, ShortCollection {
     short getRaw(int index);
 
@@ -360,6 +366,12 @@ public interface ShortList extends ListExt<Short>, ShortCollection {
 
     @NotNull
     ShortList subList(int fromIndex, int toIndex);
+
+    @NotNull
+    ShortBidiIterator iterator();
+
+    @NotNull
+    ShortBidiIterator iteratorReversed();
 
     @NotNull
     ShortSpliterator spliterator();

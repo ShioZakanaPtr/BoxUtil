@@ -2,7 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.longtype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.longtype.LongSet;
 import io.github.shiozakanaptr.acext.api.collection.floattype.FloatCollection;
 import io.github.shiozakanaptr.acext.util.function.longtype.*;
 import io.github.shiozakanaptr.acext.util.function.floattype.*;
@@ -13,6 +12,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface LongFloatMap extends MapExt<Long, Float> {
     float get(long key);
 

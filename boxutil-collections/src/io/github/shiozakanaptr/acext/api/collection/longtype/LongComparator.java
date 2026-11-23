@@ -14,6 +14,14 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Comparator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface LongComparator extends Comparator<Long> {
     int compare(long o1, long o2);

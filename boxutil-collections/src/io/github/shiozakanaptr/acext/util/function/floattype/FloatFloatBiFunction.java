@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.floattype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface FloatFloatBiFunction<R> extends BiFunction<Float, Float, R> {
     R apply(float t, float u);

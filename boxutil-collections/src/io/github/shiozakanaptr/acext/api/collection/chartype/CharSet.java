@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.function.Function;
 
+/**
+ * Type specialization class.
+ *
+ * @see SetExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface CharSet extends SetExt<Character>, CharCollection {
     boolean contains(char o);
 

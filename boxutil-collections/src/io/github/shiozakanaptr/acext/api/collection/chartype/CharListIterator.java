@@ -2,7 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.chartype;
 
 import java.util.ListIterator;
 
-public interface CharListIterator extends ListIterator<Character>, CharIterator {
+/**
+ * Type specialization interface.
+ *
+ * @see ListIterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public interface CharListIterator extends ListIterator<Character>, CharBidiIterator {
     boolean hasNext();
 
     int nextIndex();

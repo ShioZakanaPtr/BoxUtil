@@ -15,6 +15,14 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Comparator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface FloatComparator extends Comparator<Float> {
     int compare(float o1, float o2);

@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.longtype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface LongFloatBiFunction<R> extends BiFunction<Long, Float, R> {
     R apply(long t, float u);

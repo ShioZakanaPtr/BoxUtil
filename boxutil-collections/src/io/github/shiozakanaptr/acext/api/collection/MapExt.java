@@ -32,20 +32,20 @@ import java.util.function.Function;
  * a set that under {@link EntrySetExt} class, Capacity and resizing behavior,
  * where exposed, follows {@link Container}.
  *
- * <p><b>Null handling.</b> Typically, for any key or value that is {@code null},
+ * <p><b>Null handling:</b> Typically, for any key or value that is {@code null},
  * it should be treated as {@code 0} if the key is of a specific primitive type
  * that the implementation defines. However, for any value that is {@code 0}, it
  * usually is not treated as {@code null} if the value is of a specific
  * primitive type that the implementation defines. Concrete implementations may
  * impose additional restrictions; consult their documentation.
  *
- * <p><b>Optional operations.</b> Some implementations may not support mutation.
+ * <p><b>Optional operations:</b> Some implementations may not support mutation.
  * An implementation that does not support a mutating operation is documented as
  * throwing {@link UnsupportedOperationException} for that operation. Callers
  * should consult the documentation of the concrete implementation for the
  * optional operations it supports.
  *
- * <p><b>Not thread-safe.</b> Unless a concrete implementation documents
+ * <p><b>Not thread-safe:</b> Unless a concrete implementation documents
  * otherwise, a {@code MapExt} is not safe for concurrent use by multiple
  * threads. External synchronization is required if it is shared between
  * threads.
@@ -392,19 +392,25 @@ public interface MapExt<K, V> extends Map<K, V>, Container {
     }
 
     /**
-     * @see java.util.Map#keySet()
+     * {@inheritDoc}
+     *
+     * @see SetExt
      */
     @NotNull
     SetExt<K> keySet();
 
     /**
-     * @see java.util.Map#values()
+     * {@inheritDoc}
+     *
+     * @see CollectionExt
      */
     @NotNull
     CollectionExt<V> values();
 
     /**
-     * @see java.util.Map#entrySet()
+     * {@inheritDoc}
+     *
+     * @see EntrySetExt
      */
     @NotNull
     EntrySetExt<MapExt.Entry<K, V>> entrySet();

@@ -2,7 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.shorttype;
 
 import java.util.ListIterator;
 
-public interface ShortListIterator extends ListIterator<Short>, ShortIterator {
+/**
+ * Type specialization interface.
+ *
+ * @see ListIterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public interface ShortListIterator extends ListIterator<Short>, ShortBidiIterator {
     boolean hasNext();
 
     int nextIndex();

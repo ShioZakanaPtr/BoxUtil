@@ -10,7 +10,7 @@ import java.util.function.Consumer;
  * the standard {@link Queue} contract and shares {@link Container} with queue
  * implementations so that capacity and resizing can be controlled uniformly.
  *
- * <p><b>Null handling.</b> Typically, for any element that is {@code null},
+ * <p><b>Null handling:</b> Typically, for any element that is {@code null},
  * it should be treated as {@code 0} if the key is of a specific primitive type
  * that the implementation defines.
  *
@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
-public interface QueueExt<E> extends Queue<E>, Container {
+public interface QueueExt<E> extends Queue<E>, CollectionExt<E>, Container {
     int DEFAULT_INITIAL_CAPACITY = (1 << 4) + 1;
 
     default E element() {

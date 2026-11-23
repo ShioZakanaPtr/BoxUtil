@@ -2,7 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.chartype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.chartype.CharSet;
 import io.github.shiozakanaptr.acext.api.collection.doubletype.DoubleCollection;
 import io.github.shiozakanaptr.acext.util.function.chartype.*;
 import io.github.shiozakanaptr.acext.util.function.doubletype.*;
@@ -13,6 +12,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface CharDoubleMap extends MapExt<Character, Double> {
     double get(char key);
 

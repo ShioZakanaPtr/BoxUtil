@@ -2,7 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.inttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.inttype.IntSet;
 import io.github.shiozakanaptr.acext.api.collection.doubletype.DoubleCollection;
 import io.github.shiozakanaptr.acext.util.function.inttype.*;
 import io.github.shiozakanaptr.acext.util.function.doubletype.*;
@@ -13,6 +12,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface IntDoubleMap extends MapExt<Integer, Double> {
     double get(int key);
 

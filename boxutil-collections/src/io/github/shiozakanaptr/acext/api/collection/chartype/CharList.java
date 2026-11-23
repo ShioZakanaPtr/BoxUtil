@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface CharList extends ListExt<Character>, CharCollection {
     char getRaw(int index);
 
@@ -360,6 +366,12 @@ public interface CharList extends ListExt<Character>, CharCollection {
 
     @NotNull
     CharList subList(int fromIndex, int toIndex);
+
+    @NotNull
+    CharBidiIterator iterator();
+
+    @NotNull
+    CharBidiIterator iteratorReversed();
 
     @NotNull
     CharSpliterator spliterator();

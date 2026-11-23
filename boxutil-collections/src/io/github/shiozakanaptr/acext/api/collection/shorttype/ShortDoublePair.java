@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.api.collection.shorttype;
 
 import io.github.shiozakanaptr.acext.api.collection.Pair;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Pair
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ShortDoublePair extends Pair<Short, Double>, ShortDoubleMap.Entry {
     short leftRaw();
 

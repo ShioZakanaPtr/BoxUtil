@@ -10,6 +10,14 @@ import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * Type specialization interface.
+ *
+ * @see CollectionExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface DoubleCollection extends CollectionExt<Double>, DoubleIterable {
     boolean contains(double o);
 

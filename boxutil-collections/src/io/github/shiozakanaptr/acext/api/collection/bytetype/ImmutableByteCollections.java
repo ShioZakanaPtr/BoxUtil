@@ -161,7 +161,9 @@ final class ImmutableByteCollections {
             throw new UnsupportedOperationException();
         }
 
-        public abstract ByteIterator iterator();
+        public abstract ByteBidiIterator iterator();
+
+        public abstract ByteBidiIterator iteratorReversed();
 
         public abstract ByteSpliterator spliterator();
     }
@@ -172,7 +174,13 @@ final class ImmutableByteCollections {
         }
     }
 
-    private interface ImmutableByteListIterator extends ByteListIterator, ImmutableByteIterator {
+    private interface ImmutableByteBidiIterator extends ImmutableByteIterator, ByteBidiIterator {
+        default void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private interface ImmutableByteListIterator extends ByteListIterator, ImmutableByteBidiIterator {
         default void remove() {
             throw new UnsupportedOperationException();
         }
@@ -186,8 +194,147 @@ final class ImmutableByteCollections {
         }
     }
 
+    private final static class CollectionByteBidiIteratorEmpty implements ImmutableByteBidiIterator, ImmutableByteListIterator {
+        public boolean hasNext() {
+            return false;
+        }
+
+        public int nextIndex() {
+            return 0;
+        }
+
+        public byte nextByte() {
+            throw new NoSuchElementException();
+        }
+
+        public boolean hasPrevious() {
+            return false;
+        }
+
+        public int previousIndex() {
+            return -1;
+        }
+
+        public byte previousByte() {
+            throw new NoSuchElementException();
+        }
+
+        public void forEachRemaining(ByteConsumer action) {}
+
+        public void forEachPrevious(ByteConsumer action) {}
+    }
+
+    private final static class CollectionByteSpliteratorEmpty implements ByteSpliterator {
+        public ByteSpliterator trySplit() {
+            return null;
+        }
+
+        public boolean tryAdvance(ByteConsumer action) {
+            return false;
+        }
+
+        public void forEachRemaining(ByteConsumer action) {}
+
+        public long estimateSize() {
+            return 0;
+        }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
+        }
+    }
+
+    private final static class CollectionByteBidiIteratorOne implements ImmutableByteBidiIterator, ImmutableByteListIterator {
+        protected boolean onZero;
+        private final byte element;
+
+        public CollectionByteBidiIteratorOne(byte element, boolean fromZero) {
+            this.element = element;
+            this.onZero = fromZero;
+        }
+
+        public boolean hasNext() {
+            return this.onZero;
+        }
+
+        public int nextIndex() {
+            return this.onZero ? 0 : 1;
+        }
+
+        public byte nextByte() {
+            if (!this.onZero) throw new NoSuchElementException();
+            this.onZero = false;
+            return this.element;
+        }
+
+        public boolean hasPrevious() {
+            return !this.onZero;
+        }
+
+        public int previousIndex() {
+            return this.onZero ? -1 : 0;
+        }
+
+        public byte previousByte() {
+            if (this.onZero) throw new NoSuchElementException();
+            this.onZero = true;
+            return this.element;
+        }
+
+        public void forEachRemaining(ByteConsumer action) {
+            if (this.onZero) {
+                action.accept(this.element);
+                this.onZero = false;
+            }
+        }
+
+        public void forEachPrevious(ByteConsumer action) {
+            if (!this.onZero) {
+                action.accept(this.element);
+                this.onZero = true;
+            }
+        }
+    }
+
+    private final static class CollectionByteSpliteratorOne implements ByteSpliterator {
+        private boolean toggle = true;
+        private final byte element;
+
+        public CollectionByteSpliteratorOne(byte element) {
+            this.element = element;
+        }
+
+        public ByteSpliterator trySplit() {
+            return null;
+        }
+
+        public boolean tryAdvance(ByteConsumer action) {
+            if (this.toggle) {
+                action.accept(this.element);
+                this.toggle = false;
+                return true;
+            }
+            return false;
+        }
+
+        public void forEachRemaining(ByteConsumer action) {
+            if (this.toggle) {
+                action.accept(this.element);
+                this.toggle = false;
+            }
+        }
+
+        public long estimateSize() {
+            return this.toggle ? 1 : 0;
+        }
+
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
+        }
+    }
+
     private final static class ImmutableByteListEmpty extends AbstractImmutableByteList implements Cloneable, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         public byte getRaw(int index) {
             throw new IndexOutOfBoundsException("Empty list");
@@ -216,12 +363,12 @@ final class ImmutableByteCollections {
         }
 
         public ByteListIterator listIterator() {
-            return new CollectionByteListIterator();
+            return new CollectionByteBidiIteratorEmpty();
         }
 
         public ByteListIterator listIterator(int index) {
             if (index != 0) throw new IndexOutOfBoundsException();
-            return new CollectionByteListIterator();
+            return new CollectionByteBidiIteratorEmpty();
         }
 
         public ByteList subList(int fromIndex, int toIndex) {
@@ -233,12 +380,16 @@ final class ImmutableByteCollections {
             return 0;
         }
 
-        public ByteIterator iterator() {
-            return new CollectionByteIterator();
+        public ByteBidiIterator iterator() {
+            return new CollectionByteBidiIteratorEmpty();
+        }
+
+        public ByteBidiIterator iteratorReversed() {
+            return new CollectionByteBidiIteratorEmpty();
         }
 
         public ByteSpliterator spliterator() {
-            return new CollectionByteSpliterator();
+            return new CollectionByteSpliteratorEmpty();
         }
 
         public byte[] toArrayRaw() {
@@ -275,60 +426,10 @@ final class ImmutableByteCollections {
         private Object writeReplace() {
             return new ProxyStorageListEmpty();
         }
-
-        private static class CollectionByteIterator implements ImmutableByteIterator {
-            public byte nextByte() {
-                throw new NoSuchElementException();
-            }
-
-            public boolean hasNext() {
-                return false;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {}
-        }
-
-        private final static class CollectionByteListIterator extends CollectionByteIterator implements ImmutableByteListIterator {
-            public int nextIndex() {
-                return 0;
-            }
-
-            public boolean hasPrevious() {
-                return false;
-            }
-
-            public int previousIndex() {
-                return -1;
-            }
-
-            public byte previousByte() {
-                throw new NoSuchElementException();
-            }
-        }
-
-        private final static class CollectionByteSpliterator implements ByteSpliterator {
-            public ByteSpliterator trySplit() {
-                return null;
-            }
-
-            public boolean tryAdvance(ByteConsumer action) {
-                return false;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {}
-
-            public long estimateSize() {
-                return 0;
-            }
-
-            public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
-            }
-        }
     }
 
     private final static class ImmutableByteListOne extends AbstractImmutableByteList implements Cloneable, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         private final transient byte element;
 
@@ -371,12 +472,12 @@ final class ImmutableByteCollections {
         }
 
         public ByteListIterator listIterator() {
-            return new CollectionByteListIterator(this.element, true);
+            return new CollectionByteBidiIteratorOne(this.element, true);
         }
 
         public ByteListIterator listIterator(int index) {
             if (index != 0 && index != 1) throw new IndexOutOfBoundsException();
-            return new CollectionByteListIterator(this.element, index == 0);
+            return new CollectionByteBidiIteratorOne(this.element, index == 0);
         }
 
         public ByteList subList(int fromIndex, int toIndex) {
@@ -392,12 +493,16 @@ final class ImmutableByteCollections {
             return 1;
         }
 
-        public ByteIterator iterator() {
-            return new CollectionByteIterator(this.element);
+        public ByteBidiIterator iterator() {
+            return new CollectionByteBidiIteratorOne(this.element, true);
+        }
+
+        public ByteBidiIterator iteratorReversed() {
+            return new CollectionByteBidiIteratorOne(this.element, false);
         }
 
         public ByteSpliterator spliterator() {
-            return new CollectionByteSpliterator(this.element);
+            return new CollectionByteSpliteratorOne(this.element);
         }
 
         public byte[] toArrayRaw() {
@@ -440,95 +545,10 @@ final class ImmutableByteCollections {
         private Object writeReplace() {
             return new ProxyStorageListOne(this.element);
         }
-
-        private static class CollectionByteIterator implements ImmutableByteIterator {
-            protected boolean onZero = true;
-            private final byte element;
-
-            public CollectionByteIterator(byte element) {
-                this.element = element;
-            }
-
-            public byte nextByte() {
-                if (!this.onZero) throw new NoSuchElementException();
-                this.onZero = false;
-                return this.element;
-            }
-
-            public boolean hasNext() {
-                return this.onZero;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {
-                if (this.onZero) action.accept(this.element);
-            }
-        }
-
-        private final static class CollectionByteListIterator extends CollectionByteIterator implements ImmutableByteListIterator {
-            public CollectionByteListIterator(byte element, boolean fromZero) {
-                super(element);
-                this.onZero = fromZero;
-            }
-
-            public int nextIndex() {
-                return this.onZero ? 0 : 1;
-            }
-
-            public boolean hasPrevious() {
-                return !this.onZero;
-            }
-
-            public int previousIndex() {
-                return this.onZero ? -1 : 0;
-            }
-
-            public byte previousByte() {
-                if (this.onZero) throw new NoSuchElementException();
-                this.onZero = true;
-                return super.element;
-            }
-        }
-
-        private final static class CollectionByteSpliterator implements ByteSpliterator {
-            private boolean toggle = true;
-            private final byte element;
-
-            public CollectionByteSpliterator(byte element) {
-                this.element = element;
-            }
-
-            public ByteSpliterator trySplit() {
-                return null;
-            }
-
-            public boolean tryAdvance(ByteConsumer action) {
-                if (this.toggle) {
-                    action.accept(this.element);
-                    this.toggle = false;
-                    return true;
-                }
-                return false;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {
-                if (this.toggle) {
-                    action.accept(this.element);
-                    this.toggle = false;
-                }
-            }
-
-            public long estimateSize() {
-                return this.toggle ? 1 : 0;
-            }
-
-            public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
-            }
-        }
     }
 
     private final static class ImmutableByteListN extends AbstractImmutableByteList implements Cloneable, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         private final transient byte[] element;
 
@@ -597,12 +617,12 @@ final class ImmutableByteCollections {
         }
 
         public ByteListIterator listIterator() {
-            return new CollectionByteListIterator(0);
+            return new CollectionByteBidiIterator(0);
         }
 
         public ByteListIterator listIterator(int index) {
             InternalCollectionUtil.checkIndex(index, 0, this.element.length);
-            return new CollectionByteListIterator(index);
+            return new CollectionByteBidiIterator(index);
         }
 
         public ByteList subList(int fromIndex, int toIndex) {
@@ -618,8 +638,12 @@ final class ImmutableByteCollections {
             return this.element.length;
         }
 
-        public ByteIterator iterator() {
-            return new CollectionByteIterator();
+        public ByteBidiIterator iterator() {
+            return new CollectionByteBidiIterator(0);
+        }
+
+        public ByteBidiIterator iteratorReversed() {
+            return new CollectionByteBidiIterator(this.element.length);
         }
 
         public ByteSpliterator spliterator() {
@@ -704,16 +728,37 @@ final class ImmutableByteCollections {
             return new ProxyStorageListN(this.element);
         }
 
-        private class CollectionByteIterator implements ImmutableByteIterator {
-            protected int pos = 0;
+        private final class CollectionByteBidiIterator implements ImmutableByteBidiIterator, ImmutableByteListIterator {
+            private int pos;
+
+            private CollectionByteBidiIterator(int index) {
+                this.pos = index;
+            }
 
             public boolean hasNext() {
-                return this.pos < ImmutableByteListN.this.element.length;
+                return this.pos != ImmutableByteListN.this.element.length;
+            }
+
+            public int nextIndex() {
+                return this.pos;
             }
 
             public byte nextByte() {
                 if (this.pos >= ImmutableByteListN.this.element.length) throw new NoSuchElementException();
                 return ImmutableByteListN.this.element[this.pos++];
+            }
+
+            public boolean hasPrevious() {
+                return this.pos != 0;
+            }
+
+            public int previousIndex() {
+                return this.pos - 1;
+            }
+
+            public byte previousByte() {
+                if (this.pos < 1) throw new NoSuchElementException();
+                return ImmutableByteListN.this.element[this.pos--];
             }
 
             public void forEachRemaining(ByteConsumer action) {
@@ -724,29 +769,12 @@ final class ImmutableByteCollections {
                 }
                 this.pos = limit;
             }
-        }
 
-        private final class CollectionByteListIterator extends CollectionByteIterator implements ImmutableByteListIterator {
-            public CollectionByteListIterator(int index) {
-                super();
-                this.pos = index;
-            }
-
-            public int nextIndex() {
-                return this.pos;
-            }
-
-            public boolean hasPrevious() {
-                return this.pos > 0;
-            }
-
-            public int previousIndex() {
-                return this.pos - 1;
-            }
-
-            public byte previousByte() {
-                if (this.pos < 1) throw new NoSuchElementException();
-                return ImmutableByteListN.this.element[this.pos--];
+            public void forEachPrevious(ByteConsumer action) {
+                for (int i = this.pos - 1; i > -1;) {
+                    action.accept(ImmutableByteListN.this.element[i--]);
+                }
+                this.pos = 0;
             }
         }
 
@@ -799,24 +827,24 @@ final class ImmutableByteCollections {
             }
         }
 
-        protected class ImmutableByteSubList extends AbstractImmutableByteList implements RandomAccess {
-            protected int size;
-            protected final int limit;
-            protected final int offset;
+        private final class ImmutableByteSubList extends AbstractImmutableByteList implements RandomAccess {
+            private int size;
+            private final int limit;
+            private final int offset;
 
-            protected ImmutableByteSubList(int fromIdx, int toIdx) {
+            private ImmutableByteSubList(int fromIdx, int toIdx) {
                 this.size = toIdx - fromIdx;
                 this.limit = toIdx;
                 this.offset = fromIdx;
             }
 
-            protected ImmutableByteSubList(ImmutableByteSubList from, int fromIdx, int toIdx) {
+            private ImmutableByteSubList(ImmutableByteSubList from, int fromIdx, int toIdx) {
                 this.size = toIdx - fromIdx;
                 this.limit = from.offset + toIdx;
                 this.offset = from.offset + fromIdx;
             }
 
-            protected byte[] rootArray() {
+            private byte[] rootArray() {
                 return ImmutableByteListN.this.element;
             }
 
@@ -876,12 +904,12 @@ final class ImmutableByteCollections {
             }
 
             public ByteListIterator listIterator() {
-                return new CollectionByteSubListIterator(0);
+                return new CollectionByteSubBidiIterator(0);
             }
 
             public ByteListIterator listIterator(int index) {
                 InternalCollectionUtil.checkIndex(index, 0, this.size);
-                return new CollectionByteSubListIterator(index);
+                return new CollectionByteSubBidiIterator(index);
             }
 
             public ByteList subList(int fromIndex, int toIndex) {
@@ -901,8 +929,12 @@ final class ImmutableByteCollections {
                 return this.size < 1;
             }
 
-            public ByteIterator iterator() {
-                return new CollectionByteSubIterator();
+            public ByteBidiIterator iterator() {
+                return new CollectionByteSubBidiIterator(0);
+            }
+
+            public ByteBidiIterator iteratorReversed() {
+                return new CollectionByteSubBidiIterator(this.size);
             }
 
             public ByteSpliterator spliterator() {
@@ -979,11 +1011,19 @@ final class ImmutableByteCollections {
                 return sb.toString();
             }
 
-            protected class CollectionByteSubIterator implements ImmutableByteIterator {
-                protected int pos = 0;
+            private final class CollectionByteSubBidiIterator implements ImmutableByteBidiIterator, ImmutableByteListIterator {
+                private int pos;
+
+                private CollectionByteSubBidiIterator(int index) {
+                    this.pos = index;
+                }
 
                 public boolean hasNext() {
-                    return this.pos < ImmutableByteSubList.this.size;
+                    return this.pos != ImmutableByteSubList.this.size;
+                }
+
+                public int nextIndex() {
+                    return this.pos;
                 }
 
                 public byte nextByte() {
@@ -991,28 +1031,8 @@ final class ImmutableByteCollections {
                     return ImmutableByteSubList.this.rootArray()[ImmutableByteSubList.this.offset + this.pos++];
                 }
 
-                public void forEachRemaining(ByteConsumer action) {
-                    final int rawLimit = ImmutableByteSubList.this.size, limit = rawLimit + ImmutableByteSubList.this.offset;
-                    final byte[] eleL = ImmutableByteSubList.this.rootArray();
-                    for (int i = this.pos + ImmutableByteSubList.this.offset; i < limit;) {
-                        action.accept(eleL[i++]);
-                    }
-                    this.pos = rawLimit;
-                }
-            }
-
-            protected class CollectionByteSubListIterator extends CollectionByteSubIterator implements ImmutableByteListIterator {
-                protected CollectionByteSubListIterator(int index) {
-                    super();
-                    this.pos = index;
-                }
-
-                public int nextIndex() {
-                    return this.pos;
-                }
-
                 public boolean hasPrevious() {
-                    return this.pos > 0;
+                    return this.pos != 0;
                 }
 
                 public int previousIndex() {
@@ -1023,13 +1043,31 @@ final class ImmutableByteCollections {
                     if (this.pos < 1) throw new NoSuchElementException();
                     return ImmutableByteSubList.this.rootArray()[this.pos-- + ImmutableByteSubList.this.offset];
                 }
+
+                public void forEachRemaining(ByteConsumer action) {
+                    final int rawLimit = ImmutableByteSubList.this.size, limit = rawLimit + ImmutableByteSubList.this.offset;
+                    final byte[] eleL = ImmutableByteSubList.this.rootArray();
+                    for (int i = this.pos + ImmutableByteSubList.this.offset; i < limit;) {
+                        action.accept(eleL[i++]);
+                    }
+                    this.pos = rawLimit;
+                }
+
+                public void forEachPrevious(ByteConsumer action) {
+                    final int limit = ImmutableByteSubList.this.offset - 1;
+                    final byte[] eleL = ImmutableByteSubList.this.rootArray();
+                    for (int i = this.pos + limit; i > limit;) {
+                        action.accept(eleL[i++]);
+                    }
+                    this.pos = 0;
+                }
             }
 
-            protected class CollectionByteSubSpliterator implements ByteSpliterator {
-                protected int index;
-                protected int limit;
+            private final class CollectionByteSubSpliterator implements ByteSpliterator {
+                private int index;
+                private int limit;
 
-                protected CollectionByteSubSpliterator(int index, int limit) {
+                private CollectionByteSubSpliterator(int index, int limit) {
                     this.index = index;
                     this.limit = limit;
                 }
@@ -1104,7 +1142,7 @@ final class ImmutableByteCollections {
     }
 
     private static class ImmutableByteSetEmpty extends AbstractImmutableByteSet implements Cloneable, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         public boolean contains(byte o) {
             return false;
@@ -1129,11 +1167,11 @@ final class ImmutableByteCollections {
         }
 
         public ByteIterator iterator() {
-            return new CollectionByteIterator();
+            return new CollectionByteBidiIteratorEmpty();
         }
 
         public ByteSpliterator spliterator() {
-            return new CollectionByteSpliterator();
+            return new CollectionByteSpliteratorEmpty();
         }
 
         public byte[] toArrayRaw() {
@@ -1169,38 +1207,6 @@ final class ImmutableByteCollections {
 
         private Object writeReplace() {
             return new ProxyStorageSetEmpty();
-        }
-
-        private static class CollectionByteIterator implements ImmutableByteIterator {
-            public byte nextByte() {
-                throw new NoSuchElementException();
-            }
-
-            public boolean hasNext() {
-                return false;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {}
-        }
-
-        private final static class CollectionByteSpliterator implements ByteSpliterator {
-            public ByteSpliterator trySplit() {
-                return null;
-            }
-
-            public boolean tryAdvance(ByteConsumer action) {
-                return false;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {}
-
-            public long estimateSize() {
-                return 0;
-            }
-
-            public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
-            }
         }
     }
 
@@ -1242,11 +1248,11 @@ final class ImmutableByteCollections {
         }
 
         public ByteIterator iterator() {
-            return new CollectionByteIterator(this.element);
+            return new CollectionByteBidiIteratorOne(this.element, true);
         }
 
         public ByteSpliterator spliterator() {
-            return new CollectionByteSpliterator(this.element);
+            return new CollectionByteSpliteratorOne(this.element);
         }
 
         public byte[] toArrayRaw() {
@@ -1289,66 +1295,6 @@ final class ImmutableByteCollections {
         private Object writeReplace() {
             return new ProxyStorageSetOne(this.element);
         }
-
-        static class CollectionByteIterator implements ImmutableByteIterator {
-            private boolean onZero = true;
-            private final byte element;
-
-            public CollectionByteIterator(byte element) {
-                this.element = element;
-            }
-
-            public byte nextByte() {
-                if (!this.onZero) throw new NoSuchElementException();
-                this.onZero = false;
-                return this.element;
-            }
-
-            public boolean hasNext() {
-                return this.onZero;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {
-                if (this.onZero) action.accept(this.element);
-            }
-        }
-
-        static class CollectionByteSpliterator implements ByteSpliterator {
-            private boolean toggle = true;
-            private final byte element;
-
-            public CollectionByteSpliterator(byte element) {
-                this.element = element;
-            }
-
-            public ByteSpliterator trySplit() {
-                return null;
-            }
-
-            public boolean tryAdvance(ByteConsumer action) {
-                if (this.toggle) {
-                    action.accept(this.element);
-                    this.toggle = false;
-                    return true;
-                }
-                return false;
-            }
-
-            public void forEachRemaining(ByteConsumer action) {
-                if (this.toggle) {
-                    action.accept(this.element);
-                    this.toggle = false;
-                }
-            }
-
-            public long estimateSize() {
-                return this.toggle ? 1 : 0;
-            }
-
-            public int characteristics() {
-                return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE | Spliterator.NONNULL;
-            }
-        }
     }
 
     static class ImmutableByteSetN extends AbstractImmutableByteSet implements Cloneable, Serializable {
@@ -1364,6 +1310,17 @@ final class ImmutableByteCollections {
         public ImmutableByteSetN(int size, long[] bitMark) {
             this.size = size;
             this.bitMark = bitMark;
+        }
+
+        protected int getLimit() {
+            final long[] bitL = this.bitMark;
+            int result = 256;
+            for (int i = 3; i > -1;) {
+                final int space;
+                result -= (space = Long.numberOfLeadingZeros(bitL[i--]));
+                if (space != 64) break;
+            }
+            return result;
         }
 
         public boolean contains(byte o) {
@@ -1482,50 +1439,58 @@ final class ImmutableByteCollections {
             return new ProxyStorageSetN(this.bitMark);
         }
 
-        class CollectionByteIterator implements ImmutableByteIterator {
-            protected int seq = -1;
-            protected int remaining;
+        private final class CollectionByteIterator implements ImmutableByteIterator {
+            private int seq;
+            private final int limit;
 
-            public CollectionByteIterator() {
-                this.remaining = ImmutableByteSetN.this.size;
+            private CollectionByteIterator() {
+                final int limit;
+                this.limit = limit = ImmutableByteSetN.this.getLimit();
+                int seqL = 0;
+                while (seqL < limit && (ImmutableByteSetN.this.bitMark[seqL >>> 6] & (1L << (seqL & 0b111111))) == NULL_BIT) {
+                    seqL++;
+                }
+                this.seq = seqL;
             }
 
             public boolean hasNext() {
-                return this.remaining > 0;
+                return this.seq != this.limit;
             }
 
             public byte nextByte() {
-                if (this.remaining < 1) throw new NoSuchElementException();
-                this.remaining--;
+                final int limitL;
+                if (this.seq >= (limitL = this.limit)) throw new NoSuchElementException();
 
-                int seqL = this.seq + 1;
-                while (seqL < 256 && (ImmutableByteSetN.this.bitMark[seqL >>> 6] & (1L << (seqL & 0b111111))) == NULL_BIT) {
+                final int result;
+                int seqL = result = this.seq;
+                while (seqL < limitL && (ImmutableByteSetN.this.bitMark[seqL >>> 6] & (1L << (seqL & 0b111111))) == NULL_BIT) {
                     seqL++;
                 }
-                return (byte) (this.seq = seqL);
+                this.seq = seqL;
+                return (byte) result;
             }
 
             public void forEachRemaining(ByteConsumer action) {
-                for (int seqL = this.seq + 1; seqL < 256; seqL++) {
-                    if ((ImmutableByteSetN.this.bitMark[seqL >>> 6] & ( 1L << (seqL & 0b111111))) != NULL_BIT) action.accept((byte) seqL);
+                final int limitL = this.limit;
+                for (int seqL = this.seq; seqL < limitL; seqL++) {
+                    if ((ImmutableByteSetN.this.bitMark[seqL >>> 6] & (1L << (seqL & 0b111111))) != NULL_BIT) action.accept((byte) seqL);
                 }
-                this.remaining = 0;
-                this.seq = 255;
+                this.seq = limitL;
             }
         }
 
-        class CollectionByteSpliterator implements ByteSpliterator {
-            protected int seq;
-            protected int limitCap;
-            protected int estSize;
+        private final class CollectionByteSpliterator implements ByteSpliterator {
+            private int seq;
+            private int limitCap;
+            private int estSize;
 
-            protected CollectionByteSpliterator(int seq, int limitCap, int estSize) {
+            private CollectionByteSpliterator(int seq, int limitCap, int estSize) {
                 this.seq = seq;
                 this.limitCap = limitCap;
                 this.estSize = estSize;
             }
 
-            protected final int getLimitCap() {
+            private int getLimitCap() {
                 int newLimit;
                 if ((newLimit = this.limitCap) < 0) {
                     this.estSize = ImmutableByteSetN.this.size;
@@ -1542,8 +1507,8 @@ final class ImmutableByteCollections {
             public boolean tryAdvance(ByteConsumer action) {
                 final int currLimit = this.getLimitCap();
 
-                int seqL = this.seq;
-                for (; seqL < currLimit; seqL++) {
+                int seqL;
+                for (seqL = this.seq; seqL < currLimit; seqL++) {
                     if ((ImmutableByteSetN.this.bitMark[seqL >>> 6] & (1L << (seqL & 0b111111))) != NULL_BIT) {
                         action.accept((byte) (this.seq = seqL + 1));
                         return true;
@@ -1556,8 +1521,8 @@ final class ImmutableByteCollections {
             public void forEachRemaining(ByteConsumer action) {
                 final int currLimit = this.getLimitCap();
 
-                int seqL = this.seq;
-                for (; seqL < currLimit; seqL++) {
+                int seqL;
+                for (seqL = this.seq; seqL < currLimit; seqL++) {
                     if ((ImmutableByteSetN.this.bitMark[seqL >>> 6] & (1L << (seqL & 0b111111))) != NULL_BIT) {
                         action.accept((byte) (this.seq = seqL));
                     }
@@ -1565,7 +1530,7 @@ final class ImmutableByteCollections {
                 this.seq = seqL;
             }
 
-            public final long estimateSize() {
+            public long estimateSize() {
                 this.getLimitCap();
                 return this.estSize;
             }

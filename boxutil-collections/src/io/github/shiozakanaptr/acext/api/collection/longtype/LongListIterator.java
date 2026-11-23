@@ -2,7 +2,15 @@ package io.github.shiozakanaptr.acext.api.collection.longtype;
 
 import java.util.ListIterator;
 
-public interface LongListIterator extends ListIterator<Long>, LongIterator {
+/**
+ * Type specialization interface.
+ *
+ * @see ListIterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+public interface LongListIterator extends ListIterator<Long>, LongBidiIterator {
     boolean hasNext();
 
     int nextIndex();

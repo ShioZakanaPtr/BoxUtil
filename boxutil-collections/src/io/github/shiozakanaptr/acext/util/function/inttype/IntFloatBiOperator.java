@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.inttype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface IntFloatBiOperator extends BiFunction<Integer, Float, Float> {
     float apply(int t, float u);

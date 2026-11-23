@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Spliterator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface FloatSpliterator extends Spliterator.OfPrimitive<Float, FloatConsumer, FloatSpliterator> {
     FloatSpliterator trySplit();
 

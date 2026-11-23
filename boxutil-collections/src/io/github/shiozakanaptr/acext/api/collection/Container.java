@@ -2,7 +2,19 @@ package io.github.shiozakanaptr.acext.api.collection;
 
 /**
  * A generic interface for basic containers. It exposes capacity and
- * resizing function that can be control it.
+ * resizing operations that can be used to inspect and control the
+ * underlying storage capacity of an implementation.
+ *
+ * <p>Implementations may be fixed-size, growable, map-like, or otherwise.
+ * Refer to the documentation of the concrete implementation for its exact
+ * semantics, supported optional operations, and any constraints.
+ *
+ * <p>Some implementations, especially implementations of {@link JumboContainer},
+ * may use off-heap (direct) memory to store data. Such memory is difficult for
+ * the garbage collector to reclaim and may need to be released explicitly.
+ * Callers should consult the documentation of the concrete implementation to
+ * determine whether off-heap memory is used and whether any additional
+ * restrictions or requirements apply. See {@link #clear()} for details.
  *
  * @since 1.0.0
  * @author ShioZakanaPtr
@@ -165,6 +177,14 @@ public interface Container {
     }
 
     /**
+     * Returns the number of elements (or mappings, for map-like containers)
+     * currently held by this container.
+     *
+     * @return the number of elements currently in this container
+     */
+    int size();
+
+    /**
      * Returns the number of elements in this container as a {@code long}.
      *
      * <p>This method is intended for Jumbo containers, that is, containers
@@ -180,6 +200,47 @@ public interface Container {
     default long size64() {
         return -1;
     }
+
+    /**
+     * Returns {@code true} if this container contains no elements (or no
+     * mappings, for map-like containers).
+     *
+     * <p>This method is equivalent in effect to checking whether {@link #size()}
+     * is zero, but implementations may be able to determine emptiness more
+     * efficiently without computing an exact count.
+     *
+     * @return {@code true} if this container contains no elements;
+     *         {@code false} otherwise
+     * @see #size()
+     */
+    boolean isEmpty();
+
+    /**
+     * Removes all elements (or mappings, for map-like containers) from this
+     * container (optional operation). The container will be empty after this
+     * method returns.
+     *
+     * <p>The internal capacity of this container after this call is
+     * implementation-specific: implementations may retain the current capacity
+     * to avoid reallocation, may shrink it, or may release the underlying
+     * storage when supported. Use {@link #clear(int)} to request a specific
+     * resulting capacity.
+     *
+     * <p><strong>Memory release.</strong> This method may also release memory
+     * held by the implementation. Some {@link JumboContainer} implementations
+     * may use off-heap (direct) memory to store data. Such memory is difficult
+     * for the garbage collector to reclaim. For implementations whose
+     * documentation requires explicit release, if the container is no longer
+     * needed, callers must invoke this method to actively release the
+     * corresponding memory space. Callers should consult the documentation of
+     * the concrete implementation to confirm whether off-heap memory is used
+     * and whether any additional restrictions or requirements apply.
+     *
+     * @throws UnsupportedOperationException if the {@code clear} operation is
+     *         not supported by this container
+     * @see #clear(int)
+     */
+    void clear();
 
     /**
      * Removes all the elements from this container (optional operation), and

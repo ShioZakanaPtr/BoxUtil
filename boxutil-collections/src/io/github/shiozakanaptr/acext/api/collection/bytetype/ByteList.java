@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ByteList extends ListExt<Byte>, ByteCollection {
     byte getRaw(int index);
 
@@ -360,6 +366,12 @@ public interface ByteList extends ListExt<Byte>, ByteCollection {
 
     @NotNull
     ByteList subList(int fromIndex, int toIndex);
+
+    @NotNull
+    ByteBidiIterator iterator();
+
+    @NotNull
+    ByteBidiIterator iteratorReversed();
 
     @NotNull
     ByteSpliterator spliterator();

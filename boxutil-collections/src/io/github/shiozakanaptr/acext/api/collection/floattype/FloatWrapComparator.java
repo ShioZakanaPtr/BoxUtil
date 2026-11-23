@@ -10,7 +10,15 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
 
-final class FloatWrapComparator implements DoubleComparator {
+/**
+ * Type specialization class.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
+final class FloatWrapComparator implements DoubleComparator, Serializable {
+    private static final long serialVersionUID = -7142995032377883752L;
+
     private final FloatComparator source;
 
     FloatWrapComparator(FloatComparator source) {

@@ -39,12 +39,13 @@ import java.util.Objects;
  * @since 1.0.0
  * @author ShioZakanaPtr
  */
+@SuppressWarnings({"unchecked", "unused"})
 public final class MapFactory {
     private static StringBuilder pickPackage() {
         return new StringBuilder("io.github.shiozakanaptr.acext.util.collection.");
     }
 
-    private static boolean pickHead(Class<?> clazz, StringBuilder sb) {
+    private static void pickHead(Class<?> clazz, StringBuilder sb) {
         if (clazz == byte.class) {
             sb.append("bytetype.Byte");
         } else if (clazz == short.class) {
@@ -61,12 +62,10 @@ public final class MapFactory {
             sb.append("doubletype.Double");
         } else {
             sb.append("objecttype.Obj");
-            return true;
         }
-        return false;
     }
 
-    private static boolean pickNext(Class<?> clazz, StringBuilder sb) {
+    private static void pickNext(Class<?> clazz, StringBuilder sb) {
         if (clazz == byte.class) {
             sb.append("Byte");
         } else if (clazz == short.class) {
@@ -83,9 +82,7 @@ public final class MapFactory {
             sb.append("Double");
         } else {
             sb.append("Obj");
-            return true;
         }
-        return false;
     }
 
     private static boolean isPrimitiveBool(Class<?> clazz) {
@@ -547,7 +544,7 @@ public final class MapFactory {
         StringBuilder sb = pickPackage();
         sb.append("objecttype.ObjObj");
 //        pickHead(firstKeyClass, sb);
-//        pickHead(secondKeyClass, sb);
+//        pickNext(secondKeyClass, sb);
         pickNext(valueClass, sb);
         sb.append("LinearProbingShardConcurrentHashMap");
 

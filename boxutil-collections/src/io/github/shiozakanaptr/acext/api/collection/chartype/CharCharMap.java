@@ -2,8 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.chartype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.chartype.CharSet;
-import io.github.shiozakanaptr.acext.api.collection.chartype.CharCollection;
 import io.github.shiozakanaptr.acext.util.function.chartype.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +10,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface CharCharMap extends MapExt<Character, Character> {
     char get(char key);
 

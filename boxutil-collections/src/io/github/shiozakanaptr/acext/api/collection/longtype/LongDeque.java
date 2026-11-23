@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see DequeExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface LongDeque extends DequeExt<Long>, LongQueue {
     default long peekRaw() {
         return this.peekFirstRaw();
@@ -246,16 +254,6 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
         return this.removeLastRaw();
     }
 
-    /**
-     * @deprecated Please use the corresponding method that renamed ones to
-     * avoid overload-resolution ambiguity.
-     * @see #removeElement(long)
-     */
-    @Deprecated
-    default boolean remove(Object o) {
-        return LongQueue.super.remove(o);
-    }
-
     boolean removeFirstOccurrence(long o);
 
     /**
@@ -325,6 +323,12 @@ public interface LongDeque extends DequeExt<Long>, LongQueue {
     default boolean tryPollExecuteOfferReversed(@NotNull Consumer<? super Long> action) {
         return this.tryPollExecuteOfferReversed((long l_t) -> action.accept(l_t));
     }
+
+    @NotNull
+    LongBidiIterator iterator();
+
+    @NotNull
+    LongBidiIterator iteratorReversed();
 
     @NotNull LongIterator descendingIterator();
 }

@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.api.collection.doubletype;
 
 import io.github.shiozakanaptr.acext.api.collection.Pair;
 
+/**
+ * Type specialization interface.
+ *
+ * @see Pair
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface DoubleObjPair<R> extends Pair<Double, R>, DoubleObjMap.Entry<R> {
     double leftRaw();
 

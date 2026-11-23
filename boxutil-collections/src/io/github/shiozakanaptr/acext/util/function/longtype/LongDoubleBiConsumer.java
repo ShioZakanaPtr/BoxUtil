@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.longtype;
 
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiConsumer
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface LongDoubleBiConsumer extends BiConsumer<Long, Double> {
     void accept(long t, double u);

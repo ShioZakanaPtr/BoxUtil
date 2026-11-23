@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  *
  * <p>To retain an entry, copy its key and value, for example with
  * {@code new java.util.AbstractMap.SimpleImmutableEntry<>(key, value)},
- * or use the ordinary {@link #iterator()},
+ * any implementations of {@link Pair} or use the ordinary {@link #iterator()},
  * {@link #forEach(java.util.function.Consumer)}, or
  * {@link #spliterator()} methods. The effect of calling
  * {@link Map.Entry#setValue(Object)} on a reused entry is
@@ -47,7 +47,7 @@ import java.util.function.Consumer;
  * do not weaken the contract of {@code Set}.
  *
  * @param <E> the element type; for the entry set of a map this is
- *            normally {@code Map.Entry<K,V>}
+ *            normally {@code MapExt.Entry<K,V>}
  *
  * @see SetExt
  * @see java.util.Set

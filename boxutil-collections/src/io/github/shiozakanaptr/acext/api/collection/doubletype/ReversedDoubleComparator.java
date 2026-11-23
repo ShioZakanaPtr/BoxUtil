@@ -5,8 +5,16 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * Type specialization class.
+ *
+ * @see DoubleComparator
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 final class ReversedDoubleComparator implements DoubleComparator, Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -7142995032377883752L;
 
     private final DoubleComparator comparator;
 

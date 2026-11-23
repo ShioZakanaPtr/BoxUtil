@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface DoubleList extends ListExt<Double>, DoubleCollection {
     double getRaw(int index);
 
@@ -360,6 +366,12 @@ public interface DoubleList extends ListExt<Double>, DoubleCollection {
 
     @NotNull
     DoubleList subList(int fromIndex, int toIndex);
+
+    @NotNull
+    DoubleBidiIterator iterator();
+
+    @NotNull
+    DoubleBidiIterator iteratorReversed();
 
     @NotNull
     DoubleSpliterator spliterator();

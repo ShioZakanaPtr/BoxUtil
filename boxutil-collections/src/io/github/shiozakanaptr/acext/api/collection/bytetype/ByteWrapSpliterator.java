@@ -7,6 +7,12 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.Objects;
 
+/**
+ * Type specialization class.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 final class ByteWrapSpliterator implements IntSpliterator {
     private final ByteSpliterator source;
 

@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.shorttype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface ShortLongBiFunction<R> extends BiFunction<Short, Long, R> {
     R apply(short t, long u);

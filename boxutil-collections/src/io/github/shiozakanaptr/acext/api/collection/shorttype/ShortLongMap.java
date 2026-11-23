@@ -2,7 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.shorttype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.shorttype.ShortSet;
 import io.github.shiozakanaptr.acext.api.collection.longtype.LongCollection;
 import io.github.shiozakanaptr.acext.util.function.shorttype.*;
 import io.github.shiozakanaptr.acext.util.function.longtype.*;
@@ -13,6 +12,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface ShortLongMap extends MapExt<Short, Long> {
     long get(short key);
 

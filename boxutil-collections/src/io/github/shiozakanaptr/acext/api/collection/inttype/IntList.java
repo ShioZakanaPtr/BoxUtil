@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+/**
+ * Type specialization interface.
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface IntList extends ListExt<Integer>, IntCollection {
     int getRaw(int index);
 
@@ -360,6 +366,12 @@ public interface IntList extends ListExt<Integer>, IntCollection {
 
     @NotNull
     IntList subList(int fromIndex, int toIndex);
+
+    @NotNull
+    IntBidiIterator iterator();
+
+    @NotNull
+    IntBidiIterator iteratorReversed();
 
     @NotNull
     IntSpliterator spliterator();

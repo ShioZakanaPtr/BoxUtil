@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.shorttype;
 
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiConsumer
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface ShortDoubleBiConsumer extends BiConsumer<Short, Double> {
     void accept(short t, double u);

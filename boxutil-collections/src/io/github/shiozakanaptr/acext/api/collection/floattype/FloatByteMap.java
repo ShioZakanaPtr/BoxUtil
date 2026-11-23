@@ -2,7 +2,6 @@ package io.github.shiozakanaptr.acext.api.collection.floattype;
 
 import io.github.shiozakanaptr.acext.api.collection.EntrySetExt;
 import io.github.shiozakanaptr.acext.api.collection.MapExt;
-import io.github.shiozakanaptr.acext.api.collection.floattype.FloatSet;
 import io.github.shiozakanaptr.acext.api.collection.bytetype.ByteCollection;
 import io.github.shiozakanaptr.acext.util.function.floattype.*;
 import io.github.shiozakanaptr.acext.util.function.bytetype.*;
@@ -13,6 +12,14 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.function.BiConsumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see MapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface FloatByteMap extends MapExt<Float, Byte> {
     byte get(float key);
 

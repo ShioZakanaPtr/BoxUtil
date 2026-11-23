@@ -9,6 +9,14 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * Type specialization interface.
+ *
+ * @see ConcurrentMapExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface LongDoubleConcurrentMap extends LongDoubleMap, ConcurrentMapExt<Long, Double> {
     /**
      * @deprecated Please use the corresponding method that using primitive type.

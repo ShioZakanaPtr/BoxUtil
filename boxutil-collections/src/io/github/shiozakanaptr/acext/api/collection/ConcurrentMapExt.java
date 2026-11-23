@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentMap;
  * are expected to follow the weakly consistent semantics of {@link ConcurrentMap}
  * unless an implementation documents stronger guarantees.
  *
- * <p><b>Null handling.</b> Typically, for any key or value that is {@code null},
+ * <p><b>Null handling:</b> Typically, for any key or value that is {@code null},
  * it should be treated as {@code 0} if the key is of a specific primitive type
  * that the implementation defines. However, for any value that is {@code 0}, it
  * usually is not treated as {@code null} if the value is of a specific
@@ -32,18 +32,18 @@ import java.util.concurrent.ConcurrentMap;
  * {@link ConcurrentMap} may impose additional restrictions on {@code null} keys
  * and values; consult their documentation.
  *
- * <p><b>Optional operations.</b> Implementations may not support every
+ * <p><b>Optional operations:</b> Implementations may not support every
  * mutating operation. An implementation that does not support a mutating
  * operation is documented as throwing {@link UnsupportedOperationException}
  * for that operation. Callers should consult the documentation of the concrete
  * implementation for the operations it supports and their concurrency
  * semantics.
  *
- * <p><b>Thread-safe.</b> This interface is intended for concurrent use.
+ * <p><b>Thread-safe:</b> This interface is intended for concurrent use.
  * Concrete implementations define their exact thread-safety, atomicity and
  * consistency guarantees.
  *
- * <p><b>Concurrent support for additional {@link MapExt} operations.</b>
+ * <p><b>Concurrent support for additional {@link MapExt} operations:</b>
  * The following additional operations inherited from {@link MapExt} are
  * supported with concurrent semantics by this interface:
  *
@@ -52,6 +52,7 @@ import java.util.concurrent.ConcurrentMap;
  *   potentially calling function parameter multiple times.</li>
  *   <li>{@link MapExt#remapping}: when multiple threads attempt updates including
  *   potentially calling function parameter multiple times.</li>
+ *   <li>{@link MapExt#swap}: full-map-lock, prevent insert or remove calls.</li>
  *   <li>{@link MapExt#swapAt}: atomic swap and updates</li>
  * </ul>
  *

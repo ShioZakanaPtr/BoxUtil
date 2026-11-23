@@ -2,6 +2,14 @@ package io.github.shiozakanaptr.acext.util.function.bytetype;
 
 import java.util.function.BiFunction;
 
+/**
+ * Type specialization functional interface.
+ *
+ * @see BiFunction
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 @FunctionalInterface
 public interface ByteIntBiFunction<R> extends BiFunction<Byte, Integer, R> {
     R apply(byte t, int u);

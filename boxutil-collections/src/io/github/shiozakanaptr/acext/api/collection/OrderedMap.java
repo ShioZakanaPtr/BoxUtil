@@ -22,7 +22,7 @@ import java.util.function.BiConsumer;
  * {@code SequencedMap}</a> interface for the full contract, including
  * encounter-order semantics and optional-operation behavior.
  *
- * <p><strong>Note:</strong> This interface does not adapt the
+ * <p><b>Note:</b> This interface does not adapt the
  * {@code reversed()} method of {@code SequencedMap}. It only provides a
  * forward-compatible view of the first/last-entry operations. Callers requiring
  * a reversed view should use the underlying map's JDK 21 {@code SequencedMap}
@@ -36,6 +36,7 @@ import java.util.function.BiConsumer;
  *      SequencedMap (JDK 21)</a>
  *
  * @since 1.0.0
+ * @author ShioZakanaPtr
  */
 public interface OrderedMap<K, V> extends MapExt<K, V> {
     /**

@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
+/**
+ * Type specialization interface.
+ *
+ * @see DequeExt
+ *
+ * @since 1.0.0
+ * @author ShioZakanaPtr
+ */
 public interface DoubleDeque extends DequeExt<Double>, DoubleQueue {
     default double peekRaw() {
         return this.peekFirstRaw();
@@ -246,16 +254,6 @@ public interface DoubleDeque extends DequeExt<Double>, DoubleQueue {
         return this.removeLastRaw();
     }
 
-    /**
-     * @deprecated Please use the corresponding method that renamed ones to
-     * avoid overload-resolution ambiguity.
-     * @see #removeElement(double)
-     */
-    @Deprecated
-    default boolean remove(Object o) {
-        return DoubleQueue.super.remove(o);
-    }
-
     boolean removeFirstOccurrence(double o);
 
     /**
@@ -325,6 +323,12 @@ public interface DoubleDeque extends DequeExt<Double>, DoubleQueue {
     default boolean tryPollExecuteOfferReversed(@NotNull Consumer<? super Double> action) {
         return this.tryPollExecuteOfferReversed((double l_t) -> action.accept(l_t));
     }
+
+    @NotNull
+    DoubleBidiIterator iterator();
+
+    @NotNull
+    DoubleBidiIterator iteratorReversed();
 
     @NotNull DoubleIterator descendingIterator();
 }
