@@ -545,7 +545,7 @@ public final class MapFactory {
 //        pickHead(firstKeyClass, sb);
 //        pickNext(secondKeyClass, sb);
         pickNext(valueClass, sb);
-        sb.append("LinearProbingShardConcurrentHashMap");
+        sb.append("LinearProbingHashPairMap");
 
         try {
             final Class<?> clazz = Class.forName(sb.toString(), false, Class.class.getClassLoader());
