@@ -3,13 +3,14 @@ package io.github.shiozakanaptr.acext.util;
 import io.github.shiozakanaptr.acext.api.collection.Container;
 import io.github.shiozakanaptr.acext.api.collection.HashBehavior;
 import io.github.shiozakanaptr.acext.api.collection.HashContainer;
+import io.github.shiozakanaptr.acext.exception.CapacityOverflowException;
 
 import java.io.StreamCorruptedException;
 import java.util.Objects;
 
 /**
  * An internal utility class providing shared helpers for collection
- * implementation classes in this project.
+ * implementation classes in {@code ACEXT}.
  *
  * <p>This class contains low-level support routines used by the concrete
  * collection implementations, including capacity computation, argument and
@@ -18,7 +19,7 @@ import java.util.Objects;
  * logic across them.
  *
  * <p><strong>This class is not part of the public API.</strong> It is intended
- * solely for use by collection implementation classes within this project.
+ * solely for use by collection implementation classes within {@code ACEXT}.
  * Ordinary developers should not call, extend, or otherwise depend on the
  * members of this class, as its contents may change or be removed without
  * notice. For this reason, individual methods are not documented.
@@ -30,7 +31,11 @@ import java.util.Objects;
  */
 public final class InternalCollectionUtil {
     public static void throwCapacityOverflowTips() {
-        throw new IllegalStateException("The capacity of container overflow; should split to different ones");
+        throw new CapacityOverflowException();
+    }
+
+    public static void checkCacheLine(short cacheLinePadding) {
+        if (cacheLinePadding < 7 || (cacheLinePadding & (cacheLinePadding - 1)) != 0) throw new IllegalArgumentException("Illegal cache line size '" + cacheLinePadding + '\'');
     }
 
     public static void checkCapacity(long cap, long max) {
