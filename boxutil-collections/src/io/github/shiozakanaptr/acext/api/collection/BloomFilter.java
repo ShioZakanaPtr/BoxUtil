@@ -372,10 +372,6 @@ public interface BloomFilter<E> extends Predicate<E>, Container {
      * semantics (for example counting or aging Bloom filters) should override
      * this method.
      *
-     * <p>If the capacity is not positive (for example, it is unknown or reported
-     * as {@code -1}) or no hash functions are configured, the estimate is
-     * undefined and this default implementation returns {@link Double#NaN}.
-     *
      * @return the current false-positive rate in the range {@code [0.0, 1.0]},
      *         or {@link Double#NaN} if the rate is undefined for the current
      *         filter state
