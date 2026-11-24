@@ -1,12 +1,9 @@
 package io.github.shiozakanaptr.acext.util;
 
 import io.github.shiozakanaptr.acext.api.collection.HashBehavior;
-import io.github.shiozakanaptr.acext.util.collection.HashBehaviorFactory;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * A utility class providing hashing primitives and helpers used by hash-based
@@ -57,6 +54,17 @@ public final class HashingUtil {
     }
 
     /**
+     * A hash strategy that uses the input parameter value directly as the
+     * final hash, without any mixing.
+     *
+     * @param key the input value
+     * @return the same value as {@code key}
+     */
+    public static long directly64(long key) {
+        return key;
+    }
+
+    /**
      * A hash strategy that uses {@link Object#hashCode()} as the final hash.
      * If the key is {@code null}, returns {@code 0}.
      *
@@ -64,7 +72,18 @@ public final class HashingUtil {
      * @return the hash code of the key, or {@code 0} if the key is {@code null}
      */
     public static int directly(@Nullable final Object key) {
-        return key == null ? 0 : key.hashCode();
+        return key != null ? key.hashCode() : 0;
+    }
+
+    /**
+     * A hash strategy that uses {@link Object#hashCode()} as the final hash.
+     * If the key is {@code null}, returns {@code 0}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the 64-bit hash code of the key, or {@code 0} if the key is {@code null}
+     */
+    public static long directly64(@Nullable final Object key) {
+        return key != null ? key.hashCode() : 0L;
     }
 
     /**
@@ -73,7 +92,7 @@ public final class HashingUtil {
      * @param key the input value
      * @return the mixed hash value
      */
-    public static int fibonacciBit32(int key) {
+    public static int fibonacci(int key) {
         return key * 0x61c88647;
     }
 
@@ -83,20 +102,32 @@ public final class HashingUtil {
      * @param key the input value
      * @return the mixed hash value
      */
-    public static long fibonacciBit64(long key) {
+    public static long fibonacci64(long key) {
         return key * 0x61c8864680b583ebL;
     }
 
     /**
      * A hash strategy that multiply by golden ratio to an object key.
      * If the key is {@code null}, returns {@code 0}; otherwise,
-     * applies {@link #fibonacciBit32(int)} to the key's {@link Object#hashCode()}.
+     * applies {@link #fibonacci(int)} to the key's {@link Object#hashCode()}.
      *
      * @param key the object key, possibly {@code null}
      * @return the hash code of the key, or {@code 0} if the key is {@code null}
      */
     public static int fibonacci(@Nullable final Object key) {
-        return key == null ? 0 : fibonacciBit32(key.hashCode());
+        return key != null ? fibonacci(key.hashCode()) : 0;
+    }
+
+    /**
+     * A hash strategy that multiply by golden ratio to an object key.
+     * If the key is {@code null}, returns {@code 0}; otherwise,
+     * applies {@link #fibonacci64(long)} to the key's {@link Object#hashCode()}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the 64-bit hash code of the key, or {@code 0} if the key is {@code null}
+     */
+    public static long fibonacci64(@Nullable final Object key) {
+        return key != null ? fibonacci64(key.hashCode()) : 0L;
     }
 
     /**
@@ -112,6 +143,17 @@ public final class HashingUtil {
 
     /**
      * A hash strategy that applies the same supplemental hash function like
+     * {@link java.util.HashMap}: {@code key ^ (key >>> 16)} but r-shift 32.
+     *
+     * @param key the input value
+     * @return the mixed 64-bit hash value
+     */
+    public static long bitMix64(long key) {
+        return key ^ (key >>> 32);
+    }
+
+    /**
+     * A hash strategy that applies the same supplemental hash function like
      * {@link java.util.HashMap} to an object key. If the key is {@code null},
      * returns {@code 0}; otherwise, applies {@link #bitMix(int)} to
      * the key's {@link Object#hashCode()}.
@@ -120,7 +162,20 @@ public final class HashingUtil {
      * @return the mixed hash value
      */
     public static int bitMix(@Nullable final Object key) {
-        return key == null ? 0 : bitMix(key.hashCode());
+        return key != null ? bitMix(key.hashCode()) : 0;
+    }
+
+    /**
+     * A hash strategy that applies the same supplemental hash function like
+     * {@link java.util.HashMap} to an object key. If the key is {@code null},
+     * returns {@code 0}; otherwise, applies {@link #bitMix64(long)} to
+     * the key's {@link Object#hashCode()}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the mixed 64-bit hash value
+     */
+    public static long bitMix64(@Nullable final Object key) {
+        return key != null ? bitMix64(key.hashCode()) : 0L;
     }
 
     /**
@@ -130,7 +185,7 @@ public final class HashingUtil {
      * @param key the input value
      * @return the mixed hash value
      */
-    public static int fibonacciMixBit32(int key) {
+    public static int fibonacciMix(int key) {
         final int result = key * 0x61c88647;
         return result ^ (result >>> 16);
     }
@@ -142,7 +197,7 @@ public final class HashingUtil {
      * @param key the input value
      * @return the mixed hash value
      */
-    public static long fibonacciMixBit64(long key) {
+    public static long fibonacciMix64(long key) {
         final long result = key * 0x61c8864680b583ebL;
         return result ^ (result >>> 32);
     }
@@ -151,13 +206,26 @@ public final class HashingUtil {
      * A hash strategy that multiply by golden ratio to an object key, and
      * then mix it as {@link java.util.HashMap}.
      * If the key is {@code null}, returns {@code 0}; otherwise,
-     * applies {@link #fibonacciBit32(int)} to the key's {@link Object#hashCode()}.
+     * applies {@link #fibonacci(int)} to the key's {@link Object#hashCode()}.
      *
      * @param key the object key, possibly {@code null}
      * @return the hash code of the key, or {@code 0} if the key is {@code null}
      */
     public static int fibonacciMix(@Nullable final Object key) {
-        return key == null ? 0 : fibonacciMixBit32(key.hashCode());
+        return key != null ? fibonacciMix(key.hashCode()) : 0;
+    }
+
+    /**
+     * A hash strategy that multiply by golden ratio to an object key, and
+     * then mix it as {@link java.util.HashMap}.
+     * If the key is {@code null}, returns {@code 0}; otherwise,
+     * applies {@link #fibonacci64(long)} to the key's {@link Object#hashCode()}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the 64-bit hash code of the key, or {@code 0} if the key is {@code null}
+     */
+    public static long fibonacciMix64(@Nullable final Object key) {
+        return key != null ? fibonacciMix64(key.hashCode()) : 0L;
     }
 
     /**
@@ -167,7 +235,7 @@ public final class HashingUtil {
      * @param key the input value
      * @return the mixed hash value
      */
-    public static int murmur3HashFMixBit32(int key) {
+    public static int murmur3HashFMix(int key) {
         key = (key ^ (key >>> 16)) * 0x85ebca6b;
         key = (key ^ (key >>> 13)) * 0xc2b2ae35;
         return key ^ (key >>> 16);
@@ -180,7 +248,7 @@ public final class HashingUtil {
      * @param key the input value
      * @return the mixed hash value
      */
-    public static long murmur3HashFMixBit64(long key) {
+    public static long murmur3HashFMix64(long key) {
         key = (key ^ (key >>> 33)) * 0xff51afd7ed558ccdL;
         key = (key ^ (key >>> 33)) * 0xc4ceb9fe1a85ec53L;
         return key ^ (key >>> 33);
@@ -189,14 +257,27 @@ public final class HashingUtil {
     /**
      * A hash strategy that applies the MurmurHash3 finalization mix to an
      * object key. If the key is {@code null}, returns {@code 0}; otherwise,
-     * applies {@link #murmur3HashFMixBit32(int)} to the key's
+     * applies {@link #murmur3HashFMix(int)} to the key's
      * {@link Object#hashCode()}.
      *
      * @param key the object key, possibly {@code null}
      * @return the mixed hash value
      */
     public static int murmurHash3FMix(@Nullable final Object key) {
-        return key == null ? 0 : murmur3HashFMixBit32(key.hashCode());
+        return key != null ? murmur3HashFMix(key.hashCode()) : 0;
+    }
+
+    /**
+     * A hash strategy that applies the MurmurHash3 finalization mix to an
+     * object key. If the key is {@code null}, returns {@code 0}; otherwise,
+     * applies {@link #murmur3HashFMix64(long)} to the key's
+     * {@link Object#hashCode()}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the mixed 64-bit hash value
+     */
+    public static long murmurHash3FMix64(@Nullable final Object key) {
+        return key != null ? murmur3HashFMix64(key.hashCode()) : 0L;
     }
 
     private static int read32(final byte[] data, int ptr) {
@@ -255,7 +336,7 @@ public final class HashingUtil {
             case 1: hash ^= Integer.rotateLeft((k ^ (data[limit] & 0xff)) * c1, 15) * c2;
         }
 
-        return murmur3HashFMixBit32(hash ^ length);
+        return murmur3HashFMix(hash ^ length);
     }
 
     /**
@@ -285,7 +366,7 @@ public final class HashingUtil {
             hash = Integer.rotateLeft(hash ^ (Integer.rotateLeft(data[i++] * c1, 15) * c2), 13) * 5 + 0xe6546b64;
         }
 
-        return murmur3HashFMixBit32(hash ^ limit);
+        return murmur3HashFMix(hash ^ limit);
     }
 
     /**
@@ -319,7 +400,7 @@ public final class HashingUtil {
             hash ^= Integer.rotateLeft((data.charAt(limit) & 0xffff) * c1, 15) * c2;
         }
 
-        return murmur3HashFMixBit32(hash ^ length);
+        return murmur3HashFMix(hash ^ length);
     }
 
     /**
@@ -375,8 +456,8 @@ public final class HashingUtil {
         hash2 ^= length;
         hash1 += hash2;
         hash2 += hash1;
-        hash1 = murmur3HashFMixBit64(hash1);
-        hash2 = murmur3HashFMixBit64(hash2);
+        hash1 = murmur3HashFMix64(hash1);
+        hash2 = murmur3HashFMix64(hash2);
         result[0] = (hash1 += hash2);
         result[1] = hash2 + hash1;
     }
@@ -422,8 +503,8 @@ public final class HashingUtil {
         hash2 ^= length;
         hash1 += hash2;
         hash2 += hash1;
-        hash1 = murmur3HashFMixBit64(hash1);
-        hash2 = murmur3HashFMixBit64(hash2);
+        hash1 = murmur3HashFMix64(hash1);
+        hash2 = murmur3HashFMix64(hash2);
         result[0] = (hash1 += hash2);
         result[1] = hash2 + hash1;
     }
@@ -462,8 +543,8 @@ public final class HashingUtil {
         hash2 ^= length;
         hash1 += hash2;
         hash2 += hash1;
-        hash1 = murmur3HashFMixBit64(hash1);
-        hash2 = murmur3HashFMixBit64(hash2);
+        hash1 = murmur3HashFMix64(hash1);
+        hash2 = murmur3HashFMix64(hash2);
         result[0] = (hash1 += hash2);
         result[1] = hash2 + hash1;
     }
@@ -513,8 +594,8 @@ public final class HashingUtil {
         hash2 ^= length;
         hash1 += hash2;
         hash2 += hash1;
-        hash1 = murmur3HashFMixBit64(hash1);
-        hash2 = murmur3HashFMixBit64(hash2);
+        hash1 = murmur3HashFMix64(hash1);
+        hash2 = murmur3HashFMix64(hash2);
         result[0] = (hash1 += hash2);
         result[1] = hash2 + hash1;
     }

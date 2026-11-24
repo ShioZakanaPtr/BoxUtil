@@ -1,7 +1,6 @@
-package io.github.shiozakanaptr.acext.util.collection;
+package io.github.shiozakanaptr.acext.util;
 
 import io.github.shiozakanaptr.acext.api.collection.HashBehavior;
-import io.github.shiozakanaptr.acext.util.HashingUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -183,9 +182,13 @@ public final class HashBehaviorFactory {
     }
 
     private final static class DefaultDirectly implements HashBehavior<Object>, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         public int hashing(int key) {
+            return key;
+        }
+
+        public long hashing64(int key) {
             return key;
         }
 
@@ -193,112 +196,208 @@ public final class HashBehaviorFactory {
             return Long.hashCode(key);
         }
 
+        public long hashing64(long key) {
+            return key;
+        }
+
         public int hashing(float key) {
             return Float.hashCode(key);
+        }
+
+        public long hashing64(float key) {
+            return Float.floatToIntBits(key);
         }
 
         public int hashing(double key) {
             return Double.hashCode(key);
         }
 
+        public long hashing64(double key) {
+            return Double.doubleToLongBits(key);
+        }
+
         public int hashing(@Nullable Object key) {
             return HashingUtil.directly(key);
+        }
+
+        public long hashing64(@Nullable Object key) {
+            return HashingUtil.directly64(key);
         }
     }
 
     private final static class DefaultFibonacci implements HashBehavior<Object>, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         public int hashing(int key) {
-            return HashingUtil.fibonacciBit32(key);
+            return HashingUtil.fibonacci(key);
+        }
+
+        public long hashing64(int key) {
+            return HashingUtil.fibonacci64(key);
         }
 
         public int hashing(long key) {
-            return Long.hashCode(HashingUtil.fibonacciBit64(key));
+            return Long.hashCode(HashingUtil.fibonacci64(key));
+        }
+
+        public long hashing64(long key) {
+            return HashingUtil.fibonacci64(key);
         }
 
         public int hashing(float key) {
-            return HashingUtil.fibonacciBit32(Float.floatToIntBits(key));
+            return HashingUtil.fibonacci(Float.floatToIntBits(key));
+        }
+
+        public long hashing64(float key) {
+            return HashingUtil.fibonacci64(Float.floatToIntBits(key));
         }
 
         public int hashing(double key) {
-            return Long.hashCode(HashingUtil.fibonacciBit64(Double.doubleToLongBits(key)));
+            return Long.hashCode(HashingUtil.fibonacci64(Double.doubleToLongBits(key)));
+        }
+
+        public long hashing64(double key) {
+            return HashingUtil.fibonacci64(Double.doubleToLongBits(key));
         }
 
         public int hashing(@Nullable Object key) {
             return HashingUtil.fibonacci(key);
         }
+
+        public long hashing64(@Nullable Object key) {
+            return HashingUtil.fibonacci64(key);
+        }
     }
 
     private final static class DefaultBitMix implements HashBehavior<Object>, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         public int hashing(int key) {
             return HashingUtil.bitMix(key);
         }
 
+        public long hashing64(int key) {
+            return HashingUtil.bitMix64(key);
+        }
+
         public int hashing(long key) {
-            return HashingUtil.bitMix(Long.hashCode(key));
+            return Long.hashCode(HashingUtil.bitMix64(key));
+        }
+
+        public long hashing64(long key) {
+            return HashingUtil.bitMix64(key);
         }
 
         public int hashing(float key) {
             return HashingUtil.bitMix(Float.floatToIntBits(key));
         }
 
+        public long hashing64(float key) {
+            return HashingUtil.bitMix64(Float.floatToIntBits(key));
+        }
+
         public int hashing(double key) {
-            return HashingUtil.bitMix(Long.hashCode(Double.doubleToLongBits(key)));
+            return Long.hashCode(HashingUtil.bitMix64(Double.doubleToLongBits(key)));
+        }
+
+        public long hashing64(double key) {
+            return HashingUtil.bitMix64(Double.doubleToLongBits(key));
         }
 
         public int hashing(@Nullable Object key) {
             return HashingUtil.bitMix(key);
         }
+
+        public long hashing64(@Nullable Object key) {
+            return HashingUtil.bitMix64(key);
+        }
     }
 
     private final static class DefaultFibonacciMix implements HashBehavior<Object>, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         public int hashing(int key) {
-            return HashingUtil.fibonacciMixBit32(key);
+            return HashingUtil.fibonacciMix(key);
+        }
+
+        public long hashing64(int key) {
+            return HashingUtil.fibonacciMix64(key);
         }
 
         public int hashing(long key) {
-            return Long.hashCode(HashingUtil.fibonacciMixBit64(key));
+            return Long.hashCode(HashingUtil.fibonacciMix64(key));
+        }
+
+        public long hashing64(long key) {
+            return HashingUtil.fibonacciMix64(key);
         }
 
         public int hashing(float key) {
-            return HashingUtil.fibonacciMixBit32(Float.floatToIntBits(key));
+            return HashingUtil.fibonacciMix(Float.floatToIntBits(key));
+        }
+
+        public long hashing64(float key) {
+            return HashingUtil.fibonacciMix64(Float.floatToIntBits(key));
         }
 
         public int hashing(double key) {
-            return Long.hashCode(HashingUtil.fibonacciMixBit64(Double.doubleToLongBits(key)));
+            return Long.hashCode(HashingUtil.fibonacciMix64(Double.doubleToLongBits(key)));
+        }
+
+        public long hashing64(double key) {
+            return HashingUtil.fibonacciMix64(Double.doubleToLongBits(key));
         }
 
         public int hashing(@Nullable Object key) {
             return HashingUtil.fibonacciMix(key);
         }
+
+        public long hashing64(@Nullable Object key) {
+            return HashingUtil.fibonacciMix64(key);
+        }
     }
 
     private final static class DefaultMurmurHash3 implements HashBehavior<Object>, Serializable {
-        private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = -7142995032377883752L;
 
         public int hashing(int key) {
-            return HashingUtil.murmur3HashFMixBit32(key);
+            return HashingUtil.murmur3HashFMix(key);
+        }
+
+        public long hashing64(int key) {
+            return HashingUtil.murmur3HashFMix64(key);
         }
 
         public int hashing(long key) {
-            return Long.hashCode(HashingUtil.murmur3HashFMixBit64(key));
+            return Long.hashCode(HashingUtil.murmur3HashFMix64(key));
+        }
+
+        public long hashing64(long key) {
+            return HashingUtil.murmur3HashFMix64(key);
         }
 
         public int hashing(float key) {
-            return HashingUtil.murmur3HashFMixBit32(Float.floatToIntBits(key));
+            return HashingUtil.murmur3HashFMix(Float.floatToIntBits(key));
+        }
+
+        public long hashing64(float key) {
+            return HashingUtil.murmur3HashFMix64(Float.floatToIntBits(key));
         }
 
         public int hashing(double key) {
-            return Long.hashCode(HashingUtil.murmur3HashFMixBit64(Double.doubleToLongBits(key)));
+            return Long.hashCode(HashingUtil.murmur3HashFMix64(Double.doubleToLongBits(key)));
+        }
+
+        public long hashing64(double key) {
+            return HashingUtil.murmur3HashFMix64(Double.doubleToLongBits(key));
         }
 
         public int hashing(@Nullable Object key) {
             return HashingUtil.murmurHash3FMix(key);
+        }
+
+        public long hashing64(@Nullable Object key) {
+            return HashingUtil.murmurHash3FMix64(key);
         }
     }
 

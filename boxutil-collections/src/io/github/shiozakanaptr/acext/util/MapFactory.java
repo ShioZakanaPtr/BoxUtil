@@ -1,4 +1,4 @@
-package io.github.shiozakanaptr.acext.util.collection;
+package io.github.shiozakanaptr.acext.util;
 
 import io.github.shiozakanaptr.acext.api.collection.HashBehavior;
 import io.github.shiozakanaptr.acext.api.collection.HashContainer;

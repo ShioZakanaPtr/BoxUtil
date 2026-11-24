@@ -35,6 +35,18 @@ public interface HashBehavior<K> extends Serializable {
     int hashing(int key);
 
     /**
+     * Computes the 64-bit hash value for the given {@code int} key by
+     * converting it to an {@code int} via {@link Integer#hashCode(int)}
+     * and delegating to {@link #hashing64(long)}.
+     *
+     * @param key the {@code int} key
+     * @return the computed 64-bit hash value
+     */
+    default long hashing64(int key) {
+        return this.hashing64((long) Integer.hashCode(key));
+    }
+
+    /**
      * Computes the hash value for the given {@code byte} key by converting it
      * to an {@code int} via {@link Byte#hashCode(byte)} and delegating to
      * {@link #hashing(int)}.
@@ -59,6 +71,18 @@ public interface HashBehavior<K> extends Serializable {
     }
 
     /**
+     * Computes the hash value for the given {@code char} key by converting it
+     * to an {@code int} via {@link Character#hashCode(char)} and delegating to
+     * {@link #hashing(int)}.
+     *
+     * @param key the {@code char} key
+     * @return the computed hash value
+     */
+    default int hashing(char key) {
+        return this.hashing(Character.hashCode(key));
+    }
+
+    /**
      * Computes the hash value for the given {@code long} key by converting it
      * to an {@code int} via {@link Long#hashCode(long)} and delegating to
      * {@link #hashing(int)}.
@@ -71,15 +95,14 @@ public interface HashBehavior<K> extends Serializable {
     }
 
     /**
-     * Computes the hash value for the given {@code char} key by converting it
-     * to an {@code int} via {@link Character#hashCode(char)} and delegating to
-     * {@link #hashing(int)}.
+     * Computes the 64-bit hash value for the given {@code long} key by converting
+     * it to an {@code long} via directly.
      *
-     * @param key the {@code char} key
-     * @return the computed hash value
+     * @param key the {@code long} key
+     * @return the computed 64-bit hash value
      */
-    default int hashing(char key) {
-        return this.hashing(Character.hashCode(key));
+    default long hashing64(long key) {
+        return key;
     }
 
     /**
@@ -95,6 +118,18 @@ public interface HashBehavior<K> extends Serializable {
     }
 
     /**
+     * Computes the 64-bit hash value for the given {@code float} key by
+     * converting it to an {@code int} via {@link Float#hashCode(float)}
+     * and delegating to {@link #hashing64(long)}.
+     *
+     * @param key the {@code float} key
+     * @return the computed 64-bit hash value
+     */
+    default long hashing64(float key) {
+        return this.hashing64((long) Float.hashCode(key));
+    }
+
+    /**
      * Computes the hash value for the given {@code double} key by converting it
      * to an {@code int} via {@link Double#hashCode(double)} and delegating to
      * {@link #hashing(int)}.
@@ -107,6 +142,18 @@ public interface HashBehavior<K> extends Serializable {
     }
 
     /**
+     * Computes the 64-bit hash value for the given {@code double} key by
+     * converting it to an {@code long} via {@link Double#doubleToLongBits(double)}
+     * and delegating to {@link #hashing64(long)}.
+     *
+     * @param key the {@code double} key
+     * @return the computed 64-bit hash value
+     */
+    default long hashing64(double key) {
+        return this.hashing((long) Double.doubleToLongBits(key));
+    }
+
+    /**
      * Computes the hash value for the given object key. If the key is
      * {@code null}, returns {@code 0}. Otherwise, obtains the key's
      * {@link Object#hashCode()} and delegates to {@link #hashing(int)}.
@@ -115,7 +162,20 @@ public interface HashBehavior<K> extends Serializable {
      * @return the computed hash value
      */
     default int hashing(@Nullable Object key) {
-        return key == null ? 0 : this.hashing(key.hashCode());
+        return key != null ? this.hashing(key.hashCode()) : 0;
+    }
+
+    /**
+     * Computes the 64-bit hash value for the given object key. If the
+     * key is {@code null}, returns {@code 0}. Otherwise, obtains the
+     * key's {@link Object#hashCode()} and delegates to
+     * {@link #hashing64(long)}.
+     *
+     * @param key the object key, possibly {@code null}
+     * @return the computed 64-bit hash value
+     */
+    default long hashing64(@Nullable Object key) {
+        return key != null ? this.hashing64((long) key.hashCode()) : 0;
     }
 
     /**
@@ -227,5 +287,20 @@ public interface HashBehavior<K> extends Serializable {
      */
     default int mix(int left, int right) {
         return left + right * 31;
+    }
+
+    /**
+     * Mix the 64-bit hash value of two input keys. The default implementation
+     * is {@code left + right * 31L}.
+     *
+     * <p>For multi key such as {@link PairMap}, will only use the first behavior
+     * to mix all the keys.
+     *
+     * @param left the first input 64-bit hash
+     * @param right the second input 64-bit hash
+     * @return the mixed 64-bit hash about input keys
+     */
+    default long mix64(long left, long right) {
+        return left + right * 31L;
     }
 }
