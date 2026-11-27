@@ -300,27 +300,20 @@ public interface BloomFilter<E> extends Predicate<E>, Container {
     HashBehavior<E>[] getHasherQueue();
 
     /**
-     * Returns the number of unique elements that have been added to this filter,
-     * as an {@code int}.
+     * Returns the number of bits currently set to 1 in this filter's internal
+     * bit array, as an {@code int}.
      *
-     * <p>This is the number of elements added, not the number of bits used by the
-     * filter. Because a Bloom filter cannot reliably distinguish a duplicate from
-     * a new element, this value is an <em>estimate</em> of the number of unique
-     * elements added; it may be smaller than the actual number of {@code add}
-     * calls and may differ from an exact count by up to the number of false
-     * positives observed by this filter.
-     *
-     * <p>The exact meaning of the value is defined by the concrete implementation.
-     * Implementations that track an estimate (for example, by incrementing only
-     * when {@link #add} returns {@code true}) should document their semantics.
+     * <p>This is a bits count, not the number of elements added and not an
+     * estimate of the number of unique elements. Duplicate {@code add} calls do
+     * not increase this count when all corresponding bits are already set.
      *
      * <p>The underlying count may exceed {@link Integer#MAX_VALUE}. This default
      * implementation returns {@link Integer#MAX_VALUE} if {@link #size64()} is
      * greater than {@code Integer.MAX_VALUE}, and returns {@code 0} if
      * {@code size64()} is negative.
      *
-     * @return the estimated number of unique added elements, clamped to the
-     *         {@code int} range
+     * @return the number of bits currently set to 1, clamped to the {@code int}
+     *         range
      * @see #size64()
      */
     default int size() {
@@ -329,24 +322,18 @@ public interface BloomFilter<E> extends Predicate<E>, Container {
     }
 
     /**
-     * Returns the number of unique elements that have been added to this filter,
-     * as a {@code long}.
+     * Returns the number of bits currently set to 1 in this filter's internal
+     * bit array, as a {@code long}.
      *
-     * <p>This is the number of elements added, not the number of bits used by the
-     * filter. Because a Bloom filter cannot reliably distinguish a duplicate from
-     * a new element, this value is an <em>estimate</em> of the number of unique
-     * elements added; it may be smaller than the actual number of {@code add}
-     * calls and may differ from an exact count by up to the number of false
-     * positives observed by this filter.
-     *
-     * <p>The exact meaning of the value is defined by the concrete implementation.
-     * Implementations that track an estimate (for example, by incrementing only
-     * when {@link #add} returns {@code true}) should document their semantics.
+     * <p>This is a bits count, not the number of elements added and not an
+     * estimate of the number of unique elements. Implementations with a
+     * non-standard internal representation should document how this bit count is
+     * defined.
      *
      * <p>Use this method instead of {@link #size()} when the count may exceed
      * {@link Integer#MAX_VALUE}.
      *
-     * @return the estimated number of unique added elements
+     * @return the number of bits currently set to 1
      * @see #size()
      */
     long size64();
@@ -360,28 +347,74 @@ public interface BloomFilter<E> extends Predicate<E>, Container {
      *
      * <p>The default implementation estimates the rate using the classic Bloom
      * filter formula
-     * {@code (1 - e^(-k*n/m))^k}, where {@code m} is the capacity in bits as
-     * returned by {@link #capacity64()}, {@code n} is the estimated number of
-     * unique added elements as returned by {@link #size64()}, and {@code k} is
-     * the number of hash functions as given by the length of
-     * {@link #getHasherQueue()}.
+     * {@code (b / m)^k}, where {@code m} is the capacity in bits as returned by
+     * {@link #capacity64()}, {@code b} is the number of bits currently set to 1
+     * as returned by {@link #size64()}, and {@code k} is the number of hash
+     * functions as given by the length of {@link #getHasherQueue()}.
+     *
+     * <p>This is equivalent to the usual form
+     * {@code (1 - e^(-k*n/m))^k} when the expected number of set bits is
+     * {@code b = m * (1 - e^(-k*n/m))}. Because {@link #size64()} now returns the
+     * set-bit count rather than an estimated unique-element count, the default
+     * implementation uses {@code b / m} directly.
      *
      * <p>This estimate reflects the current state of the filter and is therefore
      * recomputed on each call. Implementations that maintain the rate
      * incrementally, use a different construction, or track non-standard
-     * semantics (for example counting or aging Bloom filters) should override
-     * this method.
+     * semantics should override this method.
      *
      * @return the current false-positive rate in the range {@code [0.0, 1.0]},
      *         or {@link Double#NaN} if the rate is undefined for the current
      *         filter state
-     * @see #size64()
-     * @see #capacity64()
-     * @see #getHasherQueue()
      */
     default double getCurrentErrors() {
-        final double k;
-        return Math.pow(1.0d - Math.exp(-((k = this.getHasherQueue().length) * this.size64()) / this.capacity64()), k);
+        final long capacity = this.capacity64();
+        if (capacity <= 0L) {
+            return Double.NaN;
+        }
+        return Math.pow((double) this.size64() / (double) capacity, this.getHasherQueue().length);
+    }
+
+    /**
+     * Returns an estimate of the number of unique elements that have been added
+     * to this filter, as a {@code long}.
+     *
+     * <p>This value is estimated from the current number of bits set to 1, not
+     * from an exact count of {@code add} calls. Because a Bloom filter cannot
+     * reliably distinguish a duplicate from a new element, this value is an
+     * <em>estimate</em> of the number of unique elements added. It may be smaller
+     * than the actual number of {@code add} calls.
+     *
+     * <p>The default implementation assumes a classic Bloom filter and inverts the
+     * expected set-bit ratio:
+     * {@code n = -(m / k) * ln(1 - b / m)}, where {@code m} is the capacity in
+     * bits as returned by {@link #capacity64()}, {@code b} is the number of bits
+     * currently set to 1 as returned by {@link #size64()}, and {@code k} is the
+     * number of hash functions as given by the length of
+     * {@link #getHasherQueue()}.
+     *
+     * <p>If the current filter state is invalid or cannot be estimated, this
+     * method returns {@link Long#MAX_VALUE}. In particular, this happens when
+     * {@code capacity64() <= 0}, {@code size64() < 0}, {@code k <= 0}, or when
+     * {@code size64() >= capacity64()}.
+     *
+     * <p>Implementations that maintain an exact or incremental estimate, use a
+     * different construction, or track non-standard semantics should override
+     * this method.
+     *
+     * @return the estimated number of unique added elements, or
+     *         {@link Long#MAX_VALUE} if the estimate is undefined or saturated
+     */
+    default long getEstimatedElementCount() {
+        final long capacity = this.capacity64();
+        final long bits = this.size64();
+        if (capacity <= 0L) {
+            return Long.MAX_VALUE;
+        }
+        if (bits == 0L) {
+            return 0L;
+        }
+        return Math.max(0L, Math.round(-((double) capacity / this.getHasherQueue().length) * Math.log1p(-bits / (double) capacity)));
     }
 
     /**
